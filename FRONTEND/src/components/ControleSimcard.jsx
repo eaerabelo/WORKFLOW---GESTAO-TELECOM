@@ -54,7 +54,29 @@ const CellInput = ({ value, onCommit, onCancel, placeholder, className, maskType
 
     const handleChange = (e) => {
         let val = e.target.value;
-        val = formatPastedValue(maskType === 'iccid' ? 'simcardFisico' : maskType || 'upper', val);
+        if (maskType === 'iccid') val = val.replace(/\D/g, '').slice(0, 20);
+        else if (maskType === 'cpf') val = applyCpfCnpjMask(val);
+        else if (maskType === 'valor') val = applyCurrencyMask(val);
+        else if (maskType === 'data') val = applyDateShortMask(val);
+        else if (maskType === 'upper') val = val.toUpperCase();
+        else if (maskType === 'dataPortin') {
+            let v = val.replace(/\D/g, '');
+            if (v.length > 10) v = v.slice(0, 10);
+            let masked = v;
+            if (v.length > 8) masked = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4, 6)} ${v.slice(6, 8)}:${v.slice(8, 10)}`;
+            else if (v.length > 6) masked = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4, 6)} ${v.slice(6)}`;
+            else if (v.length > 4) masked = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+            else if (v.length > 2) masked = `${v.slice(0, 2)}/${v.slice(2)}`;
+            val = masked;
+        }
+        else if (maskType === 'telefone') {
+            let v = val.replace(/\D/g, '');
+            if (v.length > 11) v = v.slice(0, 11);
+            let masked = v;
+            if (v.length > 7) masked = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+            else if (v.length > 2) masked = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+            val = masked;
+        }
         setLocalValue(val);
         onCommit(val);
     };
@@ -94,7 +116,8 @@ const EditableCell = ({ item, idx, colIdx, field, value, tipoLote, canModifySimc
         colIdx >= Math.min(selection.startCol, selection.endCol) &&
         colIdx <= Math.max(selection.startCol, selection.endCol);
 
-    const isEditing = editingCell?.id === item.id && editingCell?.type === tipoLote && editingCell?.field === field && canModifySimcard;
+    const isProtectedField = field === 'simcardFisico' || field === 'simcardEsim';
+    const isEditing = editingCell?.id === item.id && editingCell?.type === tipoLote && editingCell?.field === field && (!isProtectedField || canModifySimcard);
 
     const handleCommit = (newVal) => {
         handleInlineChange(item.id, field, newVal);
@@ -125,7 +148,11 @@ const EditableCell = ({ item, idx, colIdx, field, value, tipoLote, canModifySimc
                 }
             }}
             onDoubleClick={() => {
-                if (canModifySimcard && selection.startRow === selection.endRow && selection.startCol === selection.endCol) {
+                if (isProtectedField && !canModifySimcard) {
+                    if (handleProtectedClick) handleProtectedClick();
+                    return;
+                }
+                if (selection.startRow === selection.endRow && selection.startCol === selection.endCol) {
                     setEditingCell({ id: item.id, type: tipoLote, field });
                 }
             }}
@@ -141,11 +168,11 @@ const EditableCell = ({ item, idx, colIdx, field, value, tipoLote, canModifySimc
                     autoFocus={true}
                 />
             ) : (
-                <div className={`w-full h-full min-h-[36px] px-3 py-1.5 text-xs flex items-center ${justify} ${!canModifySimcard ? 'text-neutral-500 dark:text-neutral-400' : 'text-neutral-800 dark:text-neutral-200'} ${isSelected ? 'text-red-800 dark:text-red-200' : ''} cursor-cell select-none ${className} overflow-hidden whitespace-nowrap`}>
+                <div className={`w-full h-full min-h-[36px] px-3 py-1.5 text-xs flex items-center ${justify} ${(!canModifySimcard && isProtectedField) ? 'text-neutral-500 dark:text-neutral-400 opacity-60' : 'text-neutral-800 dark:text-neutral-200'} ${isSelected ? 'text-red-800 dark:text-red-200' : ''} cursor-cell select-none ${className} overflow-hidden whitespace-nowrap`}>
                     {value || ''}
                 </div>
             )}
-            {showLock && !canModifySimcard && value && <Lock size={12} onClick={handleProtectedClick} title="Desbloquear Edição" className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 cursor-pointer hover:text-[#E3000F] transition-colors" />}
+            {showLock && !canModifySimcard && isProtectedField && value && <Lock size={12} onClick={handleProtectedClick} title="Desbloquear Edição" className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 cursor-pointer hover:text-[#E3000F] transition-colors" />}
         </td>
     );
 };
@@ -182,7 +209,6 @@ const SelectableCell = ({ item, idx, colIdx, field, value, tipoLote, canModifySi
             <select 
                 value={value || ''} 
                 onChange={e => handleInlineChange(item.id, field, e.target.value)} 
-                disabled={!canModifySimcard}
                 className="w-full h-full min-h-[36px] px-2 py-1.5 bg-transparent outline-none focus:bg-red-50 dark:focus:bg-red-900/20 focus:ring-inset focus:ring-1 focus:ring-[#E3000F] text-[10px] font-bold text-neutral-700 dark:text-neutral-300 uppercase disabled:opacity-80"
             >
                 <option className="bg-white dark:bg-neutral-900" value=""></option>
@@ -262,15 +288,21 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     const code = e.code || '';
                     const isDelete = key === 'Delete' || key === 'Backspace' || key === 'Del' || code === 'Delete' || code === 'Backspace' || e.keyCode === 8 || e.keyCode === 46;
 
-                    // Ação de APAGAR (DELETE / BACKSPACE)
+                    // Ação de APAGAR (DELETE / BACKSPACE) com validação
                     if (isDelete) {
                         e.preventDefault();
+
+                        let cols = getColumns(currentTab, isFisico).slice(startCol, endCol + 1);
+                        
                         if (!canModifySimcard) {
-                            toast.error('Acesso restrito: Você não tem permissão para excluir registros.');
-                            return;
+                            const hasProtectedCol = cols.some(col => col === 'simcardFisico' || col === 'simcardEsim');
+                            if (hasProtectedCol) {
+                                toast.error('Acesso restrito: ICCIDs mantidos. Apagando demais campos...');
+                                cols = cols.filter(col => col !== 'simcardFisico' && col !== 'simcardEsim');
+                            }
                         }
 
-                        const cols = getColumns(currentTab, isFisico).slice(startCol, endCol + 1);
+                        if (cols.length === 0) return;
 
                         setSimcardsData(prev => {
                             const currentFiltered = (prev || []).filter(item => {
@@ -301,10 +333,17 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     }
 
                     // Ação de EDITAR (ENTER)
-                    if (e.key === 'Enter' && startRow === endRow && startCol === endCol && canModifySimcard) {
+                    if (e.key === 'Enter' && startRow === endRow && startCol === endCol) {
                         e.preventDefault();
                         const cols = getColumns(currentTab, isFisico);
                         const field = cols[startCol];
+                        
+                        const isProtected = field === 'simcardFisico' || field === 'simcardEsim';
+                        if (isProtected && !canModifySimcard) {
+                            toast.error('Acesso restrito: Você não tem permissão para editar ICCIDs.');
+                            return;
+                        }
+
                         const items = (simcardsData || []).filter(item => {
                             if (item.owner !== currentTab) return false;
                             return isFisico ? (item.simcardFisico || (!item.simcardFisico && !item.simcardEsim)) : (item.simcardEsim && !item.simcardFisico);
@@ -340,15 +379,24 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             }
                         }
 
-                        // Ação de COLAR para Múltiplas Células (CTRL+V) - Exclusivo Gestão
-                        if (e.key.toLowerCase() === 'v' && canModifySimcard) {
+                        // Ação de COLAR para Múltiplas Células (CTRL+V) - Liberado com Proteção
+                        if (e.key.toLowerCase() === 'v') {
+                            let cols = getColumns(currentTab, isFisico).slice(startCol, endCol + 1);
+                            
+                            if (!canModifySimcard) {
+                                const hasProtectedCol = cols.some(col => col === 'simcardFisico' || col === 'simcardEsim');
+                                if (hasProtectedCol) {
+                                    toast.error('Acesso restrito: Colagem em ICCIDs ignorada.');
+                                    cols = cols.map(col => (col === 'simcardFisico' || col === 'simcardEsim') ? null : col);
+                                }
+                            }
+
                             e.preventDefault();
                             navigator.clipboard.readText().then(text => {
                                 if (!text) return;
                                 const pastedLines = text.split(/\r?\n/).filter(line => line.trim() !== '' || line.includes('\t'));
                                 if (pastedLines.length === 0) return;
                                 
-                                const cols = getColumns(currentTab, isFisico).slice(startCol, endCol + 1);
 
                                 setSimcardsData(prev => {
                                     const currentFiltered = (prev || []).filter(item => {
@@ -372,7 +420,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                             const pastedCells = pastedLines[rowIdx].split('\t');
                                             const updates = {};
                                             cols.forEach((col, cIdx) => {
-                                                if (pastedCells[cIdx] !== undefined) {
+                                                if (col !== null && pastedCells[cIdx] !== undefined) {
                                                     updates[col] = formatPastedValue(col, pastedCells[cIdx]);
                                                 }
                                             });

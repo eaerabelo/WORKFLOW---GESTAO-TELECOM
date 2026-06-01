@@ -102,7 +102,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
     }, [salesData, globalMonth, goalsDB, todayISO, dateBr, yearStr, monthStr]);
 
     const [form, setForm] = useState({
-        hora: '18', area: '3', loja: 'Shopping União', senhas: '',
+        hora: '18', area: '3', loja: import.meta.env.VITE_STORE_NAME || 'Shopping União', senhas: '',
         senhasFechamento: '', churnOs: '', acaoBoost: '',
         metaGross: '', feitoGross: '', metaGrossPme: '', feitoGrossPme: '',
         metaAparelho: '', feitoAparelho: '', metaSeguro: '', feitoSeguro: '',
@@ -152,7 +152,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
         const conversao = totals.aparelho > 0 ? Math.round((totals.seguro / totals.aparelho) * 100) : 0;
         const ticketMedio = totals.qtdaAcessorioFisico > 0 ? totals.receitaAcessorio / totals.qtdaAcessorioFisico : 0;
 
-        const text = `Loja União Osasco \n\n` +
+        const text = `${import.meta.env.VITE_STORE_NAME || 'Loja União Osasco'} \n\n` +
             `Data: ${dateBr}\n\n` +
             `Senhas: ${pad(form.senhasFechamento)}\n\n` +
             `Conta Total: ${pad(totals.contaTotal)}\n` +

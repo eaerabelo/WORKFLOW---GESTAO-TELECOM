@@ -39,6 +39,9 @@ export function Proposta({ globalUser }) {
     const [compA, setCompA] = useState({ movel: '', linhaInclusa: '', qtdLinhaInclusa: 1, linhaAdicional: '', qtdLinhaAdicional: 1, fibra: '', qtdFibra: 1, tv: '', pontoAdicional: '', qtdPontoAdicional: 1, fixo: '', qtdFixo: 1, mesh: '' });
     const [compB, setCompB] = useState({ movel: '', linhaInclusa: '', qtdLinhaInclusa: 1, linhaAdicional: '', qtdLinhaAdicional: 1, fibra: '', qtdFibra: 1, tv: '', pontoAdicional: '', qtdPontoAdicional: 1, fixo: '', qtdFixo: 1, mesh: '' });
 
+    const [apA, setApA] = useState({ modelo: '', valor: '', claroTroca: '', parcelas: '21' });
+    const [apB, setApB] = useState({ modelo: '', valor: '', claroTroca: '', parcelas: '21' });
+
     // Extraindo as listas das constantes de forma segura
     const mobilePlans = Object.keys(PRICING_MOVEL || {});
     const fixoPlans = FIXO_OPTIONS || [];
@@ -90,6 +93,15 @@ export function Proposta({ globalUser }) {
     const idxTvTop = extendedTvPlans.findIndex(p => p.label === 'TV TOP (RENT)');
     if (idxTvTop >= 0) extendedTvPlans[idxTvTop] = { label: 'TV TOP (RENT)', prices: { SINGLE: 110.00, MULTI: 110.00, 'MULTI 3P': 110.00 } };
     else extendedTvPlans.push({ label: 'TV TOP (RENT)', prices: { SINGLE: 110.00, MULTI: 110.00, 'MULTI 3P': 110.00 } });
+
+    const getGoogleMapsLink = () => {
+        if (import.meta.env.VITE_STORE_MAPS_LINK) return import.meta.env.VITE_STORE_MAPS_LINK;
+        const storeName = String(import.meta.env.VITE_STORE_NAME || '').toUpperCase();
+        if (storeName.includes('LAPA')) return 'https://maps.app.goo.gl/kEMpuUjUz7ha1Rzs5';
+        if (storeName.includes('CALCADAO') || storeName.includes('CALÇADÃO')) return 'https://maps.app.goo.gl/RLcDeCoXyCW2nYVu7';
+        return 'https://maps.app.goo.gl/HkndtA47p8XvStCN9'; // Default (União Osasco)
+    };
+    const mapsLink = getGoogleMapsLink();
 
     const handleAparelhoChange = (id, field, value) => {
         setAparelhos(prev => prev.map(ap => ap.id === id ? { ...ap, [field]: value } : ap));
@@ -186,7 +198,7 @@ export function Proposta({ globalUser }) {
         }
 
         text += `\n_Consultor(a): ${globalUser?.name ? globalUser.name.split(' ')[0] : 'Equipe Claro'}_\n`;
-        text += `_Shopping União Osasco_`;
+        text += `_${import.meta.env.VITE_STORE_NAME || 'Loja Claro'}_`;
 
         const encodedText = encodeURIComponent(text);
         window.open(`https://wa.me/?text=${encodedText}`, '_blank');
@@ -583,13 +595,13 @@ export function Proposta({ globalUser }) {
                                             <img src={viteLogo} alt="Logo" className="w-8 h-8 object-contain" />
                                         </div>
                                         <div>
-                                            <h2 className="text-xl md:text-2xl font-bold mb-0.5 tracking-tight">Proposta Claro União Osasco</h2>
+                                            <h2 className="text-xl md:text-2xl font-bold mb-0.5 tracking-tight">Proposta {import.meta.env.VITE_STORE_NAME || 'Loja Claro'}</h2>
                                             <p className="text-neutral-400 text-[11px] md:text-xs font-medium uppercase tracking-wider">Data: {new Date().toLocaleDateString('pt-BR')} &bull; Validade: 24 HORAS</p>
                                         </div>   
                                     </div>
                                     <div className="text-right hidden sm:block">
                                         <div className="text-sm font-bold">{globalUser?.name || 'Consultor Claro'}</div>
-                                        <div className="text-[10px] text-neutral-400 uppercase tracking-widest">União Osasco - AT1M</div>   
+                                        <div className="text-[10px] text-neutral-400 uppercase tracking-widest">{import.meta.env.VITE_STORE_NAME || 'Loja Claro'} - {import.meta.env.VITE_STORE_CODE || ''}</div>   
                                     </div>
                                 </div>   
 
@@ -769,7 +781,7 @@ export function Proposta({ globalUser }) {
                                                 Como foi sua experiência na loja? Escaneie com a câmera do seu celular e deixe sua avaliação no Google.
                                             </p>
                                             <div className="p-1 bg-white rounded-lg border border-neutral-200 shadow-sm shrink-0">
-                                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://maps.app.goo.gl/HkndtA47p8XvStCN9&margin=0" alt="QR Code Avaliação Google" className="w-16 h-16 object-contain" crossOrigin="anonymous" />
+                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${mapsLink}&margin=0`} alt="QR Code Avaliação Google" className="w-16 h-16 object-contain" crossOrigin="anonymous" />
                                             </div>
                                         </div>
 
@@ -777,9 +789,9 @@ export function Proposta({ globalUser }) {
                                         <div className="mt-4 text-center pt-3 border-t border-neutral-200 dark:border-neutral-800 hidden print:block">
                                             <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Consultor de Vendas</div>
                                             <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200">{globalUser?.name ? globalUser.name.split(' ')[0] : 'Consultor Claro'}</div>
-                                            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">Shopping União Osasco - Claro</div>
+                                            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">{import.meta.env.VITE_STORE_NAME || 'Loja Claro'}</div>
                                             <div className="text-[09px] text-neutral-500 dark:text-neutral-400">Email: {globalUser?.email || 'consultor@claro.com.br'}</div>
-                                            <div className="text-[08px] text-neutral-500 dark:text-neutral-400">Av. dos Autonomistas, 1400 - Arco 169 - Vila Yara, Osasco - SP<br />06020-010</div>
+                                            {import.meta.env.VITE_STORE_ADDRESS && <div className="text-[08px] text-neutral-500 dark:text-neutral-400">{import.meta.env.VITE_STORE_ADDRESS}</div>}
                                         </div>
                                     </div>
                                 </div>
