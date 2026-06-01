@@ -1,217 +1,79 @@
-# Documentação Técnica - Painel Gestão Claro
+# Documentação de Módulos e Componentes
 
-Bem-vindo à documentação oficial para desenvolvedores do **Painel de Gestão Claro**. Este documento serve como guia arquitetural para engenheiros de software que assumirão a manutenção, escalabilidade e implementação de novas features neste sistema.
+Este documento detalha a arquitetura de pastas e mapeia os principais arquivos do Frontend do sistema.
 
----
-
-## 1. Arquitetura Base (Tech Stack)
-*   **Core:** React.js (via Vite)
-*   **Backend:** Node.js, Express, Socket.io (WebSocket)
-*   **Estilização:** Tailwind CSS (Utility-First)
-*   **Acessibilidade Visual:** Configuração adaptativa do Tailwind `darkMode: 'class'` integrado ao `localStorage`, com transições globais de tema mapeadas em `duration-500` e paletas cromáticas exclusivas por Role.
-*   **Ícones:** `lucide-react`
-*   **Notificações Visuais:** `react-hot-toast`
-*   **Geração de Relatórios e Midia:** `xlsx` (Excel), `html2canvas` (Geração de propostas visuais por Imagem) e envio API-URI `WhatsApp`.
-*   **Banco de Dados:** Firebase Firestore (NoSQL, Client-Side).
-*   **Gamificação:** Rankings dinâmicos calculados em tempo real (`topReceitaName`, `topPosName`).
-*   **Notificações:** Estado persistente no `localStorage` com responsividade mobile inteligente (`max-w-[calc(100vw-32px)]`) e detecção de recência. Emissão de badges e Toasts (Campanhas, Vencedores, Parciais, Metas).
-*   **Programação Defensiva:** Fallbacks (`|| ''`, `|| []`, `?.`) implementados ativamente em todas as funções nativas do JS (`.split`, `.includes`, `.toUpperCase`) protegendo a Árvore do React contra exceções nulas do Banco de Dados (WSoD - White Screen of Death), junto a um robusto `ErrorBoundary`.
-
----
-
-## 2. Estrutura do Banco de Dados (Firestore)
-A aplicação agora utiliza uma arquitetura com **Backend em Node.js**, que atua como uma barreira de proteção e cache de memória RAM para o Firebase Firestore.
-
-*   **Coleções Principais:** `vendas_uniao_osasco`, `estoque_uniao_osasco`, `reprovados_uniao_osasco`
-*   **Documento de Configuração:** `lojas/uniao_osasco_config` (Para usuários, escalas e metas)
-
-**Fluxo de Sincronização (`App.jsx` e `server.js`):**
-1.  O Backend carrega todas as coleções na memória RAM ao ser inicializado (`onSnapshot`), tornando as respostas aos clientes incrivelmente rápidas.
-2.  O Frontend consome os dados do Backend via **API REST** (`/api/...`) com parâmetros de filtragem de data (`start`, `end`), gerando zero custo adicional de leitura no Firestore. A ordenação cronológica garante os dados mais recentes no topo.
-3.  O Frontend estabelece uma conexão WebSocket (`Socket.io`). Quando uma alteração é salva por qualquer cliente, o servidor emite eventos (ex: `vendas-atualizadas`) e as telas recarregam passivamente a API.
-4.  O salvamento (Auto-Save) usa um **Smart Diff com Debounce de 1.500ms**, postando o *delta* de diferença (`upserts`, `deletes`) para o Backend, que escreve os dados agrupados (`writeBatch`) em definitivo no banco.
-
-### ✅ Tech Debt Resolvido (Escalabilidade)
-O limite de Leituras gratuitas foi extinto graças ao uso do Cache do Node.js. Adicionalmente, O limite hard de **1 MiB por documento** do Firestore foi contornado.
-
----
-
-## 3. Autenticação e RBAC (Role-Based Access Control)
-O sistema não utiliza o Firebase Authentication por padrão para dar flexibilidade de auto-registro ("Código de Vendedor"). Os usuários vivem dentro da key `usersDB` no Firestore.
-
-**Níveis de Acesso:**
-*   `GESTOR`: Acesso irrestrito (CRUD total em todos os módulos).
-*   `SENIOR` (e equivalentes: ASSISTENTE RELACIONAMENTO, ADMINISTRAÇÃO, JOVEM APRENDIZ, GEEK): Acesso avançado com permissões semelhantes ao Gestor para manuseio da Escala, Metas e do Estoque, bem como exclusão de vendas de terceiros.
-*   `VENDEDOR`: Leitura/Escrita limitada aos próprios registros. Podem editar ou excluir exclusivamente as vendas onde eles são os autores (via verificação de nome).
-
-**Filtros de Exibição de Nomes:**
-A aplicação possui uma regra em que todas as seções operacionais (Venda, Escala, Reprovados) extraem apenas o `name.split(' ')[0]` (Primeiro Nome) do usuário. Apenas os painéis de "Colaboradores" e "Cofre" mantêm a renderização dos Nomes Completos. Além disso, as opções de Vendedores nas selects das telas operacionais filtram ativamente `role === 'VENDEDOR'`, ocultando os cargos superiores.
-
-**Cofre de Acessos (`Acessos.jsx`):**
-A aba é visível no menu EXCLUSIVAMENTE para usuários com perfil de `GESTOR`, e adicionalmente bloqueada por uma "Master Key" (hardcoded no estado inicial) com valor padrão `DEV2026`. Serve para destravar a visualização das senhas em plain-text e permitir a elevação de cargo de vendedores para Gestores.
-
-Quando o botão de apagar usuário é ativado (validado internamente para `role === 'GESTOR'`), a exclusão mapeia tanto a string de `Nome Completo` quanto a string de `Primeiro Nome` para garantir que exceções não fiquem órfãs e aplica as mudanças no DB sem uso de merge para forçar a deleção na nuvem. A listagem agora adota um design visual cromático por "Badge" baseada no Nível de Acesso da pessoa.
-
-**Tela de Login (UX/UI):**
-Possui design com renderização condicional por tamanho de tela (`window.innerWidth < 768`) alterando a imagem de fundo nativamente entre Desktop e Mobile. Suporta saudações customizadas baseadas no dia (Feriados/Aniversários).
-
----
-
-## 4. Componentes e Lógicas Específicas
-
-### `Venda.jsx` (Lançamento)
-*   Trata as comissões através da função `calcularComissaoDinamica()`.
-*   A interface suporta UI Collapse: Os títulos das seções recebem eventos de duplo clique (`onDoubleClick`) que esconde as seções de menu (filtros), ampliando o espaço de trabalho. O menu lateral recolhe inteligentemente ao clicar de novo na aba já ativa.
-*   Acessórios e películas possuem `15%`, enquanto Aparelhos possuem `5%` ou `6%` (caso tenha o adicional "Seguro" anexado no array `adicionais`).
-*   **Modo Combo (Venda Múltipla):** A tela suporta alternância via estado `vendaMode`. Produtos são estocados temporariamente em `comboItems` e propriedades globais (CPF, Adicionais do Titular, Contrato) ficam em `comboGlobal`, permitindo o despacho (`unshift` e `push`) massivo de Múltiplos Serviços para a tabela.
-*   **Nova Funcionalidade:** Caso a `seguroOption` esteja selecionada em um APARELHO, a página desmembra o pacote salvando a Venda de Seguro como um registro individual e oculta a tag "Seguro" da coluna do aparelho para limpeza visual.
-*   Obrigatoriedade do campo "Tipo de Operação" (Ativação/Migração) agora é exlusiva da lógica `isMovel`, não sendo mais solicitada para produtos residenciais.
-*   **Barra de Pesquisa Global:** Pesquisa termos não apenas por CPF ou Vendedor, mas busca registros por propriedades de Combos, Serviços M-Play atrelados e Serviços Operacionais (Ativação vs Migração).
-*   Bloqueia a edição do campo "Receita" caso a matriz de produtos (`PRICING_MOVEL` no `constants.js`) possua um valor tabelado.
-*   Para otimizar o tempo (UX), campos como M-Play e Portabilidade ficam inativos (NÃO) se o produto selecionado não for Móvel.
-*   Importação/Exportação do Excel foram blindadas exclusivamente para `globalUser?.role === 'GERENTE'`. A lógica de importação foi abstraída para `excelImporter.js` (Smart Mapping).
-
-### `rules.js` e `FatorRvv.jsx` (Motor Financeiro)
-*   O `rules.js` é um arquivo puro de funções utilitárias projetado com o Padrão *Strategy*. O desacoplamento matemático tira a complexidade das telas do React.
-*   A função `aplicarRegrasDeProduto()` percorre o objeto da venda aplicando Aceleradores e Redutores da matriz da Claro. O Acelerador do Claro Multi foi refatorado para depender estritamente da meta de anexação do **M-Play**. Vendas no combo só recebem faixas de aceleração se o M-Play individual for escalonado e anexado (SIM) no ato da venda.
-*   A função `calcularFatorRV()` implementa as barreiras de Comissionamento (Tríplice Elegibilidade de 80%), Teto Máximo de R$ 6.000 e acoplamento do Bônus NPS (5%).
-*   O `FatorRvv.jsx` renderiza de forma Premium esses cruzamentos. Possui um alerta em destaque (Vermelho) reforçando tratar-se de um **Simulador** focado no espelhamento das regras. Adiciona o isolamento financeiro de **Aparelhos & Seguros** (volume separado vs comissão agrupada), e revela **Dicas de Foco** gamificadas atrelando os dados estritamente ao ID do Vendedor.
-
-### `UrResidencial.jsx` (Auditoria Logística)
-*   A tabela incorpora a função utilitária `applyCpfCnpjMask` dinamicamente no `onChange` de edição. O layout de data usa fuso compensado (`T12:00:00`) para renderizar precisamente em padrão `pt-BR`. Contém um seletor unificado para filtrar o acompanhamento focado em um Vendedor específico. Caso o usuário logado seja um `VENDEDOR`, o filtro de pesquisa é cravado no seu nome e travado com um cadeado, impedindo a visualização dos contratos da operação de outros vendedores.
-
-### `Resultado.jsx` (DRE/Run Rate)
-*   O coração financeiro do sistema. Utiliza `useMemo` pesados para varrer a array completa de vendas e alocá-las nos devidos "baldes" (Migração, Pós Total, Dependentes) via varredura por `includes()` e RegExp de texto no Produto/TipoOperação.
-*   **Matemática de Volume:** A coluna de "Acessórios" unifica perfeitamente as adições de Acessórios comuns e Películas. O Ticket Médio continua utilizando a Receita Bruta integral/Quantidade Física (Cálculo PHC).
-
-**1. Subindo o Backend (Node.js):**
-```bash
-cd BACKEND
-npm install
-npm run dev
-```
-*O servidor será iniciado na porta 3000.*
-
-**2. Subindo o Frontend (React):**
-Em um novo terminal, na pasta raiz do painel:
-```bash
-cd FRONTEND
-npm install
-npm run dev
-```
-### `ParcialFechamento.jsx` (DRE Intraday)
-*   Restrito ao gerente. Transita por todas as vendas registradas com a data correspondente ao dia de hoje (em variadas formatações compatíveis) e alimenta dois quadros centrais.
-*   As equações embutidas não apenas contam serviços como também executam contas de KPIs (Key Performance Indicators) sob a forma de Ticket Médio, Conversão em Porcentagem, Anexação, etc.
-*   Emprega funções de escape para web de URL (`encodeURIComponent`) concatenadas com a API não-oficial de deep linking do WhatsApp (`wa.me`).
-
-### `Proposta.jsx` (Simulador)
-*   Utiliza o objeto do estado global para cruzar os produtos. 
-*   Regra vital: Se houver Móvel + Fibra/TV, o `comboType` transita de `SINGLE` para `MULTI`, ativando gatilhos comerciais na tela e renderizando um ticket otimizado via CSS puro (`@media print`).
-
-### `Geek.jsx` (Central de Documentos)
-*   Projetado como uma grade de "Balões" (Cards) flexíveis que hospedam hiperlinks para PDFs e materiais promocionais.
-*   Para contornar o limite restrito de 1 Megabyte do Firestore e não depender do Firebase Storage, o sistema não faz a ingestão em binário/Base64. A persistência é feita via referenciamento URL e conta com uma modelagem semântica para os usuários (Adicionar Categoria Dinâmica) sem precisar de telas extras.
-*   **Isolamento Absoluto:** Modificado a flag `canEdit` para suportar `globalUser?.role === 'GEEK'` de maneira estrita, subtraindo poderes da Gerência Geral para esse módulo específico.
-
-### `Scripts.jsx` (Produtividade)
-*   Componente de utilidade pública que renderiza um grid de `textarea` readOnly com textos formatados.
-*   Intercepta o prop `globalUser` para interpolar dinamicamente a string de assinatura com o `name` em `.toUpperCase()` antes da renderização, montando o rodapé final do script na interface.
-*   O botão de cópia interage diretamente com a API nativa do navegador `navigator.clipboard.writeText`.
-
-### `EscalaTrabalho.jsx` (Gestão de RH)
-*   Mantém 2 dicionários de estados. `scheduleData` é o espelho padrão da semana fixa. `monthlyOverrides` hospeda as exceções do mês. O botão de exclusão injeta um fallback de controle `__DEFAULT__`, que serve para deletar a chave correspondente do Override, permitindo que a regra semanal volte a ditar o horário daquele dia sem sobras no backend.
-
-### `Reprovados.jsx` (Integração)
-*   Contém a única requisição HTTP (Fetch API) externa do projeto. Consome a API pública `ViaCEP` para validação e preenchimento de inviabilidades de endereço, focando na UF SP.
-
----
-
-## 5. Manutenção e Integrações (Guia Rápido e Leve)
-
-### 📧 Troca de Credenciais do EmailJS (Recuperação de Senha)
-O envio de e-mails para recuperação de senha não utiliza backend, é feito de forma direta (Client-Side) utilizando o **EmailJS**. Se você precisar trocar a conta ou o template, siga os passos:
-1. Acesse o arquivo `src/components/Login.jsx`.
-2. Localize a função assíncrona `handleForgotRequest`.
-3. Você verá a linha de execução: `emailjs.send('service_kpr1ksb', 'template_6wuyizw', templateParams, 'tRgcNBg8P036AeS_l');`
-4. Substitua esses valores de acordo com o painel do seu EmailJS: `emailjs.send('SEU_SERVICE_ID', 'SEU_TEMPLATE_ID', templateParams, 'SUA_PUBLIC_KEY')`.
-
-### 🗄️ Passo a Passo para Futura Troca de Banco de Dados
-Se a operação crescer a ponto de precisar migrar do Firebase para um banco relacional (ex: PostgreSQL) estruturado em um backend próprio (Node.js/Python), o sistema está desacoplado para facilitar:
-1. **Remova a Dependência:** Exclua a importação do `firebase.js` no arquivo `App.jsx`.
-2. **Troque a Leitura (GET):** No `App.jsx`, há um `useEffect` central utilizando o `onSnapshot` (Firebase). Substitua-o por um `fetch()` ou `axios.get('/api/dados')` logo na montagem (`[]`), e alimente os estados existentes (`setSalesData`, `setUsersDB`).
-3. **Troque a Gravação (POST/PUT):** Logo abaixo da leitura, há um `useEffect` que executa o **Auto-Save (Smart Diff e Debounce de 1.2s)** através do comando `writeBatch`. Altere esta lógica para realizar envios via requisições (POST para criar, PUT para editar, DELETE para excluir) na sua nova API. A estrutura de dados do React continuará intacta!
-
----
-
-## 6. Deploy e Setup de Ambiente
-
-**1. Para rodar localmente:**
-```bash
-npm install
-npm run dev
-```
-
-**2. Variáveis de Ambiente:**
-Na versão MVP, o `firebaseConfig` foi fixado em `src/firebase.js`. Para migração a ambientes corporativos, transferir as chaves para arquivos `.env`:
-```env
-VITE_FIREBASE_API_KEY="xxx"
-VITE_FIREBASE_AUTH_DOMAIN="xxx"
-...
-```
-E chamar no app através de `import.meta.env.VITE_FIREBASE_API_KEY`.
-
-**3. Build para Produção:**
-```bash
-npm run build
-```
-O Vite criará uma pasta `dist/` estática. O App é 100% Client-Side Rendered e compatível com Vercel, Netlify, Github Pages ou AWS S3 (sem necessidade de backend em Node/Python).
-
----
-
-## 7. Mapa de Arquivos (Directory Tree)
-
-Para facilitar a navegação pelo projeto, abaixo está a estrutura de pastas e a responsabilidade de cada diretório.
+## 🗂️ Arquitetura de Pastas e Arquivos (Frontend)
 
 ```text
-painel-claro/
-├── public/                   # Arquivos públicos e estáticos (favicon, ícones)
-├── src/                      # Código-fonte principal da aplicação (React)
-│   ├── components/           # Componentes modulares e Telas do sistema
-│   │   ├── Acessos.jsx       # Cofre de acessos e senhas (exclusivo Gestor)
-│   │   ├── Colaboradores.jsx # Dashboards individuais (Meta vs Realizado)
-│   │   ├── ControleSimcard.jsx # Tabela de gestão de estoque de Chips (Físico/ESIM)
-│   │   ├── EscalaTrabalho.jsx # Painel duplo de gestão de horários e folgas
-│   │   ├── Login.jsx         # Tela de autenticação, registro e EmailJS
-│   │   ├── Meta.jsx          # Distribuição mensal de metas da loja
-│   │   ├── Proposta.jsx      # Simulador de combos e gerador do layout para PDF
-│   │   ├── Geek.jsx          # Repositório de Books, Promomemos e arquivos PDF
-│   │   ├── FatorRvv.jsx      # Painel de comissionamento, atingimento e bônus (Etapas IW)
-│   │   ├── ParcialFechamento.jsx # Consolidação automática de KPIs do dia e envio de WhatsApp
-│   │   ├── Reprovados.jsx    # Controle de vendas não concluídas e ViaCEP
-│   │   ├── Resultado.jsx     # Cálculo macro da loja (Run Rate, Excel-like)
-│   │   ├── SistemasClaro.jsx # Atalhos rápidos
-│   │   ├── UrResidencial.jsx # Acompanhamento logístico e contratos
-│   │   ├── Scripts.jsx       # Componente de textos padronizados e cópia rápida
-│   │   └── Venda.jsx         # Tela principal de lançamento e fluxo de caixa
-│   │
-│   ├── utils/                # Funções globais e utilitários
-│   │   ├── constants.js      # Tabelas de preços, regras fixas, horários e dropdowns
-│   │   └── masks.js          # Funções de formatação (CPF, Moeda, Telefone, Datas)
-│   │   └── rules.js          # Motor de inteligência matemática do Fator RV
-│   │
-│   ├── App.jsx               # Componente Raiz, Roteamento das Abas e Lógicas Cloud (onSnapshot/setDoc)
-│   ├── firebase.js           # Inicialização e conexão com o Google Firestore
-│   ├── index.css             # Estilos globais (Tailwind) e injeções de impressão (@media print)
-│   └── main.jsx              # Ponto de entrada do DOM do React
-│
-├── .env.local                # [OCULTO] Variáveis de ambiente seguras (API Keys)
-├── DocumentacaoDesenvolvedor.md # Este documento de arquitetura
-├── REGRAS_DE_NEGOCIO.md      # Manual obrigatório de regras e travas de usabilidade
-├── README.md                 # Landing Page do repositório para o GitHub
-├── package.json              # Mapeamento de dependências e comandos de build
-└── vite.config.js            # Configuração do empacotador veloz do React (Vite)
+FRONTEND/
+├── public/                 # Arquivos estáticos (favicon, manifest)
+├── src/
+│   ├── assets/             # Imagens, logos e ícones locais
+│   ├── components/         # Módulos principais (Telas do sistema)
+│   │   ├── App.jsx             # Contêiner Mestre (Roteamento, WebSocket, Layout)
+│   │   ├── Login.jsx           # Autenticação e redefinição de senha
+│   │   ├── Venda.jsx           # Formulário de lançamento de Vendas e Combos
+│   │   ├── ControleSimcard.jsx # Planilha Excel-like para gestão de estoque
+│   │   ├── Resultado.jsx       # Dashboard consolidado da loja
+│   │   ├── Meta.jsx            # Definição e Histórico de Metas
+│   │   ├── ParcialFechamento.jsx# Relatórios automáticos para WhatsApp
+│   │   ├── FatorRvv.jsx        # Simulador de contracheque / Dicas
+│   │   ├── Reprovados.jsx      # Histórico de Inviabilidades Técnicas/Crédito
+│   │   ├── UrResidencial.jsx   # Gestão de Instalações e Status UR
+│   │   ├── Colaboradores.jsx   # Desempenho individual e Ranking da equipe
+│   │   ├── Geek.jsx            # Mural de Informações e PDFs (Módulo Geek)
+│   │   ├── Campanha.jsx        # Gestão de Prêmios e Incentivos
+│   │   ├── Scripts.jsx         # Textos padrões para cópia rápida
+│   │   ├── Precificacao.jsx    # Gestão de preços (Em desenvolvimento)
+│   │   ├── SistemasClaro.jsx   # Links rápidos
+│   │   └── ProgressBar.jsx     # Componente visual genérico
+│   ├── utils/              # Funções auxiliares
+│   │   ├── constants.js        # Constantes (Metas, Preços Iniciais, Produtos)
+│   │   ├── masks.js            # Máscaras de CPF, CNPJ, Moeda, Data
+│   │   └── excelImporter.js    # Lógica de leitura de arquivos .xlsx
+│   ├── index.css           # Configurações do Tailwind e Estilos Globais
+│   └── main.jsx            # Ponto de inicialização do React
+├── .env.osasco             # Variáveis de ambiente da Loja Osasco
+├── .env.lapa               # Variáveis de ambiente da Loja Lapa
+├── .env.calcadao           # Variáveis de ambiente da Loja Calçadão
+├── package.json            # Dependências e scripts de execução
+├── tailwind.config.js      # Configurações de design do TailwindCSS
+└── vite.config.js          # Configuração do empacotador (Build/Dev Server)
 ```
 
----
+## Detalhamento dos Componentes Core
 
-*Mantenha a integridade deste código viva. Evite pacotes npm desnecessários e priorize o carregamento rápido.*
+### App.jsx (O Coração)
+É o contêiner mestre. Controla o menu lateral, tema Dark/Light, renderização das abas e hospeda a conexão WebSocket e os métodos globais (`handleSetSalesData`, `handleUndo`). Aqui também reside o `Smart Diff`, que garante envios otimizados de dados para o Backend.
+
+### Login.jsx
+Lida com a autenticação e cadastro de novos usuários. Integra o **EmailJS** para o fluxo de "Esqueci minha Senha", onde um código de 4 dígitos é enviado para o e-mail corporativo do consultor.
+
+### Venda.jsx
+Formulário de entrada de faturamento. 
+* Suporta "Venda Individual" e "Combo" (Carrinho de compras inteligente).
+* Calcula automaticamente o valor da Receita com base no Produto e SubOpção escolhida.
+* Contém botão de Importação/Exportação para a gestão carregar planilhas.
+
+### ControleSimcard.jsx
+Interface de "Planilha" estilo Excel.
+* **Modo de Seleção Horizontal e Vertical**: Os usuários podem clicar, segurar e arrastar o mouse para selecionar várias células em colunas diferentes.
+* O botão `Delete` esvazia todas as células selecionadas de uma vez, e o `Ctrl+Z` restaura erros.
+* `Ctrl+C` e `Ctrl+V` nativos, permitindo que a gestão cole lotes inteiros de ICCIDs e CPFs diretamente do Excel mantendo as formatações.
+
+### Resultado.jsx
+Dashboard gerencial unificado.
+* Mostra as vendas consolidadas (Run Rate diário) cruzando com a Meta total da Loja dividida pelos dias úteis.
+* Calcula o Gross Total Diário, Pos Total, M-Play, Anexação de Acessórios e Conversão de Seguro.
+
+### Meta.jsx
+* **Definir**: Formulário exclusivo para o Gerente traçar os objetivos do mês para todos os produtos.
+* **Histórico MxM e SxS**: Tabelas que comparam os faturamentos de meses (Mês x Mês) e semanas (Semana x Semana) passadas, gerando os percentuais de atingimento e crescimento coloridos.
+
+### ParcialFechamento.jsx
+Montador automático de relatórios em texto para o WhatsApp.
+Puxa o dia atual de vendas e confronta com a "Necessidade Diária" baseada na Meta da loja, formatando tudo no padrão de cobrança da Claro de forma estruturada.
+
+### FatorRvv.jsx
+Simulador de contracheque e bússola de performance.
+Dispara os dados das vendas para a API e retorna a provisão financeira baseada nas travas de Elegibilidade (Atingir 80% das 3 metas). Exibe mensagens motivacionais e estratégicas ("Dicas de Foco") caso alguma meta esteja atrasada, guiando o vendedor sobre o que ele precisa focar para alavancar seu resultado.

@@ -5,11 +5,13 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { calcularFatorRV, aplicarRegrasDeProduto, calcularFatorRVSenior, calcularFatorRVGerente, calcularFatorRVGeek, calcularFatorRVAssistente, calcularFatorRVAdministrativo } from './utils/rules.js';
 import { db } from './firebase.js'; // <-- Importando o banco de dados seguro
+import { consultarIA } from './controllers/iaController.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const storeId = process.env.STORE_ID || 'uniao_osasco'; // Puxa o nome da loja do .env
 
 // Criando o Servidor HTTP nativo e acoplando o Socket.io
 const httpServer = createServer(app);
@@ -48,33 +50,33 @@ let resolveConfig; const configReady = new Promise(r => resolveConfig = r);
 console.log("⏳ Iniciando o Cache em Memória do Banco de Dados...");
 
 // Os "onSnapshot" no backend mantêm a RAM sempre atualizada lendo apenas a "diferença" do banco
-db.collection('vendas_uniao_osasco').onSnapshot(snap => { 
+db.collection(`vendas_${storeId}`).onSnapshot(snap => { 
     cacheVendas = snap.docs.map(doc => doc.data()); 
     console.log(`✅ Vendas cacheadas: ${cacheVendas.length}`);
     resolveVendas();
     io.emit('vendas-atualizadas'); // Notifica os clientes que os dados de vendas foram atualizados no cache
 });
-db.collection('estoque_uniao_osasco').onSnapshot(snap => { 
+db.collection(`estoque_${storeId}`).onSnapshot(snap => { 
     cacheSimcards = snap.docs.map(doc => doc.data());
     resolveSimcards();
     io.emit('simcards-atualizados');
 });
-db.collection('reprovados_uniao_osasco').onSnapshot(snap => { 
+db.collection(`reprovados_${storeId}`).onSnapshot(snap => { 
     cacheReprovados = snap.docs.map(doc => doc.data());
     resolveReprovados();
     io.emit('reprovados-atualizados');
 });
-db.collection('geek_docs_uniao_osasco').onSnapshot(snap => { 
+db.collection(`geek_docs_${storeId}`).onSnapshot(snap => { 
     cacheGeekDocs = snap.docs.map(doc => doc.data());
     resolveGeekDocs();
     io.emit('geek-docs-atualizados');
 });
-db.collection('campanhas_uniao_osasco').onSnapshot(snap => { 
+db.collection(`campanhas_${storeId}`).onSnapshot(snap => { 
     cacheCampanhas = snap.docs.map(doc => doc.data());
     resolveCampanhas();
     io.emit('campanhas-atualizadas');
 });
-db.collection('lojas').doc('uniao_osasco_config').onSnapshot(snap => { 
+db.collection('lojas').doc(`${storeId}_config`).onSnapshot(snap => { 
     if (snap.exists) {
         cacheConfig = snap.data();
     } else {
@@ -97,7 +99,7 @@ app.get('/api/status', (req, res) => {
 app.get('/api/test-db', async (req, res) => {
     try {
         // Tenta ler 1 venda só para ver se a chave privada funcionou
-        const snapshot = await db.collection('vendas_uniao_osasco').limit(1).get();
+        const snapshot = await db.collection(`vendas_${storeId}`).limit(1).get();
         const temDados = !snapshot.empty;
         res.json({ success: true, message: 'Conexão com Firestore Admin estabelecida!', temDados });
     } catch (error) {
@@ -105,6 +107,12 @@ app.get('/api/test-db', async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
+/**
+ * ROTA DE INTELIGÊNCIA ARTIFICIAL
+ * A lógica agora está 100% isolada no arquivo controllers/iaController.js
+ */
+app.post('/api/consultar-ia', consultarIA);
 
 /**
  * ROTAS DE BANCO DE DADOS (API REST)
@@ -147,14 +155,14 @@ app.post('/api/vendas/sync', async (req, res) => {
         
         if (upserts && upserts.length > 0) {
             upserts.forEach(venda => {
-                const docRef = db.collection('vendas_uniao_osasco').doc(String(venda.id));
+                const docRef = db.collection(`vendas_${storeId}`).doc(String(venda.id));
                 batch.set(docRef, venda);
             });
         }
         
         if (deletes && deletes.length > 0) {
             deletes.forEach(id => {
-                const docRef = db.collection('vendas_uniao_osasco').doc(String(id));
+                const docRef = db.collection(`vendas_${storeId}`).doc(String(id));
                 batch.delete(docRef);
             });
         }
@@ -190,14 +198,14 @@ app.post('/api/simcards/sync', async (req, res) => {
         
         if (upserts && upserts.length > 0) {
             upserts.forEach(item => {
-                const docRef = db.collection('estoque_uniao_osasco').doc(String(item.id));
+                const docRef = db.collection(`estoque_${storeId}`).doc(String(item.id));
                 batch.set(docRef, item);
             });
         }
         
         if (deletes && deletes.length > 0) {
             deletes.forEach(id => {
-                const docRef = db.collection('estoque_uniao_osasco').doc(String(id));
+                const docRef = db.collection(`estoque_${storeId}`).doc(String(id));
                 batch.delete(docRef);
             });
         }
@@ -246,14 +254,14 @@ app.post('/api/reprovados/sync', async (req, res) => {
         
         if (upserts && upserts.length > 0) {
             upserts.forEach(item => {
-                const docRef = db.collection('reprovados_uniao_osasco').doc(String(item.id));
+                const docRef = db.collection(`reprovados_${storeId}`).doc(String(item.id));
                 batch.set(docRef, item);
             });
         }
         
         if (deletes && deletes.length > 0) {
             deletes.forEach(id => {
-                const docRef = db.collection('reprovados_uniao_osasco').doc(String(id));
+                const docRef = db.collection(`reprovados_${storeId}`).doc(String(id));
                 batch.delete(docRef);
             });
         }
@@ -287,14 +295,14 @@ app.post('/api/geek-docs/sync', async (req, res) => {
         
         if (upserts && upserts.length > 0) {
             upserts.forEach(item => {
-                const docRef = db.collection('geek_docs_uniao_osasco').doc(String(item.id));
+                const docRef = db.collection(`geek_docs_${storeId}`).doc(String(item.id));
                 batch.set(docRef, item);
             });
         }
         
         if (deletes && deletes.length > 0) {
             deletes.forEach(id => {
-                const docRef = db.collection('geek_docs_uniao_osasco').doc(String(id));
+                const docRef = db.collection(`geek_docs_${storeId}`).doc(String(id));
                 batch.delete(docRef);
             });
         }
@@ -328,14 +336,14 @@ app.post('/api/campanhas/sync', async (req, res) => {
         
         if (upserts && upserts.length > 0) {
             upserts.forEach(item => {
-                const docRef = db.collection('campanhas_uniao_osasco').doc(String(item.id));
+                const docRef = db.collection(`campanhas_${storeId}`).doc(String(item.id));
                 batch.set(docRef, item);
             });
         }
         
         if (deletes && deletes.length > 0) {
             deletes.forEach(id => {
-                const docRef = db.collection('campanhas_uniao_osasco').doc(String(id));
+                const docRef = db.collection(`campanhas_${storeId}`).doc(String(id));
                 batch.delete(docRef);
             });
         }
@@ -364,7 +372,7 @@ app.get('/api/config', async (req, res) => {
 app.post('/api/config/sync', async (req, res) => {
     try {
         const configData = req.body;
-        await db.collection('lojas').doc('uniao_osasco_config').set(configData);
+        await db.collection('lojas').doc(`${storeId}_config`).set(configData);
         res.json({ success: true, message: 'Configurações sincronizadas com sucesso!' });
     } catch (error) {
         console.error("Erro ao sincronizar configurações:", error);

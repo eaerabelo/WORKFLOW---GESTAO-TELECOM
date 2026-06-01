@@ -18,12 +18,14 @@ Este documento detalha o fluxo de uso da plataforma, dividido em camadas operaci
 - **Registro Rápido:** Você registra as vendas de todos os produtos: Aparelhos, Acessórios, Móvel e Fibra.
 - **Automação Financeira:** Ao colocar o valor bruto da venda, o sistema calcula sua comissão instantaneamente (15% para Acessórios/Películas e 5% para Aparelhos, subindo para 6% se você vincular um Seguro).
 - **Travas Anti-Erro:** Preços de combos tabelados são preenchidos e bloqueados automaticamente. Para facilitar o preenchimento, ao vender um "Aparelho" ou "Fibra", as caixas de "M-Play" e "Portabilidade" desaparecem, pulando direto para a Receita!
+- **Prevenção de Duplicidade:** Se você lançar uma "Migração", o painel esconde a opção de "Portabilidade" sozinho. Em vendas de Combo, ao marcar a caixinha de "M-Play" para o primeiro produto, o sistema a esconderá para os próximos para não duplicar a sua meta sem necessidade!
 - **Venda Múltipla (Combo):** Quando um cliente levar muitos serviços (ex: Celular + Internet + TV + Dependentes), alterne para a aba "Venda Múltipla (Combo)". Você adiciona os produtos em um "carrinho" e o painel distribui CPFs, Contratos e Descontos automaticamente antes de registrar tudo de uma vez.
 - **Resumo Inteligente:** O painel conta até as vendas do serviço M-Play na barra inferior e, ao buscar relatórios de venda, ela vai mostrar desde a primeira venda disponível na história até o dia de hoje.
 - **Seus Registros:** Você é dono das suas vendas. Seu nome é preenchido automaticamente (apenas o primeiro nome) e você pode consultar seus registros a qualquer momento pelo calendário.
 
 ### Camada 3: Atendimento e Negociação (Propostas)
 - **Simulador de Combos:** Você pode montar orçamentos (SINGLE, MULTI e MULTI 3P) em tempo real enquanto atende o cliente.
+- **Comparador Inteligente e IA:** Vá para a aba "Comparador Planos". Selecione duas opções de pacote. Clique em "Argumentos Via Gemini IA" e o nosso robô consultor criará frases e argumentos para você convencer o cliente a levar o pacote de maior valor!
 - **Gatilhos de Venda:** Quando você monta um Combo Multi, o sistema cruza os descontos e emite um alerta na tela: *"Economia de R$ X ao ano!"*, ajudando a convencer o cliente.
 - **Compartilhamento Turbo:** Use o botão flutuante para mandar a proposta escrita direto no **WhatsApp** do cliente, ou clique em "Baixar como Imagem" para ter o encarte bonitinho salvo no seu PC para envio.
 
@@ -34,6 +36,7 @@ Este documento detalha o fluxo de uso da plataforma, dividido em camadas operaci
 - **Sua Escala:** Você tem permissão de leitura na Escala de Trabalho, podendo verificar seus horários, folgas programadas da semana ou exceções cadastradas pelo seu gerente.
 
 ### Camada 5: Rotina e Processos (Reprovados)
+- **Contagem Rápida:** No final da tela de UR-Residencial, existe um rodapé mostrando de forma neutra o total de conectados, pendentes e cancelados.
 - **Acompanhamento Logístico (UR):** A aba UR-Residencial exibirá exclusivamente as suas vendas residenciais de forma sigilosa, protegendo os seus contratos dos outros vendedores.
 - **Notificações de Campanhas:** O sistema rastreia e avisa na hora, com balões e alertas no sininho, sempre que a liderança lançar novas Campanhas Promocionais ou divulgar a lista de Ganhadores com troféus de destaque!
 - **Gestão de Inviabilidades:** Caso uma venda residencial caia por falta de crédito ou cabeamento, você a registra na aba de Reprovados.
@@ -52,7 +55,7 @@ As camadas a seguir possuem privilégios escalados. O perfil Sênior tem forte v
 
 ### Camada 1: Controle Estratégico (Metas e Resultado)
 - **Distribuição Inteligente (Metas):** O Gestor informa apenas o "Bolo Total" (A meta global da loja no mês). O sistema divide esse valor matematicamente pela quantidade de consultores ativos.
-- **Run Rate e DRE (Resultado):** O coração da operação. Visualize no formato nativo da aplicação ou utilize o botão verde "Exportar Excel" tanto nas abas de Venda ou Resultados para enviar as planilhas prontas para a Regional.
+- **Run Rate e DRE (Resultado & Parcial):** O coração financeiro. A aba de Parcial e Fechamento agora separa Ativações e Portabilidades individualmente, além de puxar perfeitamente Dependentes e Migrações Pré-Conta para dentro do seu consolidado de "Conta Total"!
 - **Traffic Target:** O cálculo da meta diária da loja é inteligente: Sábados e Domingos recebem "Peso 2", puxando mais meta para os dias de maior fluxo no shopping.
 - **Auditoria e Bônus (Fator RV):** Diferente do vendedor que só vê a própria prévia, a Gerência possui uma caixa de seleção rápida no Fator RV para consultar a remuneração de qualquer colaborador da equipe, checando a aplicação dos Aceleradores Multi e os Redutores de PME.
 
