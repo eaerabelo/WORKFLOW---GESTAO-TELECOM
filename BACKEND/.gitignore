@@ -1,0 +1,5 @@
+# Node modules
+node_modules/
+
+# Chaves Privadas do Firebase (EXTREMAMENTE IMPORTANTE)
+serviceAccountKey.json
