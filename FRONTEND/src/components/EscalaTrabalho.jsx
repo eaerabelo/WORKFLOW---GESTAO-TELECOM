@@ -7,9 +7,12 @@ const getLocalDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDat
 const SAFE_HORARIOS = ['09:40 - 18:00', '10:40 - 19:00', '11:40 - 20:00', '13:40 - 22:00', 'FOLGA'];
 
 export const EscalaTrabalho = ({ canEditSchedule, scheduleData, setScheduleData, monthlyOverrides, setMonthlyOverrides, hasAccess, setAuthModal, usersDB = {} }) => {
-    const SAFE_VENDEDORES = Object.values(usersDB || {})
-        .map(u => String(u?.name || '').split(' ')[0])
-        .filter(Boolean);
+    const SAFE_VENDEDORES = [...new Set(
+        Object.values(usersDB || {})
+            .filter(u => u?.role !== 'SUSPENDER')
+            .map(u => String(u?.name || '').split(' ')[0])
+            .filter(Boolean)
+    )].sort();
     const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
     const [editScheduleCell, setEditScheduleCell] = useState(null);
     const [editScheduleValue, setEditScheduleValue] = useState('');

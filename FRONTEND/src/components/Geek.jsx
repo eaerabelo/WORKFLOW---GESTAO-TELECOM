@@ -2,12 +2,28 @@ import React, { useState } from 'react';
 import { Cpu, Plus, FileText, Trash2, ExternalLink, X, BookOpen, Layers, Tag, Archive, FolderPlus, Edit3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser }) {
+export const checkHasNewGeek = (docs, globalUser) => {
+    try {
+        const viewed = globalUser?.viewedGeekDocs || {};
+        return (docs || []).some(doc => {
+            const lastUpdated = doc.updatedAt || doc.id;
+            const isRecent = (Date.now() - lastUpdated) < 15 * 24 * 60 * 60 * 1000; // 15 dias
+            if (!isRecent) return false;
+            return viewed[doc.id] !== lastUpdated;
+        });
+    } catch {
+        return false;
+    }
+};
+
+export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, updateUserProfile }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ titulo: '', categoria: 'BOOK DE OFERTAS', link: '' });
     const [isNovaCategoria, setIsNovaCategoria] = useState(false);
     const [novaCategoriaNome, setNovaCategoriaNome] = useState('');
+
+    const viewedDocs = globalUser?.viewedGeekDocs || {};
 
     const categoriasPadrao = [
         { id: 'BOOK DE OFERTAS', icon: <BookOpen size={20} className="text-blue-500" /> },
@@ -64,7 +80,8 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser }) {
                 ...doc,
                 titulo: formData.titulo,
                 categoria: finalCategoria,
-                link: finalLink
+                link: finalLink,
+                updatedAt: Date.now()
             } : doc));
             toast.success('Documento atualizado com sucesso!');
         } else {
@@ -73,7 +90,8 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser }) {
                 titulo: formData.titulo,
                 categoria: finalCategoria,
                 link: finalLink,
-                data: new Date().toLocaleDateString('pt-BR')
+                data: new Date().toLocaleDateString('pt-BR'),
+                updatedAt: Date.now()
             };
 
             setGeekDocs(prev => [newDoc, ...prev]);
@@ -94,14 +112,43 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser }) {
         }
     };
 
+    const markAsViewed = (doc) => {
+        const lastUpdated = doc.updatedAt || doc.id;
+        if (viewedDocs[doc.id] !== lastUpdated) {
+            const newViewed = { ...viewedDocs, [doc.id]: lastUpdated };
+            updateUserProfile({ viewedGeekDocs: newViewed });
+        }
+    };
+
+    const isDocNew = (doc) => {
+        const lastUpdated = doc.updatedAt || doc.id;
+        const isRecent = (Date.now() - lastUpdated) < 15 * 24 * 60 * 60 * 1000;
+        if (!isRecent) return false;
+        return viewedDocs[doc.id] !== lastUpdated;
+    };
+
+    const hasNews = (geekDocs || []).some(isDocNew);
+
     return (
         <div className="h-full flex flex-col bg-neutral-50/50 dark:bg-neutral-950/50 rounded-2xl overflow-y-auto animate-fade-in transition-colors">
             <div className="p-6 pb-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400"><Cpu size={22} /></div>
                     <div>
-                        <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">Espaço GEEK</h2>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Central de Documentos, Books de Ofertas e Manuais.</p>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">Espaço GEEK</h2>
+                            {hasNews ? (
+                                <span className="bg-red-100 text-[#E3000F] dark:bg-red-900/30 dark:text-red-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider animate-pulse flex items-center">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#E3000F] mr-1.5"></span>
+                                    Novidades
+                                </span>
+                            ) : (
+                                <span className="bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                    Tudo Visto
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-1">Central de Documentos, Books de Ofertas e Manuais.</p>
                     </div>
                 </div>
                 {canEdit && (
@@ -124,6 +171,12 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser }) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                 {docs.map(doc => (
                                     <div key={doc.id} className="group relative bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-xl p-4 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md transition-all flex flex-col">
+                                        {isDocNew(doc) && (
+                                            <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 z-10">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#E3000F] border-2 border-white dark:border-neutral-900" title="Novo arquivo ou alterado recentemente"></span>
+                                            </span>
+                                        )}
                                         <div className="flex items-start justify-between gap-2 mb-3">
                                             <div className="w-10 h-10 rounded-full bg-white dark:bg-neutral-800 shadow-sm flex items-center justify-center text-indigo-500 shrink-0"><FileText size={18} /></div>
                                             {canEdit && (
@@ -135,7 +188,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser }) {
                                         </div>
                                         <h4 className="font-bold text-neutral-800 dark:text-neutral-100 text-sm mb-1 line-clamp-2 flex-1" title={doc.titulo}>{doc.titulo}</h4>
                                         <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-4 mt-auto pt-2">Add: {doc.data}</p>
-                                        <a href={doc.link} target="_blank" rel="noopener noreferrer" className="w-full py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5">Acessar <ExternalLink size={14} /></a>
+                                        <a href={doc.link} target="_blank" rel="noopener noreferrer" onClick={() => markAsViewed(doc)} className="w-full py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5">Acessar <ExternalLink size={14} /></a>
                                     </div>
                                 ))}
                             </div>

@@ -103,7 +103,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
 
     const summaryCount = { pendente: 0, conectado: 0, cancelado: 0, total: 0 };
     filteredData.forEach(item => {
-        const q = Number(item.qtda) || 1;
+        const q = item.qtda === 0 || item.qtda === '0' ? 0 : (Number(item.qtda) || 1);
         summaryCount.total += q;
         const status = item.statusUr || 'PEND.DE INSTALAÇÃO';
         if (status === 'PEND.DE INSTALAÇÃO') summaryCount.pendente += q;
@@ -142,6 +142,16 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                 const autoCidade = getCidadePorContrato(value);
                 if (autoCidade) {
                     nextForm.cidade = autoCidade;
+                }
+            }
+            if (field === 'statusUr') {
+                if (value === 'CANCELADO') {
+                    nextForm.qtda = 0;
+                    nextForm.receita = 0;
+                    nextForm.comissao = 0;
+                    nextForm.valorBruto = 0;
+                } else if (prev.statusUr === 'CANCELADO' && value !== 'CANCELADO') {
+                    if (nextForm.qtda == 0) nextForm.qtda = 1;
                 }
             }
             return nextForm;

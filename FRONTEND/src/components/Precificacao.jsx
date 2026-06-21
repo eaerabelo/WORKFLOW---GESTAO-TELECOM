@@ -143,7 +143,7 @@ export function Precificacao({ pricingData, setPricingData, globalUser }) {
 
                 <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 flex-1 flex flex-col overflow-hidden">
                     {/* Tabs */}
-                    <div className="flex border-b border-neutral-200 dark:border-neutral-800 p-2 gap-2 bg-neutral-50 dark:bg-neutral-800/50">
+                    <div className="flex overflow-x-auto scrollbar-hide border-b border-neutral-200 dark:border-neutral-800 p-2 gap-2 bg-neutral-50 dark:bg-neutral-800/50" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
                         <button
                             onClick={() => setActiveTab('movel')}
                             className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'movel' ? 'bg-white dark:bg-neutral-700 text-[#E3000F] shadow-sm' : 'text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}

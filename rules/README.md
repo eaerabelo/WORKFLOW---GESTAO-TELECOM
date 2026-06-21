@@ -27,7 +27,7 @@ Para enviar as atualizações visuais e de código para a internet de forma isol
 O projeto utiliza arquivos `.env` separados para cada loja (ex: `.env.osasco`). 
 Eles precisam conter:
 
-* `VITE_API_URL`: O link do backend hospedado no Render (Ex: `https://backend-painel-claro.onrender.com`).
+* `VITE_API_URL`: O link do backend hospedado na Oracle Cloud (Ex: `http://168.138.130.96:3000`).
 * `VITE_STORE_NAME`: Nome da loja exibido no cabeçalho (Ex: `CLARO UNIÃO OSASCO`).
 * `VITE_STORE_CODE`: Código PDV da loja (Ex: `AT1M`).
 

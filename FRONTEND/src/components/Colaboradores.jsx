@@ -35,10 +35,8 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
     
     const individualMetas = {
         receita: (Number(activeMetas.receita) || 0) / numSellers,
-        posTotal: Math.ceil((Number(activeMetas.posTotal) || 0) / numSellers),
         posPago: Math.ceil((Number(activeMetas.posPago) || 0) / numSellers),
         controle: Math.ceil((Number(activeMetas.controle) || 0) / numSellers),
-        urTotal: Math.ceil((Number(activeMetas.urTotal) || 0) / numSellers),
         fibra: Math.ceil((Number(activeMetas.fibra) || 0) / numSellers),
         tv: Math.ceil((Number(activeMetas.tv) || 0) / numSellers),
         aparelho: Math.ceil((Number(activeMetas.aparelho) || 0) / numSellers),
@@ -49,6 +47,10 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
         trocafy: Math.ceil((Number(activeMetas.trocafy) || 0) / numSellers),
         mesh: Math.ceil((Number(activeMetas.mesh) || 0) / numSellers),
     };
+
+    // Garante que o Total espelha matematicamente a soma das frações arredondadas (ceil) para evitar furos no "por dia"
+    individualMetas.posTotal = individualMetas.posPago + individualMetas.controle;
+    individualMetas.urTotal = individualMetas.fibra + individualMetas.tv;
 
     const getSellerMetrics = (sellerName) => {
         const mySales = (salesData || []).filter(s => {
@@ -65,9 +67,9 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
         mySales.forEach(sale => {
             metrics.totalReceita += Number(sale.comissao !== undefined ? sale.comissao : sale.receita) || 0;
             const p = String(sale.produto || '').toUpperCase();
-            const qtda = Number(sale.qtda) || 0;
+            const qtda = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
             const rec = Number(sale.receita) || 0;
-            if (p.includes('CONTROLE')) metrics.volControle += qtda;
+            if (p.includes('CONTROLE') || p.includes('FLEX')) metrics.volControle += qtda;
             if (p.includes('POS') || p.includes('DEPENDENTE') || p.includes('BANDA LARGA')) metrics.volPosPago += qtda;
             if (p.includes('POS') || p.includes('CONTROLE') || p.includes('DEPENDENTE') || p.includes('BANDA LARGA') || p.includes('FLEX')) metrics.volPosTotal += qtda;
             if (p.includes('FIBRA')) metrics.volFibra += qtda;
@@ -146,7 +148,7 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
 
         const generatedRows = [];
         const sumTotals = {
-            grossDia: 0, posPagoTotal: 0, controleTotal: 0, urTotal: 0, fibra: 0, tv: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, receita: 0
+            grossDia: 0, posPagoTotal: 0, controleTotal: 0, urTotal: 0, fibra: 0, tv: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, mplay: 0, receita: 0
         };
 
         for (let d = 1; d <= daysInMonth; d++) {
@@ -162,14 +164,14 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
 
             let posTt = 0, controle = 0, depPg = 0, depBl = 0, depGratis = 0, migracaoPos = 0, migracaoControle = 0, grossPme = 0;
             let bl = 0, flex = 0, receita = 0, fibra = 0, tv = 0, tvBox = 0, fixo = 0, urPme = 0, aparelho = 0;
-            let seguro = 0, acessorio = 0, pelicula = 0;
+            let seguro = 0, acessorio = 0, pelicula = 0, mplay = 0;
 
             dailySales.forEach(sale => {
                 const pBase = String(sale.produtoBase || sale.produto || '').toUpperCase();
                 const op = String(sale.tipoOperacao || sale.operacao || '').toUpperCase();
                 const sub = String(sale.subOption || sale.subtipo || '').toUpperCase();
                 const rec = Number(sale.comissao !== undefined ? sale.comissao : sale.receita) || 0;
-                const q = Number(sale.qtda) || 1;
+                const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
 
                 receita += rec;
 
@@ -201,6 +203,7 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
                 else if (pBase.includes('SEGURO')) seguro += q;
                 else if (pBase.includes('ACESSÓRIO') || pBase.includes('ACESSORIO')) { acessorio += q; }
                 else if (pBase.includes('PELÍCULA') || pBase.includes('PELICULA')) { pelicula += q; }
+                if (sale.mplay === 'SIM') mplay += 1;
             });
 
             const grossDia = posTt + controle + depPg + depBl + depGratis + migracaoPos + migracaoControle + grossPme + bl + flex;
@@ -209,12 +212,12 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
             const controleTotal = controle + migracaoControle;
 
             generatedRows.push({
-                data: dayStr, grossDia, posPagoTotal, controleTotal, urTotal, fibra: fibra + bl, tv: tv + tvBox, aparelho, acessorio, pelicula, seguro, receita
+                data: dayStr, grossDia, posPagoTotal, controleTotal, urTotal, fibra: fibra + bl, tv: tv + tvBox, aparelho, acessorio, pelicula, seguro, mplay, receita
             });
 
             sumTotals.grossDia += grossDia; sumTotals.posPagoTotal += posPagoTotal; sumTotals.controleTotal += controleTotal;
             sumTotals.urTotal += urTotal; sumTotals.fibra += (fibra + bl); sumTotals.tv += (tv + tvBox);
-            sumTotals.aparelho += aparelho; sumTotals.acessorio += acessorio; sumTotals.pelicula += pelicula; sumTotals.seguro += seguro; sumTotals.receita += receita;
+            sumTotals.aparelho += aparelho; sumTotals.acessorio += acessorio; sumTotals.pelicula += pelicula; sumTotals.seguro += seguro; sumTotals.mplay += mplay; sumTotals.receita += receita;
         }
 
         return { dailyRows: generatedRows, dailyTotals: sumTotals };
@@ -231,47 +234,13 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
         { key: 'acessorio', label: 'ACESSÓRIOS' },
         { key: 'pelicula', label: 'PELÍCULAS' },
         { key: 'seguro', label: 'SEGURO' },
+        { key: 'mplay', label: 'M-PLAY' },
         { key: 'receita', label: 'RECEITA (R$)', isCurrency: true, highlight: true }
     ];
 
     const renderValue = (val, isCurrency) => {
         if (val === null || val === undefined || val === 0) return <span className="text-neutral-400 dark:text-neutral-600">-</span>;
         return isCurrency ? applyCurrencyMask(val) : val;
-    };
-
-    const renderNecessidade = (meta, realizado, isCurrency = false) => {
-        const [yearStr, monthStr] = (monthFilter || '').split('-');
-        if (!yearStr || !monthStr) return '-';
-        const year = parseInt(yearStr, 10);
-        const month = parseInt(monthStr, 10);
-        const daysInMonth = new Date(year, month, 0).getDate();
-
-        const today = new Date();
-        const currentY = today.getFullYear();
-        const currentM = today.getMonth() + 1;
-        const currentD = today.getDate();
-
-        let remainingDays = 0;
-        if (year > currentY || (year === currentY && month > currentM)) {
-            remainingDays = daysInMonth;
-        } else if (year === currentY && month === currentM) {
-            remainingDays = Math.max(1, daysInMonth - currentD + 1);
-        } else {
-            remainingDays = 0;
-        }
-
-        if (remainingDays === 0) return <span className="text-sm font-bold text-neutral-400">Mês encerrado</span>;
-        
-        const diff = meta - realizado;
-        if (diff <= 0) return <span className="text-sm font-bold text-green-500">Meta Batida 🎉</span>;
-        
-        const value = diff / remainingDays;
-        
-        if (isCurrency) {
-            return applyCurrencyMask(value) + ' /dia';
-        }
-        
-        return Math.ceil(value) + ' /dia';
     };
 
     return (
@@ -391,54 +360,103 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
                         </div>
                     </div>
 
-                    <div className="flex border-b border-neutral-200 dark:border-neutral-800 mb-6 shrink-0">
+                    <div className="flex overflow-x-auto scrollbar-hide border-b border-neutral-200 dark:border-neutral-800 mb-6 shrink-0" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
                         <button onClick={() => setActiveSubTab('DESEMPENHO')} className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${activeSubTab === 'DESEMPENHO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Visão Geral</button>
                         <button onClick={() => setActiveSubTab('DIARIO')} className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${activeSubTab === 'DIARIO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Resultado Diário</button>
                         <button onClick={() => setActiveSubTab('NECESSIDADE_DIARIA')} className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${activeSubTab === 'NECESSIDADE_DIARIA' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Necessidade Diária</button>
                     </div>
 
-                    {activeSubTab === 'NECESSIDADE_DIARIA' ? (
-                        <div className="flex-1 pb-6 pr-2 space-y-6 overflow-y-auto scrollbar-thin">
-                            <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col relative overflow-hidden">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <div className="p-2 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-lg"><Target size={20} /></div>
-                                    <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-lg uppercase tracking-wide">Necessidade Diária</h3>
-                                </div>
-                                <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6">
-                                    Acompanhe quanto você precisa vender diariamente para atingir as metas do mês atual. O cálculo divide o saldo restante pelos dias que faltam para o mês acabar.
-                                </p>
+                    {activeSubTab === 'NECESSIDADE_DIARIA' ? (() => {
+                        // Cálculos Extratos para Necessidade Diária
+                        let remainingDays = 0;
+                        const [yearStr, monthStr] = (monthFilter || '').split('-');
+                        if (yearStr && monthStr) {
+                            const year = parseInt(yearStr, 10);
+                            const month = parseInt(monthStr, 10);
+                            const daysInMonth = new Date(year, month, 0).getDate();
+                            const today = new Date();
+                            const currentY = today.getFullYear();
+                            const currentM = today.getMonth() + 1;
+                            const currentD = today.getDate();
+                            if (year > currentY || (year === currentY && month > currentM)) remainingDays = daysInMonth;
+                            else if (year === currentY && month === currentM) remainingDays = Math.max(1, daysInMonth - currentD + 1);
+                        }
+
+                        const calcNec = (meta, real, isCurrency) => {
+                            const diff = meta - real;
+                            if (diff <= 0) return { faltam: 0, porDia: 0, isBatida: true };
+                            if (remainingDays === 0) return { faltam: diff, porDia: 0, isEncerrado: true };
+                            const pd = isCurrency ? (diff / remainingDays) : Math.ceil(diff / remainingDays);
+                            return { faltam: diff, porDia: pd, isBatida: false };
+                        };
+
+                        const metrics = getSellerMetrics(selectedSeller);
+                        
+                        const necPosPago = calcNec(individualMetas.posPago, metrics.volPosPago, false);
+                        const necControle = calcNec(individualMetas.controle, metrics.volControle, false);
+                        const necPosTotal = {
+                            faltam: necPosPago.faltam + necControle.faltam,
+                            porDia: necPosPago.porDia + necControle.porDia,
+                            isBatida: (necPosPago.faltam + necControle.faltam) <= 0,
+                            isEncerrado: remainingDays === 0
+                        };
+
+                        const necFibra = calcNec(individualMetas.fibra, metrics.volFibra, false);
+                        const necTv = calcNec(individualMetas.tv, metrics.volTv, false);
+                        const necUrTotal = {
+                            faltam: necFibra.faltam + necTv.faltam,
+                            porDia: necFibra.porDia + necTv.porDia,
+                            isBatida: (necFibra.faltam + necTv.faltam) <= 0,
+                            isEncerrado: remainingDays === 0
+                        };
+
+                        const necessidadeData = [
+                            { label: 'Receita (R$)', meta: individualMetas.receita, real: metrics.totalReceita, isCurrency: true, nec: calcNec(individualMetas.receita, metrics.totalReceita, true) },
+                            { label: 'Pós Total', meta: individualMetas.posTotal, real: metrics.volPosTotal, isCurrency: false, nec: necPosTotal },
+                            { label: 'Pós-Pago', meta: individualMetas.posPago, real: metrics.volPosPago, isCurrency: false, nec: necPosPago },
+                            { label: 'Controle', meta: individualMetas.controle, real: metrics.volControle, isCurrency: false, nec: necControle },
+                            { label: 'UR Total', meta: individualMetas.urTotal, real: metrics.volUrTotal, isCurrency: false, nec: necUrTotal },
+                            { label: 'Fibra', meta: individualMetas.fibra, real: metrics.volFibra, isCurrency: false, nec: necFibra },
+                            { label: 'TV+ / Box', meta: individualMetas.tv, real: metrics.volTv, isCurrency: false, nec: necTv },
+                            { label: 'Aparelhos', meta: individualMetas.aparelho, real: metrics.volAparelho, isCurrency: false, nec: calcNec(individualMetas.aparelho, metrics.volAparelho, false) },
+                            { label: 'Acessórios', meta: individualMetas.acessorio, real: metrics.volAcessorio, isCurrency: false, nec: calcNec(individualMetas.acessorio, metrics.volAcessorio, false) },
+                            { label: 'Películas', meta: individualMetas.pelicula, real: metrics.volPelicula, isCurrency: false, nec: calcNec(individualMetas.pelicula, metrics.volPelicula, false) },
+                            { label: 'Seguro', meta: individualMetas.seguro, real: metrics.volSeguro, isCurrency: false, nec: calcNec(individualMetas.seguro, metrics.volSeguro, false) },
+                            { label: 'M-Play', meta: individualMetas.mplay, real: metrics.volMPlay, isCurrency: false, nec: calcNec(individualMetas.mplay, metrics.volMPlay, false) },
+                            { label: 'Trocafy', meta: individualMetas.trocafy, real: metrics.volTrocafy, isCurrency: false, nec: calcNec(individualMetas.trocafy, metrics.volTrocafy, false) },
+                            { label: 'Mesh', meta: individualMetas.mesh, real: metrics.volMesh, isCurrency: false, nec: calcNec(individualMetas.mesh, metrics.volMesh, false) }
+                        ];
+
+                        return (
+                            <div className="flex-1 pb-6 pr-2 space-y-6 overflow-y-auto scrollbar-thin">
+                                <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col relative overflow-hidden">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <div className="p-2 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-lg"><Target size={20} /></div>
+                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-lg uppercase tracking-wide">Necessidade Diária</h3>
+                                    </div>
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6">
+                                        Acompanhe quanto você precisa vender diariamente para atingir as metas do mês atual. O cálculo divide o saldo restante pelos dias que faltam para o mês acabar.
+                                    </p>
                                 
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {[
-                                        { label: 'Receita (R$)', meta: individualMetas.receita, real: getSellerMetrics(selectedSeller).totalReceita, isCurrency: true },
-                                        { label: 'Pós Total', meta: individualMetas.posTotal, real: getSellerMetrics(selectedSeller).volPosTotal },
-                                        { label: 'Pós-Pago', meta: individualMetas.posPago, real: getSellerMetrics(selectedSeller).volPosPago },
-                                        { label: 'Controle', meta: individualMetas.controle, real: getSellerMetrics(selectedSeller).volControle },
-                                        { label: 'UR Total', meta: individualMetas.urTotal, real: getSellerMetrics(selectedSeller).volUrTotal },
-                                        { label: 'Fibra', meta: individualMetas.fibra, real: getSellerMetrics(selectedSeller).volFibra },
-                                        { label: 'TV+ / Box', meta: individualMetas.tv, real: getSellerMetrics(selectedSeller).volTv },
-                                        { label: 'Aparelhos', meta: individualMetas.aparelho, real: getSellerMetrics(selectedSeller).volAparelho },
-                                        { label: 'Acessórios', meta: individualMetas.acessorio, real: getSellerMetrics(selectedSeller).volAcessorio },
-                                        { label: 'Películas', meta: individualMetas.pelicula, real: getSellerMetrics(selectedSeller).volPelicula },
-                                        { label: 'Seguro', meta: individualMetas.seguro, real: getSellerMetrics(selectedSeller).volSeguro },
-                                        { label: 'M-Play', meta: individualMetas.mplay, real: getSellerMetrics(selectedSeller).volMPlay },
-                                        { label: 'Trocafy', meta: individualMetas.trocafy, real: getSellerMetrics(selectedSeller).volTrocafy },
-                                        { label: 'Mesh', meta: individualMetas.mesh, real: getSellerMetrics(selectedSeller).volMesh }
-                                    ].map((ind, i) => (
-                                        <div key={i} className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-[#E3000F]/30 transition-colors">
-                                            <div className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-1">{ind.label}</div>
-                                            <div className={`text-xl font-black ${ind.label === 'Receita (R$)' ? 'text-[#E3000F]' : 'text-neutral-800 dark:text-neutral-100'}`}>
-                                                {renderNecessidade(ind.meta, ind.real, ind.isCurrency)}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                        {necessidadeData.map((ind, i) => (
+                                            <div key={i} className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-[#E3000F]/30 transition-colors">
+                                                <div className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-1">{ind.label}</div>
+                                                <div className={`text-xl font-black ${ind.label === 'Receita (R$)' ? 'text-[#E3000F]' : 'text-neutral-800 dark:text-neutral-100'}`}>
+                                                    {ind.nec.isBatida ? <span className="text-sm font-bold text-green-500">Meta Batida 🎉</span> : 
+                                                        ind.nec.isEncerrado ? <span className="text-sm font-bold text-neutral-400">Mês encerrado</span> : 
+                                                            (ind.isCurrency ? applyCurrencyMask(ind.nec.porDia) + ' /dia' : Math.ceil(ind.nec.porDia) + ' /dia')}
+                                                </div>
+                                                <div className="text-[9px] text-neutral-400 dark:text-neutral-500 mt-2 font-bold">
+                                                    Faltam: {ind.isCurrency ? applyCurrencyMask(ind.nec.faltam) : ind.nec.faltam.toFixed(0)}
+                                                </div>
                                             </div>
-                                            <div className="text-[9px] text-neutral-400 dark:text-neutral-500 mt-2 font-bold">
-                                                Faltam: {ind.isCurrency ? applyCurrencyMask(Math.max(0, ind.meta - ind.real)) : Math.max(0, ind.meta - ind.real).toFixed(0)}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ) : activeSubTab === 'DESEMPENHO' ? (
+                        );
+                    })() : activeSubTab === 'DESEMPENHO' ? (
                         <div className="flex-1 pb-6 pr-2 space-y-6 overflow-y-auto">
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm lg:col-span-2 flex flex-col relative overflow-hidden group">

@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, MonitorPlay, AlertCircle, X, Check, Lock, Briefcase, Trash2, Edit3, Calendar, Search, Upload, FileDown } from 'lucide-react';
+import { Plus, MonitorPlay, AlertCircle, X, Check, Lock, Briefcase, Trash2, Edit3, Calendar, Search, Upload, FileDown, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { PRICING_MOVEL, FIBRA_OPTIONS, TV_BOX_OPTIONS, FIXO_OPTIONS, MESH_OPTIONS, SEGURO_OPTIONS, DEPENDENTE_OPTIONS, PRODUTOS_CONTRATO_OBRIGATORIO, PRODUTOS } from '../utils/constants';
 import { applyCpfCnpjMask, applyContratoMask, applyCurrencyMask, parseCurrencyToFloat, getTodaySP } from '../utils/masks';
 import { parseExcelSales } from '../utils/excelImporter';
+import ClaroContractForm from '../utils/contrato.jsx';
 
 const safeProdutos = Array.isArray(PRODUTOS) ? PRODUTOS : [];
 
@@ -26,6 +27,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     const [searchTerm, setSearchTerm] = useState('');
     const [isOptionsCollapsed, setIsOptionsCollapsed] = useState(false);
     const fileInputRef = useRef(null);
+    const [contractSale, setContractSale] = useState(null);
     
     // --- ESTADOS DO COMBO ---
     const [vendaMode, setVendaMode] = useState('INDIVIDUAL'); // 'INDIVIDUAL' | 'COMBO'
@@ -433,7 +435,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     const summaryCount = { pos: 0, ctrl: 0, apa: 0, ace: 0, fib: 0, tv: 0, seg: 0, mplay: 0, receita: 0 };
     filteredSales.forEach(sale => {
         const pBase = String(sale.produtoBase || sale.produto || '').toUpperCase();
-        const q = Number(sale.qtda) || 1;
+        const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
 
         if (pBase.includes('CONTROLE')) summaryCount.ctrl += q;
         else if (pBase.includes('POS') || pBase.includes('PÓS') || pBase.includes('DEPENDENTE') || pBase.includes('DEP') || pBase.includes('FLEX') || pBase.includes('BANDA LARGA') || pBase === 'PME' || pBase === 'BL') summaryCount.pos += q;
@@ -524,7 +526,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
 
     return (
         <>
-            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden flex flex-col h-full animate-fade-in transition-colors">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden flex flex-col h-full animate-fade-in transition-colors print:hidden">
                 <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 flex flex-col md:flex-row gap-3 justify-between items-start md:items-center bg-white dark:bg-neutral-900 shrink-0">
                     <h2 
                         onDoubleClick={() => setIsOptionsCollapsed(!isOptionsCollapsed)}
@@ -577,6 +579,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                         <button onClick={handleExportExcel} className="flex-1 sm:flex-none px-4 py-2 bg-[#107c41] text-white text-sm font-medium rounded-lg hover:bg-[#0c5e31] transition-colors shadow-sm shadow-green-700/30 justify-center flex items-center whitespace-nowrap gap-1">Exportar</button>
                                     </>
                                 )}
+                                {/* <button onClick={() => setContractSale({})} className="flex-1 sm:flex-none px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors shadow-sm shadow-orange-500/30 flex items-center justify-center gap-1 whitespace-nowrap"><FileText size={16} /> Gerar Contrato</button> */}
                                 <button onClick={openNovaVendaModal} className="flex-1 sm:flex-none px-4 py-2 bg-[#E3000F] text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm shadow-red-500/30 flex items-center justify-center gap-1 whitespace-nowrap"><Plus size={16} /> Nova Venda</button>
                             </div>
                         </div>
@@ -816,6 +819,10 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                         </div>
                     </div>
                 </div>
+            )}
+
+            {contractSale && (
+                <ClaroContractForm sale={contractSale} onClose={() => setContractSale(null)} />
             )}
         </>
     );

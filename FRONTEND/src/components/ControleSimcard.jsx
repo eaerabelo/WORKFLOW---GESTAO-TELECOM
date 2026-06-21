@@ -37,6 +37,10 @@ const getColumns = (tab, isFisico) => {
     const iccidField = isFisico ? 'simcardFisico' : 'simcardEsim';
     if (tab === 'SOBREPOSIÇÃO') {
         return [iccidField, 'data', 'dataPortin', 'numPortado', 'numProvisorio', 'ov', 'codAutorizacao', 'cpf', 'plano', 'cliente', 'observacao'];
+    } else if (tab === 'ESTOQUE TVBOX') {
+        return ['caid', 'data', 'vendedor', 'cliente', 'cpf', 'observacao'];
+    } else if (tab === 'FALTAS') {
+        return [iccidField, 'data', 'vendedor', 'ov', 'codAutorizacao', 'cpf', 'plano', 'cliente', 'observacao'];
     } else {
         return [iccidField, 'data', 'ov', 'codAutorizacao', 'cpf', 'plano', 'cliente', 'pagamento', 'valor', 'observacao'];
     }
@@ -44,11 +48,13 @@ const getColumns = (tab, isFisico) => {
 
 const CellInput = ({ value, onCommit, onCancel, placeholder, className, maskType, autoFocus }) => {
     const [localValue, setLocalValue] = useState(value || '');
+    const latestValue = useRef(value || '');
     const [isFocused, setIsFocused] = useState(false);
 
     useEffect(() => {
         if (!isFocused) {
             setLocalValue(value || '');
+            latestValue.current = value || '';
         }
     }, [value, isFocused]);
 
@@ -78,16 +84,21 @@ const CellInput = ({ value, onCommit, onCancel, placeholder, className, maskType
             val = masked;
         }
         setLocalValue(val);
-        onCommit(val);
+        latestValue.current = val;
     };
 
     const handleBlur = () => {
         setIsFocused(false);
+        onCommit(latestValue.current);
         if (onCancel) onCancel();
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter' || e.key === 'Escape') {
+        if (e.key === 'Enter') {
+            e.target.blur();
+        } else if (e.key === 'Escape') {
+            setLocalValue(value || '');
+            latestValue.current = value || '';
             e.target.blur();
         }
     };
@@ -190,7 +201,7 @@ const SelectableCell = ({ item, idx, colIdx, field, value, tipoLote, canModifySi
         <td 
             className={`border border-neutral-200 dark:border-neutral-800 p-0 relative selectable-cell ${isSelected ? 'bg-red-100 dark:bg-red-900/40 ring-inset ring-2 ring-red-500 z-10' : ''}`}
             onMouseDown={(e) => {
-                if (e.target.tagName === 'SELECT') return;
+                if (e.target.closest('select')) return;
 
                 if (document.activeElement && typeof document.activeElement.blur === 'function') {
                     document.activeElement.blur();
@@ -238,13 +249,13 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
     const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
     const [batchData, setBatchData] = useState({ fisicos: '', esims: '', data: getTodaySP() });
 
-    const [selection, setSelection] = useState({ type: null, startRow: null, endRow: null, startCol: null, endCol: null });
+    const [selection, setSelection] = useState({ type: null, startRow: null, endRow: null, startCol: null, endCol: null, isFisico: null });
     const [isDragging, setIsDragging] = useState(false);
     const [editingCell, setEditingCell] = useState(null);
     const [isOptionsCollapsed, setIsOptionsCollapsed] = useState(false);
-    const selectionRef = useRef({ selection: null, data: null, currentTab: null, canModifySimcard });
+    const selectionRef = useRef({ selection: null, data: null, currentTab: null, canModifySimcard, isFisico: null });
 
-    const dynamicTabs = ['GESTAO', ...safeVendedores, 'SOBREPOSIÇÃO'];
+    const dynamicTabs = ['GESTAO', ...safeVendedores, 'SOBREPOSIÇÃO', 'FALTAS', 'ESTOQUE TVBOX'];
     const currentTab = dynamicTabs.includes(simcardActiveTab) ? simcardActiveTab : (dynamicTabs[0] || 'GESTAO');
 
     useEffect(() => {
@@ -258,8 +269,8 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
     }, [isBatchModalOpen]);
 
     useEffect(() => {
-        selectionRef.current = { selection, simcardsData, currentTab, canModifySimcard };
-    }, [selection, simcardsData, currentTab, canModifySimcard]);
+        selectionRef.current = { selection, simcardsData, currentTab, canModifySimcard, isFisico: selection?.type === 'FÍSICO' };
+    }, [selection, simcardsData, currentTab, canModifySimcard, selection?.type]);
 
     useEffect(() => {
         const handleGlobalMouseUp = () => setIsDragging(false);
@@ -271,7 +282,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
         };
         
         const handleKeyDown = (e) => {
-            const { selection, simcardsData, currentTab, canModifySimcard } = selectionRef.current;
+            const { selection, simcardsData, currentTab, canModifySimcard, isFisico } = selectionRef.current;
             
             if (selection && selection.type && selection.startRow !== null && selection.endRow !== null && selection.startCol !== null && selection.endCol !== null) {
                 const startRow = Math.min(selection.startRow, selection.endRow);
@@ -280,10 +291,9 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                 const endCol = Math.max(selection.startCol, selection.endCol);
                 
                 const activeTag = document.activeElement ? document.activeElement.tagName.toUpperCase() : '';
-                const isEditingCell = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName.toUpperCase()));
+                const isEditingCell = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag);
 
                 if (!isEditingCell) {
-                    const isFisico = selection.type === 'FÍSICO';
                     const key = e.key || '';
                     const code = e.code || '';
                     const isDelete = key === 'Delete' || key === 'Backspace' || key === 'Del' || code === 'Delete' || code === 'Backspace' || e.keyCode === 8 || e.keyCode === 46;
@@ -295,7 +305,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                         let cols = getColumns(currentTab, isFisico).slice(startCol, endCol + 1);
                         
                         if (!canModifySimcard) {
-                            const hasProtectedCol = cols.some(col => col === 'simcardFisico' || col === 'simcardEsim');
+                            const hasProtectedCol = cols.some(col => col === 'simcardFisico' || col === 'simcardEsim' || col === 'caid');
                             if (hasProtectedCol) {
                                 toast.error('Acesso restrito: ICCIDs mantidos. Apagando demais campos...');
                                 cols = cols.filter(col => col !== 'simcardFisico' && col !== 'simcardEsim');
@@ -306,6 +316,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
                         setSimcardsData(prev => {
                             const currentFiltered = (prev || []).filter(item => {
+                                if (currentTab === 'ESTOQUE TVBOX') return item.owner === currentTab;
                                 if (item.owner !== currentTab) return false;
                                 if (isFisico) {
                                     return item.simcardFisico || (!item.simcardFisico && !item.simcardEsim);
@@ -338,7 +349,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                         const cols = getColumns(currentTab, isFisico);
                         const field = cols[startCol];
                         
-                        const isProtected = field === 'simcardFisico' || field === 'simcardEsim';
+                        const isProtected = field === 'simcardFisico' || field === 'simcardEsim' || field === 'caid';
                         if (isProtected && !canModifySimcard) {
                             toast.error('Acesso restrito: Você não tem permissão para editar ICCIDs.');
                             return;
@@ -346,6 +357,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
                         const items = (simcardsData || []).filter(item => {
                             if (item.owner !== currentTab) return false;
+                            if (currentTab === 'ESTOQUE TVBOX') return true;
                             return isFisico ? (item.simcardFisico || (!item.simcardFisico && !item.simcardEsim)) : (item.simcardEsim && !item.simcardFisico);
                         });
                         if (items[startRow]) {
@@ -358,6 +370,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                         if (e.key.toLowerCase() === 'c') {
                             e.preventDefault();
                             const filteredData = (simcardsData || []).filter(item => {
+                                if (currentTab === 'ESTOQUE TVBOX') return item.owner === currentTab;
                                 if (item.owner !== currentTab) return false;
                                 if (isFisico) {
                                     return item.simcardFisico || (!item.simcardFisico && !item.simcardEsim);
@@ -384,7 +397,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             let cols = getColumns(currentTab, isFisico).slice(startCol, endCol + 1);
                             
                             if (!canModifySimcard) {
-                                const hasProtectedCol = cols.some(col => col === 'simcardFisico' || col === 'simcardEsim');
+                                const hasProtectedCol = cols.some(col => col === 'simcardFisico' || col === 'simcardEsim' || col === 'caid');
                                 if (hasProtectedCol) {
                                     toast.error('Acesso restrito: Colagem em ICCIDs ignorada.');
                                     cols = cols.map(col => (col === 'simcardFisico' || col === 'simcardEsim') ? null : col);
@@ -400,6 +413,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
                                 setSimcardsData(prev => {
                                     const currentFiltered = (prev || []).filter(item => {
+                                        if (currentTab === 'ESTOQUE TVBOX') return item.owner === currentTab;
                                         if (item.owner !== currentTab) return false;
                                         if (isFisico) {
                                             return item.simcardFisico || (!item.simcardFisico && !item.simcardEsim);
@@ -449,7 +463,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
     }, []);
 
     const handleBatchSubmit = (e) => {
-        e.preventDefault();
+        e.preventDefault(); 
         const linhasFisico = batchData.fisicos.split('\n').map(l => l.trim().replace(/\D/g, '').slice(0, 20)).filter(l => l);
         const linhasEsim = batchData.esims.split('\n').map(l => l.trim().replace(/\D/g, '').slice(0, 20)).filter(l => l);
 
@@ -463,28 +477,41 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
         const novosRegistros = [];
         const baseId = -Date.now() * 1000;
-        
-        linhasFisico.forEach((linha, i) => {
-            novosRegistros.push({
-                id: baseId - i,
-                owner: currentTab,
-                simcardFisico: linha,
-                simcardEsim: '',
-                data: shortDate, ov: '', codAutorizacao: '', cpf: '', plano: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
-                dataPortin: '', numPortado: '', numProvisorio: ''
-            });
-        });
 
-        linhasEsim.forEach((linha, i) => {
-            novosRegistros.push({
-                id: baseId - linhasFisico.length - i,
-                owner: currentTab,
-                simcardFisico: '',
-                simcardEsim: linha,
-                data: shortDate, ov: '', codAutorizacao: '', cpf: '', plano: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
-                dataPortin: '', numPortado: '', numProvisorio: ''
+        if (currentTab === 'ESTOQUE TVBOX') {
+            const linhasCaid = batchData.fisicos.split('\n').map(l => l.trim()).filter(l => l);
+            linhasCaid.forEach((linha, i) => {
+                novosRegistros.push({
+                    id: baseId - i,
+                    owner: currentTab,
+                    caid: linha,
+                    data: shortDate,
+                    vendedor: '', cliente: '', cpf: '', observacao: ''
+                });
             });
-        });
+        } else {
+            linhasFisico.forEach((linha, i) => {
+                novosRegistros.push({
+                    id: baseId - i,
+                    owner: currentTab,
+                    simcardFisico: linha,
+                    simcardEsim: '',
+                    data: shortDate, ov: '', codAutorizacao: '', cpf: '', plano: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
+                    dataPortin: '', numPortado: '', numProvisorio: ''
+                });
+            });
+
+            linhasEsim.forEach((linha, i) => {
+                novosRegistros.push({
+                    id: baseId - linhasFisico.length - i,
+                    owner: currentTab,
+                    simcardFisico: '',
+                    simcardEsim: linha,
+                    data: shortDate, ov: '', codAutorizacao: '', cpf: '', plano: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
+                    dataPortin: '', numPortado: '', numProvisorio: ''
+                });
+            });
+        }
 
         setSimcardsData(prev => [...prev, ...novosRegistros]);
         setIsBatchModalOpen(false);
@@ -492,7 +519,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
     };
 
     const handleInlineChange = (id, field, value) => {
-        if ((field === 'simcardFisico' || field === 'simcardEsim') && !canModifySimcard) return;
+        if ((field === 'simcardFisico' || field === 'simcardEsim' || field === 'caid') && !canModifySimcard) return;
         setSimcardsData(prev => prev.map(item => {
             if (item.id === id) {
                 let newValue = value;
@@ -551,6 +578,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
     const handleExportExcel = () => {
         const filteredData = (simcardsData || []).filter(item => item.owner === currentTab);
+
         if (filteredData.length === 0) {
             toast.error('Nenhum dado para exportar na aba atual.');
             return;
@@ -558,6 +586,16 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
         const dataToExport = filteredData.map(item => {
             const isFisico = item.simcardFisico || (!item.simcardFisico && !item.simcardEsim);
+            if (currentTab === 'ESTOQUE TVBOX') {
+                return {
+                    'CAID': item.caid,
+                    'Data Entrada': item.data,
+                    'Vendedor': item.vendedor || '-',
+                    'Cliente': item.cliente || '-',
+                    'CPF | CNPJ': item.cpf || '-',
+                    'Observação': item.observacao || '-'
+                };
+            }
             if (currentTab === 'SOBREPOSIÇÃO') {
                 return {
                     'SIMCARD/E-SIM': isFisico ? item.simcardFisico : item.simcardEsim,
@@ -571,6 +609,18 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     'Plano': item.plano,
                     'Cliente': item.cliente,
                     'Observação': item.observacao || '-'
+                };
+            } else if (currentTab === 'FALTAS') {
+                return {
+                    'SIMCARD/E-SIM': isFisico ? item.simcardFisico : item.simcardEsim,
+                    'Data': item.data,
+                    'Vendedor': item.vendedor || '-',
+                    'OV': item.ov,
+                    'Cód. Aut.': item.codAutorizacao,
+                    'CPF | CNPJ': item.cpf,
+                    'Plano': item.plano,
+                    'Cliente': item.cliente,
+                    'Observação (Problema)': item.observacao || '-'
                 };
             } else {
                 return {
@@ -626,131 +676,189 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     )}
                 </div>
 
-                <div className="flex overflow-x-auto bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 scrollbar-hide shrink-0">
+                <div className="flex overflow-x-auto bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 scrollbar-hide shrink-0" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
                     {dynamicTabs.map(tab => (
                         <button key={tab} onClick={() => setSimcardActiveTab(tab)} className={`px-5 py-3 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors border-b-[3px] ${currentTab === tab ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>{tab}</button>
                     ))}
                 </div>
 
+                <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 px-4 py-2 shrink-0 overflow-x-auto scrollbar-hide no-print">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase text-neutral-400 dark:text-neutral-500 mr-1">Status:</span>
+                        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/50 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 w-max">
+                            <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"></div> Em Processo de Baixa SAP</span>
+                            <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"></div> Chip Não Localizado SAP</span>
+                            <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm"></div> Corrigido / Processado</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="overflow-auto flex-1 bg-neutral-50/20 dark:bg-neutral-950/50 flex flex-col">
-                    {['FÍSICO', 'VIRTUAL (E-SIM)'].map((tipoLote, idx) => {
-                        const isFisico = tipoLote === 'FÍSICO';
-                        const filteredData = (simcardsData || []).filter(item => {
-                            if (item.owner !== currentTab) return false;
-                            if (isFisico) {
-                                return item.simcardFisico || (!item.simcardFisico && !item.simcardEsim);
-                            } else {
-                                return item.simcardEsim && !item.simcardFisico;
-                            }
-                        });
-
-                        return (
-                            <div key={tipoLote} className={`${idx > 0 ? 'mt-8' : ''}`}>
-                                <div className="bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-4 py-2 font-bold uppercase text-xs sticky left-0 border-y border-neutral-300 dark:border-neutral-700 shadow-sm">
-                                    ICCID: {tipoLote}
-                                </div>
-                                <table className="w-full text-sm text-left whitespace-nowrap border-collapse border border-neutral-300 dark:border-neutral-800">
-                                    <thead className="text-[11px] text-white uppercase bg-[#C00000] dark:bg-red-900 sticky top-0 z-10 shadow-sm">
-                                        {currentTab === 'SOBREPOSIÇÃO' ? (
-                                            <tr>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-44 min-w-[176px]">{isFisico ? 'SIMCARD Físico' : 'E-SIM Virtual'}</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Data</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-36 min-w-[144px]">Data Portin</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Nº Portado</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Nº Provisório</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-20 min-w-[80px]">OV</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Cód. Aut.</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">CPF | CNPJ</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Plano</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Cliente</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Observação</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Ações</th>
-                                            </tr>
-                                        ) : (
-                                            <tr>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-44 min-w-[176px]">{isFisico ? 'SIMCARD Físico' : 'E-SIM Virtual'}</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Data</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-20 min-w-[80px]">OV</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Cód. Aut.</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">CPF | CNPJ</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Plano</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Cliente</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-28 min-w-[112px]">Pagamento</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Valor</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Observação</th>
-                                                <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Ações</th>
-                                            </tr>
-                                        )}
-                                    </thead>
-                                    <tbody className="bg-white dark:bg-neutral-900">
-                                        {filteredData.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="12" className="text-center py-6 text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-900 font-medium">Nenhum registro encontrado nesta seção.</td>
-                                            </tr>
-                                        ) : (
-                                            filteredData.map((item, idx) => {
-                                                const val = isFisico ? item.simcardFisico : item.simcardEsim;
-                                                const commonProps = { item, idx, tipoLote, canModifySimcard, selection, setSelection, isDragging, setIsDragging, editingCell, setEditingCell, handleInlineChange, handleProtectedClick };
-                                                const iccidField = isFisico ? 'simcardFisico' : 'simcardEsim';
-
-                                                return (
-                                                    <tr key={item.id} className={`transition-colors group ${item.statusColor === 'green' ? 'bg-green-200 dark:bg-green-900/40 hover:bg-green-300/60 dark:hover:bg-green-900/60' :
-                                                        item.statusColor === 'yellow' ? 'bg-yellow-200 dark:bg-yellow-900/40 hover:bg-yellow-300/60 dark:hover:bg-yellow-900/60' :
-                                                            item.statusColor === 'red' ? 'bg-red-200 dark:bg-red-900/40 hover:bg-red-300/60 dark:hover:bg-red-900/60' :
-                                                                'hover:bg-red-50/40 dark:hover:bg-red-900/20'
-                                                        }`}>
-                                                        <EditableCell {...commonProps} field={iccidField} colIdx={0} value={val} maskType="iccid" className="font-mono text-xs" showLock={true} />
-                                                        <EditableCell {...commonProps} field="data" colIdx={1} value={item.data} maskType="data" placeholder="DD/MM/AA" align="center" className="text-neutral-600 dark:text-neutral-400" />
-                                                
-                                                        {currentTab === 'SOBREPOSIÇÃO' && (
-                                                            <>
-                                                                <EditableCell {...commonProps} field="dataPortin" colIdx={2} value={item.dataPortin} maskType="dataPortin" align="center" className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                                <EditableCell {...commonProps} field="numPortado" colIdx={3} value={item.numPortado} maskType="telefone" className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                                <EditableCell {...commonProps} field="numProvisorio" colIdx={4} value={item.numProvisorio} maskType="telefone" className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                            </>
-                                                        )}
-
-                                                        <EditableCell {...commonProps} field="ov" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 5 : 2} value={item.ov} maskType="upper" className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                        <EditableCell {...commonProps} field="codAutorizacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 6 : 3} value={item.codAutorizacao} className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                        <EditableCell {...commonProps} field="cpf" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 7 : 4} value={item.cpf} maskType="cpf" className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                        <EditableCell {...commonProps} field="plano" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 8 : 5} value={item.plano} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
-                                                        <EditableCell {...commonProps} field="cliente" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 9 : 6} value={item.cliente} maskType="upper" className="uppercase text-neutral-800 dark:text-neutral-200" />
-                                                
-                                                        {currentTab !== 'SOBREPOSIÇÃO' && (
-                                                            <>
-                                                                <SelectableCell {...commonProps} field="pagamento" colIdx={7} value={item.pagamento} />
-                                                                <EditableCell {...commonProps} field="valor" colIdx={8} value={item.valor} maskType="valor" placeholder="R$ 0,00" className="font-bold text-neutral-800 dark:text-neutral-200" />
-                                                            </>
-                                                        )}
-
-                                                        <EditableCell {...commonProps} field="observacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 10 : 9} value={item.observacao} className="text-neutral-600 dark:text-neutral-400" />
-                                                        
-                                                        <td className="border border-neutral-200 dark:border-neutral-800 p-0 text-center align-middle">
-                                                            <div className="flex items-center justify-center gap-1.5 h-full min-h-[36px] px-2">
-                                                                {canModifySimcard && (
-                                                                    <div className="flex items-center gap-1.5 border-r border-neutral-300 dark:border-neutral-700 pr-2 mr-1">
-                                                                        <button onClick={() => handleChangeColor(item.id, 'green')} className="w-3.5 h-3.5 rounded-full bg-green-500 hover:bg-green-600 shadow-sm transition-colors" title="Tudo Certo" />
-                                                                        <button onClick={() => handleChangeColor(item.id, 'yellow')} className="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:bg-yellow-600 shadow-sm transition-colors" title="Atenção" />
-                                                                        <button onClick={() => handleChangeColor(item.id, 'red')} className="w-3.5 h-3.5 rounded-full bg-red-500 hover:bg-red-600 shadow-sm transition-colors" title="Com Erro" />
-                                                                        {item.statusColor && (
-                                                                            <button onClick={() => handleChangeColor(item.id, null)} className="w-3.5 h-3.5 rounded-full bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-500 text-[8px] flex items-center justify-center font-bold shadow-sm transition-colors" title="Limpar Cor">X</button>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                                <button onClick={() => handleDeleteRequest(item.id)} className={`flex items-center justify-center transition-colors ${canModifySimcard ? 'text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded' : 'text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400'}`} title={canModifySimcard ? "Excluir Linha" : "Autenticação Necessária"}>
-                                                                    {canModifySimcard ? <Trash2 size={14} /> : <Lock size={12} />}
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
+                    {currentTab === 'ESTOQUE TVBOX' ? (
+                        <div>
+                            <div className="bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-4 py-2 font-bold uppercase text-xs sticky left-0 border-y border-neutral-300 dark:border-neutral-700 shadow-sm">
+                                CAID: TV BOX
                             </div>
-                        );
-                    })}
+                            <table className="w-full text-sm text-left whitespace-nowrap border-collapse border border-neutral-300 dark:border-neutral-800">
+                                <thead className="text-[11px] text-white uppercase bg-[#C00000] dark:bg-red-900 sticky top-0 z-10 shadow-sm">
+                                    <tr>
+                                        <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-44 min-w-[176px]">CAID</th>
+                                        <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Data Entrada</th>
+                                        <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Vendedor</th>
+                                        <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Cliente</th>
+                                        <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">CPF | CNPJ</th>
+                                        <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Observação</th>
+                                        <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white dark:bg-neutral-900">
+                                    {(simcardsData || []).filter(item => item.owner === currentTab).length === 0 ? (
+                                        <tr><td colSpan="7" className="text-center py-6 text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-900 font-medium">Nenhum TV BOX em estoque.</td></tr>
+                                    ) : (
+                                        (simcardsData || []).filter(item => item.owner === currentTab).map((item, idx) => (
+                                            <tr key={item.id} className={`transition-colors group hover:bg-red-50/40 dark:hover:bg-red-900/20`}>
+                                                <EditableCell item={item} idx={idx} colIdx={0} field="caid" value={item.caid} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="upper" className="font-mono text-xs" showLock={true} />
+                                                <EditableCell item={item} idx={idx} colIdx={1} field="data" value={item.data} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="data" placeholder="DD/MM/AA" align="center" className="text-neutral-600 dark:text-neutral-400" />
+                                                <EditableCell item={item} idx={idx} colIdx={2} field="vendedor" value={item.vendedor} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
+                                                <EditableCell item={item} idx={idx} colIdx={3} field="cliente" value={item.cliente} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="upper" className="uppercase text-neutral-800 dark:text-neutral-200" />
+                                                <EditableCell item={item} idx={idx} colIdx={4} field="cpf" value={item.cpf} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="cpf" className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                <EditableCell item={item} idx={idx} colIdx={5} field="observacao" value={item.observacao} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} className="text-neutral-600 dark:text-neutral-400" />
+                                                <td className="border border-neutral-200 dark:border-neutral-800 p-0 text-center align-middle"><button onClick={() => handleDeleteRequest(item.id)} className={`flex items-center justify-center transition-colors w-full h-full ${canModifySimcard ? 'text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded' : 'text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400'}`} title={canModifySimcard ? "Excluir Linha" : "Autenticação Necessária"}>{canModifySimcard ? <Trash2 size={14} /> : <Lock size={12} />}</button></td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        ['FÍSICO', 'VIRTUAL (E-SIM)'].map((tipoLote, idx) => {
+                            const isFisico = tipoLote === 'FÍSICO';
+                            const filteredData = (simcardsData || []).filter(item => {
+                                if (item.owner !== currentTab) return false;
+                                if (isFisico) {
+                                    return item.simcardFisico || (!item.simcardFisico && !item.simcardEsim);
+                                } else {
+                                    return item.simcardEsim && !item.simcardFisico;
+                                }
+                            });
+
+                            return (
+                                <div key={tipoLote} className={`${idx > 0 ? 'mt-8' : ''}`}>
+                                    <div className="bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-4 py-2 font-bold uppercase text-xs sticky left-0 border-y border-neutral-300 dark:border-neutral-700 shadow-sm">
+                                        ICCID: {tipoLote}
+                                    </div>
+                                    <table className="w-full text-sm text-left whitespace-nowrap border-collapse border border-neutral-300 dark:border-neutral-800">
+                                        <thead className="text-[11px] text-white uppercase bg-[#C00000] dark:bg-red-900 sticky top-0 z-10 shadow-sm">
+                                            {currentTab === 'SOBREPOSIÇÃO' ? (
+                                                <tr>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-44 min-w-[176px]">{isFisico ? 'SIMCARD Físico' : 'E-SIM Virtual'}</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Data</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-36 min-w-[144px]">Data Portin</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Nº Portado</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Nº Provisório</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-20 min-w-[80px]">OV</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Cód. Aut.</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">CPF | CNPJ</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Plano</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Cliente</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Observação</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Ações</th>
+                                                </tr>
+                                            ) : currentTab === 'FALTAS' ? (
+                                                <tr>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-44 min-w-[176px]">{isFisico ? 'SIMCARD Físico' : 'E-SIM Virtual'}</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Data</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Vendedor</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-20 min-w-[80px]">OV</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Cód. Aut.</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">CPF | CNPJ</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Plano</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Cliente</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Observação (Problema)</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Ações</th>
+                                                </tr>
+                                            ) : (
+                                                <tr>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-44 min-w-[176px]">{isFisico ? 'SIMCARD Físico' : 'E-SIM Virtual'}</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Data</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-20 min-w-[80px]">OV</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Cód. Aut.</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">CPF | CNPJ</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Plano</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Cliente</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-28 min-w-[112px]">Pagamento</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Valor</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Observação</th>
+                                                    <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Ações</th>
+                                                </tr>
+                                            )}
+                                        </thead>
+                                        <tbody className="bg-white dark:bg-neutral-900">
+                                            {filteredData.length === 0 ? (
+                                                <tr><td colSpan="12" className="text-center py-6 text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-900 font-medium">Nenhum registro encontrado nesta seção.</td></tr>
+                                            ) : (
+                                                filteredData.map((item, idx) => {
+                                                    const val = isFisico ? item.simcardFisico : item.simcardEsim;
+                                                    const commonProps = { item, idx, tipoLote, canModifySimcard, selection, setSelection, isDragging, setIsDragging, editingCell, setEditingCell, handleInlineChange, handleProtectedClick };
+                                                    const iccidField = isFisico ? 'simcardFisico' : 'simcardEsim';
+
+                                                    return (
+                                                        <tr key={item.id} className={`transition-colors group ${item.statusColor === 'green' ? 'bg-green-200 dark:bg-green-900/40 hover:bg-green-300/60 dark:hover:bg-green-900/60' :
+                                                            item.statusColor === 'yellow' ? 'bg-yellow-200 dark:bg-yellow-900/40 hover:bg-yellow-300/60 dark:hover:bg-yellow-900/60' :
+                                                                item.statusColor === 'red' ? 'bg-red-200 dark:bg-red-900/40 hover:bg-red-300/60 dark:hover:bg-red-900/60' :
+                                                                    'hover:bg-red-50/40 dark:hover:bg-red-900/20'
+                                                            }`}>
+                                                            <EditableCell {...commonProps} field={iccidField} colIdx={0} value={val} maskType="iccid" className="font-mono text-xs" showLock={true} />
+                                                            <EditableCell {...commonProps} field="data" colIdx={1} value={item.data} maskType="data" placeholder="DD/MM/AA" align="center" className="text-neutral-600 dark:text-neutral-400" />
+                                                            {currentTab === 'SOBREPOSIÇÃO' && (
+                                                                <>
+                                                                    <EditableCell {...commonProps} field="dataPortin" colIdx={2} value={item.dataPortin} maskType="dataPortin" align="center" className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                                    <EditableCell {...commonProps} field="numPortado" colIdx={3} value={item.numPortado} maskType="telefone" className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                                    <EditableCell {...commonProps} field="numProvisorio" colIdx={4} value={item.numProvisorio} maskType="telefone" className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                                </>
+                                                            )}
+                                                            {currentTab === 'FALTAS' && (
+                                                                <EditableCell {...commonProps} field="vendedor" colIdx={2} value={item.vendedor} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
+                                                            )}
+                                                            <EditableCell {...commonProps} field="ov" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 5 : (currentTab === 'FALTAS' ? 3 : 2)} value={item.ov} maskType="upper" className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                            <EditableCell {...commonProps} field="codAutorizacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 6 : (currentTab === 'FALTAS' ? 4 : 3)} value={item.codAutorizacao} className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                            <EditableCell {...commonProps} field="cpf" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 7 : (currentTab === 'FALTAS' ? 5 : 4)} value={item.cpf} maskType="cpf" className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                            <EditableCell {...commonProps} field="plano" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 8 : (currentTab === 'FALTAS' ? 6 : 5)} value={item.plano} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
+                                                            <EditableCell {...commonProps} field="cliente" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 9 : (currentTab === 'FALTAS' ? 7 : 6)} value={item.cliente} maskType="upper" className="uppercase text-neutral-800 dark:text-neutral-200" />
+                                                            {currentTab !== 'SOBREPOSIÇÃO' && currentTab !== 'FALTAS' && (
+                                                                <>
+                                                                    <SelectableCell {...commonProps} field="pagamento" colIdx={7} value={item.pagamento} />
+                                                                    <EditableCell {...commonProps} field="valor" colIdx={8} value={item.valor} maskType="valor" placeholder="R$ 0,00" className="font-bold text-neutral-800 dark:text-neutral-200" />
+                                                                </>
+                                                            )}
+                                                            <EditableCell {...commonProps} field="observacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 10 : (currentTab === 'FALTAS' ? 8 : 9)} value={item.observacao} className="text-neutral-600 dark:text-neutral-400" />
+                                                            <td className="border border-neutral-200 dark:border-neutral-800 p-0 text-center align-middle">
+                                                                <div className="flex items-center justify-center gap-1.5 h-full min-h-[36px] px-2">
+                                                                    {canModifySimcard && (
+                                                                        <div className="flex items-center gap-1.5 border-r border-neutral-300 dark:border-neutral-700 pr-2 mr-1">
+                                                                            <button onClick={() => handleChangeColor(item.id, 'green')} className="w-3.5 h-3.5 rounded-full bg-green-500 hover:bg-green-600 shadow-sm transition-colors" title="Corrigido/Processado" />
+                                                                            <button onClick={() => handleChangeColor(item.id, 'yellow')} className="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:bg-yellow-600 shadow-sm transition-colors" title="Em Processo de Baixa SAP" />
+                                                                            <button onClick={() => handleChangeColor(item.id, 'red')} className="w-3.5 h-3.5 rounded-full bg-red-500 hover:bg-red-600 shadow-sm transition-colors" title="Chip Não Localizado SAP" />
+                                                                            {item.statusColor && (
+                                                                                <button onClick={() => handleChangeColor(item.id, null)} className="w-3.5 h-3.5 rounded-full bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-500 text-[8px] flex items-center justify-center font-bold shadow-sm transition-colors" title="Limpar Cor">X</button>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    <button onClick={() => handleDeleteRequest(item.id)} className={`flex items-center justify-center transition-colors ${canModifySimcard ? 'text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded' : 'text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400'}`} title={canModifySimcard ? "Excluir Linha" : "Autenticação Necessária"}>
+                                                                        {canModifySimcard ? <Trash2 size={14} /> : <Lock size={12} />}
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
 
@@ -767,7 +875,11 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                                     <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-neutral-200 dark:bg-neutral-700 -translate-x-1/2"></div>
                                     <div className="md:pr-3"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote Físico (ICCID)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.fisicos} onChange={e => setBatchData({ ...batchData, fisicos: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;89550532010074916929&#10;89550532010074916930" /></div>
-                                    <div className="md:pl-3 pt-6 md:pt-0 border-t border-neutral-200 dark:border-neutral-700 md:border-0"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote Virtual (E-SIM)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.esims} onChange={e => setBatchData({ ...batchData, esims: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;89550532010074916929&#10;89550532010074916930" /></div>
+                                    {currentTab === 'ESTOQUE TVBOX' ? (
+                                        <div className="md:pl-3 pt-6 md:pt-0 border-t border-neutral-200 dark:border-neutral-700 md:border-0"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote TV BOX (CAID)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.fisicos} onChange={e => setBatchData({ ...batchData, fisicos: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;001234567890&#10;001234567891" /></div>
+                                    ) : (
+                                        <div className="md:pl-3 pt-6 md:pt-0 border-t border-neutral-200 dark:border-neutral-700 md:border-0"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote Virtual (E-SIM)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.esims} onChange={e => setBatchData({ ...batchData, esims: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;89550532010074916929&#10;89550532010074916930" /></div>
+                                    )}
                                 </div>
                                 <div className="pt-2 flex justify-end gap-3"><button type="button" onClick={() => setIsBatchModalOpen(false)} className="px-6 py-3 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Cancelar</button><button onClick={handleBatchSubmit} className="px-8 py-3 bg-[#E3000F] text-white font-medium rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30 flex items-center gap-2">Adicionar à Planilha</button></div>
                             </div>

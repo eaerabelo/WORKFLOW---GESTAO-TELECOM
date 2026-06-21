@@ -8,8 +8,9 @@ Este documento tem como objetivo apresentar as decisões técnicas tomadas duran
 A aplicação foi projetada utilizando uma arquitetura **Client-Server Serverless-ready**. Destaque especial para a evolução de um modelo tradicional de "banco direto no front" para a construção de uma **API RESTful completa**, que criamos sob medida para este projeto:
 
 - **Frontend (SPA com React + Vite):** Escolhido pela reatividade instantânea, reaproveitamento de componentes e pela extrema velocidade de build (HMR do Vite). Como a aplicação possui muita manipulação de estado na mesma tela (Tabelas, Filtros, Modal), o React garante atualizações no DOM virtual sem recarregamentos desnecessários.
-- **Construção de API RESTful Própria (Node.js + Express):** Desenvolvemos **do zero** uma API REST customizada para atuar como "middleware" entre o sistema e o banco. O Frontend não acessa mais o Firestore diretamente; em vez disso, ele consome nossas próprias rotas controladas (ex: `GET /api/vendas`, `POST /api/simcards/sync`).
-- **Cache em Memória RAM:** Nossa API absorve todo o impacto de milhares de requisições de leitura, mantendo os dados cacheados na memória do servidor e os devolvendo instantaneamente para o Frontend. O resultado: resolvemos o limite do Firebase e zeramos os custos de "Quota Exceeded".
+- **Construção de API RESTful Própria (Node.js + Express):** Desenvolvemos **do zero** uma API REST customizada para atuar como "middleware" entre o sistema e o banco. O Frontend consome nossas próprias rotas controladas (ex: `GET /api/vendas`, `POST /api/simcards/sync`).
+- **Banco de Dados Oracle Cloud SQL:** Migração completa de NoSQL (Firebase) para o poderoso Oracle Cloud Autonomous Database 19c. Isso garantiu zero gargalos de performance e eliminou os custos de "Quota Exceeded". Utiliza colunas flexíveis com constraint JSON para absorver alterações estruturais livremente.
+- **Servidor Oracle Compute VM:** Hospedagem permanente (Always Free) rodando Ubuntu Linux e Node.js via PM2. Eliminou travamentos e tempo de hibernação presentes em hospedagens gratuitas (como Render).
 - **Tempo Real (Socket.io):** Adotado para propagar eventos e sincronizar as máquinas da loja em tempo real. Em um cenário de múltiplos vendedores, garante que estoques e comissões não sofram concorrência.
 - **Smart Diff com Batching:** Uma inteligência criada para comparar as alterações locais em tela e enviá-las (`upserts` e `deletes`) para a nossa API REST apenas quando o usuário para de digitar (Debounce), economizando drasticamente o tráfego de rede.
 
@@ -29,7 +30,8 @@ A aplicação foi projetada utilizando uma arquitetura **Client-Server Serverles
 **Backend:**
 - `express` - Servidor web rápido e minimalista.
 - `socket.io` - WebSockets para a comunicação real-time.
-- `firebase-admin` - SDK oficial para administrar o Firestore em ambiente seguro.
+- `oracledb` - SDK oficial (Thin-mode) para integração de alta performance com a Oracle Cloud.
+- `pm2` - Gerenciador de processos em produção no servidor Ubuntu.
 
 ---
 

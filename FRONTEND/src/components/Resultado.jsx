@@ -25,9 +25,29 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
         const daysInMonth = new Date(year, month, 0).getDate();
         // Pós Total já representa o Gross da loja, não devemos somar com Controle senão a meta dobra.
         const metaGross = Number(activeMetas.posTotal) || 0; 
+        const diasUteisMovel = Number(activeMetas.diasUteisMovel) || daysInMonth;
         
         let remainingMeta = metaGross;
-        let remainingDays = daysInMonth;
+        let remainingDays = diasUteisMovel;
+
+        // Padrão inteligente de dias de funcionamento (Pula domingos primeiro se DU for menor que o mês)
+        let workingDaysPattern = new Array(daysInMonth).fill(true);
+        if (diasUteisMovel < daysInMonth) {
+            let daysToSkip = daysInMonth - diasUteisMovel;
+            for (let d = 1; d <= daysInMonth && daysToSkip > 0; d++) {
+                const dateObj = new Date(year, month - 1, d);
+                if (dateObj.getDay() === 0) { // Domingo
+                    workingDaysPattern[d - 1] = false;
+                    daysToSkip--;
+                }
+            }
+            for (let d = daysInMonth; d >= 1 && daysToSkip > 0; d--) {
+                if (workingDaysPattern[d - 1]) {
+                    workingDaysPattern[d - 1] = false;
+                    daysToSkip--;
+                }
+            }
+        }
 
         const generatedRows = [];
         let accumulatedGross = 0;
@@ -49,7 +69,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
             const dateBr = `${dayStr}/${monthStr}/${yearStr}`;
 
             let metaDia = 0;
-            if (remainingDays > 0) {
+            if (workingDaysPattern[d - 1] && remainingDays > 0) {
                 metaDia = Math.ceil(remainingMeta / remainingDays);
                 remainingMeta -= metaDia;
                 remainingDays -= 1;
@@ -73,7 +93,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                 const sub = String(sale.subOption || sale.subtipo || '').toUpperCase();
                 const rec = Number(sale.receita) || 0;
                 const recBruto = Number(sale.valorBruto || sale.receita) || 0;
-                const q = Number(sale.qtda) || 1;
+                const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
                 const adds = sale.adicionais || [];
 
                 receita += rec;

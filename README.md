@@ -14,7 +14,7 @@ Este sistema foi desenvolvido como uma Single Page Application (SPA) **Multi-Ten
 - **Ícones:** Lucide React
 - **Inteligência Artificial:** API Google Gemini (Generative AI) nativa
 - **Exportações:** XLSX (Excel) e Imagens via HTML2Canvas
-- **Persistência de Dados:** Firebase Firestore (Banco de Dados em Nuvem NoSQL em tempo real)
+- **Persistência de Dados:** Oracle Cloud Autonomous Database (Banco de Dados SQL de alta performance em Nuvem)
 - **Multi-Tenant:** Isolamento completo de dados por loja guiado por variáveis de ambiente.
 
 ---
@@ -91,7 +91,7 @@ cd BACKEND
 npm install
 npm run dev
 ```
-*O backend será inicializado, sincronizará com o Firebase e ouvirá na porta padrão.*
+*O backend será inicializado, conectará ao Oracle Cloud SQL e ouvirá na porta padrão.*
 
 **2. Iniciar o Frontend (Multi-Tenant):**
 Abra um novo terminal e navegue para a pasta frontend:
@@ -115,7 +115,7 @@ Os arquivos consolidados ficarão dentro da pasta `/dist/`, prontos para serem h
 ---
 
 ## 🗄️ Estrutura de Armazenamento
-O sistema utiliza o **Firebase Firestore** na nuvem com uma arquitetura robusta de Múltiplas Coleções (garantindo escalabilidade infinita e fugindo do limite de 1MB por arquivo). As alterações são propagadas em Real-Time usando listeners (`onSnapshot`) e gravadas de forma otimizada via **Smart Diff** e **Batch Writes**, sendo sincronizadas instantaneamente em todas as telas da loja para que nenhum colaborador trabalhe com informações desatualizadas.
+O sistema utiliza o **Oracle Cloud Autonomous Database** na nuvem com uma arquitetura robusta de schema flexível (colunas CLOB para JSON). As alterações são propagadas em Real-Time usando listeners e rotas do Node, gravadas de forma otimizada via **Smart Diff** e **Batch Writes**, sendo sincronizadas instantaneamente em todas as telas da loja para que nenhum colaborador trabalhe com informações desatualizadas.
 
 ---
 
@@ -169,12 +169,12 @@ BACKEND/
 ├── src/
 │   ├── server.js           # Ponto de inicialização (Middlewares, Rotas e API)
 │   ├── socket.js           # Configuração de eventos do WebSocket (Tempo Real)
-│   ├── firebaseAdmin.js    # Inicialização do SDK Admin do Firestore seguro
+│   ├── db_oracle.js        # Pool de conexão com o Autonomous Database Oracle
 │   ├── routes/             # Rotas segmentadas da API
 │   │   ├── vendas.js       # Endpoints: GET /vendas, POST /vendas/sync
 │   │   ├── simcards.js     # Endpoints de leitura e diff de estoque
 │   │   └── ...             # Demais rotas (config, reprovados, etc)
 │   └── controllers/        # Inteligência de negócio e processamentos em lote
-├── .env                    # Chaves de API (Gemini), Credenciais Firestore (Oculto)
-└── package.json            # Dependências do servidor (express, socket.io, firebase-admin)
+├── .env                    # Chaves de API (Gemini), Senha Oracle (Oculto)
+└── package.json            # Dependências do servidor (express, socket.io, oracledb)
 ```

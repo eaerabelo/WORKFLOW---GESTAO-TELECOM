@@ -1,8 +1,7 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
 
-
+// Configuração oficial do seu banco de dados Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDFZvBcVkrHrxSLKrdbaNB_ZIUFFw8BYLs",
     authDomain: "painel-claro.firebaseapp.com",
@@ -10,12 +9,9 @@ const firebaseConfig = {
     projectId: "painel-claro",
     storageBucket: "painel-claro.firebasestorage.app",
     messagingSenderId: "767795934244",
-    appId: "1:767795934244:web:05141872efe728701854b1",
-    measurementId: "G-1T10VX1ERX"
+    appId: "1:767795934244:web:1d6d6e116ceed6aa1854b1",
+    measurementId: "G-9GP7WSXPKC"
 };
 
-
-// Evita o erro de "duplicate-app" do Vite, inicializando apenas se já não existir
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-
+const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);

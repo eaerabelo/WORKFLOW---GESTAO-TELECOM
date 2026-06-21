@@ -97,9 +97,9 @@ export function Proposta({ globalUser }) {
     const getGoogleMapsLink = () => {
         if (import.meta.env.VITE_STORE_MAPS_LINK) return import.meta.env.VITE_STORE_MAPS_LINK;
         const storeName = String(import.meta.env.VITE_STORE_NAME || '').toUpperCase();
-        if (storeName.includes('LAPA')) return 'https://maps.app.goo.gl/kEMpuUjUz7ha1Rzs5';
-        if (storeName.includes('CALCADAO') || storeName.includes('CALÇADÃO')) return 'https://maps.app.goo.gl/RLcDeCoXyCW2nYVu7';
-        return 'https://maps.app.goo.gl/HkndtA47p8XvStCN9'; // Default (União Osasco)
+        if (storeName.includes('LAPA')) return 'https://search.google.com/local/writereview?placeid=ChIJwUEAiID5zpQRLIBc3-xg08E';
+        if (storeName.includes('CALCADAO') || storeName.includes('CALÇADÃO')) return 'https://search.google.com/local/writereview?placeid=ChIJDWJK6_P_zpQRcdtyBhR7Tik';
+        return 'https://search.google.com/local/writereview?placeid=ChIJs-b9A0L_zpQR0mJDaZfyy-Y'; // Default (União Osasco)
     };
     const mapsLink = getGoogleMapsLink();
 
@@ -407,7 +407,7 @@ export function Proposta({ globalUser }) {
     return (
         <div className="h-full flex flex-col animate-fade-in transition-colors">
             
-            <div className="flex border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 shrink-0 overflow-x-auto scrollbar-hide rounded-t-2xl no-print">
+            <div className="flex border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 shrink-0 overflow-x-auto scrollbar-hide rounded-t-2xl no-print" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
                 <button onClick={() => setActiveTab('PROPOSTA')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-[3px] ${activeTab === 'PROPOSTA' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>Proposta Comercial</button>
                 <button onClick={() => setActiveTab('COMPARADOR')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-[3px] ${activeTab === 'COMPARADOR' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>Comparador Planos</button>
                 <button onClick={() => setActiveTab('COMPARADOR_APARELHOS')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-[3px] ${activeTab === 'COMPARADOR_APARELHOS' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>Comparador Aparelhos</button>
@@ -595,7 +595,7 @@ export function Proposta({ globalUser }) {
                                             <img src={viteLogo} alt="Logo" className="w-8 h-8 object-contain" />
                                         </div>
                                         <div>
-                                            <h2 className="text-xl md:text-2xl font-bold mb-0.5 tracking-tight">Proposta {import.meta.env.VITE_STORE_NAME || 'Loja Claro'}</h2>
+                                            <h2 className="text-xl md:text-2xl font-bold mb-0.5 tracking-tight">PROPOSTA {import.meta.env.VITE_STORE_NAME || 'Loja Claro'}</h2>
                                             <p className="text-neutral-400 text-[11px] md:text-xs font-medium uppercase tracking-wider">Data: {new Date().toLocaleDateString('pt-BR')} &bull; Validade: 24 HORAS</p>
                                         </div>   
                                     </div>

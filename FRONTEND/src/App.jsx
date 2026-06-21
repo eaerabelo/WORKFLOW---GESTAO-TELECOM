@@ -4,19 +4,17 @@ import React, { useState, useEffect, useRef } from 'react';
 // Importação de Ícones da biblioteca lucide-react para utilizar na interface
 import {
   Menu, X, Search, ChevronRight, UserPlus,
-  Users, BarChart3, FileText, Database,
+  Users, BarChart3, FileText, Database, Home,
   Target, AlertOctagon, Phone, CreditCard, Briefcase, AlertCircle, Check, Lock,
-  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign
+  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap
 } from 'lucide-react';
 
 // Importação de biblioteca de Toasts para feedback visual de ações em tela
 import toast, { Toaster } from 'react-hot-toast';
 
-// O Frontend agora é 100% blindado e alimentado pelo Backend via API.
-// O acesso direto ao Firebase foi completamente removido do React!
-
-// Importação do Socket.io para comunicação em Tempo Real com o Node.js
-import { io } from 'socket.io-client';
+// Acesso direto ao Firebase restaurado provisoriamente (Serverless Multi-Tenant)
+import { db } from './firebase';
+import { collection, doc, onSnapshot, writeBatch, setDoc } from 'firebase/firestore';
 
 // Importações de constantes como usuários padrões e base para as metas
 import {
@@ -42,16 +40,20 @@ import { Reprovados } from './components/Reprovados.jsx';
 import { Resultado } from './components/Resultado.jsx';
 import { Login } from './components/Login.jsx';
 import { ParcialFechamento } from './components/ParcialFechamento.jsx';
-import { Geek } from './components/Geek.jsx';
+import { Geek, checkHasNewGeek } from './components/Geek.jsx';
 import { Scripts } from './components/Scripts.jsx';
 import { FatorRvv } from './components/FatorRvv.jsx';
-import { Campanha } from './components/Campanha.jsx';
+import { Campanha, checkHasNewCampanha } from './components/Campanha.jsx';
 import { Precificacao } from './components/Precificacao.jsx';
+import { Tutorial } from './components/Tutorial.jsx';
+import { Atualizacoes } from './components/Atualizacoes.jsx';
 import qrWifiImg from './assets/qr-wifi.png';
 import claroLogo from './assets/LOGO_CLARO.png.webp';
 
 // URL base da API configurada via variável de ambiente (Vite) ou fallback para localhost
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Multi-Tenant: Identificador da loja para buscar as coleções corretas no banco
+const STORE_ID = import.meta.env.VITE_STORE_ID || 'uniao_osasco';
 
 // Variáveis seguras (Fallback) caso as constantes falhem ou estejam ausentes
 const safeMetasPadrao = METAS_PADRAO || { receita: 0, posTotal: 0, posPago: 0, controle: 0, urTotal: 0, fibra: 0, tv: 0, fixo: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, mesh: 0, trocafy: 0, mplay: 0 };
@@ -131,6 +133,8 @@ export default function App() {
 
   // Estado do Modal de Wi-Fi
   const [isWifiModalOpen, setIsWifiModalOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [isUrReminderModalOpen, setIsUrReminderModalOpen] = useState(false);
 
   // Persiste as notificações localmente a cada atualização
   useEffect(() => {
@@ -211,6 +215,42 @@ export default function App() {
     return () => clearInterval(interval);
   }, [globalUser?.role]);
 
+  // --- ALERTA DE ACOMPANHAMENTO UR (VENDEDOR) ---
+  useEffect(() => {
+    if (globalUser?.role !== 'VENDEDOR') return;
+
+    const checkUrDate = () => {
+      const now = new Date();
+      const dayOfMonth = now.getDate();
+      const currentMonthYear = `${now.getFullYear()}-${now.getMonth() + 1}`;
+
+      // Dispara a notificação apenas no dia 20 de cada mês
+      if (dayOfMonth === 20) {
+        const lastUrNotification = localStorage.getItem('lastUrNotification');
+
+        if (lastUrNotification !== currentMonthYear) {
+          const newNotif = {
+            id: `ur-reminder-${currentMonthYear}`,
+            title: `Acompanhe suas Instalações!`,
+            desc: `Lembre-se de verificar a aba "UR RESIDENCIAL" para acompanhar o status de suas vendas de fibra e TV.`,
+            time: Date.now(),
+            read: false,
+            type: 'ur-reminder' // Novo tipo para ícone
+          };
+
+          setNotifications(prev => [newNotif, ...(Array.isArray(prev) ? prev : []).filter(n => n.id !== newNotif.id)].slice(0, 20));
+          setIsUrReminderModalOpen(true);
+
+          localStorage.setItem('lastUrNotification', currentMonthYear);
+        }
+      }
+    };
+
+    const interval = setInterval(checkUrDate, 60 * 60 * 1000); // Verifica a cada hora
+    checkUrDate(); // Verifica imediatamente ao carregar
+    return () => clearInterval(interval);
+  }, [globalUser?.role]);
+
   // --- ESTADOS DE BANCO DE DADOS (NUVEM - FIREBASE) ---
   // Armazena todos os registros do Banco de Dados sincronizados em Real-Time
   const [simcardsData, setSimcardsData] = useState([]);
@@ -224,6 +264,22 @@ export default function App() {
   const [pricingData, setPricingData] = useState(DEFAULT_PRICING);
   // Define se o primeiro carregamento da Nuvem já foi finalizado
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
+
+  // --- NOVIDADES GEEK ---
+  const [hasNewGeek, setHasNewGeek] = useState(false);
+  useEffect(() => {
+    if (globalUser) {
+      setHasNewGeek(checkHasNewGeek(geekDocs, globalUser));
+    }
+  }, [geekDocs, globalUser]);
+
+  // --- NOVIDADES CAMPANHA ---
+  const [hasNewCampanha, setHasNewCampanha] = useState(false);
+  useEffect(() => {
+    if (globalUser) {
+      setHasNewCampanha(checkHasNewCampanha(campanhasData, globalUser));
+    }
+  }, [campanhasData, globalUser]);
 
   // --- ESTADOS DE GESTÃO DE METAS (MONTH-BY-MONTH) ---
   // Filtro de Mês e Metas
@@ -356,6 +412,27 @@ export default function App() {
     config: ''
   });
 
+  // Função para atualizar o perfil do usuário logado e refletir no banco de dados (ex: lidos de novidades)
+  const updateUserProfile = (updates) => {
+    if (!globalUser?.username) return;
+
+    setUsersDB(prev => {
+      const currentDbUser = prev[globalUser.username] || {};
+      const newDbUser = { ...currentDbUser, ...updates };
+        
+      return {
+        ...prev,
+        [globalUser.username]: newDbUser
+      };
+    });
+
+    setGlobalUser(prev => {
+      const newUser = { ...prev, ...updates };
+      localStorage.setItem('sessionUser', JSON.stringify(newUser));
+      return newUser;
+    });
+  };
+
   // --- SISTEMA DE DESFAZER (UNDO / CTRL+Z) ---
   // Stack local do estado que armazena os últimos "Delete" efetuados
   const [undoStack, setUndoStack] = useState([]);
@@ -473,16 +550,11 @@ export default function App() {
   };
 
   // 1. CARREGAMENTO REAL-TIME SEPARADO (ON-SNAPSHOT NAS COLEÇÕES)
-  // Estabelece a conexão com o Firebase do Google
   useEffect(() => {
-    // 🚀 PASSO 0: CONFIGURAÇÕES GLOBAIS BUSCADAS VIA API REST (Cofre, Senhas, Metas, Escala)
-    const fetchConfigAPI = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/config`);
-        const d = await response.json();
-        
-        // 🛡️ SISTEMA DE RECUPERAÇÃO E PROTEÇÃO
-        // Se o banco foi apagado acidentalmente, restauramos do arquivo local de segurança
+    // 🚀 PASSO 0: CONFIGURAÇÕES GLOBAIS
+    const unsubConfig = onSnapshot(doc(db, 'lojas', `${STORE_ID}_config`), (snap) => {
+      if (snap.exists()) {
+        const d = snap.data();
         const recoveredUsers = (d && d.usersDB && Object.keys(d.usersDB).length > 0) ? d.usersDB : safeAppUsers;
         const recoveredGoals = (d && d.goalsDB && Object.keys(d.goalsDB).length > 0) ? d.goalsDB : { [currentYYYYMM]: { ...safeMetasPadrao } };
         const recoveredPricing = (d && d.pricingData && Object.keys(d.pricingData).length > 0) ? d.pricingData : DEFAULT_PRICING;
@@ -502,131 +574,80 @@ export default function App() {
         });
 
         if (!isFirebaseReady) setIsFirebaseReady(true);
-      } catch (error) {
-        console.error("Erro Configs API:", error);
+      } else {
         setIsFirebaseReady(true);
       }
-    };
-    fetchConfigAPI();
-
-    const startStr = `${globalMonth}-01`;
-    const endStr = `${globalMonth}-31T23:59:59`; // Garante a captura até o último segundo do dia 31
-
-    // 🚀 INICIANDO O TÚNEL DE TEMPO REAL
-    const socket = io(API_URL);
-    socket.on('connect', () => {
-      console.log('🟢 Conectado ao Servidor em Tempo Real!');
     });
 
-    socket.on('config-atualizada', () => {
-      fetchConfigAPI();
-    });
-
-    // Função de ordenação cronológica inteligente para evitar "embaralhar"
     const sortChronologically = (a, b) => {
       const getTime = (d) => (typeof d === 'string') ? new Date(d.includes('/') ? d.split('/').reverse().join('-') : d.substring(0, 10)).getTime() : 0;
       const timeA = getTime(a.data);
       const timeB = getTime(b.data);
-      if (timeA !== timeB) return timeB - timeA; // Datas mais recentes sempre no topo
-      return (b.id || 0) - (a.id || 0); // Desempate pela ordem de registro (ID) caso sejam do mesmo dia
+      if (timeA !== timeB) return timeB - timeA;
+      return (b.id || 0) - (a.id || 0);
     };
 
-    // 🚀 PASSO 1: VENDAS BUSCADAS VIA API REST DO BACKEND (Node.js)
-    // Substituímos o onSnapshot direto do Firebase por uma requisição HTTP limpa
-    const fetchVendasAPI = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/vendas?start=${startStr}&end=${endStr}`);
-        const data = await response.json();
-        data.sort(sortChronologically);
-        setSalesData(data);
-        cloudRefs.current.sales = data;
-      } catch (error) {
-        console.error("Erro ao conectar com a API de Vendas do Backend:", error);
-      }
-    };
-    fetchVendasAPI();
-
-    // Ouve o servidor. Se alguém salvar uma venda na loja, o React refaz o fetch sozinho!
-    socket.on('vendas-atualizadas', () => {
-      console.log('🔄 Nova venda detectada no servidor! Atualizando tela...');
-      fetchVendasAPI();
+    // 🚀 PASSO 1: VENDAS (Filtrando no Frontend)
+    const unsubVendas = onSnapshot(collection(db, `vendas_${STORE_ID}`), (snap) => {
+      let data = snap.docs.map(doc => doc.data());
+      const startStr = `${globalMonth}-01`;
+      const endStr = `${globalMonth}-31T23:59:59`;
+      data = data.filter(v => {
+        let dateIso = v.data || '';
+        if (dateIso.includes('/')) dateIso = dateIso.split('/').reverse().join('-');
+        return dateIso >= startStr && dateIso <= endStr;
+      });
+      data.sort(sortChronologically);
+      setSalesData(data);
+      cloudRefs.current.sales = data;
     });
 
-    // 🚀 PASSO 2: ESTOQUE BUSCADO VIA API REST DO BACKEND (Node.js)
-    const fetchSimcardsAPI = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/simcards`);
-        const data = await response.json();
-        data.sort((a, b) => b.id - a.id);
-        setSimcardsData(data);
-        cloudRefs.current.simcards = data;
-      } catch (error) {
-        console.error("Erro ao conectar com a API de Simcards do Backend:", error);
-      }
-    };
-    fetchSimcardsAPI();
-
-    socket.on('simcards-atualizados', () => {
-      console.log('🔄 Estoque atualizado no servidor! Atualizando tela...');
-      fetchSimcardsAPI();
+    // 🚀 PASSO 2: ESTOQUE
+    const unsubSimcards = onSnapshot(collection(db, `estoque_${STORE_ID}`), (snap) => {
+      let data = snap.docs.map(doc => doc.data());
+      data.sort((a, b) => b.id - a.id);
+      setSimcardsData(data);
+      cloudRefs.current.simcards = data;
     });
 
-    // 🚀 PASSO 3: REPROVADOS BUSCADOS VIA API REST
-    const fetchReprovadosAPI = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/reprovados`);
-        const data = await response.json();
-        data.sort(sortChronologically);
-        setReprovadosData(data);
-        cloudRefs.current.reprovados = data;
-      } catch (error) {
-        console.error("Erro ao conectar com a API de Reprovados:", error);
-      }
-    };
-    fetchReprovadosAPI();
-
-    socket.on('reprovados-atualizados', () => {
-      fetchReprovadosAPI();
+    // 🚀 PASSO 3: REPROVADOS
+    const unsubReprovados = onSnapshot(collection(db, `reprovados_${STORE_ID}`), (snap) => {
+      let data = snap.docs.map(doc => doc.data());
+      const startStr = `${globalMonth}-01`;
+      const endStr = `${globalMonth}-31T23:59:59`;
+      data = data.filter(v => {
+        let dateIso = v.data || '';
+        if (dateIso.includes('/')) dateIso = dateIso.split('/').reverse().join('-');
+        return dateIso >= startStr && dateIso <= endStr;
+      });
+      data.sort(sortChronologically);
+      setReprovadosData(data);
+      cloudRefs.current.reprovados = data;
     });
 
-    // 🚀 PASSO 4: GEEK DOCS BUSCADOS VIA API REST
-    const fetchGeekDocsAPI = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/geek-docs`);
-        const data = await response.json();
-        data.sort((a, b) => b.id - a.id);
-        setGeekDocs(data);
-        cloudRefs.current.geekDocs = data;
-      } catch (error) {
-        console.error("Erro ao conectar com a API de Geek Docs:", error);
-      }
-    };
-    fetchGeekDocsAPI();
-
-    socket.on('geek-docs-atualizados', () => {
-      fetchGeekDocsAPI();
+    // 🚀 PASSO 4: GEEK DOCS
+    const unsubGeek = onSnapshot(collection(db, `geek_docs_${STORE_ID}`), (snap) => {
+      let data = snap.docs.map(doc => doc.data());
+      data.sort((a, b) => b.id - a.id);
+      setGeekDocs(data);
+      cloudRefs.current.geekDocs = data;
     });
 
-    // 🚀 PASSO 5: CAMPANHAS BUSCADAS VIA API REST
-    const fetchCampanhasAPI = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/campanhas`);
-        const data = await response.json();
-        data.sort((a, b) => b.id - a.id);
-        setCampanhasData(data);
-        cloudRefs.current.campanhas = data;
-      } catch (error) {
-        console.error("Erro ao conectar com a API de Campanhas:", error);
-      }
-    };
-    fetchCampanhasAPI();
-
-    socket.on('campanhas-atualizadas', () => {
-      fetchCampanhasAPI();
+    // 🚀 PASSO 5: CAMPANHAS
+    const unsubCampanhas = onSnapshot(collection(db, `campanhas_${STORE_ID}`), (snap) => {
+      let data = snap.docs.map(doc => doc.data());
+      data.sort((a, b) => b.id - a.id);
+      setCampanhasData(data);
+      cloudRefs.current.campanhas = data;
     });
 
     return () => {
-      socket.disconnect(); // Desconecta ao mudar de mês para evitar túneis duplicados
+      unsubConfig();
+      unsubVendas();
+      unsubSimcards();
+      unsubReprovados();
+      unsubGeek();
+      unsubCampanhas();
     };
   }, [globalMonth]);
 
@@ -639,64 +660,45 @@ export default function App() {
 
         const safeStr = (obj) => JSON.stringify(obj || {});
 
-        // Função inteligente de comparação (Diff)
-        const syncCollectionAPI = async (localArray, cloudArray, syncEndpoint) => {
+        const syncCollectionFirebase = async (localArray, cloudArray, collectionName) => {
           const localMap = new Map((localArray || []).map(item => [String(item.id), item]));
           const cloudMap = new Map((cloudArray || []).map(item => [String(item.id), item]));
 
-          const apiUpserts = [];
-          const apiDeletes = [];
+          const batch = writeBatch(db);
+          let batchCount = 0;
 
-          // 1. Identificar Novas inserções ou Edições feitas pelo usuário
           localMap.forEach((item, id) => {
             const cloudItem = cloudMap.get(id);
             if (!cloudItem || safeStr(item) !== safeStr(cloudItem)) {
-              apiUpserts.push(item);
+              batch.set(doc(db, collectionName, String(id)), item);
+              batchCount++;
             }
           });
 
-          // 2. Identificar Exclusões (Botão de Excluir da Tabela)
           cloudMap.forEach((item, id) => {
             if (!localMap.has(id)) {
-              apiDeletes.push(id);
+              batch.delete(doc(db, collectionName, String(id)));
+              batchCount++;
             }
           });
 
-          // 3. Despacha para a nossa API no Backend
-          if (apiUpserts.length > 0 || apiDeletes.length > 0) {
-            try {
-              await fetch(`${API_URL}${syncEndpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ upserts: apiUpserts, deletes: apiDeletes })
-              });
-              hasChanges = true;
-            } catch (error) {
-              console.error(`Erro na Sincronização API (${syncEndpoint}):`, error);
-            }
+          if (batchCount > 0) {
+            await batch.commit();
+            hasChanges = true;
           }
         };
 
-        await syncCollectionAPI(salesData, cloudRefs.current.sales, '/api/vendas/sync');
-        await syncCollectionAPI(simcardsData, cloudRefs.current.simcards, '/api/simcards/sync');
-        await syncCollectionAPI(reprovadosData, cloudRefs.current.reprovados, '/api/reprovados/sync');
-        await syncCollectionAPI(geekDocs, cloudRefs.current.geekDocs, '/api/geek-docs/sync');
-        await syncCollectionAPI(campanhasData, cloudRefs.current.campanhas, '/api/campanhas/sync');
+        await syncCollectionFirebase(salesData, cloudRefs.current.sales, `vendas_${STORE_ID}`);
+        await syncCollectionFirebase(simcardsData, cloudRefs.current.simcards, `estoque_${STORE_ID}`);
+        await syncCollectionFirebase(reprovadosData, cloudRefs.current.reprovados, `reprovados_${STORE_ID}`);
+        await syncCollectionFirebase(geekDocs, cloudRefs.current.geekDocs, `geek_docs_${STORE_ID}`);
+        await syncCollectionFirebase(campanhasData, cloudRefs.current.campanhas, `campanhas_${STORE_ID}`);
 
         // 3. Salva Configurações Globais apenas se houver mudança nos privilégios
         const currentConfigStr = safeStr({ usersDB, goalsDB, scheduleData, monthlyOverrides, pricingData });
-        // 🛡️ TRAVA DE SEGURANÇA: Só envia se já carregou da nuvem com sucesso (cloudRefs não está vazio)
         if (cloudRefs.current.config !== '' && currentConfigStr !== cloudRefs.current.config) {
-          try {
-            await fetch(`${API_URL}/api/config/sync`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: currentConfigStr
-            });
-            cloudRefs.current.config = currentConfigStr;
-          } catch (error) {
-            console.error("Erro na Sincronização API (Configurações):", error);
-          }
+          await setDoc(doc(db, 'lojas', `${STORE_ID}_config`), JSON.parse(currentConfigStr));
+          cloudRefs.current.config = currentConfigStr;
         }
 
         // 4. Dispara todas as diferenças para a nuvem de uma vez só!
@@ -860,6 +862,7 @@ export default function App() {
       if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'PARCIAL & FECHAMENTO' && !['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'PRECIFICAÇÃO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
+      if (activeTab === 'ACESSOS' && userMatched.role !== 'GERENTE') setActiveTab('VENDA');
     } else {
       setAuthError('Usuário ou senha incorretos. Acesso negado.');
     }
@@ -935,6 +938,7 @@ export default function App() {
               if (section.name === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return null;
               if (section.name === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return null;
               if (section.name === 'PRECIFICAÇÃO' && !hasPricingAccess) return null;
+              if (section.name === 'ACESSOS' && !isGerente) return null;
 
               return (
                 <li key={section.name}>
@@ -950,7 +954,24 @@ export default function App() {
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === section.name ? 'bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F]' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
                     title={activeTab === section.name ? "Clique para recolher o menu lateral" : ""}
                   >
-                    <div className="flex items-center gap-3"><span className={`${activeTab === section.name ? 'text-[#E3000F]' : 'text-neutral-400'}`}>{section.icon}</span>{section.name}</div>
+                    <div className="flex items-center gap-3">
+                      <span className={`${activeTab === section.name ? 'text-[#E3000F]' : 'text-neutral-400'}`}>{section.icon}</span>
+                      <div className="flex items-center gap-1.5">
+                        {section.name}
+                        {section.name === 'GEEK' && hasNewGeek && (
+                          <span className="flex h-2 w-2 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E3000F]"></span>
+                          </span>
+                        )}
+                        {section.name === 'CAMPANHAS' && hasNewCampanha && (
+                          <span className="flex h-2 w-2 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E3000F]"></span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     {activeTab === section.name && <ChevronRight size={14} />}
                   </button>
                 </li>
@@ -988,6 +1009,15 @@ export default function App() {
               </button>
             )}
             
+            {/* Botão Global de Tutorial */}
+            <button 
+              onClick={() => setIsTutorialOpen(true)} 
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-[#E3000F] dark:text-red-400 rounded-lg text-sm font-medium transition-colors animate-fade-in"
+              title="Ver Tutorial desta Tela"
+            >
+              <BookOpen size={16} /> <span className="hidden lg:inline">Tutorial</span>
+            </button>
+
             {/* Seletor Global de Mês */}
             <div className="hidden md:flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm animate-fade-in">
               <CalendarDays size={16} className="text-[#E3000F]" />
@@ -1054,13 +1084,15 @@ export default function App() {
                                 notif.type === 'campanha' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' : 
                                   notif.type === 'campanha_win' ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-500' : 
                                     notif.type === 'pricing' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-500' :
-                                      'bg-red-100 text-[#E3000F] dark:bg-red-900/30'
+                                      notif.type === 'ur-reminder' ? 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400' :
+                                        'bg-red-100 text-[#E3000F] dark:bg-red-900/30'
                                 }`}>
                                 {notif.type === 'parcial' ? <ClipboardCheck size={16} /> : 
                                   notif.type === 'campanha' ? <Megaphone size={16} /> : 
                                     notif.type === 'campanha_win' ? <Trophy size={16} /> : 
                                       notif.type === 'pricing' ? <DollarSign size={16} /> :
-                                        <Target size={16} />}
+                                        notif.type === 'ur-reminder' ? <Home size={16} /> :
+                                          <Target size={16} />}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h4 className={`text-sm mb-0.5 leading-tight ${!notif.read ? 'font-bold text-neutral-900 dark:text-white' : 'font-medium text-neutral-700 dark:text-neutral-300'}`}>{notif.title}</h4>
@@ -1135,11 +1167,11 @@ export default function App() {
           ) : activeTab === 'PARCIAL & FECHAMENTO' ? (
             <ParcialFechamento hasAccess={hasParcialAccess} salesData={salesData} goalsDB={goalsDB} globalMonth={globalMonth} />
           ) : activeTab === 'GEEK' ? (
-            <Geek geekDocs={geekDocs} setGeekDocs={handleSetGeekDocs} isGerente={isGerente} globalUser={globalUser} />
+            <Geek geekDocs={geekDocs} setGeekDocs={handleSetGeekDocs} isGerente={isGerente} globalUser={globalUser} updateUserProfile={updateUserProfile} />
           ) : activeTab === 'SCRIPTS' ? (
             <Scripts globalUser={globalUser} usersDB={usersDB} />
           ) : activeTab === 'CAMPANHAS' ? (
-            <Campanha globalUser={globalUser} campanhasData={campanhasData} setCampanhasData={handleSetCampanhasData} />
+            <Campanha globalUser={globalUser} campanhasData={campanhasData} setCampanhasData={handleSetCampanhasData} updateUserProfile={updateUserProfile} />
           ) : activeTab === 'FATOR RV' ? (
             <FatorRvv globalUser={globalUser} salesData={salesData} goalsDB={goalsDB} usersDB={usersDB} globalMonth={globalMonth} />
           ) : activeTab === 'PRECIFICAÇÃO' ? (
@@ -1154,7 +1186,7 @@ export default function App() {
 
         <footer className="w-full bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 py-3 shrink-0 no-print flex items-center justify-center transition-colors duration-500">
           <p className="text-[10px] sm:text-xs text-neutral-400 font-semibold tracking-widest uppercase text-center px-4 whitespace-nowrap">
-            <span className="hidden sm:inline">&copy; {new Date().getFullYear()} Todos os direitos reservados <span className="text-[#E3000F] mx-1">-</span> Desenvolvido por Matheus Rabelo <span className="text-[#E3000F] mx-1">-</span> Developer FullStack</span>
+            <span className="hidden sm:inline">&copy; {new Date().getFullYear()} Todos os direitos reservados <span className="text-[#E3000F] mx-1">-</span> Desenvolvido por Matheus Rabelo <span className="text-[#E3000F] mx-1">-</span></span>
             <span className="sm:hidden">&copy; {new Date().getFullYear()} Dev: Matheus Rabelo</span>
           </p>
         </footer>
@@ -1247,6 +1279,39 @@ export default function App() {
         </div>
       )}
 
+      {/* MODAL GLOBAL DE TUTORIAIS */}
+      {isTutorialOpen && (
+        <Tutorial onClose={() => setIsTutorialOpen(false)} defaultTab={activeTab} globalUser={globalUser} />
+      )}
+
+      {/* MODAL DE ATUALIZAÇÕES (NOVIDADES) EXTRAÍDO */}
+      <Atualizacoes globalUser={globalUser} updateUserProfile={updateUserProfile} />
+
+      {/* MODAL DE LEMBRETE UR RESIDENCIAL */}
+      {isUrReminderModalOpen && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/60 backdrop-blur-sm p-4 no-print flex items-center justify-center" onClick={() => setIsUrReminderModalOpen(false)}>
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-md animate-fade-in flex flex-col items-center p-8 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-cyan-50 dark:bg-cyan-900/20 rounded-full flex items-center justify-center text-cyan-600 dark:text-cyan-400 mb-4 border-4 border-white dark:border-neutral-900 shadow-lg">
+              <Home size={32} />
+            </div>
+            
+            <h2 className="text-2xl font-black text-neutral-800 dark:text-neutral-100 mb-2 tracking-tight">Acompanhe suas Instalações!</h2>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 leading-relaxed">
+              Lembre-se de verificar a aba <strong className="text-neutral-700 dark:text-neutral-300">"UR RESIDENCIAL"</strong> para acompanhar o status de suas vendas de fibra e TV. Não deixe nenhuma venda cair por falta de acompanhamento!
+            </p>
+
+            <button 
+              onClick={() => {
+                setIsUrReminderModalOpen(false);
+                setActiveTab('UR-RESIDENCIAL');
+              }} 
+              className="w-full py-3 bg-[#E3000F] text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30 flex items-center justify-center gap-2"
+            >
+              <Check size={18} /> CIENTE, IR PARA A ABA
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

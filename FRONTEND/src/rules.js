@@ -128,10 +128,8 @@ export const calcularFatorRV = (pctAtingimento, totalComissao, metricasExtras = 
     };
 
     const bonusPos = calcularBonusProduto(metricasExtras.volPosPago || 0, metricasExtras.metaPosPago || 0);
-    const bonusFibra = calcularBonusProduto(metricasExtras.volFibra || 0, metricasExtras.metaFibra || 0);
-    const bonusTv = calcularBonusProduto(metricasExtras.volTv || 0, metricasExtras.metaTv || 0);
-
-    bonusUnitario = bonusPos + bonusFibra + bonusTv;
+    
+    bonusUnitario = bonusPos;
     previaPagamento += bonusUnitario;
 
     if (previaPagamento > TETO_RV_VENDEDOR) {

@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calculator, User, DollarSign, Target, TrendingUp, AlertCircle, Award, Lock, CheckCircle2 } from 'lucide-react';
 import { applyCurrencyMask } from '../utils/masks';
 import { METAS_PADRAO } from '../utils/constants';
-
-// URL base da API configurada via variável de ambiente (Vite) ou fallback para localhost
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { aplicarRegrasDeProduto, calcularFatorRV } from '../rules.js';
 
 export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {}, globalMonth }) => {
     const isVendedor = globalUser?.role === 'VENDEDOR';
@@ -96,13 +94,11 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
             let volBlPme = 0;
 
             try {
-                // 🚀 Correção de Performance: Em vez de dezenas de requisições simultâneas, fazemos 1 única requisição em LOTE
-                const batchResponse = await fetch(`${API_URL}/api/calcular-lote-receita`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sales: sellerSales, metricasVendedor: { pctAtingimentoMplay } })
-                });
-                const { resultados } = await batchResponse.json();
+                // Cálculo local usando o rules.js
+                const resultados = sellerSales.map(sale => ({
+                    id: sale.id,
+                    receitaBase: aplicarRegrasDeProduto(sale, { pctAtingimentoMplay })
+                }));
 
                 let totalComissao = 0;
                 let comissaoAparelho = 0;
@@ -113,7 +109,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     const receitaBase = resApi ? resApi.receitaBase : 0;
 
                     const pBase = String(sale.produtoBase || sale.produto || '').toUpperCase();
-                    const q = Number(sale.qtda) || 1;
+                    const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
                     const combo = String(sale.combo || '').toUpperCase();
                     const port = String(sale.portabilidade || '').toUpperCase();
                     
@@ -182,20 +178,13 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                 const pctAtingimentoTmAcessorio = metaTmAcessorio > 0 ? (tmAcessorio / metaTmAcessorio) * 100 : (tmAcessorio > 0 ? 100 : 0);
                 const pctAtingimentoBlPme = metaBlPme > 0 ? (volBlPme / metaBlPme) * 100 : (volBlPme > 0 ? 100 : 0);
 
-                // Pede o Fator RV Final para a API
-                const rvResponse = await fetch(`${API_URL}/api/calcular-rv`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        pctAtingimento, totalComissao, role: selectedUserRole,
-                        metricasExtras: {
-                            totalVendas, pctAtingimentoPos, pctAtingimentoUr, notaNps: 0,
-                            volPosPago, metaPosPago, volFibra, metaFibra, volTv, metaTv,
-                            pctAtingimentoAparelho, pctAtingimentoAcessorio, pctAtingimentoTmAcessorio, pctAtingimentoBlPme
-                        }
-                    })
-                });
-                const resultRV = await rvResponse.json();
+                // Pede o Fator RV Final calculando localmente
+                const metricasExtras = {
+                    totalVendas, pctAtingimentoPos, pctAtingimentoUr, notaNps: 0,
+                    volPosPago, metaPosPago, volFibra, metaFibra, volTv, metaTv,
+                    pctAtingimentoAparelho, pctAtingimentoAcessorio, pctAtingimentoTmAcessorio, pctAtingimentoBlPme
+                };
+                const resultRV = calcularFatorRV(pctAtingimento, totalComissao, metricasExtras);
 
                 if (isMounted) {
                     setMetrics({
@@ -591,7 +580,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                         {metrics.selectedUserRole === 'GEEK' ? (
                                             <p className="text-[11px] text-yellow-700 dark:text-yellow-400 font-medium leading-relaxed"><strong className="block mb-1 flex items-center gap-1"><Award size={12} /> Como ativar este Bônus?</strong> Como Assistente Tecnológico, você recebe <strong>R$ 235,00</strong> se bater 100% de Acessórios + Ticket Médio (TM), além de até <strong>R$ 300,00</strong> extras pelo atingimento de Banda Larga PME!</p>
                                         ) : (
-                                            <p className="text-[11px] text-yellow-700 dark:text-yellow-400 font-medium leading-relaxed"><strong className="block mb-1 flex items-center gap-1"><Award size={12} /> Como ativar este Bônus?</strong> Ao ultrapassar 100% da meta de TV, Fibra ou Pós-Pago, você recebe entre <strong>R$ 10,00 e R$ 15,00</strong> extras por cada venda adicional!</p>
+                                            <p className="text-[11px] text-yellow-700 dark:text-yellow-400 font-medium leading-relaxed"><strong className="block mb-1 flex items-center gap-1"><Award size={12} /> Como ativar este Bônus?</strong> Ao ultrapassar 100% da meta de Pós-Pago, você recebe entre <strong>R$ 10,00 e R$ 15,00</strong> extras por cada venda adicional!</p>
                                         )}
                                     </div>
                                 </div>

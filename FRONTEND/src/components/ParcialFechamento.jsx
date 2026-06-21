@@ -11,18 +11,23 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
     const { totals, dailyGoals } = useMemo(() => {
         const activeMetas = (goalsDB || {})[globalMonth] || {};
         const daysInMonth = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
-        const calcDailyGoal = (val) => Math.ceil((Number(val) || 0) / daysInMonth);
+        
+        const duMovel = Number(activeMetas.diasUteisMovel) || daysInMonth;
+        const duFibra = Number(activeMetas.diasUteisFibra) || daysInMonth;
+
+        const calcDailyGoalMovel = (val) => Math.ceil((Number(val) || 0) / duMovel);
+        const calcDailyGoalFibra = (val) => Math.ceil((Number(val) || 0) / duFibra);
         
         const dGoals = {
-            gross: calcDailyGoal(activeMetas.posTotal),
+            gross: calcDailyGoalMovel(activeMetas.posTotal),
             grossPme: 0,
-            aparelho: calcDailyGoal(activeMetas.aparelho),
-            seguro: calcDailyGoal(activeMetas.seguro),
-            acessorio: calcDailyGoal(Number(activeMetas.acessorio) + Number(activeMetas.pelicula)),
-            virtua: calcDailyGoal(activeMetas.fibra),
+            aparelho: calcDailyGoalMovel(activeMetas.aparelho),
+            seguro: calcDailyGoalMovel(activeMetas.seguro),
+            acessorio: calcDailyGoalMovel(Number(activeMetas.acessorio) + Number(activeMetas.pelicula)),
+            virtua: calcDailyGoalFibra(activeMetas.fibra),
             virtuaPme: 0,
-            tv: calcDailyGoal(activeMetas.tv),
-            mplay: calcDailyGoal(activeMetas.mplay)
+            tv: calcDailyGoalFibra(activeMetas.tv),
+            mplay: calcDailyGoalMovel(activeMetas.mplay)
         };
 
         const todaySales = (salesData || []).filter(s => {
@@ -45,7 +50,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
             const port = String(sale.portabilidade || '').toUpperCase();
             const rec = Number(sale.receita) || 0;
             const recBruto = Number(sale.valorBruto || sale.receita) || 0;
-            const q = Number(sale.qtda) || 1;
+            const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
             const adds = sale.adicionais || [];
 
             if (port === 'SIM') sumTotals.portabilidade += q;
