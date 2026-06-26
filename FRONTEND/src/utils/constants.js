@@ -2,10 +2,10 @@
 export const DEFAULT_PRICING = {
     lastUpdated: Date.now(),
     movel: [
-        { id: 'm1', nome: 'Controle 30GB', valor: 59.90, valorMulti: 49.90, valorMulti3p: 49.90 },
-        { id: 'm2', nome: 'Controle 35GB', valor: 69.90, valorMulti: 69.90, valorMulti3p: 69.90 },
-        { id: 'm3', nome: 'Controle 35GB Gaming', valor: 99.90, valorMulti: 99.90, valorMulti3p: 99.90 },
-        { id: 'm4', nome: 'Pós 50GB', valor: 124.90, valorMulti: 80.00, valorMulti3p: 80.00 },
+        { id: 'm1', nome: 'Controle 41GB', valor: 59.90, valorMulti: 49.90, valorMulti3p: 49.90 },
+        { id: 'm2', nome: 'Controle 46GB', valor: 69.90, valorMulti: 69.90, valorMulti3p: 69.90 },
+        { id: 'm3', nome: 'Controle 46GB Gaming', valor: 99.90, valorMulti: 99.90, valorMulti3p: 99.90 },
+        { id: 'm4', nome: 'Pós 60GB', valor: 124.90, valorMulti: 59.90, valorMulti3p: 59.90 },
         { id: 'm5', nome: 'Pós 50GB Gaming', valor: 164.90, valorMulti: 120.00, valorMulti3p: 120.00 },
         { id: 'm6', nome: 'Pós 100GB', valor: 179.90, valorMulti: 125.00, valorMulti3p: 125.00 },
         { id: 'm7', nome: 'Pós 150GB', valor: 239.90, valorMulti: 180.00, valorMulti3p: 180.00 },
@@ -40,15 +40,15 @@ export const DEFAULT_PRICING = {
 
 // Mantidos por retrocompatibilidade com componentes não atualizados ainda
 export const PRICING_MOVEL = {
-    'POS 50GB': { SINGLE: 124.90, MULTI: 80.00 },
+    'POS 60GB': { SINGLE: 124.90, MULTI: 59.90 },
     'POS 50GB GAMING': { SINGLE: 164.90, MULTI: 120.00 },
     'POS 100GB': { SINGLE: 179.90, MULTI: 125.00 },
     'POS 150GB': { SINGLE: 239.90, MULTI: 180.00 },
     'POS 200GB': { SINGLE: 339.90, MULTI: 240.00 },
     'POS 500GB': { SINGLE: 849.90, MULTI: 800.00 },
-    'CONTROLE 30GB': { SINGLE: 59.90, MULTI: 49.90 },
-    'CONTROLE 35GB': { SINGLE: 69.90, MULTI: 69.90 },
-    'CONTROLE 35GB GAMING': { SINGLE: 99.90, MULTI: 99.90 },
+    'CONTROLE 41GB': { SINGLE: 59.90, MULTI: 49.90 },
+    'CONTROLE 46GB': { SINGLE: 69.90, MULTI: 69.90 },
+    'CONTROLE 46GB GAMING': { SINGLE: 99.90, MULTI: 99.90 },
 };
 
 export const FIBRA_OPTIONS = [
@@ -122,8 +122,8 @@ export const SISTEMAS_LINKS = [
 export const VENDEDORES = ['MATHEUS', 'GISELE', 'BRUNA', 'DANILO', 'DAVID'];
 
 export const PRODUTOS = [
-    'POS 50GB', 'POS 50GB GAMING', 'POS 100GB', 'POS 150GB', 'POS 200GB', 'POS 500GB',
-    'CONTROLE 30GB', 'CONTROLE 35GB', 'CONTROLE 35GB GAMING', 'FIBRA', 'TV-BOX',
+    'POS 60GB', 'POS 50GB GAMING', 'POS 100GB', 'POS 150GB', 'POS 200GB', 'POS 500GB',
+    'CONTROLE 41GB', 'CONTROLE 46GB', 'CONTROLE 46GB GAMING', 'FIBRA', 'TV-BOX',
     'FIXO', 'CLARO FLEX', 'MESH', 'POS PME', 'FIBRA PME', 'SEGURO',
     'APARELHO', 'ACESSORIO', 'PELICULA', 'DEPENDENTE', 'BANDA LARGA'
 ];
@@ -140,8 +140,7 @@ export const APP_USERS = {
     'adm': { pass: 'DEV2026', role: 'ADMINISTRAÇÃO', name: 'Desenvolvedor Master' },
     'gerente': { pass: '00332890', role: 'GERENTE', name: 'Gerente Lider' },
     'senior': { pass: '00332890', role: 'SENIOR', name: 'Senior Vendas' },
-    'geek': { pass: '00332890', role: 'GEEK', name: 'Suporte Geek' },
-    '123654': { pass: '00332890', role: 'VENDEDOR', name: 'MATHEUS' }
+    'geek': { pass: '00332890', role: 'GEEK', name: 'Suporte Geek' }
 };
 
 export const HORARIOS_PADRAO = [

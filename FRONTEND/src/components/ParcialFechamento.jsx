@@ -285,6 +285,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
                                 <StatTextRow label="Banda Larga" value={String(totals.bl).padStart(2, '0')} />
                                 <StatTextRow label="Flex" value={String(totals.flex).padStart(2, '0')} />
                                 <StatTextRow label="Gross PME" value={String(totals.grossPme).padStart(2, '0')} />
+                                <StatTextRow label="M-PLAY" value={String(totals.mplay).padStart(2, '0')} highlight={true} />
                                 <StatTextRow label="Portabilidade" value={String(totals.portabilidade).padStart(2, '0')} highlight={true} />
                                 <StatTextRow label="Ativação / Migrações" value={`${String(totals.ativacao).padStart(2, '0')} / ${String(totals.migracao).padStart(2, '0')}`} highlight={true} />
                                 <div className="mt-2 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg p-2 flex justify-between items-center"><span className="text-[11px] font-bold text-[#E3000F] uppercase tracking-widest">Gross Total</span><span className="text-sm font-black text-[#E3000F]">{String(totals.grossDia).padStart(2, '0')}</span></div>

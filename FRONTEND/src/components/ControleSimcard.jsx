@@ -247,10 +247,17 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
         return 'GESTAO';
     });
     const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
-    const [batchData, setBatchData] = useState({ fisicos: '', esims: '', data: getTodaySP() });
+    const [batchData, setBatchData] = useState({ fisicos: '', esims: '', caids: '', data: getTodaySP() });
 
     const [selection, setSelection] = useState({ type: null, startRow: null, endRow: null, startCol: null, endCol: null, isFisico: null });
     const [isDragging, setIsDragging] = useState(false);
+
+    useEffect(() => {
+        if (isBatchModalOpen) {
+            setBatchData({ fisicos: '', esims: '', caids: '', data: getTodaySP() });
+        }
+    }, [isBatchModalOpen]);
+
     const [editingCell, setEditingCell] = useState(null);
     const [isOptionsCollapsed, setIsOptionsCollapsed] = useState(false);
     const selectionRef = useRef({ selection: null, data: null, currentTab: null, canModifySimcard, isFisico: null });
@@ -466,8 +473,13 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
         e.preventDefault(); 
         const linhasFisico = batchData.fisicos.split('\n').map(l => l.trim().replace(/\D/g, '').slice(0, 20)).filter(l => l);
         const linhasEsim = batchData.esims.split('\n').map(l => l.trim().replace(/\D/g, '').slice(0, 20)).filter(l => l);
+        const linhasCaid = (batchData.caids || '').split('\n').map(l => l.trim()).filter(l => l);
 
-        if (linhasFisico.length === 0 && linhasEsim.length === 0) return;
+        if (currentTab === 'ESTOQUE TVBOX') {
+            if (linhasCaid.length === 0) return;
+        } else {
+            if (linhasFisico.length === 0 && linhasEsim.length === 0) return;
+        }
 
         let shortDate = '';
         if (batchData.data) {
@@ -479,7 +491,6 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
         const baseId = -Date.now() * 1000;
 
         if (currentTab === 'ESTOQUE TVBOX') {
-            const linhasCaid = batchData.fisicos.split('\n').map(l => l.trim()).filter(l => l);
             linhasCaid.forEach((linha, i) => {
                 novosRegistros.push({
                     id: baseId - i,
@@ -873,10 +884,16 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             <div className="p-6 space-y-6">
                                 <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Data do Lote</label><input type="date" value={batchData.data} onChange={e => setBatchData({ ...batchData, data: e.target.value })} className="w-full md:w-1/2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg mt-1 outline-none focus:ring-1 focus:ring-[#E3000F]" /></div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                                    <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-neutral-200 dark:bg-neutral-700 -translate-x-1/2"></div>
-                                    <div className="md:pr-3"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote Físico (ICCID)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.fisicos} onChange={e => setBatchData({ ...batchData, fisicos: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;89550532010074916929&#10;89550532010074916930" /></div>
+                                    {currentTab !== 'ESTOQUE TVBOX' && (
+                                        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-neutral-200 dark:bg-neutral-700 -translate-x-1/2"></div>
+                                    )}
+                                    
+                                    {currentTab !== 'ESTOQUE TVBOX' && (
+                                        <div className="md:pr-3"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote Físico (ICCID)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.fisicos} onChange={e => setBatchData({ ...batchData, fisicos: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;89550532010074916929&#10;89550532010074916930" /></div>
+                                    )}
+
                                     {currentTab === 'ESTOQUE TVBOX' ? (
-                                        <div className="md:pl-3 pt-6 md:pt-0 border-t border-neutral-200 dark:border-neutral-700 md:border-0"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote TV BOX (CAID)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.fisicos} onChange={e => setBatchData({ ...batchData, fisicos: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;001234567890&#10;001234567891" /></div>
+                                        <div className="col-span-1 md:col-span-2"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote TV BOX (CAID)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.caids || ''} onChange={e => setBatchData({ ...batchData, caids: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;001234567890&#10;001234567891" /></div>
                                     ) : (
                                         <div className="md:pl-3 pt-6 md:pt-0 border-t border-neutral-200 dark:border-neutral-700 md:border-0"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1"><span>Lote Virtual (E-SIM)</span><span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span></label><textarea value={batchData.esims} onChange={e => setBatchData({ ...batchData, esims: e.target.value })} rows={8} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none" placeholder="Ex:&#10;89550532010074916929&#10;89550532010074916930" /></div>
                                     )}

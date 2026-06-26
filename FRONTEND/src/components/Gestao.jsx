@@ -2,16 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Target, Lock, Check, History, MonitorPlay, Smartphone, Home, Watch, ShieldCheck, Save, LineChart, Loader2, ClipboardList, Sparkles, TrendingDown, TrendingUp, Presentation, FileDown } from 'lucide-react';
 import { METAS_PADRAO } from '../utils/constants';
 import { applyCurrencyMask, parseCurrencyToFloat } from '../utils/masks';
-import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
+import { Indicadores } from './Indicadores.jsx';
 
 const STORE_ID = import.meta.env.VITE_STORE_ID || 'uniao_osasco';
 
 const safeMetasPadrao = METAS_PADRAO || { receita: 0, posTotal: 0, posPago: 0, controle: 0, urTotal: 0, fibra: 0, tv: 0, fixo: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, mesh: 0, trocafy: 0, mplay: 0 };
 
-export const Meta = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, currentYYYYMM, salesData = [], globalMonth }) => {
+export const Gestao = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, currentYYYYMM, salesData = [], usersDB, globalMonth }) => {
     const [selectedGoalMonth, setSelectedGoalMonth] = useState(currentYYYYMM);
     const [goalForm, setGoalForm] = useState({ ...safeMetasPadrao, receita: applyCurrencyMask(safeMetasPadrao.receita) });
     const [showGoalSuccess, setShowGoalSuccess] = useState(false);
@@ -30,11 +29,14 @@ export const Meta = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, cu
         const fetchHistory = async () => {
             setIsLoadingHistory(true);
             try {
-                const querySnapshot = await getDocs(collection(db, `vendas_${STORE_ID}`));
-                const data = querySnapshot.docs.map(doc => doc.data());
-                setAllHistoricalSales(data);
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                const res = await fetch(`${API_URL}/api/vendas?storeId=${STORE_ID}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setAllHistoricalSales(data);
+                }
             } catch (error) {
-                console.error("Erro ao buscar histórico no Firebase:", error);
+                console.error("Erro ao buscar histórico na Oracle API:", error);
             } finally {
                 setIsLoadingHistory(false);
             }
@@ -60,7 +62,6 @@ export const Meta = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, cu
         else value = value.replace(/\D/g, '');
         setGoalForm(prev => ({ ...prev, [name]: value }));
     };
-
     const saveGoals = (e) => {
         e.preventDefault();
         if (!canEdit) return;
@@ -456,6 +457,7 @@ export const Meta = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, cu
                         <button onClick={() => setMetaActiveSubTab('COMPARATIVO')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${metaActiveSubTab === 'COMPARATIVO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Histórico MxM</button>
                         <button onClick={() => setMetaActiveSubTab('SEMANAL')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${metaActiveSubTab === 'SEMANAL' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Histórico SXS</button>
                         <button onClick={() => setMetaActiveSubTab('DIAGNOSTICO')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${metaActiveSubTab === 'DIAGNOSTICO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Diagnóstico Semanal</button>
+                        <button onClick={() => setMetaActiveSubTab('INDICADORES')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${metaActiveSubTab === 'INDICADORES' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Indicadores</button>
                     </div>
 
                     {metaActiveSubTab === 'DEFINIR' && (
@@ -718,6 +720,8 @@ export const Meta = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, cu
                             </div>
                         </div>
                     )}
+
+                    {metaActiveSubTab === 'INDICADORES' && <Indicadores salesData={salesData} usersDB={usersDB} globalMonth={globalMonth} goalsDB={goalsDB} />}
 
                     {metaActiveSubTab === 'DIAGNOSTICO' && (
                         <div className="flex-1 overflow-auto p-6 md:p-8 bg-neutral-50/50 dark:bg-neutral-950/50">

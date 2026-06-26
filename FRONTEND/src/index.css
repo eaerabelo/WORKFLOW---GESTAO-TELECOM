@@ -12,6 +12,39 @@
   scrollbar-width: none;
 }
 
+/* Scrollbars customizadas finas e transparentes */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;  /* Vertical mais fina */
+  height: 8px; /* Horizontal mais grossa para facilitar o clique */
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --- BARRA VERTICAL (CINZA DISCRETA) --- */
+.custom-scrollbar::-webkit-scrollbar-thumb:vertical {
+  background-color: rgba(156, 163, 175, 0.2);
+  border-radius: 10px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:vertical {
+  background-color: rgba(156, 163, 175, 0.15);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:vertical:hover {
+  background-color: rgba(156, 163, 175, 0.4);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:vertical:hover {
+  background-color: rgba(156, 163, 175, 0.3);
+}
+
+/* --- BARRA HORIZONTAL (VERMELHA CLARO) --- */
+.custom-scrollbar::-webkit-scrollbar-thumb:horizontal {
+  background-color: rgba(227, 0, 15, 0.4);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:horizontal:hover {
+  background-color: rgba(227, 0, 15, 0.8);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

@@ -8,6 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 process.env.TNS_ADMIN = join(__dirname, 'wallet_painelclaro');
 
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+oracledb.fetchAsString = [oracledb.CLOB];
 
 // Variável para armazenar o pool de conexões
 let pool;

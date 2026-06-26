@@ -108,13 +108,13 @@ export function Tutorial({ onClose, defaultTab, globalUser }) {
 
     const modulosRaw = [
         'VENDA', 'CONTROLE-SIMCARD', 'FATOR RV', 'RESULTADO', 'COLABORADORES', 
-        'META', 'ESCALA DE TRABALHO', 'UR-RESIDENCIAL', 'PROPOSTA', 'REPROVADOS', 
+        'GESTÃO', 'ESCALA DE TRABALHO', 'UR-RESIDENCIAL', 'PROPOSTA', 'REPROVADOS', 
         'PARCIAL & FECHAMENTO', 'GEEK', 'SCRIPTS', 'CAMPANHAS', 'PRECIFICAÇÃO', 
         'SISTEMAS CLARO'
     ];
 
     const modulos = modulosRaw.filter(mod => {
-        if (mod === 'META' && !hasMetaAccess) return false;
+        if (mod === 'GESTÃO' && !hasMetaAccess) return false;
         if (mod === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return false;
         if (mod === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return false;
         if (mod === 'PRECIFICAÇÃO' && !hasPricingAccess) return false;

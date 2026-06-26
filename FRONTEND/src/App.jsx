@@ -6,15 +6,16 @@ import {
   Menu, X, Search, ChevronRight, UserPlus,
   Users, BarChart3, FileText, Database, Home,
   Target, AlertOctagon, Phone, CreditCard, Briefcase, AlertCircle, Check, Lock,
-  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap
+  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap, AlertTriangle, WifiOff, Map as MapIcon, Loader2
 } from 'lucide-react';
 
 // Importação de biblioteca de Toasts para feedback visual de ações em tela
 import toast, { Toaster } from 'react-hot-toast';
 
 // Acesso direto ao Firebase restaurado provisoriamente (Serverless Multi-Tenant)
-import { db } from './firebase';
-import { collection, doc, onSnapshot, writeBatch, setDoc } from 'firebase/firestore';
+// Acesso via API Oracle / Websocket
+import { io } from 'socket.io-client';
+const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
 // Importações de constantes como usuários padrões e base para as metas
 import {
@@ -32,7 +33,7 @@ import { EscalaTrabalho } from './components/EscalaTrabalho.jsx';
 import { Acessos } from './components/Acessos.jsx';
 import { Colaboradores } from './components/Colaboradores.jsx';
 import { ControleSimcard } from './components/ControleSimcard.jsx';
-import { Meta } from './components/Meta.jsx';
+import { Gestao } from './components/Gestao.jsx';
 import { Venda } from './components/Venda.jsx';
 import { Proposta } from './components/Proposta.jsx';
 import { UrResidencial } from './components/UrResidencial.jsx';
@@ -44,9 +45,9 @@ import { Geek, checkHasNewGeek } from './components/Geek.jsx';
 import { Scripts } from './components/Scripts.jsx';
 import { FatorRvv } from './components/FatorRvv.jsx';
 import { Campanha, checkHasNewCampanha } from './components/Campanha.jsx';
-import { Precificacao } from './components/Precificacao.jsx';
 import { Tutorial } from './components/Tutorial.jsx';
 import { Atualizacoes } from './components/Atualizacoes.jsx';
+import { AreaLojas } from './components/AreaLojas.jsx';
 import qrWifiImg from './assets/qr-wifi.png';
 import claroLogo from './assets/LOGO_CLARO.png.webp';
 
@@ -65,6 +66,10 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
   // Aba ativa selecionada no painel principal
   const [activeTab, setActiveTab] = useState('VENDA');
+
+  // --- ESTADOS DE MONITORAMENTO DO SERVIDOR ---
+  const [isOffline, setIsOffline] = useState(false);
+  const [dbSizeMB, setDbSizeMB] = useState(null);
 
   // --- TEMA (LIGHT/DARK) ---
   // Recupera o tema do localStorage e define o tema atual da interface
@@ -89,6 +94,39 @@ export default function App() {
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
+
+  // --- LÓGICA DE MONITORAMENTO (ALERTA VERMELHO) E TAMANHO DO BANCO ---
+  useEffect(() => {
+    // Escuta os eventos do Socket já existente
+    socket.on('disconnect', () => setIsOffline(true));
+    socket.on('connect', () => setIsOffline(false));
+
+    // Polling contínuo a cada 30 segundos para checar o banco
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/status`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsOffline(false);
+          if (data.oracleDBSizeMB !== undefined) {
+            setDbSizeMB(data.oracleDBSizeMB);
+          }
+        } else {
+          setIsOffline(true);
+        }
+      } catch (e) {
+        setIsOffline(true);
+      }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 30000);
+
+    return () => {
+      socket.off('disconnect');
+      socket.off('connect');
+      clearInterval(interval);
+    };
+  }, []);
 
   // --- ESTADOS DO SISTEMA DE LOGIN GLOBAL ---
   // Carrega o usuário da sessão a partir do LocalStorage com validade de 30 minutos
@@ -155,7 +193,7 @@ export default function App() {
       const h = now.getHours();
       
       // Horários designados para parciais
-      const targetHours = [10, 12, 14, 16, 18, 20];
+      const targetHours = [14, 16, 18];
       if (targetHours.includes(h)) {
         const lastHour = localStorage.getItem('lastParcialHour');
         const lastDate = localStorage.getItem('lastParcialDate');
@@ -263,7 +301,23 @@ export default function App() {
   const [monthlyOverrides, setMonthlyOverrides] = useState({});
   const [pricingData, setPricingData] = useState(DEFAULT_PRICING);
   // Define se o primeiro carregamento da Nuvem já foi finalizado
-  const [isFirebaseReady, setIsFirebaseReady] = useState(false);
+  const [isBackendReady, setisBackendReady] = useState(false);
+
+  // --- ESTADOS DE CONEXÃO (INTERNET E BANCO DE DADOS) ---
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [isSocketConnected, setIsSocketConnected] = useState(true);
+
+  // Monitora a conexão de internet do navegador do usuário
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // --- NOVIDADES GEEK ---
   const [hasNewGeek, setHasNewGeek] = useState(false);
@@ -291,7 +345,7 @@ export default function App() {
   // Adiciona notificação global se o Administrador atualizar as Metas de Vendas do mês vigente
   useEffect(() => {
     const metasLastUpdated = (goalsDB || {})[currentYYYYMM]?.lastUpdated;
-    if (metasLastUpdated && isFirebaseReady) {
+    if (metasLastUpdated && isBackendReady) {
       const savedLastUpdated = localStorage.getItem('last_seen_metas_update');
       if (!savedLastUpdated || metasLastUpdated > parseInt(savedLastUpdated, 10)) {
         if (savedLastUpdated) { 
@@ -310,12 +364,12 @@ export default function App() {
         localStorage.setItem('last_seen_metas_update', String(metasLastUpdated));
       }
     }
-  }, [goalsDB, currentYYYYMM, isFirebaseReady]);
+  }, [goalsDB, currentYYYYMM, isBackendReady]);
 
   // --- ALERTA DE PRECIFICAÇÃO ---
   useEffect(() => {
     const pricingLastUpdated = pricingData?.lastUpdated;
-    if (pricingLastUpdated && isFirebaseReady) {
+    if (pricingLastUpdated && isBackendReady) {
       const savedLastUpdated = localStorage.getItem('last_seen_pricing_update');
       const currentDataStr = JSON.stringify({ movel: pricingData?.movel || [], residencial: pricingData?.residencial || [] });
       const savedDataStr = localStorage.getItem('last_seen_pricing_data');
@@ -339,11 +393,11 @@ export default function App() {
         localStorage.setItem('last_seen_pricing_data', currentDataStr);
       }
     }
-  }, [pricingData, isFirebaseReady]);
+  }, [pricingData, isBackendReady]);
 
   // --- ALERTA DE CAMPANHAS (LANÇAMENTOS E VENCEDORES) ---
   useEffect(() => {
-    if (!isFirebaseReady || !campanhasData) return;
+    if (!isBackendReady || !campanhasData) return;
 
     const savedLastSeenStr = localStorage.getItem('last_seen_campanhas');
     const savedLastSeen = savedLastSeenStr ? JSON.parse(savedLastSeenStr) : null;
@@ -385,7 +439,7 @@ export default function App() {
     if (hasUpdates || savedLastSeen === null) {
       localStorage.setItem('last_seen_campanhas', JSON.stringify(currentSeen));
     }
-  }, [campanhasData, isFirebaseReady]);
+  }, [campanhasData, isBackendReady]);
 
   // --- ESTADOS DO DASHBOARD DE VENDAS ---
   // Seleção e visualização global de determinado colaborador
@@ -549,159 +603,166 @@ export default function App() {
     });
   };
 
-  // 1. CARREGAMENTO REAL-TIME SEPARADO (ON-SNAPSHOT NAS COLEÇÕES)
+  // 1. CARREGAMENTO REAL-TIME VIA ORACLE E SOCKET.IO
   useEffect(() => {
-    // 🚀 PASSO 0: CONFIGURAÇÕES GLOBAIS
-    const unsubConfig = onSnapshot(doc(db, 'lojas', `${STORE_ID}_config`), (snap) => {
-      if (snap.exists()) {
-        const d = snap.data();
-        const recoveredUsers = (d && d.usersDB && Object.keys(d.usersDB).length > 0) ? d.usersDB : safeAppUsers;
-        const recoveredGoals = (d && d.goalsDB && Object.keys(d.goalsDB).length > 0) ? d.goalsDB : { [currentYYYYMM]: { ...safeMetasPadrao } };
-        const recoveredPricing = (d && d.pricingData && Object.keys(d.pricingData).length > 0) ? d.pricingData : DEFAULT_PRICING;
+    const fetchAllData = async () => {
+      try {
+        const startStr = `${globalMonth}-01`;
+        const endStr = `${globalMonth}-31T23:59:59`;
+
+        const [vendasRes, configRes, estoqueRes, reprovadosRes, geekRes, campanhasRes] = await Promise.all([
+          fetch(`${API_URL}/api/vendas?storeId=${STORE_ID}&start=${startStr}&end=${endStr}&_t=${Date.now()}`),
+          fetch(`${API_URL}/api/config?storeId=${STORE_ID}`),
+          fetch(`${API_URL}/api/simcards?storeId=${STORE_ID}`),
+          fetch(`${API_URL}/api/reprovados?storeId=${STORE_ID}&start=${startStr}&end=${endStr}`),
+          fetch(`${API_URL}/api/geek-docs?storeId=${STORE_ID}`),
+          fetch(`${API_URL}/api/campanhas?storeId=${STORE_ID}`)
+        ]);
+
+        const vendas = await vendasRes.json();
+        const config = await configRes.json();
+        const estoque = await estoqueRes.json();
+        const reprovados = await reprovadosRes.json();
+        const geek = await geekRes.json();
+        const campanhas = await campanhasRes.json();
+
+        // Ordenações
+        const sortChronologically = (a, b) => {
+          const getTime = (d) => (typeof d === 'string') ? new Date(d.includes('/') ? d.split('/').reverse().join('-') : d.substring(0, 10)).getTime() : 0;
+          const timeA = getTime(a.data);
+          const timeB = getTime(b.data);
+          if (timeA !== timeB) return timeB - timeA;
+          return (b.id || 0) - (a.id || 0);
+        };
+
+        vendas.sort(sortChronologically);
+        reprovados.sort(sortChronologically);
+        estoque.sort((a, b) => b.id - a.id);
+        geek.sort((a, b) => b.id - a.id);
+        campanhas.sort((a, b) => b.id - a.id);
+
+        setSalesData(vendas);
+        cloudRefs.current.sales = vendas;
+
+        setSimcardsData(estoque);
+        cloudRefs.current.simcards = estoque;
+
+        setReprovadosData(reprovados);
+        cloudRefs.current.reprovados = reprovados;
+
+        setGeekDocs(geek);
+        cloudRefs.current.geekDocs = geek;
+
+        setCampanhasData(campanhas);
+        cloudRefs.current.campanhas = campanhas;
+
+        const recoveredUsers = (config && config.usersDB && Object.keys(config.usersDB).length > 0) ? config.usersDB : safeAppUsers;
+        const recoveredGoals = (config && config.goalsDB && Object.keys(config.goalsDB).length > 0) ? config.goalsDB : { [currentYYYYMM]: { ...safeMetasPadrao } };
+        const recoveredPricing = (config && config.pricingData && Object.keys(config.pricingData).length > 0) ? config.pricingData : DEFAULT_PRICING;
 
         setUsersDB(recoveredUsers);
         setGoalsDB(recoveredGoals);
         setPricingData(recoveredPricing);
-        if (d && d.scheduleData) setScheduleData(d.scheduleData);
-        if (d && d.monthlyOverrides) setMonthlyOverrides(d.monthlyOverrides);
+        if (config && config.scheduleData) setScheduleData(config.scheduleData);
+        if (config && config.monthlyOverrides) setMonthlyOverrides(config.monthlyOverrides);
 
         cloudRefs.current.config = JSON.stringify({
           usersDB: recoveredUsers,
           goalsDB: recoveredGoals,
-          scheduleData: d?.scheduleData || {},
-          monthlyOverrides: d?.monthlyOverrides || {},
+          scheduleData: config?.scheduleData || {},
+          monthlyOverrides: config?.monthlyOverrides || {},
           pricingData: recoveredPricing
         });
 
-        if (!isFirebaseReady) setIsFirebaseReady(true);
-      } else {
-        setIsFirebaseReady(true);
+        setisBackendReady(true);
+      } catch (err) {
+        console.error("Erro ao buscar dados da Oracle:", err);
+        setisBackendReady(true); // Evita tela de carregamento infinita se a API falhar
       }
-    });
-
-    const sortChronologically = (a, b) => {
-      const getTime = (d) => (typeof d === 'string') ? new Date(d.includes('/') ? d.split('/').reverse().join('-') : d.substring(0, 10)).getTime() : 0;
-      const timeA = getTime(a.data);
-      const timeB = getTime(b.data);
-      if (timeA !== timeB) return timeB - timeA;
-      return (b.id || 0) - (a.id || 0);
     };
 
-    // 🚀 PASSO 1: VENDAS (Filtrando no Frontend)
-    const unsubVendas = onSnapshot(collection(db, `vendas_${STORE_ID}`), (snap) => {
-      let data = snap.docs.map(doc => doc.data());
-      const startStr = `${globalMonth}-01`;
-      const endStr = `${globalMonth}-31T23:59:59`;
-      data = data.filter(v => {
-        let dateIso = v.data || '';
-        if (dateIso.includes('/')) dateIso = dateIso.split('/').reverse().join('-');
-        return dateIso >= startStr && dateIso <= endStr;
-      });
-      data.sort(sortChronologically);
-      setSalesData(data);
-      cloudRefs.current.sales = data;
-    });
+    fetchAllData();
 
-    // 🚀 PASSO 2: ESTOQUE
-    const unsubSimcards = onSnapshot(collection(db, `estoque_${STORE_ID}`), (snap) => {
-      let data = snap.docs.map(doc => doc.data());
-      data.sort((a, b) => b.id - a.id);
-      setSimcardsData(data);
-      cloudRefs.current.simcards = data;
-    });
+    // SOCKET.IO LISTENERS
+    socket.on('connect', () => setIsSocketConnected(true));
+    socket.on('disconnect', () => setIsSocketConnected(false));
+    socket.on('connect_error', () => setIsSocketConnected(false));
 
-    // 🚀 PASSO 3: REPROVADOS
-    const unsubReprovados = onSnapshot(collection(db, `reprovados_${STORE_ID}`), (snap) => {
-      let data = snap.docs.map(doc => doc.data());
-      const startStr = `${globalMonth}-01`;
-      const endStr = `${globalMonth}-31T23:59:59`;
-      data = data.filter(v => {
-        let dateIso = v.data || '';
-        if (dateIso.includes('/')) dateIso = dateIso.split('/').reverse().join('-');
-        return dateIso >= startStr && dateIso <= endStr;
-      });
-      data.sort(sortChronologically);
-      setReprovadosData(data);
-      cloudRefs.current.reprovados = data;
-    });
-
-    // 🚀 PASSO 4: GEEK DOCS
-    const unsubGeek = onSnapshot(collection(db, `geek_docs_${STORE_ID}`), (snap) => {
-      let data = snap.docs.map(doc => doc.data());
-      data.sort((a, b) => b.id - a.id);
-      setGeekDocs(data);
-      cloudRefs.current.geekDocs = data;
-    });
-
-    // 🚀 PASSO 5: CAMPANHAS
-    const unsubCampanhas = onSnapshot(collection(db, `campanhas_${STORE_ID}`), (snap) => {
-      let data = snap.docs.map(doc => doc.data());
-      data.sort((a, b) => b.id - a.id);
-      setCampanhasData(data);
-      cloudRefs.current.campanhas = data;
-    });
+    socket.on('vendas-atualizadas', (sId) => { if (sId === STORE_ID) fetchAllData(); });
+    socket.on('simcards-atualizados', (sId) => { if (sId === STORE_ID) fetchAllData(); });
+    socket.on('reprovados-atualizados', (sId) => { if (sId === STORE_ID) fetchAllData(); });
+    socket.on('geek-docs-atualizados', (sId) => { if (sId === STORE_ID) fetchAllData(); });
+    socket.on('campanhas-atualizadas', (sId) => { if (sId === STORE_ID) fetchAllData(); });
+    socket.on('config-atualizada', (sId) => { if (sId === STORE_ID) fetchAllData(); });
 
     return () => {
-      unsubConfig();
-      unsubVendas();
-      unsubSimcards();
-      unsubReprovados();
-      unsubGeek();
-      unsubCampanhas();
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connect_error');
+      socket.off('vendas-atualizadas');
+      socket.off('simcards-atualizados');
+      socket.off('reprovados-atualizados');
+      socket.off('geek-docs-atualizados');
+      socket.off('campanhas-atualizadas');
+      socket.off('config-atualizada');
     };
   }, [globalMonth]);
 
-  // 2. AUTO-SAVE NA NUVEM (Smart Diff - Salva apenas os documentos que foram alterados)
+  // 2. AUTO-SAVE NA API ORACLE (Smart Diff)
   useEffect(() => {
-    if (!isFirebaseReady) return;
+    if (!isBackendReady) return;
     const timeoutId = setTimeout(async () => {
       try {
         let hasChanges = false;
-
         const safeStr = (obj) => JSON.stringify(obj || {});
 
-        const syncCollectionFirebase = async (localArray, cloudArray, collectionName) => {
+        const syncCollectionOracle = async (localArray, cloudArray, endpoint) => {
           const localMap = new Map((localArray || []).map(item => [String(item.id), item]));
           const cloudMap = new Map((cloudArray || []).map(item => [String(item.id), item]));
 
-          const batch = writeBatch(db);
-          let batchCount = 0;
+          const upserts = [];
+          const deletes = [];
 
           localMap.forEach((item, id) => {
             const cloudItem = cloudMap.get(id);
             if (!cloudItem || safeStr(item) !== safeStr(cloudItem)) {
-              batch.set(doc(db, collectionName, String(id)), item);
-              batchCount++;
+              upserts.push(item);
             }
           });
 
           cloudMap.forEach((item, id) => {
             if (!localMap.has(id)) {
-              batch.delete(doc(db, collectionName, String(id)));
-              batchCount++;
+              deletes.push(id);
             }
           });
 
-          if (batchCount > 0) {
-            await batch.commit();
+          if (upserts.length > 0 || deletes.length > 0) {
+            await fetch(`${API_URL}/api/${endpoint}/sync`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ storeId: STORE_ID, upserts, deletes })
+            });
             hasChanges = true;
           }
         };
 
-        await syncCollectionFirebase(salesData, cloudRefs.current.sales, `vendas_${STORE_ID}`);
-        await syncCollectionFirebase(simcardsData, cloudRefs.current.simcards, `estoque_${STORE_ID}`);
-        await syncCollectionFirebase(reprovadosData, cloudRefs.current.reprovados, `reprovados_${STORE_ID}`);
-        await syncCollectionFirebase(geekDocs, cloudRefs.current.geekDocs, `geek_docs_${STORE_ID}`);
-        await syncCollectionFirebase(campanhasData, cloudRefs.current.campanhas, `campanhas_${STORE_ID}`);
+        await syncCollectionOracle(salesData, cloudRefs.current.sales, 'vendas');
+        await syncCollectionOracle(simcardsData, cloudRefs.current.simcards, 'simcards');
+        await syncCollectionOracle(reprovadosData, cloudRefs.current.reprovados, 'reprovados');
+        await syncCollectionOracle(geekDocs, cloudRefs.current.geekDocs, 'geek-docs');
+        await syncCollectionOracle(campanhasData, cloudRefs.current.campanhas, 'campanhas');
 
-        // 3. Salva Configurações Globais apenas se houver mudança nos privilégios
+        // Config Global
         const currentConfigStr = safeStr({ usersDB, goalsDB, scheduleData, monthlyOverrides, pricingData });
         if (cloudRefs.current.config !== '' && currentConfigStr !== cloudRefs.current.config) {
-          await setDoc(doc(db, 'lojas', `${STORE_ID}_config`), JSON.parse(currentConfigStr));
+          await fetch(`${API_URL}/api/config/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ storeId: STORE_ID, configData: JSON.parse(currentConfigStr) })
+          });
           cloudRefs.current.config = currentConfigStr;
         }
 
-        // 4. Dispara todas as diferenças para a nuvem de uma vez só!
         if (hasChanges) {
           cloudRefs.current.sales = [...salesData];
           cloudRefs.current.simcards = [...simcardsData];
@@ -710,11 +771,11 @@ export default function App() {
           cloudRefs.current.campanhas = [...campanhasData];
         }
       } catch (error) {
-        console.error("Erro no Auto-Save (Smart Diff):", error);
+        console.error("Erro no Auto-Save Oracle:", error);
       }
     }, 1500);
     return () => clearTimeout(timeoutId);
-  }, [salesData, simcardsData, reprovadosData, geekDocs, campanhasData, goalsDB, scheduleData, monthlyOverrides, usersDB, pricingData, isFirebaseReady]);
+  }, [salesData, simcardsData, reprovadosData, geekDocs, campanhasData, goalsDB, scheduleData, monthlyOverrides, usersDB, pricingData, isBackendReady]);
 
   // 3. TIMER DE SESSÃO EXPIRADA POR INATIVIDADE (30 MINUTOS)
   // Monitoramento de inatividade global do usuário, fazendo Logout automático caso ocioso
@@ -774,7 +835,7 @@ export default function App() {
   // 4. SINCRONIZAÇÃO EM TEMPO REAL DAS PERMISSÕES DO USUÁRIO ATUAL
   // Observa caso os cargos do usuário logado mudem no Banco e os desloga/altera na hora
   useEffect(() => {
-    if (globalUser && globalUser.username && isFirebaseReady) {
+    if (globalUser && globalUser.username && isBackendReady) {
       const currentDbUser = (usersDB || {})[globalUser.username] || safeAppUsers[globalUser.username];
       if (currentDbUser && currentDbUser.role !== globalUser.role) {
         if (currentDbUser.role === 'SUSPENDER') {
@@ -791,7 +852,7 @@ export default function App() {
         toast.success(`Atenção: Suas permissões foram atualizadas para ${currentDbUser.role}!`, { icon: '🔄' });
       }
     }
-  }, [usersDB, globalUser?.role, globalUser?.username, isFirebaseReady]);
+  }, [usersDB, globalUser?.role, globalUser?.username, isBackendReady]);
 
   // Abas Dinâmicas de acordo com o Menu Lateral
   const sidebarSections = [
@@ -801,7 +862,7 @@ export default function App() {
     { name: 'CONTROLE-SIMCARD', icon: <Phone size={18} /> },
     { name: 'ESCALA DE TRABALHO', icon: <CalendarDays size={18} /> },
     { name: 'FATOR RV', icon: <Calculator size={18} /> },
-    { name: 'META', icon: <Target size={18} /> },
+    { name: 'GESTÃO', icon: <Target size={18} /> },
     { name: 'PROPOSTA', icon: <FileText size={18} /> },
     { name: 'REPROVADOS', icon: <AlertOctagon size={18} /> },
     { name: 'RESULTADO', icon: <BarChart3 size={18} /> },
@@ -810,7 +871,7 @@ export default function App() {
     { name: 'UR-RESIDENCIAL', icon: <Briefcase size={18} /> },
     { name: 'VENDA', icon: <CreditCard size={18} /> },
     { name: 'PARCIAL & FECHAMENTO', icon: <ClipboardCheck size={18} /> },
-    { name: 'PRECIFICAÇÃO', icon: <DollarSign size={18} /> },
+    { name: 'ÁREA - LOJAS', icon: <MapIcon size={18} /> },
     { name: 'GEEK', icon: <Cpu size={18} /> }
   ].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -825,7 +886,6 @@ export default function App() {
   const hasMetaAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(globalUser?.role);
   const canEditMeta = ['GERENTE', 'SENIOR'].includes(globalUser?.role);
   const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(globalUser?.role);
-  const hasPricingAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(globalUser?.role);
   const isVendedor = globalUser?.role === 'VENDEDOR';
 
   // --- LÓGICA DE LOGIN ---
@@ -858,11 +918,11 @@ export default function App() {
       }
       setAuthModal({ isOpen: false, pendingAction: null, pendingId: null, requiredRole: null });
       setAuthCredentials({ user: '', password: '' });
-      if (activeTab === 'META' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(userMatched.role)) setActiveTab('VENDA');
+      if (activeTab === 'GESTÃO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'PARCIAL & FECHAMENTO' && !['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(userMatched.role)) setActiveTab('VENDA');
-      if (activeTab === 'PRECIFICAÇÃO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'ACESSOS' && userMatched.role !== 'GERENTE') setActiveTab('VENDA');
+      if (activeTab === 'ÁREA - LOJAS' && userMatched.role !== 'GERENTE') setActiveTab('VENDA');
     } else {
       setAuthError('Usuário ou senha incorretos. Acesso negado.');
     }
@@ -873,7 +933,7 @@ export default function App() {
     setGlobalUser(null);
     setSelectedSeller(null);
     localStorage.removeItem('sessionUser');
-    if (activeTab === 'META' || activeTab === 'ESCALA DE TRABALHO' || activeTab === 'ACESSOS' || activeTab === 'PARCIAL & FECHAMENTO' || activeTab === 'PRECIFICAÇÃO') setActiveTab('VENDA');
+    if (activeTab === 'GESTÃO' || activeTab === 'ESCALA DE TRABALHO' || activeTab === 'ACESSOS' || activeTab === 'PARCIAL & FECHAMENTO' || activeTab === 'ÁREA - LOJAS') setActiveTab('VENDA');
   };
 
 
@@ -881,11 +941,11 @@ export default function App() {
   // 🛡️ TELA DE BLOQUEIO INICIAL (LOGIN OBRIGATÓRIO)
   // =========================================================
   // Renderiza tela de Loading enquanto as Collections não estão preparadas
-  if (!isFirebaseReady) {
+  if (!isBackendReady) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-neutral-100 dark:bg-neutral-900 font-sans flex-col gap-4">
         <div className="w-12 h-12 border-4 border-[#E3000F] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm animate-pulse">Conectando ao Firebase e Sincronizando com a Nuvem...</p>
+        <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm animate-pulse">Conectando ao Servidor Principal (Oracle) e Sincronizando Banco de Dados...</p>
       </div>
     );
   }
@@ -934,11 +994,11 @@ export default function App() {
           <div className="px-4 mb-2 text-xs font-semibold text-neutral-400 dark:text-neutral-500 tracking-wider">MÓDULOS (A-Z)</div>
           <ul className="space-y-1 px-3">
             {sidebarSections.map((section) => {
-              if (section.name === 'META' && !hasMetaAccess) return null;
+              if (section.name === 'GESTÃO' && !hasMetaAccess) return null;
               if (section.name === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return null;
               if (section.name === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return null;
-              if (section.name === 'PRECIFICAÇÃO' && !hasPricingAccess) return null;
               if (section.name === 'ACESSOS' && !isGerente) return null;
+              if (section.name === 'ÁREA - LOJAS' && !isGerente) return null;
 
               return (
                 <li key={section.name}>
@@ -979,6 +1039,16 @@ export default function App() {
             })}
           </ul>
         </nav>
+
+        {/* MONITORAMENTO DO BANCO DE DADOS (ORACLE) */}
+        {dbSizeMB !== null && (
+          <div className="px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 shrink-0">
+            <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400" title="Tamanho atual do banco de dados na Oracle">
+              <Database size={14} className="text-[#E3000F]" />
+              <span>Oracle DB: {Number(dbSizeMB).toFixed(2)} MB</span>
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* Main Content Area */}
@@ -1142,8 +1212,8 @@ export default function App() {
         <div className="flex-1 overflow-auto print:overflow-visible print:h-auto print:block print:p-0 print:bg-white p-2 sm:p-4 lg:p-8 bg-neutral-50 dark:bg-neutral-950 print-area-wrapper transition-colors duration-500">
 
           {/* Roteador/Renderizador do Conteúdo Principal conforme as Abas ativas */}
-          {activeTab === 'META' ? (
-            <Meta hasAccess={hasMetaAccess} canEdit={canEditMeta} setAuthModal={setAuthModal} goalsDB={goalsDB} setGoalsDB={setGoalsDB} currentYYYYMM={currentYYYYMM} usersDB={usersDB} salesData={salesData} globalMonth={globalMonth} />
+          {activeTab === 'GESTÃO' ? (
+            <Gestao hasAccess={hasMetaAccess} canEdit={canEditMeta} setAuthModal={setAuthModal} goalsDB={goalsDB} setGoalsDB={setGoalsDB} currentYYYYMM={currentYYYYMM} usersDB={usersDB} salesData={salesData} globalMonth={globalMonth} />
           ) : activeTab === 'VENDA' ? (
             <Venda salesData={salesData} setSalesData={handleSetSalesData} isVendedor={isVendedor} globalUser={globalUser} usersDB={usersDB} globalMonth={globalMonth} />
           ) : activeTab === 'CONTROLE-SIMCARD' ? (
@@ -1164,6 +1234,8 @@ export default function App() {
             <Reprovados reprovadosData={reprovadosData} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} isGerente={isGerente} isVendedor={isVendedor} usersDB={usersDB} globalMonth={globalMonth} />
           ) : activeTab === 'RESULTADO' ? (
             <Resultado salesData={salesData} goalsDB={goalsDB} usersDB={usersDB} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
+          ) : activeTab === 'ÁREA - LOJAS' ? (
+            <AreaLojas globalMonth={globalMonth} />
           ) : activeTab === 'PARCIAL & FECHAMENTO' ? (
             <ParcialFechamento hasAccess={hasParcialAccess} salesData={salesData} goalsDB={goalsDB} globalMonth={globalMonth} />
           ) : activeTab === 'GEEK' ? (
@@ -1174,8 +1246,6 @@ export default function App() {
             <Campanha globalUser={globalUser} campanhasData={campanhasData} setCampanhasData={handleSetCampanhasData} updateUserProfile={updateUserProfile} />
           ) : activeTab === 'FATOR RV' ? (
             <FatorRvv globalUser={globalUser} salesData={salesData} goalsDB={goalsDB} usersDB={usersDB} globalMonth={globalMonth} />
-          ) : activeTab === 'PRECIFICAÇÃO' ? (
-            <Precificacao pricingData={pricingData} setPricingData={setPricingData} globalUser={globalUser} />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-500 animate-fade-in border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl bg-white/50 dark:bg-neutral-900/50">
               <Database size={48} className="mb-4 text-neutral-300" />
@@ -1285,7 +1355,7 @@ export default function App() {
       )}
 
       {/* MODAL DE ATUALIZAÇÕES (NOVIDADES) EXTRAÍDO */}
-      <Atualizacoes globalUser={globalUser} updateUserProfile={updateUserProfile} />
+      <Atualizacoes globalUser={globalUser} updateUserProfile={updateUserProfile} usersDB={usersDB} />
 
       {/* MODAL DE LEMBRETE UR RESIDENCIAL */}
       {isUrReminderModalOpen && (
@@ -1309,6 +1379,23 @@ export default function App() {
             >
               <Check size={18} /> CIENTE, IR PARA A ABA
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ALERTA GLOBAL DE FALHA DE CONEXÃO COM O SERVIDOR ORACLE */}
+      {isOffline && (
+        <div className="fixed inset-0 z-[9999] bg-[#E3000F] flex flex-col items-center justify-center text-white animate-fade-in p-6 text-center">
+          <div className="bg-white/10 p-6 rounded-full mb-6 backdrop-blur-sm animate-pulse">
+            <WifiOff size={80} className="text-white" />
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-black mb-4 tracking-tight drop-shadow-lg uppercase">SISTEMA OFFLINE</h1>
+          <p className="text-xl sm:text-2xl mb-8 max-w-2xl font-medium drop-shadow-md">
+            O painel perdeu a conexão com o servidor da Oracle ou você está sem internet.
+          </p>
+          <div className="flex items-center gap-3 bg-white/10 px-6 py-3 rounded-full backdrop-blur-sm">
+            <Loader2 size={20} className="animate-spin" />
+            <span className="font-semibold tracking-wider uppercase text-sm">Tentando reconectar automaticamente...</span>
           </div>
         </div>
       )}

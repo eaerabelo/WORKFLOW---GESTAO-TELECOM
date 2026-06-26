@@ -210,6 +210,13 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         });
     };
 
+    const convertToBRDate = (isoStr) => {
+        if (!isoStr || typeof isoStr !== 'string' || !isoStr.includes('-')) return isoStr;
+        const parts = isoStr.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return isoStr;
+    };
+
     const handleSubmitSale = (e) => {
         e.preventDefault();
         const { vendedor, data, qtda, portabilidade, produto, receita, cpf, contrato, mplay, adicionais, tipoOperacao, subOption } = formData;
@@ -242,6 +249,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         const novaVenda = {
             id: editingId || Date.now(),
             ...formData,
+            data: convertToBRDate(formData.data),
             adicionais: cleanedAdicionais,
             produtoBase: formData.produto,
             subOption: formData.subOption,
@@ -267,6 +275,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                 const vendaSeguro = {
                     ...formData,
                     id: Date.now() + 1,
+                    data: convertToBRDate(formData.data),
                     produtoBase: 'SEGURO',
                     subOption: formData.seguroOption,
                     produto: `SEGURO (${formData.seguroOption})`,
@@ -367,7 +376,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             const cleanedAdicionais = (item.produtoBase || item.produto) === 'APARELHO' ? itemAdicionais.filter(a => a !== 'SEGURO') : itemAdicionais;
 
             novasVendas.push({
-                id: currentId++, vendedor: item.vendedor, data: item.data, qtda: item.qtda, portabilidade: item.portabilidade, operadoraOrigem: item.operadoraOrigem, combo: item.combo,
+                id: currentId++, vendedor: item.vendedor, data: convertToBRDate(item.data), qtda: item.qtda, portabilidade: item.portabilidade, operadoraOrigem: item.operadoraOrigem, combo: item.combo,
                 produtoBase: item.produtoBase || item.produto, subOption: item.subOption, produto: item.subOption ? `${item.produtoBase || item.produto} (${item.subOption})` : (item.produtoBase || item.produto),
                 receita: valorComissao, comissao: valorComissao, valorBruto: receitaFloat, cpf: comboGlobal.cpf, contrato: isItemResidential ? comboGlobal.contrato : '-',
                 mplay: item.mplay, adicionais: cleanedAdicionais, tipoOperacao: item.tipoOperacao, seguroOption: item.seguroOption || '',
@@ -377,7 +386,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             if ((item.produtoBase || item.produto) === 'APARELHO' && item.seguroOption) {
                 const precoSeguro = calculatePrice('SEGURO', 'SINGLE', item.seguroOption) || 0;
                 novasVendas.unshift({
-                    id: currentId++, vendedor: item.vendedor, data: item.data, qtda: 1, portabilidade: 'NÃO', operadoraOrigem: '', combo: 'SINGLE', produtoBase: 'SEGURO',
+                    id: currentId++, vendedor: item.vendedor, data: convertToBRDate(item.data), qtda: 1, portabilidade: 'NÃO', operadoraOrigem: '', combo: 'SINGLE', produtoBase: 'SEGURO',
                     subOption: item.seguroOption, produto: `SEGURO (${item.seguroOption})`, receita: precoSeguro, comissao: precoSeguro, valorBruto: precoSeguro, cpf: comboGlobal.cpf,
                     contrato: '-', mplay: 'NÃO', adicionais: [], tipoOperacao: ''
                 });

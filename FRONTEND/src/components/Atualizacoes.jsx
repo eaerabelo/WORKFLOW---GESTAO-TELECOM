@@ -1,49 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, BookOpen, Zap, Lock, Users, Rocket, Sparkles, Check, Calculator, Edit3, CalendarDays, Megaphone, Globe, ClipboardList, Presentation, LineChart, FileText, Home, Printer } from 'lucide-react';
+import { Phone, BookOpen, Zap, Lock, Users, Rocket, Sparkles, Check, Calculator, Edit3, CalendarDays, Megaphone, Globe, ClipboardList, Presentation, LineChart, FileText, Home, Printer, Target, MonitorPlay } from 'lucide-react';
 
 // =========================================================================
 // 🚀 NOTAS DE ATUALIZAÇÃO DO SISTEMA (MODAL ÚNICO DE NOVIDADES)
 // =========================================================================
 const SYSTEM_UPDATES = {
-    version: 'v2.0.0', // Atualize a versão aqui para que a tela reapareça nas próximas atualizações
-    title: 'NOVOS RECURSOS E AJUSTES',
+    version: 'v2.2.0', // Atualizado para exibir as novas funcionalidades
+    title: 'NOVAS ATUALIZAÇÕES DO PAINEL',
     subtitle: 'Confira as últimas melhorias implementadas no painel para facilitar sua rotina.',
     features: [
         {
-            icon: <Calculator size={18} className="text-orange-500" />,
-            title: 'Ajuste na Regra de Bônus Unitário',
-            desc: 'O bônus do Fator RV que era pago ao ultrapassar 100% das metas de TV e Fibra foi removido. A partir de agora, apenas as vendas de Pós-Pago que excederem a meta continuarão gerando o valor extra.',
+            icon: <Target size={18} className="text-blue-500" />,
+            title: 'Novos Indicadores com Porcentagem de Meta',
+            desc: 'Os cartões de Indicadores agora mostram a porcentagem exata atingida por cada vendedor individualmente. Além disso, criamos a seção "LOJA - INDICADORES" no fim da página para você visualizar o desempenho consolidado de toda a equipe!',
+            roles: ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO']
+        },
+        {
+            icon: <CalendarDays size={18} className="text-green-500" />,
+            title: 'Datas no Padrão Brasileiro',
+            desc: 'Todas as telas, filtros e exportações agora utilizam nativamente o padrão brasileiro de datas (DD/MM/AAAA) até no Banco de Dados, resolvendo de vez problemas com relatórios e planilhas.',
             roles: ['ALL']
         },
         {
-            icon: <Home size={18} className="text-blue-500" />,
-            title: 'Novo Controle de Estoque TV Box',
-            desc: 'Uma nova aba dedicada foi adicionada ao "Controle de SIM Cards" para gerenciar o estoque de TV Box, permitindo o registro de CAID, data de entrada, vendedor e cliente.',
-            roles: ['ALL']
+            icon: <MonitorPlay size={18} className="text-purple-500" />,
+            title: 'Correção Inteligente no Estoque TV BOX',
+            desc: 'Foi corrigido um bug chato na inserção do Estoque de TV Box! O botão de salvar não trava mais, pois o formulário agora valida exclusivamente e de forma inteligente apenas os seus lotes de CAIDs.',
+            roles: ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'JOVEM APRENDIZ', 'GEEK']
         },
         {
-            icon: <Megaphone size={18} className="text-green-500" />,
-            title: 'Notificações Automáticas',
-            desc: 'O sistema agora envia lembretes automáticos para os Gestores sobre o envio da parcial de vendas e para os Vendedores sobre o acompanhamento de instalações residenciais (UR).',
+            icon: <Globe size={18} className="text-orange-500" />,
+            title: 'Sincronização Global de Telas',
+            desc: 'A tela de novidades (esta que você está lendo) agora está sincronizada no seu usuário. Não importa se você acessar pelo celular ou por outro computador: ao fechar o aviso, ele nunca mais aparecerá repetido.',
             roles: ['ALL']
         }
     ]
 };
 
-export function Atualizacoes({ globalUser, updateUserProfile }) {
-    const [isOpen, setIsOpen] = useState(() => {
-        const savedVersion = globalUser?.lastSeenUpdateVersion;
-        return savedVersion !== SYSTEM_UPDATES.version;
-    });
-
-    // Estado para travar o botão por 5 segundos
+export function Atualizacoes({ globalUser, updateUserProfile, usersDB = {} }) {
+    const [isOpen, setIsOpen] = useState(false);
     const [timeLeft, setTimeLeft] = useState(5);
+    const [hasBeenClosedInSession, setHasBeenClosedInSession] = useState(false);
 
     useEffect(() => {
-        if (globalUser) {
-            setIsOpen(globalUser.lastSeenUpdateVersion !== SYSTEM_UPDATES.version);
+        if (!globalUser || hasBeenClosedInSession) return;
+
+        // O banco de dados é a fonte da verdade. Se o usuário estiver em outro IP/PC,
+        // o globalUser (localStorage) pode estar desatualizado, mas o usersDB vai chegar fresquinho do servidor.
+        const dbUser = usersDB[globalUser.username];
+        const lastSeen = dbUser?.lastSeenUpdateVersion || globalUser.lastSeenUpdateVersion;
+
+        if (lastSeen !== SYSTEM_UPDATES.version) {
+            setIsOpen(true);
+        } else {
+            setIsOpen(false);
         }
-    }, [globalUser]);
+    }, [globalUser, usersDB, hasBeenClosedInSession]);
 
     useEffect(() => {
         if (isOpen && timeLeft > 0) {
@@ -55,6 +66,7 @@ export function Atualizacoes({ globalUser, updateUserProfile }) {
     const handleClose = () => {
         if (timeLeft > 0) return; // Bloqueia a ação se o timer não zerou
         updateUserProfile({ lastSeenUpdateVersion: SYSTEM_UPDATES.version });
+        setHasBeenClosedInSession(true);
         setIsOpen(false);
     };
 
@@ -85,7 +97,7 @@ export function Atualizacoes({ globalUser, updateUserProfile }) {
                 </div>
 
                 <div className="p-5 sm:p-6 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 shrink-0">
-                    <button 
+                    <button
                         onClick={handleClose}
                         disabled={timeLeft > 0}
                         className={`w-full py-3.5 text-white text-sm font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${timeLeft > 0 ? 'bg-neutral-400 dark:bg-neutral-700 cursor-not-allowed opacity-80' : 'bg-[#E3000F] hover:bg-red-700 hover:shadow-lg hover:shadow-red-500/30 hover:-translate-y-0.5'}`}

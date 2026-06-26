@@ -28,7 +28,7 @@ const getHolidayMessage = () => {
 
 export function Login({ usersDB, setUsersDB, onLogin }) {
     const [view, setView] = useState('LOGIN'); // 'LOGIN', 'REGISTER', 'FORGOT'
-    
+
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     useEffect(() => {
@@ -36,7 +36,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-    
+
     // Login State
     const [loginUser, setLoginUser] = useState('');
     const [loginPass, setLoginPass] = useState('');
@@ -64,13 +64,13 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
         const user = loginUser.toUpperCase();
         if (usersDB[user] && usersDB[user].pass === loginPass) {
             const userData = usersDB[user];
-            
+
             if (userData.role === 'SUSPENDER') {
                 toast.error('Conta suspensa temporariamente. Procure seu Gestor.');
                 return;
             }
             let isBirthday = false;
-            
+
             if (userData.birthDate) {
                 const today = new Date();
                 const [year, month, day] = userData.birthDate.split('-');
@@ -93,21 +93,24 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
     const handleRegister = (e) => {
         e.preventDefault();
-        
+
         if (!regName || !regUser || !regEmail || !regPhone || !regPass || !regConfirmPass || !regBirthDate || !regStoreCode) {
             toast.error('Preencha todos os campos.');
             return;
         }
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const isManagerSetup = urlParams.get('setup') === 'lideranca2026';
+
         const expectedStoreCode = import.meta.env.VITE_STORE_CODE || 'AT1M';
-        if (regStoreCode.toUpperCase() !== expectedStoreCode.toUpperCase()) {
+        if (!isManagerSetup && regStoreCode.toUpperCase() !== expectedStoreCode.toUpperCase()) {
             toast.error('Código da loja incorreto. Verifique com a liderança.');
             return;
         }
-        
+
         const userUpper = regUser.toUpperCase();
-        if (!userUpper.startsWith('9') && !userUpper.startsWith('F')) {
-            toast.error('O Login deve iniciar com 9 ou F. (Exemplo: 98765432 ou F123456)');
+        if (!userUpper.startsWith('9') && !userUpper.startsWith('F') && !userUpper.startsWith('T') && !userUpper.startsWith('Z')) {
+            toast.error('O Login deve iniciar com 9, F, T ou Z. (Exemplo: 98765432 ou F123456)');
             return;
         }
 
@@ -132,7 +135,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
         }
 
         // Validação de Conta Duplicada (Prevenção de múltiplos cadastros)
-        const duplicateUser = Object.values(usersDB).find(u => 
+        const duplicateUser = Object.values(usersDB).find(u =>
             (u.email && u.email.toLowerCase() === regEmail.toLowerCase()) ||
             (u.phone && u.phone === regPhone)
         );
@@ -160,15 +163,15 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             pass: regPass,
             phone: regPhone,
             birthDate: regBirthDate,
-            role: 'VENDEDOR' // default
+            role: isManagerSetup ? 'GERENTE' : 'VENDEDOR' // default
         };
 
         setUsersDB(prev => ({ ...prev, [userUpper]: newUser }));
-        toast.success('CADASTRO REALIZADO COM SUCESSO');
+        toast.success(isManagerSetup ? 'CONTA DE GERENTE CRIADA COM SUCESSO!' : 'CADASTRO REALIZADO COM SUCESSO');
         setView('LOGIN');
         setLoginUser(userUpper);
         setLoginPass('');
-        
+
         // Clear reg state
         setRegName('');
         setRegUser('');
@@ -187,9 +190,9 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             toast.error('Usuário não encontrado.');
             return;
         }
-        
+
         const dbEmail = usersDB[userUpper].email || '';
-        
+
         if (!dbEmail) {
             toast.error('Este usuário não possui um e-mail cadastrado para recuperação.');
             return;
@@ -202,9 +205,9 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
         const code = Math.floor(1000 + Math.random() * 9000).toString();
         setExpectedCode(code);
-        
+
         toast.loading('Enviando E-mail...', { id: 'emailToast' });
-        
+
         try {
             const templateParams = {
                 to_name: usersDB[userUpper].name,
@@ -217,7 +220,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
             // Integração Oficial EmailJS
             await emailjs.send('service_kpr1ksb', 'template_6wuyizw', templateParams, 'tRgcNBg8P036AeS_l');
-            
+
             toast.success(`E-mail enviado com sucesso!`, { id: 'emailToast' });
             setForgotStep(2);
         } catch (error) {
@@ -236,7 +239,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             toast.error('Informe a nova senha.');
             return;
         }
-        
+
         const userUpper = forgotUser.toUpperCase();
         setUsersDB(prev => ({
             ...prev,
@@ -258,7 +261,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
     const holidayMessage = getHolidayMessage();
 
     return (
-        <div 
+        <div
             className="min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-500 relative"
             style={{ backgroundImage: `url(${isMobile ? claroWallpaperMobile : claroWallpaper})`, backgroundSize: '100% 100%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundAttachment: 'fixed' }}
         >
@@ -300,7 +303,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                 <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Senha de Acesso" className="w-full pl-10 pr-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F]" />
                             </div>
                             <button type="submit" className="w-full py-3 bg-[#E3000F] text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Entrar</button>
-                            
+
                             <div className="flex flex-col gap-2 mt-4 text-center">
                                 <button type="button" onClick={() => setView('FORGOT')} className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-[#E3000F] dark:hover:text-[#E3000F] transition-colors">Esqueci minha senha</button>
                                 <div className="border-t border-neutral-100 dark:border-neutral-800 my-2"></div>

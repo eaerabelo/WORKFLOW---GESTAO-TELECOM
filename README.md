@@ -61,8 +61,10 @@ Módulo de produtividade contendo textos padronizados e pré-montados para facil
 
 ---
 
-## 🛡️ Usabilidade e Concorrência (Multi-usuários)
+## 🛡️ Usabilidade, Concorrência e Monitoramento (Multi-usuários)
 O sistema foi arquitetado para suportar múltiplos computadores operando simultaneamente no salão de vendas, garantindo uma experiência fluida e sem conflitos:
+- **Monitoramento de Conexão em Tempo Real:** Uma camada de segurança (Tela Vermelha de Bloqueio) intercepta imediatamente qualquer queda de internet ou do banco Oracle, impedindo que os usuários façam vendas "no escuro". O painel retoma sozinho assim que a rede voltar.
+- **Tamanho do Banco (Oracle DB):** O menu lateral exibe em tempo real o peso em MBs das tabelas do servidor Oracle para garantir transparência.
 - **Isolamento Visual (Local State):** A navegação entre abas, preenchimento de formulários e abertura de modais ocorrem na memória local. A tela de um usuário nunca sofre interferência ou troca inesperada pelas ações de outro.
 - **Collapse Dinâmico:** Seções recebem eventos de duplo clique (Double-Click) que recolhem filtros, proporcionando experiência Widescreen focada em dados.
 - **Notificações Globais:** Um "Sininho" de lembretes no topo da interface alerta os vendedores caso o Gestor altere as metas do mês atual, e notifica o gestor sobre os prazos fixos para envio da Parcial.
@@ -72,6 +74,7 @@ O sistema foi arquitetado para suportar múltiplos computadores operando simulta
 - **Anti-Conflito:** Janelas flutuantes e modais de edição em uso são protegidos contra fechamentos abruptos caso os dados de fundo sejam alterados por terceiros.
 - **Modo Noturno (Dark Mode):** Alternância com transição suave (500ms) de tema claro/escuro via ícones Sun/Moon, armazenada na máquina local, com contraste rigoroso de tabelas e leitura limpa das listagens.
 - **Acesso Rápido Wi-Fi:** Modal centralizado exibindo o QR Code da rede Wi-Fi da loja, disponível a qualquer momento no cabeçalho do painel para facilitar a conexão dos clientes na loja.
+- **Custom Scrollbar UI:** Barras de rolagem horizontais (vermelho Claro) mais táteis para facilitar o scroll em monitores touch, além de verticais refinadas (4px).
 
 ---
 

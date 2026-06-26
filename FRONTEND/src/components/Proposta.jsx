@@ -97,6 +97,11 @@ export function Proposta({ globalUser }) {
     const getGoogleMapsLink = () => {
         if (import.meta.env.VITE_STORE_MAPS_LINK) return import.meta.env.VITE_STORE_MAPS_LINK;
         const storeName = String(import.meta.env.VITE_STORE_NAME || '').toUpperCase();
+        if (storeName.includes('BUTANTA') || storeName.includes('BUTANTÃ')) return 'https://search.google.com/local/writereview?placeid=ChIJ5Te4Z6dfzpQR2NWYOS7zHAA';
+        if (storeName.includes('HIGIENOPOLIS') || storeName.includes('HIGIENÓPOLIS')) return 'https://search.google.com/local/writereview?placeid=ChIJhcScRwNZzpQR20v8KuLVfuM';
+        if (storeName.includes('WEST') || storeName.includes('WESTPLAZA')) return 'https://search.google.com/local/writereview?placeid=ChIJFU3C0BNZzpQR1eSw_0_S_tg';
+        if (storeName.includes('VILLA LOBOS') || storeName.includes('VILLALOBOS')) return 'https://search.google.com/local/writereview?placeid=ChIJV9BCCTtWzpQRJp6NxyRZUYA';
+        if (storeName.includes('BOURBON')) return 'https://search.google.com/local/writereview?placeid=ChIJ49F-S-xXzpQRGTdoxAHuQJ0';
         if (storeName.includes('LAPA')) return 'https://search.google.com/local/writereview?placeid=ChIJwUEAiID5zpQRLIBc3-xg08E';
         if (storeName.includes('CALCADAO') || storeName.includes('CALÇADÃO')) return 'https://search.google.com/local/writereview?placeid=ChIJDWJK6_P_zpQRcdtyBhR7Tik';
         return 'https://search.google.com/local/writereview?placeid=ChIJs-b9A0L_zpQR0mJDaZfyy-Y'; // Default (União Osasco)
@@ -271,7 +276,7 @@ export function Proposta({ globalUser }) {
             } else if (p.includes('100GB')) {
                 bens.push({ icon: <Globe size={14} />, title: 'Roaming Américas', desc: 'Navegue em 44 países.' });
                 bens.push({ icon: <ShieldCheck size={14} />, title: 'Nuvem 200GB', desc: 'iCloud (200GB) ou Google One (200GB).' });
-            } else if (p.includes('50GB') || p.includes('GAMING')) {
+            } else if (p.includes('50GB') || p.includes('60GB') || p.includes('GAMING')) {
                 bens.push({ icon: <Globe size={14} />, title: 'Roaming Américas', desc: 'Navegue em 44 países.' });
                 bens.push({ icon: <ShieldCheck size={14} />, title: 'Nuvem', desc: 'iCloud (50GB) ou Google One (100GB).' });
             }

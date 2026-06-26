@@ -11,6 +11,21 @@
         ],
         "osasco": [
           "painel-claro"
+        ],
+        "westplaza": [
+          "painel-claro-westplaza"
+        ],
+        "bourbon": [
+          "painel-claro-bourbon"
+        ],
+        "villalobos": [
+          "painel-claro-villalobos"
+        ],
+        "higienopolis": [
+          "painel-claro-higienopolis"
+        ],
+        "butanta": [
+          "painel-claro-butanta"
         ]
       }
     }

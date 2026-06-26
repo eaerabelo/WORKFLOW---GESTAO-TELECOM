@@ -17,6 +17,36 @@
       "public": "dist",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [ { "source": "**", "destination": "/index.html" } ]
+    },
+    {
+      "target": "westplaza",
+      "public": "dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [ { "source": "**", "destination": "/index.html" } ]
+    },
+    {
+      "target": "bourbon",
+      "public": "dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [ { "source": "**", "destination": "/index.html" } ]
+    },
+    {
+      "target": "villalobos",
+      "public": "dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [ { "source": "**", "destination": "/index.html" } ]
+    },
+    {
+      "target": "higienopolis",
+      "public": "dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [ { "source": "**", "destination": "/index.html" } ]
+    },
+    {
+      "target": "butanta",
+      "public": "dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [ { "source": "**", "destination": "/index.html" } ]
     }
   ]
 }
