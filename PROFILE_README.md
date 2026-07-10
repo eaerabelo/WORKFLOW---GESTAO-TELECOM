@@ -8,7 +8,7 @@
 ---
 
 ### 🚀 About Me
-I'm a Full Stack Developer with a unique background in commercial operations. Currently working as a Sales Consultant at Claro and studying Systems Analysis and Development, **I leverage my hands-on business experience to build software that solves real-world operational bottlenecks.**
+I'm a Full Stack Developer with a unique background in commercial operations. Currently working as a Sales Consultant in Telecom and studying Systems Analysis and Development, **I leverage my hands-on business experience to build software that solves real-world operational bottlenecks.**
 
 I specialize in building real-time, scalable Web Applications using the JavaScript/TypeScript ecosystem. I'm passionate about automation, clean code, and creating tools that boost team productivity.
 
@@ -25,7 +25,7 @@ I specialize in building real-time, scalable Web Applications using the JavaScri
   <img alt="Tailwind CSS" src="https://img.shields.io/badge/-Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white"/>
   <br>
   <!-- Data & Real-Time -->
-  <img alt="Firebase" src="https://img.shields.io/badge/-Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black"/>
+  <img alt="Oracle Database" src="https://img.shields.io/badge/-Oracle-F80000?style=for-the-badge&logo=oracle&logoColor=white"/>
   <img alt="Socket.io" src="https://img.shields.io/badge/-Socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white"/>
   <img alt="MySQL" src="https://img.shields.io/badge/-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/>
   <img alt="MongoDB" src="https://img.shields.io/badge/-MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white"/>
@@ -42,8 +42,8 @@ I specialize in building real-time, scalable Web Applications using the JavaScri
 
 | Project | Description | Tech Stack |
 |----------|--------------|------|
-| 🏆 **Painel de Gestão Claro** | A robust **Multi-Tenant SPA** built to manage sales, goals, shifts, and inventory for telecom stores. Features include **Real-Time Data Sync** (WebSockets), **Gemini AI Integration** for sales arguments, automated WhatsApp reporting, and a custom Role-Based Access Control (RBAC) security layer. | `React`, `Node.js`, `Firebase`, `Socket.io`, `Tailwind` |
-| 📋 **JS Questionnaire** | Interactive form with complex validations and dynamic DOM manipulation. | `JavaScript`, `HTML5`, `CSS3` |
+| 🏆 **Painel de Gestão de Vendas** | A robust **Multi-Tenant SPA** built to manage sales, goals, shifts, and inventory for telecom stores. Features include **Real-Time Data Sync** (WebSockets), **Gemini AI Integration** for sales arguments, automated WhatsApp reporting, and a custom Role-Based Access Control (RBAC) security layer. | `React`, `Node.js`, `Oracle SQL`, `Socket.io`, `Tailwind` |
+| 📋 **JS Questionnaire** | Interactive form with complex validations and DOM manipulation. | `JavaScript`, `HTML5`, `CSS3` |
 | 🚀 **Full Stack Udemy Journey** | A collection of projects exploring Node.js APIs, React, Redux, and Design Patterns. | `Node.js`, `React`, `Express` |
 
 ---
