@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, Save, X, DollarSign, Smartphone, Home, RotateCcw, Lock, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { DEFAULT_PRICING } from '../utils/constants';
+
 import { applyCurrencyMask, parseCurrencyToFloat } from '../utils/masks';
 
 export function Precificacao({ pricingData, setPricingData, globalUser }) {
@@ -87,7 +87,7 @@ export function Precificacao({ pricingData, setPricingData, globalUser }) {
     const handleRestoreDefaults = () => {
         if (!window.confirm('Isso apagará suas alterações atuais e restaurará todos os produtos padrões do sistema. Deseja continuar?')) return;
         setPricingData({
-            ...DEFAULT_PRICING,
+            ...(pricingData || {}),
             lastUpdated: Date.now()
         });
         toast.success('Produtos padrões restaurados com sucesso!');

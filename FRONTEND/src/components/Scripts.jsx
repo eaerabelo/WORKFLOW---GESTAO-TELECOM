@@ -1,5 +1,7 @@
 import React from 'react';
+import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { Copy } from 'lucide-react';
+import { getCurrentStoreName } from '../utils/stores.js';
 import toast from 'react-hot-toast';
 
 export const Scripts = ({ globalUser, usersDB = {} }) => {
@@ -19,7 +21,7 @@ export const Scripts = ({ globalUser, usersDB = {} }) => {
     }
 
     // Busca o nome da Loja pela variável de ambiente do Render/Vite
-    const storeName = import.meta.env.VITE_STORE_NAME || 'LOJA CLARO';
+    const storeName = getCurrentStoreName();
 
     // Assinatura padrão configurada de forma dinâmica
     const signature = `${userName} / GERENTE - ${gerenteName} / ${storeName}`;

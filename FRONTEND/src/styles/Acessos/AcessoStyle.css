@@ -1,0 +1,133 @@
+/* =========================================
+   ESTILOS GLOBAIS DA TELA DE ACESSOS
+   Usando @apply para manter o padrão Tailwind
+========================================= */
+
+.acessos-container {
+    @apply h-full flex flex-col bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden transition-colors;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.acessos-locked-container {
+    @apply h-full flex flex-col items-center justify-center bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 p-6 transition-colors;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.acessos-header {
+    @apply p-6 border-b border-neutral-100 dark:border-neutral-800 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-neutral-900 dark:bg-neutral-950 text-white shrink-0;
+}
+
+.acessos-icon-box {
+    @apply w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white;
+}
+
+.acessos-kpi-box {
+    @apply flex-1 sm:flex-none bg-neutral-800 dark:bg-neutral-900 px-4 py-1.5 rounded-lg border border-neutral-700 flex flex-col items-center justify-center shadow-sm;
+}
+
+.acessos-kpi-label {
+    @apply text-[9px] text-neutral-400 font-bold uppercase tracking-wider mb-0.5;
+}
+
+.acessos-kpi-value {
+    @apply text-sm font-black text-white leading-none;
+}
+
+/* =========================================
+   BOTÕES DA TELA
+========================================= */
+.acessos-btn-primary {
+    @apply w-full sm:w-auto justify-center px-4 py-2 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm font-bold rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors shadow-sm flex items-center gap-2;
+}
+
+.acessos-btn-danger {
+    @apply w-full sm:w-auto justify-center px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2;
+}
+
+.acessos-btn-unlock {
+    @apply w-full py-3 bg-neutral-900 text-white font-bold rounded-xl hover:bg-black transition-colors shadow-lg flex items-center justify-center gap-2;
+}
+
+/* =========================================
+   ÁREA DA TABELA
+========================================= */
+.acessos-content-area {
+    @apply flex-1 overflow-auto p-4 sm:p-6 bg-neutral-50/50 dark:bg-neutral-950/50;
+}
+
+.acessos-table-container {
+    @apply bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-x-auto shadow-sm;
+}
+
+.acessos-table {
+    @apply w-full text-left whitespace-nowrap text-sm min-w-max;
+}
+
+.acessos-thead {
+    @apply bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-bold uppercase text-[10px] tracking-wider;
+}
+
+.acessos-tr-hover {
+    @apply hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors;
+}
+
+.acessos-td {
+    @apply px-6 py-3;
+}
+
+.acessos-td-bold {
+    @apply px-6 py-3 font-bold text-neutral-800 dark:text-neutral-200;
+}
+
+.acessos-td-mono {
+    @apply px-6 py-3 font-mono text-neutral-600 dark:text-neutral-400;
+}
+
+.acessos-td-muted {
+    @apply px-6 py-3 text-neutral-500 dark:text-neutral-500;
+}
+
+/* =========================================
+   INPUTS E MODAL
+========================================= */
+.acessos-input-field {
+    @apply w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-neutral-900;
+}
+
+.acessos-input-field-mono {
+    @apply w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-neutral-900 font-mono;
+}
+
+.acessos-label {
+    @apply text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider;
+}
+
+.acessos-modal-overlay {
+    @apply fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center;
+}
+
+@media print {
+    .acessos-modal-overlay {
+        display: none !important;
+    }
+}
+
+.acessos-modal-content {
+    @apply bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-md transition-colors;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.acessos-btn-action-edit {
+    @apply p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors;
+}
+
+.acessos-btn-action-delete {
+    @apply p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors;
+}
+
+/* =========================================
+   FÉRIAS (NOVOS ESTILOS)
+========================================= */
+.acessos-badge-ferias {
+    @apply px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-[#E3000F] text-white animate-pulse;
+}

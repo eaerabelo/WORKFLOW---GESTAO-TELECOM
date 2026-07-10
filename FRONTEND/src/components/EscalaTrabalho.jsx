@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { Unlock, Lock, Printer, Edit3, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { HORARIOS_PADRAO } from '../utils/constants';
 
@@ -10,7 +11,7 @@ export const EscalaTrabalho = ({ canEditSchedule, scheduleData, setScheduleData,
     const SAFE_VENDEDORES = [...new Set(
         Object.values(usersDB || {})
             .filter(u => u?.role !== 'SUSPENDER')
-            .map(u => String(u?.name || '').split(' ')[0])
+            .map(u => String(u?.name || ""))
             .filter(Boolean)
     )].sort();
     const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
@@ -135,7 +136,7 @@ export const EscalaTrabalho = ({ canEditSchedule, scheduleData, setScheduleData,
                                 {SAFE_VENDEDORES.map((seller) => (
                                     <tr key={`weekly-${seller}`} className="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
                                         <td className="border border-neutral-200 dark:border-neutral-800 px-4 py-3 font-bold text-neutral-800 dark:text-neutral-200 text-left bg-neutral-50/50 dark:bg-neutral-800/50">
-                                            {seller}
+                                            {getFirstName(seller)}
                                         </td>
                                         {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'].map(day => (
                                             <td
@@ -201,7 +202,7 @@ export const EscalaTrabalho = ({ canEditSchedule, scheduleData, setScheduleData,
                                 {SAFE_VENDEDORES.map((seller) => (
                                     <tr key={`month-${seller}`} className="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
                                         <td className="border border-neutral-200 dark:border-neutral-800 px-4 py-3 print:px-2 print:py-1 font-bold text-neutral-800 dark:text-neutral-200 text-left bg-neutral-50 dark:bg-neutral-800 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)] dark:shadow-[2px_0_5px_rgba(0,0,0,0.2)]">
-                                            {seller}
+                                            {getFirstName(seller)}
                                         </td>
                                         {Array.from({ length: getLocalDaysInMonth(currentMonthDate.getFullYear(), currentMonthDate.getMonth()) }).map((_, i) => {
                                             const d = i + 1;

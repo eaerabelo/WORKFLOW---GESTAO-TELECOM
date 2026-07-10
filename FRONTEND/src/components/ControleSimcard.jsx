@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { Lock, Unlock, FileSpreadsheet, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
@@ -39,7 +40,7 @@ const getColumns = (tab, isFisico) => {
         return [iccidField, 'data', 'dataPortin', 'numPortado', 'numProvisorio', 'ov', 'codAutorizacao', 'cpf', 'plano', 'cliente', 'observacao'];
     } else if (tab === 'ESTOQUE TVBOX') {
         return ['caid', 'data', 'vendedor', 'cliente', 'cpf', 'observacao'];
-    } else if (tab === 'FALTAS') {
+    } else if (tab === 'ACOMPANHAR') {
         return [iccidField, 'data', 'vendedor', 'ov', 'codAutorizacao', 'cpf', 'plano', 'cliente', 'observacao'];
     } else {
         return [iccidField, 'data', 'ov', 'codAutorizacao', 'cpf', 'plano', 'cliente', 'pagamento', 'valor', 'observacao'];
@@ -236,13 +237,13 @@ const SelectableCell = ({ item, idx, colIdx, field, value, tipoLote, canModifySi
 export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcard, globalUser, setAuthModal, usersDB = {} }) => {
     const safeVendedores = Object.values(usersDB || {})
         .filter(u => !u?.role || u?.role === 'VENDEDOR')
-        .map(u => String(u?.name || '').split(' ')[0])
+        .map(u => String(u?.name || ""))
         .filter(Boolean);
 
     const [simcardActiveTab, setSimcardActiveTab] = useState(() => {
         if (globalUser?.role === 'VENDEDOR' && globalUser?.name) {
-            const sellerFirstName = String(globalUser.name || '').split(' ')[0];
-            if (safeVendedores.includes(sellerFirstName)) return sellerFirstName;
+            const sellerFullName = String(globalUser.name || "");
+            if (safeVendedores.includes(sellerFullName)) return sellerFullName;
         }
         return 'GESTAO';
     });
@@ -262,7 +263,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
     const [isOptionsCollapsed, setIsOptionsCollapsed] = useState(false);
     const selectionRef = useRef({ selection: null, data: null, currentTab: null, canModifySimcard, isFisico: null });
 
-    const dynamicTabs = ['GESTAO', ...safeVendedores, 'SOBREPOSIÇÃO', 'FALTAS', 'ESTOQUE TVBOX'];
+    const dynamicTabs = ['GESTAO', ...safeVendedores, 'SOBREPOSIÇÃO', 'ACOMPANHAR', 'ESTOQUE TVBOX'];
     const currentTab = dynamicTabs.includes(simcardActiveTab) ? simcardActiveTab : (dynamicTabs[0] || 'GESTAO');
 
     useEffect(() => {
@@ -582,9 +583,19 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
     const handleChangeColor = (id, newColor) => {
         if (!canModifySimcard) return;
-        setSimcardsData(prev => prev.map(item => 
-            item.id === id ? { ...item, statusColor: newColor } : item
-        ));
+        setSimcardsData(prev => prev.map(item => {
+            if (item.id === id) {
+                // Ao marcar vermelho ou amarelo, move automaticamente para a aba ACOMPANHAR (para limpar as tabelas)
+                if ((newColor === 'red' || newColor === 'yellow') && item.owner !== 'ACOMPANHAR' && item.owner !== 'SOBREPOSIÇÃO' && item.owner !== 'ESTOQUE TVBOX') {
+                    toast.success('Movido automaticamente para a aba ACOMPANHAR!');
+                    const obsSuffix = item.vendedor ? `(De: ${getFirstName(item.vendedor)})` : `(De: ${item.owner})`;
+                    const sep = item.observacao ? ' ' : '';
+                    return { ...item, statusColor: newColor, owner: 'ACOMPANHAR', observacao: (item.observacao || '') + sep + obsSuffix };
+                }
+                return { ...item, statusColor: newColor };
+            }
+            return item;
+        }));
     };
 
     const handleExportExcel = () => {
@@ -621,7 +632,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     'Cliente': item.cliente,
                     'Observação': item.observacao || '-'
                 };
-            } else if (currentTab === 'FALTAS') {
+            } else if (currentTab === 'ACOMPANHAR') {
                 return {
                     'SIMCARD/E-SIM': isFisico ? item.simcardFisico : item.simcardEsim,
                     'Data': item.data,
@@ -689,7 +700,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
                 <div className="flex overflow-x-auto bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 scrollbar-hide shrink-0" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
                     {dynamicTabs.map(tab => (
-                        <button key={tab} onClick={() => setSimcardActiveTab(tab)} className={`px-5 py-3 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors border-b-[3px] ${currentTab === tab ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>{tab}</button>
+                        <button key={tab} onClick={() => setSimcardActiveTab(tab)} className={`px-5 py-3 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors border-b-[3px] ${currentTab === tab ? "border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900" : "border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"}`}>{["GESTAO", "SOBREPOSIÇÃO", "ACOMPANHAR", "ESTOQUE TVBOX"].includes(tab) ? tab : getFirstName(tab)}</button>
                     ))}
                 </div>
 
@@ -730,7 +741,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                             <tr key={item.id} className={`transition-colors group hover:bg-red-50/40 dark:hover:bg-red-900/20`}>
                                                 <EditableCell item={item} idx={idx} colIdx={0} field="caid" value={item.caid} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="upper" className="font-mono text-xs" showLock={true} />
                                                 <EditableCell item={item} idx={idx} colIdx={1} field="data" value={item.data} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="data" placeholder="DD/MM/AA" align="center" className="text-neutral-600 dark:text-neutral-400" />
-                                                <EditableCell item={item} idx={idx} colIdx={2} field="vendedor" value={item.vendedor} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
+                                                <EditableCell item={item} idx={idx} colIdx={2} field="vendedor" value={item.vendedor ? item.vendedor.split(' ')[0] : ''} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
                                                 <EditableCell item={item} idx={idx} colIdx={3} field="cliente" value={item.cliente} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="upper" className="uppercase text-neutral-800 dark:text-neutral-200" />
                                                 <EditableCell item={item} idx={idx} colIdx={4} field="cpf" value={item.cpf} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} maskType="cpf" className="font-mono text-neutral-800 dark:text-neutral-200" />
                                                 <EditableCell item={item} idx={idx} colIdx={5} field="observacao" value={item.observacao} tipoLote="TVBOX" canModifySimcard={canModifySimcard} selection={selection} setSelection={setSelection} isDragging={isDragging} setIsDragging={setIsDragging} editingCell={editingCell} setEditingCell={setEditingCell} handleInlineChange={handleInlineChange} handleProtectedClick={handleProtectedClick} className="text-neutral-600 dark:text-neutral-400" />
@@ -829,7 +840,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                                                 </>
                                                             )}
                                                             {currentTab === 'FALTAS' && (
-                                                                <EditableCell {...commonProps} field="vendedor" colIdx={2} value={item.vendedor} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
+                                                                <EditableCell {...commonProps} field="vendedor" colIdx={2} value={item.vendedor ? item.vendedor.split(' ')[0] : ''} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
                                                             )}
                                                             <EditableCell {...commonProps} field="ov" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 5 : (currentTab === 'FALTAS' ? 3 : 2)} value={item.ov} maskType="upper" className="font-mono text-neutral-800 dark:text-neutral-200" />
                                                             <EditableCell {...commonProps} field="codAutorizacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 6 : (currentTab === 'FALTAS' ? 4 : 3)} value={item.codAutorizacao} className="font-mono text-neutral-800 dark:text-neutral-200" />
@@ -860,6 +871,9 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                                                     </button>
                                                                 </div>
                                                             </td>
+                                             3+
+                                             
+                                             
                                                         </tr>
                                                     );
                                                 })

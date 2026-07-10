@@ -26,3 +26,22 @@ dist-ssr
 *.sln
 *.sw?
 .env.local
+
+# Credentials, SSH keys, and Oracle wallets
+*.key
+wallet_painelclaro/
+Wallet_painelclaro.zip
+serviceAccountKey.json
+BACKEND/serviceAccountKey.json
+BACKEND/wallet_painelclaro/
+BACKEND/Wallet_painelclaro.zip
+
+# Binaries and archives
+cloudflared.exe
+*.zip
+*.tar.gz
+*.tgz
+
+# Logs
+requests.log
+BACKEND/requests.log

@@ -54,7 +54,7 @@ export const Indicadores = ({ salesData = [], usersDB = {}, globalMonth, goalsDB
             if (!sellerMap[v]) {
                 sellerMap[v] = {
                     nomeCompleto: v,
-                    primeiroNome: v.split(' ')[0],
+                    primeiroNome: v,
                     receita: 0,
                     gross: 0,
                     posTotal: 0,
@@ -71,7 +71,13 @@ export const Indicadores = ({ salesData = [], usersDB = {}, globalMonth, goalsDB
             }
 
             let valString = sale.receita !== undefined ? sale.receita : sale.valor_total;
-            if (typeof valString === 'string') valString = valString.replace(/R\$\s?/, '').replace(/\./g, '').replace(',', '.');
+            if (typeof valString === 'string') {
+                if (valString.includes(',')) {
+                    valString = valString.replace(/R\$\s?/, '').replace(/\./g, '').replace(',', '.');
+                } else {
+                    valString = valString.replace(/R\$\s?/, '');
+                }
+            }
             let receitaNum = Number(valString || 0);
             if (isNaN(receitaNum)) receitaNum = 0;
             sellerMap[v].receita += receitaNum;
@@ -124,13 +130,64 @@ export const Indicadores = ({ salesData = [], usersDB = {}, globalMonth, goalsDB
             receita: 0, gross: 0, posTotal: 0, controleTotal: 0, urTotal: 0,
             fibra: 0, tv: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, mplay: 0
         };
-        metricsByVendedor.forEach(v => {
-            Object.keys(result).forEach(k => {
-                result[k] += v[k];
-            });
+        currentMonthSales.forEach(sale => {
+            let valString = sale.receita !== undefined ? sale.receita : sale.valor_total;
+            if (typeof valString === 'string') {
+                if (valString.includes(',')) {
+                    valString = valString.replace(/R\$\s?/, '').replace(/\./g, '').replace(',', '.');
+                } else {
+                    valString = valString.replace(/R\$\s?/, '');
+                }
+            }
+            let receitaNum = Number(valString || 0);
+            if (isNaN(receitaNum)) receitaNum = 0;
+            result.receita += receitaNum;
+
+            const pBase = String(sale.produtoBase || sale.produto || '').toUpperCase();
+            const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
+            const op = String(sale.tipoOperacao || sale.operacao || '').toUpperCase();
+            const sub = String(sale.subOption || sale.subProduto || '').toUpperCase();
+
+            let isGross = false, isPos = false, isControle = false;
+
+            if (pBase.includes('PME') && !pBase.includes('FIBRA')) {
+                isGross = true;
+            } else if (pBase.includes('PÓS') || pBase.includes('POS')) {
+                isGross = true;
+                isPos = true;
+            } else if (pBase.includes('CONTROLE')) {
+                isGross = true;
+                isControle = true;
+            } else if (pBase.includes('DEPENDENTE') || pBase.includes('DEP')) {
+                isGross = true;
+            } else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('CLARO NET VIRTUA')) {
+                isGross = true;
+            } else if (pBase.includes('FLEX')) {
+                isGross = true;
+            } else if (pBase.includes('FIBRA')) {
+                result.fibra += q;
+                result.urTotal += q;
+            } else if (pBase.includes('TV') && !pBase.includes('TV BOX') && !pBase.includes('TV-BOX')) {
+                result.tv += q;
+                result.urTotal += q;
+            } else if (pBase.includes('APARELHO')) {
+                result.aparelho += q;
+            } else if (pBase.includes('ACESSÓRIO') || pBase.includes('ACESSORIO')) {
+                result.acessorio += q;
+            } else if (pBase.includes('PELÍCULA') || pBase.includes('PELICULA')) {
+                result.pelicula += q;
+            } else if (pBase.includes('SEGURO')) {
+                result.seguro += q;
+            } else if (pBase.includes('M-PLAY') || pBase.includes('MPLAY')) {
+                result.mplay += q;
+            }
+
+            if (isGross) result.gross += q;
+            if (isPos) result.posTotal += q;
+            if (isControle) result.controleTotal += q;
         });
         return result;
-    }, [metricsByVendedor]);
+    }, [currentMonthSales]);
 
     const getRankedSellers = (key) => {
         return [...metricsByVendedor]

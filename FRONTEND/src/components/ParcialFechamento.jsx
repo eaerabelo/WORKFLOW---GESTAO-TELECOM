@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ClipboardCheck, ShieldAlert, MessageCircle, Clock, Hash, Store, Target, CheckCircle2, FileText, Send } from 'lucide-react';
 import { getTodaySP, applyCurrencyMask } from '../utils/masks';
+import { getCurrentStoreName } from '../utils/stores';
 
 export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, globalMonth }) {
     const todayISO = getTodaySP();
@@ -107,7 +108,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
     }, [salesData, globalMonth, goalsDB, todayISO, dateBr, yearStr, monthStr]);
 
     const [form, setForm] = useState({
-        hora: '18', area: '3', loja: import.meta.env.VITE_STORE_NAME || 'Shopping União', senhas: '',
+        hora: '18', area: '3', loja: getCurrentStoreName(), senhas: '',
         senhasFechamento: '', churnOs: '', acaoBoost: '',
         metaGross: '', feitoGross: '', metaGrossPme: '', feitoGrossPme: '',
         metaAparelho: '', feitoAparelho: '', metaSeguro: '', feitoSeguro: '',
@@ -157,7 +158,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
         const conversao = totals.aparelho > 0 ? Math.round((totals.seguro / totals.aparelho) * 100) : 0;
         const ticketMedio = totals.qtdaAcessorioFisico > 0 ? totals.receitaAcessorio / totals.qtdaAcessorioFisico : 0;
 
-        const text = `${import.meta.env.VITE_STORE_NAME || 'Loja União Osasco'} \n\n` +
+        const text = `${getCurrentStoreName()} \n\n` +
             `Data: ${dateBr}\n\n` +
             `Senhas: ${pad(form.senhasFechamento)}\n\n` +
             `Conta Total: ${pad(totals.contaTotal)}\n` +

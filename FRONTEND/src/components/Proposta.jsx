@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { Calculator, Smartphone, Wifi, Tv, Phone, User, CheckCircle2, Download, Router, ShieldCheck, Zap, Star, Globe, MonitorPlay, MessageCircle, Camera, Plus, X, Tag, ArrowRightLeft } from 'lucide-react';
+import wfLogo from '../assets/logo_WF.png';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
-import { PRICING_MOVEL, FIBRA_OPTIONS, TV_BOX_OPTIONS, FIXO_OPTIONS, MESH_OPTIONS } from '../utils/constants';
+import { usePricing } from '../context/PricingContext';
 import { applyCurrencyMask, parseCurrencyToFloat } from '../utils/masks';
-import viteLogo from '../assets/vite.svg';
+import { getCurrentStoreName, getCurrentStoreCode } from '../utils/stores.js';
 
 export const StreamingBadges = () => (
     <div className="flex flex-wrap gap-1.5 mt-1.5 mb-1">
@@ -18,6 +20,8 @@ export const StreamingBadges = () => (
 );
 
 export function Proposta({ globalUser }) {
+    const { pricingData, loading } = usePricing();
+    const { PRICING_MOVEL = {}, FIBRA_OPTIONS = [], TV_BOX_OPTIONS = [], FIXO_OPTIONS = [], MESH_OPTIONS = [] } = pricingData || {};
     const [activeTab, setActiveTab] = useState('PROPOSTA');
     const [cliente, setCliente] = useState('');
     const [movel, setMovel] = useState('');
@@ -95,8 +99,7 @@ export function Proposta({ globalUser }) {
     else extendedTvPlans.push({ label: 'TV TOP (RENT)', prices: { SINGLE: 110.00, MULTI: 110.00, 'MULTI 3P': 110.00 } });
 
     const getGoogleMapsLink = () => {
-        if (import.meta.env.VITE_STORE_MAPS_LINK) return import.meta.env.VITE_STORE_MAPS_LINK;
-        const storeName = String(import.meta.env.VITE_STORE_NAME || '').toUpperCase();
+        const storeName = String(getCurrentStoreName()).toUpperCase();
         if (storeName.includes('BUTANTA') || storeName.includes('BUTANTÃ')) return 'https://search.google.com/local/writereview?placeid=ChIJ5Te4Z6dfzpQR2NWYOS7zHAA';
         if (storeName.includes('HIGIENOPOLIS') || storeName.includes('HIGIENÓPOLIS')) return 'https://search.google.com/local/writereview?placeid=ChIJhcScRwNZzpQR20v8KuLVfuM';
         if (storeName.includes('WEST') || storeName.includes('WESTPLAZA')) return 'https://search.google.com/local/writereview?placeid=ChIJFU3C0BNZzpQR1eSw_0_S_tg';
@@ -202,8 +205,8 @@ export function Proposta({ globalUser }) {
             });
         }
 
-        text += `\n_Consultor(a): ${globalUser?.name ? globalUser.name.split(' ')[0] : 'Equipe Claro'}_\n`;
-        text += `_${import.meta.env.VITE_STORE_NAME || 'Loja Claro'}_`;
+        text += `\n_Consultor(a): ${globalUser?.name ? globalUser.name : 'Equipe Claro'}_\n`;
+        text += `_${getCurrentStoreName()}_\n`;
 
         const encodedText = encodeURIComponent(text);
         window.open(`https://wa.me/?text=${encodedText}`, '_blank');
@@ -245,7 +248,7 @@ export function Proposta({ globalUser }) {
     const handlePrint = () => {
         const isDark = document.documentElement.classList.contains('dark');
         if (isDark) document.documentElement.classList.remove('dark');
-        
+
         setTimeout(() => {
             window.print();
             if (isDark) document.documentElement.classList.add('dark');
@@ -272,7 +275,8 @@ export function Proposta({ globalUser }) {
             } else if (p.includes('150GB')) {
                 bens.push({ icon: <User size={14} />, title: 'Dependentes', desc: 'No Multi ou Individual 1 dep incluso.' });
                 bens.push({ icon: <Globe size={14} />, title: 'Roaming Américas e Europa', desc: 'Navegue em 88 países.' });
-                bens.push({ icon: <ShieldCheck size={14} />, title: 'Nuvem 2TB', desc: 'iCloud (2TB) ou Google One + Gemini Pro (2TB).' });
+                bens.push({ icon: <ShieldCheck size={14} /
+                >, title: 'Nuvem 2TB', desc: 'iCloud (2TB) ou Google One + Gemini Pro (2TB).' });
             } else if (p.includes('100GB')) {
                 bens.push({ icon: <Globe size={14} />, title: 'Roaming Américas', desc: 'Navegue em 44 países.' });
                 bens.push({ icon: <ShieldCheck size={14} />, title: 'Nuvem 200GB', desc: 'iCloud (200GB) ou Google One (200GB).' });
@@ -364,12 +368,12 @@ export function Proposta({ globalUser }) {
         const valPontoAdicional = getPrice('PONTO_ADICIONAL', comp.pontoAdicional) * (parseInt(comp.qtdPontoAdicional, 10) || 1);
         const valFixo = getPrice('FIXO', comp.fixo) * (parseInt(comp.qtdFixo, 10) || 1);
         const valMesh = getPrice('MESH', comp.mesh);
-        
+
         const total = valMovel + valLinhaInclusa + valLinhaAdicional + valFibra + valTv + valPontoAdicional + valFixo + valMesh;
         const semCombo = type !== 'SINGLE' && total > 0 ? total * 1.35 : 0;
         const economia = semCombo > 0 ? (semCombo - total) * 12 : 0;
         const bens = getBeneficiosList(comp.movel, comp.fibra, comp.tv, comp.linhaInclusa, comp.linhaAdicional, comp.pontoAdicional, comp.fixo, comp.mesh, '');
-        
+
         return { type, valMovel, valLinhaInclusa, valLinhaAdicional, valFibra, valTv, valPontoAdicional, valFixo, valMesh, total, semCombo, economia, bens };
     };
 
@@ -411,7 +415,7 @@ export function Proposta({ globalUser }) {
 
     return (
         <div className="h-full flex flex-col animate-fade-in transition-colors">
-            
+
             <div className="flex border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 shrink-0 overflow-x-auto scrollbar-hide rounded-t-2xl no-print" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
                 <button onClick={() => setActiveTab('PROPOSTA')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-[3px] ${activeTab === 'PROPOSTA' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>Proposta Comercial</button>
                 <button onClick={() => setActiveTab('COMPARADOR')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-[3px] ${activeTab === 'COMPARADOR' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>Comparador Planos</button>
@@ -421,7 +425,7 @@ export function Proposta({ globalUser }) {
             <div className="flex-1 overflow-y-auto p-4 md:p-6 print:p-0 print:overflow-visible bg-neutral-50/50 dark:bg-neutral-950/50">
                 {activeTab === 'PROPOSTA' && (
                     <div className="flex flex-col lg:flex-row gap-6 min-h-full print:block print:h-auto print:overflow-visible">
-                        
+
                         {/* COLUNA ESQUERDA: FORMULÁRIO DE SIMULAÇÃO (Oculto na impressão) */}
                         <div className="w-full lg:w-[35%] flex flex-col gap-4 no-print pr-2 pb-8">
                             <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 p-5 shrink-0">
@@ -567,7 +571,7 @@ export function Proposta({ globalUser }) {
                         </div>
 
                         {/* Botão Flutuante WhatsApp (Canto Inferior Direito) */}
-                        <button 
+                        <button
                             onClick={handleWhatsAppShare}
                             disabled={valorTotal === 0 && valAparelhoBruto === 0}
                             className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-[0_10px_25px_rgba(37,211,102,0.4)] hover:bg-[#1EBE57] hover:scale-110 transition-all flex items-center justify-center no-print disabled:opacity-0 disabled:pointer-events-none group"
@@ -591,56 +595,56 @@ export function Proposta({ globalUser }) {
                             </div>
 
                             <div id="printable-proposal" className="print-proposta bg-white dark:bg-neutral-900 w-full rounded-2xl shadow-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden print:overflow-visible relative print:shadow-none print:border print:border-neutral-300 print:w-full print:block print:max-w-[190mm] print:mx-auto" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
-                    
+
                                 {/* Cabeçalho da Proposta */}
                                 <div className="bg-neutral-900 dark:bg-neutral-950 text-white p-5 md:p-6 relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E3000F] via-red-500 to-[#E3000F]"></div>
                                     <div className="flex items-center gap-4 text-center sm:text-left">
                                         <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg shrink-0 mx-auto sm:mx-0">
-                                            <img src={viteLogo} alt="Logo" className="w-8 h-8 object-contain" />
+                                            <img src={wfLogo} alt="Logo" className="w-8 h-8 object-contain" />
                                         </div>
                                         <div>
-                                            <h2 className="text-xl md:text-2xl font-bold mb-0.5 tracking-tight">PROPOSTA {import.meta.env.VITE_STORE_NAME || 'Loja Claro'}</h2>
+                                            <h2 className="text-xl md:text-2xl font-bold mb-0.5 tracking-tight">PROPOSTA {getCurrentStoreName()}</h2>
                                             <p className="text-neutral-400 text-[11px] md:text-xs font-medium uppercase tracking-wider">Data: {new Date().toLocaleDateString('pt-BR')} &bull; Validade: 24 HORAS</p>
-                                        </div>   
+                                        </div>
                                     </div>
                                     <div className="text-right hidden sm:block">
                                         <div className="text-sm font-bold">{globalUser?.name || 'Consultor Claro'}</div>
-                                        <div className="text-[10px] text-neutral-400 uppercase tracking-widest">{import.meta.env.VITE_STORE_NAME || 'Loja Claro'} - {import.meta.env.VITE_STORE_CODE || ''}</div>   
+                                        <div className="text-[10px] text-neutral-400 uppercase tracking-widest">{getCurrentStoreName()} - {getCurrentStoreCode()}</div>
                                     </div>
-                                </div>   
+                                </div>
 
-                                {/* Corpo da Proposta: 2 Colunas Lado a Lado (Serviços | Benefícios) */}   
+                                {/* Corpo da Proposta: 2 Colunas Lado a Lado (Serviços | Benefícios) */}
                                 <div className="grid grid-cols-1 md:grid-cols-12 bg-white dark:bg-neutral-900 print:grid-cols-12">
-                           
+
                                     {/* Coluna 1: Cliente e Resumo de Serviços (Lado Esquerdo) */}
-                                    <div className="md:col-span-7 lg:col-span-7 print:col-span-7 p-6 print:p-5 flex flex-col border-b md:border-b-0 md:border-r border-neutral-100 dark:border-neutral-800 print:border-r print:border-neutral-200">   
+                                    <div className="md:col-span-7 lg:col-span-7 print:col-span-7 p-6 print:p-5 flex flex-col border-b md:border-b-0 md:border-r border-neutral-100 dark:border-neutral-800 print:border-r print:border-neutral-200">
                                         <div className="mb-4 pb-4 border-b border-neutral-100 dark:border-neutral-800 border-dashed">
-                                            <div className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-0.5">Proposta para</div>   
+                                            <div className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-0.5">Proposta para</div>
                                             <div className="text-lg font-bold text-neutral-800 dark:text-neutral-100 leading-tight">{cliente || 'Cliente Não Informado'}</div>
-                                        </div>   
+                                        </div>
 
                                         <div className="space-y-2 mb-4">
                                             <div className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1">Resumo dos Serviços</div>
-                                   
+
                                             {movel && (
                                                 <div className="flex justify-between items-center group">
                                                     <div className="flex items-center gap-3"><div className="w-7 h-7 rounded-lg bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-400 border border-neutral-100 dark:border-neutral-700"><Smartphone size={14} /></div><span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 leading-tight w-36 sm:w-auto truncate">{movel}</span></div>
-                                                    <span className="text-xs font-black text-neutral-900 dark:text-white">{applyCurrencyMask(valMovel)}</span>   
+                                                    <span className="text-xs font-black text-neutral-900 dark:text-white">{applyCurrencyMask(valMovel)}</span>
                                                 </div>
                                             )}
                                             {linhaInclusa && (
-                                                <div className="flex justify-between items-center group">   
+                                                <div className="flex justify-between items-center group">
                                                     <div className="flex items-center gap-3"><div className="w-7 h-7 rounded-lg bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-400 border border-neutral-100 dark:border-neutral-700"><User size={14} /></div><span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 leading-tight w-36 sm:w-auto truncate">{qtdLinhaInclusa > 1 ? `${qtdLinhaInclusa}x ` : ''}{linhaInclusa}</span></div>
-                                                    <span className="text-xs font-black text-neutral-900 dark:text-white">{applyCurrencyMask(valLinhaInclusa)}</span>   
+                                                    <span className="text-xs font-black text-neutral-900 dark:text-white">{applyCurrencyMask(valLinhaInclusa)}</span>
                                                 </div>
-                                            )}   
+                                            )}
                                             {linhaAdicional && (
-                                                <div className="flex justify-between items-center group">   
+                                                <div className="flex justify-between items-center group">
                                                     <div className="flex items-center gap-3"><div className="w-7 h-7 rounded-lg bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-400 border border-neutral-100 dark:border-neutral-700"><User size={14} /></div><span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 leading-tight w-36 sm:w-auto truncate">{qtdLinhaAdicional > 1 ? `${qtdLinhaAdicional}x ` : ''}{linhaAdicional}</span></div>
                                                     <span className="text-xs font-black text-neutral-900 dark:text-white">{applyCurrencyMask(valLinhaAdicional)}</span>
                                                 </div>
-                                            )}   
+                                            )}
                                             {fibra && (
                                                 <div className="flex justify-between items-center group">
                                                     <div className="flex items-center gap-3"><div className="w-7 h-7 rounded-lg bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-400 border border-neutral-100 dark:border-neutral-700"><Wifi size={14} /></div><span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 leading-tight w-36 sm:w-auto truncate">{qtdFibra > 1 ? `${qtdFibra}x ` : ''}Fibra {fibra}</span></div>
@@ -683,7 +687,7 @@ export function Proposta({ globalUser }) {
                                                 </div>
                                             )}
                                         </div>
-                        
+
                                         <div className="bg-neutral-50 dark:bg-neutral-800 rounded-xl p-4 border border-neutral-200 dark:border-neutral-700">
                                             {comboType !== 'SINGLE' && valorTotal > 0 && (
                                                 <div className="flex justify-between items-center mb-2 pb-2 border-b border-neutral-200/60 dark:border-neutral-700">
@@ -705,7 +709,7 @@ export function Proposta({ globalUser }) {
                                                 <div className="mb-3">
                                                     <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest block mb-0.5">Oferta Exclusiva de Aparelho{aparelhos.length > 1 ? 's' : ''}</span>
                                                 </div>
-                        
+
                                                 <div className="space-y-4">
                                                     {aparelhos.map((ap, idx) => {
                                                         const valApBruto = parseCurrencyToFloat(ap.valor);
@@ -715,7 +719,7 @@ export function Proposta({ globalUser }) {
                                                             return (
                                                                 <div key={ap.id} className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-3 border border-neutral-200 dark:border-neutral-700">
                                                                     <h4 className="text-sm font-black text-neutral-800 dark:text-neutral-100 uppercase flex justify-between items-center mb-2 pb-2 border-b border-neutral-200 dark:border-neutral-700">
-                                                                        <span>{ap.nome || `Aparelho ${idx + 1}`}</span> 
+                                                                        <span>{ap.nome || `Aparelho ${idx + 1}`}</span>
                                                                         <span className="text-xs text-[#E3000F] font-bold">{valDesc > 0 ? <span className="text-neutral-400 line-through mr-1 text-[10px]">{ap.valor}</span> : ''}{applyCurrencyMask(valAp)}</span>
                                                                     </h4>
                                                                     {valDesc > 0 && (
@@ -753,13 +757,13 @@ export function Proposta({ globalUser }) {
                                             </div>
                                         )}
                                     </div>
-                        
+
                                     {/* Coluna 2: Benefícios do Site Claro (Lado Direito) */}
                                     <div className="md:col-span-5 lg:col-span-5 print:col-span-5 bg-green-50/20 dark:bg-green-900/5 print:bg-green-50/40 p-6 print:p-5 flex flex-col">
                                         <h3 className="text-[11px] font-bold text-green-800 dark:text-green-500 uppercase tracking-widest mb-5 flex items-center gap-2">
                                             <ShieldCheck size={16} className="text-green-600" /> Benefícios Inclusos
                                         </h3>
-            
+
                                         <div className="space-y-3 flex-1">
                                             {beneficios.length === 0 ? (
                                                 <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center mt-10">Adicione produtos para ver as vantagens.</p>
@@ -767,34 +771,23 @@ export function Proposta({ globalUser }) {
                                                 beneficios.map((b, idx) => (
                                                     <div key={idx} className="flex gap-3 items-start">
                                                         <div className="mt-0.5 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 p-1.5 rounded-lg shrink-0">{b.icon}</div>
-                                                        <div> 
+                                                        <div>
                                                             <h4 className="text-xs font-bold text-neutral-800 dark:text-neutral-200 leading-tight mb-0.5">{b.title}</h4>
                                                             <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-snug">{b.desc}</p>
                                                             {b.badges && <StreamingBadges />}
                                                         </div>
                                                     </div>
-                                                ))        
-                                            )} 
+                                                ))
+                                            )}
                                         </div>
 
-                                        {/* QR Code Avaliação Google */}
-                                        <div className="mt-4 p-4 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 flex flex-col items-center text-center shadow-sm">
-                                            <p className="text-xs font-bold text-neutral-800 dark:text-neutral-100 mb-1 flex items-center justify-center gap-1.5">
-                                                <Star size={14} className="text-yellow-500 fill-yellow-500" /> Avalie nosso atendimento!
-                                            </p>
-                                            <p className="text-[9px] text-neutral-500 dark:text-neutral-400 mb-3 leading-tight">
-                                                Como foi sua experiência na loja? Escaneie com a câmera do seu celular e deixe sua avaliação no Google.
-                                            </p>
-                                            <div className="p-1 bg-white rounded-lg border border-neutral-200 shadow-sm shrink-0">
-                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${mapsLink}&margin=0`} alt="QR Code Avaliação Google" className="w-16 h-16 object-contain" crossOrigin="anonymous" />
-                                            </div>
-                                        </div>
+
 
                                         {/* Assinatura do Consultor (Visível apenas na impressão/PDF) */}
                                         <div className="mt-4 text-center pt-3 border-t border-neutral-200 dark:border-neutral-800 hidden print:block">
                                             <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Consultor de Vendas</div>
-                                            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200">{globalUser?.name ? globalUser.name.split(' ')[0] : 'Consultor Claro'}</div>
-                                            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">{import.meta.env.VITE_STORE_NAME || 'Loja Claro'}</div>
+                                            <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200">{globalUser?.name ? globalUser.name : 'Consultor Claro'}</div>
+                                            <div className="text-[10px] text-neutral-500 dark:text-neutral-400">{getCurrentStoreName()}</div>
                                             <div className="text-[09px] text-neutral-500 dark:text-neutral-400">Email: {globalUser?.email || 'consultor@claro.com.br'}</div>
                                             {import.meta.env.VITE_STORE_ADDRESS && <div className="text-[08px] text-neutral-500 dark:text-neutral-400">{import.meta.env.VITE_STORE_ADDRESS}</div>}
                                         </div>
@@ -1012,14 +1005,14 @@ export function Proposta({ globalUser }) {
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E3000F] via-red-500 to-[#E3000F]"></div>
                                     <div className="flex items-center gap-4 text-center sm:text-left">
                                         <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg shrink-0 mx-auto sm:mx-0">
-                                            <img src={viteLogo} alt="Logo" className="w-8 h-8 object-contain" />
+                                            <img src={wfLogo} alt="Logo" className="w-8 h-8 object-contain" />
                                         </div>
                                         <div>
                                             <h2 className="text-xl md:text-2xl font-bold mb-0.5 tracking-tight">Comparativo de Planos Claro</h2>
                                             <p className="text-neutral-400 text-[11px] md:text-xs font-medium uppercase tracking-wider">Data: {new Date().toLocaleDateString('pt-BR')} &bull; Validade: 24 HORAS</p>
-                                        </div>   
+                                        </div>
                                     </div>
-                                </div>   
+                                </div>
 
                                 <div className="flex flex-col sm:flex-row bg-white dark:bg-neutral-900 sm:divide-x divide-y sm:divide-y-0 divide-neutral-100 dark:divide-neutral-800">
                                     {/* Pacote A */}

@@ -29,12 +29,8 @@ export const Gestao = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, 
         const fetchHistory = async () => {
             setIsLoadingHistory(true);
             try {
-                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-                const res = await fetch(`${API_URL}/api/vendas?storeId=${STORE_ID}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setAllHistoricalSales(data);
-                }
+                const data = await fetchSales();
+                setAllHistoricalSales(data);
             } catch (error) {
                 console.error("Erro ao buscar histórico na Oracle API:", error);
             } finally {

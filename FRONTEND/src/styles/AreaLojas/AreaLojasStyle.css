@@ -1,0 +1,277 @@
+/* =========================================
+   ESTILOS GLOBAIS DA TELA AREA LOJAS
+========================================= */
+.area-lojas-container {
+  @apply h-full flex flex-col bg-neutral-50/50 dark:bg-neutral-950/50;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.area-lojas-header {
+  @apply p-6 md:p-8 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shrink-0;
+}
+
+.area-lojas-header-inner {
+  @apply max-w-[1400px] mx-auto flex items-center gap-4;
+}
+
+.area-lojas-icon-box {
+  @apply w-12 h-12 bg-red-50 dark:bg-red-900/20 text-[#E3000F] rounded-2xl flex items-center justify-center shadow-inner shrink-0;
+}
+
+/* =========================================
+   CARDS DE LOJA (PLACAR)
+========================================= */
+.area-lojas-store-card {
+  @apply shrink-0 w-80 relative flex flex-col bg-white dark:bg-neutral-900 rounded-3xl border transition-all duration-300 shadow-sm overflow-hidden snap-start;
+}
+
+.area-lojas-store-card-current {
+  @apply border-[#E3000F] shadow-md shadow-red-500/10;
+}
+
+.area-lojas-store-card-normal {
+  @apply border-neutral-200 dark:border-neutral-800;
+}
+
+.area-lojas-store-header {
+  @apply p-4 border-b flex items-center justify-between sticky top-0 z-20 backdrop-blur-md;
+}
+
+.area-lojas-store-header-current {
+  @apply bg-red-50/90 dark:bg-red-900/20 border-red-100 dark:border-red-900/30;
+}
+
+.area-lojas-store-header-normal {
+  @apply bg-neutral-50/90 dark:bg-neutral-900/90 border-neutral-100 dark:border-neutral-800;
+}
+
+/* =========================================
+   INDICADORES
+========================================= */
+.area-lojas-indicator-row {
+  @apply flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-800/50 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 px-2 rounded-md transition-colors;
+}
+
+/* =========================================
+   RANKING (BOTTOM SECTION)
+========================================= */
+.area-lojas-ranking-card {
+  @apply bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-5 hover:border-[#E3000F]/50 dark:hover:border-[#E3000F]/50 hover:shadow-lg transition-all cursor-pointer flex flex-col h-full;
+}
+
+.area-lojas-ranking-back-btn {
+  @apply mb-8 flex items-center gap-2 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors bg-white dark:bg-neutral-900 px-4 py-2 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800;
+}
+
+.area-lojas-ranking-list-card {
+  @apply bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 p-6 shadow-sm flex flex-col gap-4;
+}
+
+/* =========================================
+   INDICADORES (LINHAS)
+========================================= */
+.area-lojas-indicator-col {
+  @apply flex flex-col flex-1 min-w-0 pr-2;
+}
+.area-lojas-indicator-label {
+  @apply text-[9px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest;
+}
+.area-lojas-indicator-value {
+  @apply font-black text-[12px] text-neutral-800 dark:text-neutral-200 leading-tight mt-0.5 whitespace-nowrap;
+}
+.area-lojas-indicator-meta-container {
+  @apply flex items-center justify-end gap-2 shrink-0;
+}
+.area-lojas-indicator-meta-box {
+  @apply flex flex-col items-end;
+}
+.area-lojas-indicator-meta-label {
+  @apply text-[8px] text-neutral-400 uppercase tracking-widest;
+}
+.area-lojas-indicator-meta-value {
+  @apply font-bold text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5 whitespace-nowrap;
+}
+.area-lojas-indicator-pct-box {
+  @apply flex flex-col items-end min-w-[42px];
+}
+.area-lojas-indicator-pct-base {
+  @apply text-[9px] font-black px-1.5 py-0.5 rounded-md;
+}
+.area-lojas-indicator-no-meta-container {
+  @apply flex items-center justify-end shrink-0;
+}
+.area-lojas-indicator-no-meta-label {
+  @apply text-[9px] font-bold text-neutral-400 italic bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-md;
+}
+
+/* =========================================
+   CARDS DA LOJA (PLACAR) - ELEMENTOS INTERNOS
+========================================= */
+.area-lojas-store-badge-current {
+  @apply absolute top-0 left-1/2 -translate-x-1/2 bg-[#E3000F] text-white text-[9px] font-black tracking-wider px-3 py-0.5 rounded-b-md flex items-center gap-1 z-10;
+}
+.area-lojas-store-header-content {
+  @apply flex items-center gap-3;
+}
+.area-lojas-store-rank-badge {
+  @apply w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shadow-inner;
+}
+.area-lojas-store-rank-1 {
+  @apply bg-yellow-100 text-yellow-600;
+}
+.area-lojas-store-rank-2 {
+  @apply bg-neutral-200 text-neutral-600;
+}
+.area-lojas-store-rank-3 {
+  @apply bg-orange-100 text-orange-600;
+}
+.area-lojas-store-rank-other {
+  @apply bg-white dark:bg-neutral-800 text-neutral-400 border border-neutral-200 dark:border-neutral-700;
+}
+.area-lojas-store-name {
+  @apply font-black text-neutral-800 dark:text-neutral-100 text-[13px] uppercase tracking-tight leading-tight;
+}
+.area-lojas-store-code {
+  @apply text-[9px] text-neutral-400 font-bold tracking-widest;
+}
+.area-lojas-store-indicators-list {
+  @apply p-3 px-4 flex flex-col overflow-y-auto max-h-[40vh];
+}
+
+/* =========================================
+   LOADING E ESTRUTURA PRINCIPAL
+========================================= */
+.area-lojas-loading-container {
+  @apply h-64 flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-500 mt-20;
+}
+.area-lojas-loading-spinner {
+  @apply animate-spin mb-4 text-[#E3000F];
+}
+.area-lojas-loading-title {
+  @apply font-bold tracking-wide;
+}
+.area-lojas-loading-subtitle {
+  @apply text-xs mt-2;
+}
+.area-lojas-content-wrapper {
+  @apply pb-10;
+}
+.area-lojas-carousel-section {
+  @apply bg-neutral-100/50 dark:bg-neutral-950 py-6 border-b border-neutral-200 dark:border-neutral-800;
+}
+.area-lojas-carousel-inner {
+  @apply max-w-[1400px] mx-auto px-6 md:px-8;
+}
+.area-lojas-carousel-title {
+  @apply text-lg font-black text-neutral-800 dark:text-neutral-100 mb-4 flex items-center gap-2;
+}
+.area-lojas-carousel-container {
+  @apply flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4;
+}
+.area-lojas-bottom-section {
+  @apply max-w-[1400px] mx-auto px-6 md:px-8 pt-8;
+}
+
+/* =========================================
+   DESTAQUES POR INDICADOR (GRID)
+========================================= */
+.area-lojas-highlights-header {
+  @apply mb-6;
+}
+.area-lojas-highlights-title {
+  @apply text-2xl font-black text-neutral-800 dark:text-neutral-100;
+}
+.area-lojas-highlights-subtitle {
+  @apply text-neutral-500 dark:text-neutral-400 mt-1;
+}
+.area-lojas-highlights-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
+}
+.area-lojas-highlight-card-header {
+  @apply flex justify-between items-center mb-4;
+}
+.area-lojas-highlight-card-title {
+  @apply font-black text-neutral-800 dark:text-neutral-100 text-lg group-hover:text-[#E3000F] transition-colors;
+}
+.area-lojas-highlight-card-body {
+  @apply flex-1 space-y-3;
+}
+.area-lojas-highlight-empty {
+  @apply text-sm text-neutral-400 italic;
+}
+.area-lojas-highlight-row {
+  @apply flex items-center justify-between text-sm;
+}
+.area-lojas-highlight-row-left {
+  @apply flex items-center gap-2 overflow-hidden pr-2;
+}
+.area-lojas-highlight-row-rank {
+  @apply font-bold text-neutral-400 w-4 text-xs;
+}
+.area-lojas-highlight-row-name {
+  @apply font-bold text-neutral-700 dark:text-neutral-300 truncate;
+}
+.area-lojas-highlight-row-value {
+  @apply font-black text-neutral-900 dark:text-white shrink-0;
+}
+
+/* =========================================
+   RANKING DETALHADO (LISTA COMPLETA)
+========================================= */
+.area-lojas-detail-container {
+  @apply max-w-4xl mx-auto;
+}
+.area-lojas-detail-header {
+  @apply text-center mb-10;
+}
+.area-lojas-detail-title {
+  @apply text-3xl font-black text-neutral-800 dark:text-neutral-100 flex items-center justify-center gap-3;
+}
+.area-lojas-detail-subtitle {
+  @apply text-neutral-500 mt-2;
+}
+.area-lojas-detail-empty {
+  @apply text-center p-8 text-neutral-500;
+}
+.area-lojas-detail-row {
+  @apply flex items-center gap-4;
+}
+.area-lojas-detail-rank-box {
+  @apply w-8 shrink-0 font-black text-lg text-right;
+}
+.area-lojas-detail-rank-text {
+  @apply text-neutral-400;
+}
+.area-lojas-detail-info-box {
+  @apply flex-1;
+}
+.area-lojas-detail-info-header {
+  @apply flex justify-between items-end mb-1;
+}
+.area-lojas-detail-info-left {
+  @apply flex items-center gap-2;
+}
+.area-lojas-detail-seller-name-top1 {
+  @apply font-bold text-yellow-600 dark:text-yellow-500;
+}
+.area-lojas-detail-seller-name-normal {
+  @apply font-bold text-neutral-700 dark:text-neutral-200;
+}
+.area-lojas-detail-store-badge {
+  @apply text-[9px] font-bold tracking-widest text-white bg-neutral-800 px-1.5 py-0.5 rounded uppercase;
+}
+.area-lojas-detail-value {
+  @apply font-black text-lg text-neutral-800 dark:text-neutral-100;
+}
+.area-lojas-detail-bar-track {
+  @apply h-3 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden;
+}
+.area-lojas-detail-bar-fill {
+  @apply h-full rounded-full transition-all duration-1000;
+}
+.area-lojas-detail-bar-fill-top1 {
+  @apply bg-yellow-500;
+}
+.area-lojas-detail-bar-fill-normal {
+  @apply bg-[#E3000F];
+}

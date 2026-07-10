@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { Calculator, User, DollarSign, Target, TrendingUp, AlertCircle, Award, Lock, CheckCircle2 } from 'lucide-react';
 import { applyCurrencyMask } from '../utils/masks';
 import { METAS_PADRAO } from '../utils/constants';
-import { aplicarRegrasDeProduto, calcularFatorRV } from '../rules.js';
+import { authFetch, API_URL } from '../services/api.js';
 
 export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {}, globalMonth }) => {
     const isVendedor = globalUser?.role === 'VENDEDOR';
-    const loggedName = String(globalUser?.name || '').split(' ')[0];
+    const loggedName = String(globalUser?.name || '');
 
     const safeVendedores = Object.values(usersDB || {})
         .filter(u => !u?.role || u?.role === 'VENDEDOR')
-        .map(u => String(u?.name || '').split(' ')[0])
+        .map(u => String(u?.name || ''))
         .filter(Boolean);
 
     const allUsers = Object.values(usersDB || {})
         .filter(u => u?.role !== 'SUSPENDER')
-        .map(u => String(u?.name || '').split(' ')[0])
+        .map(u => String(u?.name || ''))
         .filter(Boolean);
         
-    const historicalUsers = (salesData || []).map(s => String(s.vendedor || '').split(' ')[0]).filter(Boolean);
+    const historicalUsers = (salesData || []).map(s => String(s.vendedor || '')).filter(Boolean);
     const uniqueSelectableUsers = [...new Set([...allUsers, ...historicalUsers])].sort();
 
     const [selectedSeller, setSelectedSeller] = useState(loggedName);
@@ -35,7 +36,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
         const fetchData = async () => {
             setIsLoading(true);
             
-            const selectedUserObj = Object.values(usersDB || {}).find(u => String(u?.name || '').split(' ')[0] === selectedSeller);
+            const selectedUserObj = Object.values(usersDB || {}).find(u => String(u?.name || '') === selectedSeller);
             const selectedUserRole = selectedUserObj?.role || 'VENDEDOR';
             const isStoreLevelRole = ['GERENTE', 'SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'JOVEM APRENDIZ', 'GEEK'].includes(selectedUserRole);
 
@@ -57,7 +58,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
             // 2. Isola as vendas baseadas no perfil (Líderes herdam a produção da loja)
             const sellerSales = isStoreLevelRole 
                 ? monthSales 
-                : monthSales.filter(s => s.vendedor === selectedSeller || s.vendedor === String(selectedSeller || '').split(' ')[0]);
+                : monthSales.filter(s => s.vendedor === selectedSeller || s.vendedor === String(selectedSeller || ''));
 
             let sellerTotalReceita = 0;
             let volMplay = 0;
@@ -94,11 +95,16 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
             let volBlPme = 0;
 
             try {
-                // Cálculo local usando o rules.js
-                const resultados = sellerSales.map(sale => ({
-                    id: sale.id,
-                    receitaBase: aplicarRegrasDeProduto(sale, { pctAtingimentoMplay })
-                }));
+                // Passo 1: Busca os resultados da API (aplicarRegrasDeProduto)
+                const resProdRaw = await authFetch(`${API_URL}/api/calcular/fator-rv/resultados`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sellerSales, pctAtingimentoMplay })
+                });
+                const resProd = await resProdRaw.json();
+                const resultados = resProd.resultados || [];
+                const receitaExtraMplay = resProd.receitaExtraMplay || 0;
+
 
                 let totalComissao = 0;
                 let comissaoAparelho = 0;
@@ -178,19 +184,32 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                 const pctAtingimentoTmAcessorio = metaTmAcessorio > 0 ? (tmAcessorio / metaTmAcessorio) * 100 : (tmAcessorio > 0 ? 100 : 0);
                 const pctAtingimentoBlPme = metaBlPme > 0 ? (volBlPme / metaBlPme) * 100 : (volBlPme > 0 ? 100 : 0);
 
-                // Pede o Fator RV Final calculando localmente
+                // Passo 2: Pede o Fator RV Final para a API
                 const metricasExtras = {
                     totalVendas, pctAtingimentoPos, pctAtingimentoUr, notaNps: 0,
                     volPosPago, metaPosPago, volFibra, metaFibra, volTv, metaTv,
-                    pctAtingimentoAparelho, pctAtingimentoAcessorio, pctAtingimentoTmAcessorio, pctAtingimentoBlPme
+                    pctAtingimentoAparelho, pctAtingimentoAcessorio, pctAtingimentoTmAcessorio, pctAtingimentoBlPme,
+                    role: selectedUserRole,
+                    totalReceita: totalReceita,
+                    comissaoAparelho: comissaoAparelho,
+                    comissaoSeguro: comissaoSeguro,
+                    receitaAcessorio: receitaAcessorio,
+                    metaReceita: metaReceita
                 };
-                const resultRV = calcularFatorRV(pctAtingimento, totalComissao, metricasExtras);
+                
+                const resRVRaw = await authFetch(`${API_URL}/api/calcular/fator-rv/calcular`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pctAtingimento, totalComissao, metricasExtras })
+                });
+                const resRV = await resRVRaw.json();
+                const resultRV = resRV.resultRV || {};
 
                 if (isMounted) {
                     setMetrics({
                         totalReceita, totalComissao, totalVendas, totalPos, totalUr,
                         metaReceita, metaPos, metaUr, pctAtingimento, pctAtingimentoPos, pctAtingimentoUr,
-                        pctAtingimentoMplay, volMplay, metaMplay,
+                        pctAtingimentoMplay, volMplay, metaMplay, receitaExtraMplay,
                         previaPagamento: resultRV.previaPagamento,
                         fatorSimulado: resultRV.fatorAplicado,
                         elegivel: resultRV.elegivel,
@@ -253,7 +272,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     >
                         <option value="" disabled>Selecione um consultor</option>
                         {uniqueSelectableUsers.map(v => {
-                            const usrObj = Object.values(usersDB || {}).find(u => String(u?.name || '').split(' ')[0] === v);
+                            const usrObj = Object.values(usersDB || {}).find(u => String(u?.name || '') === v);
                             const roleLabel = usrObj?.role && usrObj.role !== 'VENDEDOR' ? ` (${usrObj.role})` : '';
                             return (
                                 <option key={v} value={v} className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100">{v}{roleLabel}</option>
@@ -311,7 +330,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                         {applyCurrencyMask(metrics.previaPagamento)}
                                     </div>
                                     <p className="text-sm text-neutral-500 font-medium">
-                                        Baseado no atingimento de <strong className="text-neutral-300">{metrics.pctAtingimento.toFixed(1)}%</strong> da meta {metrics.isStoreLevelRole ? 'da LOJA' : 'individual'} (Fator Simulado: {metrics.fatorSimulado * 100}%).
+                                        Baseado no atingimento de <strong className="text-neutral-300">{metrics.pctAtingimento.toFixed(1)}%</strong> da meta {metrics.isStoreLevelRole ? 'da LOJA' : 'individual'} (Fator Simulado: {Number((metrics.fatorSimulado * 100).toFixed(2))}%).
                                     </p>
                                 </div>
                             </div>
@@ -580,7 +599,10 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                         {metrics.selectedUserRole === 'GEEK' ? (
                                             <p className="text-[11px] text-yellow-700 dark:text-yellow-400 font-medium leading-relaxed"><strong className="block mb-1 flex items-center gap-1"><Award size={12} /> Como ativar este Bônus?</strong> Como Assistente Tecnológico, você recebe <strong>R$ 235,00</strong> se bater 100% de Acessórios + Ticket Médio (TM), além de até <strong>R$ 300,00</strong> extras pelo atingimento de Banda Larga PME!</p>
                                         ) : (
-                                            <p className="text-[11px] text-yellow-700 dark:text-yellow-400 font-medium leading-relaxed"><strong className="block mb-1 flex items-center gap-1"><Award size={12} /> Como ativar este Bônus?</strong> Ao ultrapassar 100% da meta de Pós-Pago, você recebe entre <strong>R$ 10,00 e R$ 15,00</strong> extras por cada venda adicional!</p>
+                                            <p className="text-[11px] text-yellow-700 dark:text-yellow-400 font-medium leading-relaxed">
+                                                <strong className="block mb-1 flex items-center gap-1"><TrendingUp size={12} /> Impacto do M-Play na sua Receita Base</strong> 
+                                                Sua pontuação de M-Play ({metrics.pctAtingimentoMplay.toFixed(1)}%) injetou <strong className="text-yellow-800 dark:text-yellow-300 font-bold">+{applyCurrencyMask(metrics.receitaExtraMplay || 0)} EM RECEITA</strong> no run rate da sua comissão!
+                                            </p>
                                         )}
                                     </div>
                                 </div>
@@ -625,6 +647,124 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                         <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">Upgrades (50%) e Sidegrades (25%) já estão sendo calculados automaticamente no valor final.</p>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Regras do Cargo Logado */}
+                            <div className="md:col-span-3 bg-white dark:bg-neutral-900 rounded-3xl p-6 md:p-8 border border-neutral-200 dark:border-neutral-800 shadow-sm mt-4">
+                                <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 uppercase tracking-widest flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                                    <AlertCircle size={18} className="text-blue-500" /> Regras de Comissionamento ({metrics.selectedUserRole})
+                                </h3>
+                                {(() => {
+                                    const role = metrics.selectedUserRole || 'VENDEDOR';
+                                    switch (role) {
+                                        case 'GERENTE':
+                                            return (
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6">
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Elegibilidade Mínima (85%)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">É necessário bater pelo menos 85% nos indicadores macro (Receita, Gross e Residencial) para destravar o comissionamento.</p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Faixas de Pagamento (Base: Loja)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">
+                                                            • <strong>85% a 90%:</strong> 0.5% sobre o faturamento líquido<br/>
+                                                            • <strong>90.1% a 100%:</strong> 1.0% sobre o faturamento líquido<br/>
+                                                            • <strong>Acima de 100%:</strong> 1.5% sobre o faturamento líquido
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Trava de Qualidade (NPS)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">Se a nota de satisfação (NPS) ficar abaixo de 8, aplica-se um <strong>deflator de 20%</strong> no valor final da comissão.</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        case 'ASSISTENTE RELACIONAMENTO':
+                                            return (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Elegibilidade Mínima (80%)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">É necessário bater pelo menos 80% em retenção/satisfação para iniciar os ganhos.</p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Faixas de Pagamento</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">
+                                                            • <strong>80% a 95%:</strong> Ganha 1.5%<br/>
+                                                            • <strong>95.1% a 100%:</strong> Ganha 2.5%<br/>
+                                                            • <strong>Acima de 100%:</strong> Ganha 3.5%
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        case 'GEEK':
+                                            return (
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6">
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Elegibilidade Mínima (80%)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">Piso de 80% de atingimento nas metas do setor para destravar os pagamentos de Acessórios e Serviços.</p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Acessórios (2%) e Serviços (6%)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">Ganha 6.0% sobre a receita de Serviços Digitais, Seguros e Licenças e 2.0% sobre a receita de Acessórios e Películas.</p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Acelerador (&gt; 100%)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">Ao superar 100% da meta global, passa a ganhar <strong>10.0%</strong> sobre a receita de serviços referente ao excedente da meta.</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        case 'ADMINISTRAÇÃO':
+                                            return (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Elegibilidade Mínima (Loja 80%)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">Para comissionar, a loja precisa atingir no mínimo 80% da meta, aliado à aprovação na conformidade da auditoria (zero quebra de caixa).</p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Faixas de Pagamento (Base: Loja)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">
+                                                            • <strong>Loja entre 80% e 100%:</strong> Ganha 0.15% sobre a receita de vendas.<br/>
+                                                            • <strong>Loja Acima de 100%:</strong> Ganha 0.25% sobre a receita de vendas.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        case 'SENIOR':
+                                            return (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Elegibilidade Mínima (85%)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">Diferente do júnior, seu piso de elegibilidade individual é de 85% em diante.</p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Faixas Progressivas por Produto</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">
+                                                            • <strong>85% a 99.9%:</strong> 2.0% Aparelhos / 4.0% Planos<br/>
+                                                            • <strong>100% a 115%:</strong> 3.5% Aparelhos / 6.0% Planos<br/>
+                                                            • <strong>Acima de 115%:</strong> 4.5% Aparelhos / 8.0% Planos
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        default:
+                                            return (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Elegibilidade Mínima (80%)</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">É necessário bater pelo menos 80% nos indicadores para destravar o comissionamento.</p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Faixas de Pagamento Base</span>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-1">
+                                                            • <strong>80% a 99.9%:</strong> 4.5% sobre a receita líquida<br/>
+                                                            • <strong>100% a 119.9%:</strong> 7.0% sobre a receita líquida<br/>
+                                                            • <strong>120% a 149.9%:</strong> 9.0% sobre a receita líquida<br/>
+                                                            • <strong>Acima de 150%:</strong> 11.0% sobre a receita líquida
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                    }
+                                })()}
                             </div>
 
                         </div>

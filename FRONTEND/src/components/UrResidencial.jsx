@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { Edit2, Save, X, Search, Calendar, Filter, Trash2, Home, User, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
@@ -13,7 +14,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
     const [isOptionsCollapsed, setIsOptionsCollapsed] = useState(false);
     
     const isVendedor = globalUser?.role === 'VENDEDOR';
-    const loggedName = String(globalUser?.name || '').split(' ')[0];
+    const loggedName = String(globalUser?.name || '');
     const [sellerFilter, setSellerFilter] = useState(isVendedor ? loggedName : '');
   
     const monthFilter = globalMonth;
@@ -26,10 +27,10 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
 
     const activeVendedoresOptions = Object.values(usersDB || {})
         .filter(u => !u?.role || u?.role === 'VENDEDOR')
-        .map(u => String(u?.name || '').split(' ')[0])
+        .map(u => String(u?.name || ""))
         .filter(Boolean);
         
-    const historicalVendedoresOptions = (salesData || []).map(s => String(s.vendedor || '').split(' ')[0]).filter(Boolean);
+    const historicalVendedoresOptions = (salesData || []).map(s => String(s.vendedor || '')).filter(Boolean);
     
     const VENDEDORES_OPTIONS = [...new Set([...activeVendedoresOptions, ...historicalVendedoresOptions])].sort();
 
@@ -54,25 +55,9 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
         return p.includes('FIBRA') || p.includes('TV') || p.includes('FIXO') || p.includes('RESIDENCIAL') || p.includes('MESH');
     };
 
-    // Filtrando a Base Central de Vendas para exibir somente UR-RESIDENCIAL no mês consultado
+    // Filtrando a Base Central de Vendas para exibir somente UR-RESIDENCIAL
     const filteredData = (salesData || []).filter(item => {
         if (!isResidential(item.produto)) return false;
-
-        let matchMonth = false;
-        if (typeof item.data === 'string') {
-            const parts = item.data.split('/');
-            if (parts.length === 3) {
-                const itemMonth = `${parts[2]}-${parts[1]}`;
-                if (itemMonth === monthFilter) matchMonth = true;
-            } else if (item.data.includes('-')) {
-                if (item.data.slice(0, 7) === monthFilter) matchMonth = true;
-            }
-        }
-        if (item.dataInstalacao && item.dataInstalacao.slice(0, 7) === monthFilter) {
-            matchMonth = true;
-        }
-
-        if (!matchMonth) return false;
 
         if (sellerFilter && item.vendedor !== sellerFilter) {
             return false;
@@ -237,20 +222,11 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                 {!isVendedor && <option className="bg-white dark:bg-neutral-900" value="">Todos Vendedores</option>}
                                 {isVendedor 
                                     ? <option className="bg-white dark:bg-neutral-900" value={loggedName}>{loggedName}</option>
-                                    : VENDEDORES_OPTIONS.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{v}</option>)
+                                    : VENDEDORES_OPTIONS.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)
                                 }
                             </select>
                         </div>
-                        <div className="relative w-full sm:w-auto">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" size={16} />
-                            <input
-                                type="month"
-                                value={monthFilter}
-                                onChange={(e) => setMonthFilter(e.target.value)}
-                                className="w-full sm:w-44 pl-9 pr-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F] transition-all cursor-pointer"
-                                title="Consultar Histórico do Mês"
-                            />
-                        </div>
+
                         {isLideranca && (
                             <button type="button" onClick={handleExportExcel} className="w-full sm:w-auto px-4 py-2 bg-[#107c41] text-white text-sm font-medium rounded-xl hover:bg-[#0c5e31] transition-colors shadow-sm shadow-green-700/30 flex items-center justify-center gap-2 whitespace-nowrap">Exportar Excel</button>
                         )}
@@ -307,7 +283,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                                     {isEditing ? <input type="date" value={editForm.dataInstalacao || ''} onChange={(e) => handleChange(e, 'dataInstalacao')} className="w-32 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer focus:border-[#E3000F]" /> : <span className="text-neutral-700 dark:text-neutral-300">{item.dataInstalacao ? new Date(item.dataInstalacao + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}</span>}
                                                 </td>
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800">
-                                                    {isEditing ? <select value={editForm.vendedor || ''} onChange={(e) => handleChange(e, 'vendedor')} className="w-28 px-1 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none"><option className="bg-white dark:bg-neutral-900" value="">Selecione...</option>{VENDEDORES_OPTIONS.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{v}</option>)}</select> : <span className="font-medium text-neutral-800 dark:text-neutral-200">{item.vendedor}</span>}
+                                                    {isEditing ? <select value={editForm.vendedor || ''} onChange={(e) => handleChange(e, 'vendedor')} className="w-28 px-1 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none"><option className="bg-white dark:bg-neutral-900" value="">Selecione...</option>{VENDEDORES_OPTIONS.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)}</select> : <span className="font-medium text-neutral-800 dark:text-neutral-200">{getFirstName(item.vendedor)}</span>}
                                                 </td>
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800">
                                                     {isEditing ? <select value={editForm.produto || ''} onChange={(e) => handleChange(e, 'produto')} className="w-36 px-1 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none"><option className="bg-white dark:bg-neutral-900" value="">Selecione...</option>{RESIDENTIAL_PRODUCTS.map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select> : <span className="text-neutral-700 dark:text-neutral-300">{item.produto}</span>}

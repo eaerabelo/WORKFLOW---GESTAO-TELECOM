@@ -6,7 +6,7 @@ import {
   Menu, X, Search, ChevronRight, UserPlus,
   Users, BarChart3, FileText, Database, Home,
   Target, AlertOctagon, Phone, CreditCard, Briefcase, AlertCircle, Check, Lock,
-  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap, AlertTriangle, WifiOff, Map as MapIcon, Loader2
+  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap, AlertTriangle, WifiOff, Map as MapIcon, Loader2, Activity
 } from 'lucide-react';
 
 // Importação de biblioteca de Toasts para feedback visual de ações em tela
@@ -19,7 +19,7 @@ const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
 // Importações de constantes como usuários padrões e base para as metas
 import {
-  METAS_PADRAO, APP_USERS, DEFAULT_PRICING
+  METAS_PADRAO
 } from './utils/constants';
 
 // Importação de função utilitária para capturar data ajustada ao fuso horário
@@ -28,7 +28,7 @@ import {
 } from './utils/masks';
 
 // Importações de Módulos (Componentes) que constroem as telas do Sistema
-import { SistemasClaro } from './components/SistemasClaro.jsx';
+import { Sistemas } from './components/Sistemas.jsx';
 import { EscalaTrabalho } from './components/EscalaTrabalho.jsx';
 import { Acessos } from './components/Acessos.jsx';
 import { Colaboradores } from './components/Colaboradores.jsx';
@@ -48,17 +48,23 @@ import { Campanha, checkHasNewCampanha } from './components/Campanha.jsx';
 import { Tutorial } from './components/Tutorial.jsx';
 import { Atualizacoes } from './components/Atualizacoes.jsx';
 import { AreaLojas } from './components/AreaLojas.jsx';
-import qrWifiImg from './assets/qr-wifi.png';
-import claroLogo from './assets/LOGO_CLARO.png.webp';
+import wfLogo from './assets/logo_WF.png';
+import qrWifiImg from "./assets/QR_CODEWIFI.png";
 
-// URL base da API configurada via variável de ambiente (Vite) ou fallback para localhost
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-// Multi-Tenant: Identificador da loja para buscar as coleções corretas no banco
-const STORE_ID = import.meta.env.VITE_STORE_ID || 'uniao_osasco';
+// Importação da Camada de Serviços (API)
+import { 
+  fetchStatus, fetchSales, fetchConfig, fetchSimcards, 
+  fetchReprovados, fetchGeekDocs, fetchCampanhas, 
+  syncCollectionDynamic, syncConfigData 
+} from './services/api.js';
+import { getCurrentStoreName, getCurrentStoreCode } from './utils/stores.js';
+
+// Multi-Tenant: Identificador dinâmico da loja
+const STORE_ID = (typeof window !== 'undefined' ? localStorage.getItem('storeId') : null) || 'uniao_osasco';
 
 // Variáveis seguras (Fallback) caso as constantes falhem ou estejam ausentes
-const safeMetasPadrao = METAS_PADRAO || { receita: 0, posTotal: 0, posPago: 0, controle: 0, urTotal: 0, fibra: 0, tv: 0, fixo: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, mesh: 0, trocafy: 0, mplay: 0 };
-const safeAppUsers = APP_USERS || {};
+const safeMetasPadrao = METAS_PADRAO;
+
 
 // Função / Componente Principal do Aplicativo (Ponto de Entrada)
 export default function App() {
@@ -104,15 +110,10 @@ export default function App() {
     // Polling contínuo a cada 30 segundos para checar o banco
     const checkStatus = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/status`);
-        if (res.ok) {
-          const data = await res.json();
-          setIsOffline(false);
-          if (data.oracleDBSizeMB !== undefined) {
-            setDbSizeMB(data.oracleDBSizeMB);
-          }
-        } else {
-          setIsOffline(true);
+        const data = await fetchStatus();
+        setIsOffline(false);
+        if (data.oracleDBSizeMB !== undefined) {
+          setDbSizeMB(data.oracleDBSizeMB);
         }
       } catch (e) {
         setIsOffline(true);
@@ -299,7 +300,7 @@ export default function App() {
   const [usersDB, setUsersDB] = useState({});
   const [scheduleData, setScheduleData] = useState({});
   const [monthlyOverrides, setMonthlyOverrides] = useState({});
-  const [pricingData, setPricingData] = useState(DEFAULT_PRICING);
+  const [pricingData, setPricingData] = useState({});
   // Define se o primeiro carregamento da Nuvem já foi finalizado
   const [isBackendReady, setisBackendReady] = useState(false);
 
@@ -471,12 +472,14 @@ export default function App() {
     if (!globalUser?.username) return;
 
     setUsersDB(prev => {
-      const currentDbUser = prev[globalUser.username] || {};
+      const upperUsername = globalUser.username.toUpperCase();
+      const rawUser = prev[upperUsername] || {}[globalUser.username] || {}[globalUser.username.toLowerCase()] || {};
+      const currentDbUser = (rawUser && rawUser.role) ? rawUser : {};
       const newDbUser = { ...currentDbUser, ...updates };
         
       return {
         ...prev,
-        [globalUser.username]: newDbUser
+        [upperUsername]: newDbUser
       };
     });
 
@@ -535,6 +538,13 @@ export default function App() {
       if (e.key === 'Escape' && isWifiModalOpen) {
         setIsWifiModalOpen(false);
       }
+    };
+
+    const handleConfigUpdate = (newConfig) => {
+      if (newConfig.systemMeta) setSystemMeta(newConfig.systemMeta);
+      if (newConfig.userMetas) setUserMetas(newConfig.userMetas);
+      if (newConfig.campanhas) setCampanhasData(newConfig.campanhas);
+      if (newConfig.geekDocs) setGeekDocs(newConfig.geekDocs);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -607,24 +617,14 @@ export default function App() {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const startStr = `${globalMonth}-01`;
-        const endStr = `${globalMonth}-31T23:59:59`;
-
-        const [vendasRes, configRes, estoqueRes, reprovadosRes, geekRes, campanhasRes] = await Promise.all([
-          fetch(`${API_URL}/api/vendas?storeId=${STORE_ID}&start=${startStr}&end=${endStr}&_t=${Date.now()}`),
-          fetch(`${API_URL}/api/config?storeId=${STORE_ID}`),
-          fetch(`${API_URL}/api/simcards?storeId=${STORE_ID}`),
-          fetch(`${API_URL}/api/reprovados?storeId=${STORE_ID}&start=${startStr}&end=${endStr}`),
-          fetch(`${API_URL}/api/geek-docs?storeId=${STORE_ID}`),
-          fetch(`${API_URL}/api/campanhas?storeId=${STORE_ID}`)
+        const [vendas, config, estoque, reprovados, geek, campanhas] = await Promise.all([
+          fetchSales(),
+          fetchConfig(),
+          fetchSimcards(),
+          fetchReprovados(),
+          fetchGeekDocs(),
+          fetchCampanhas()
         ]);
-
-        const vendas = await vendasRes.json();
-        const config = await configRes.json();
-        const estoque = await estoqueRes.json();
-        const reprovados = await reprovadosRes.json();
-        const geek = await geekRes.json();
-        const campanhas = await campanhasRes.json();
 
         // Ordenações
         const sortChronologically = (a, b) => {
@@ -656,9 +656,9 @@ export default function App() {
         setCampanhasData(campanhas);
         cloudRefs.current.campanhas = campanhas;
 
-        const recoveredUsers = (config && config.usersDB && Object.keys(config.usersDB).length > 0) ? config.usersDB : safeAppUsers;
+        const recoveredUsers = (config && config.usersDB && Object.keys(config.usersDB).length > 0) ? config.usersDB : {};
         const recoveredGoals = (config && config.goalsDB && Object.keys(config.goalsDB).length > 0) ? config.goalsDB : { [currentYYYYMM]: { ...safeMetasPadrao } };
-        const recoveredPricing = (config && config.pricingData && Object.keys(config.pricingData).length > 0) ? config.pricingData : DEFAULT_PRICING;
+        const recoveredPricing = (config && config.pricingData && Object.keys(config.pricingData).length > 0) ? config.pricingData : {};
 
         setUsersDB(recoveredUsers);
         setGoalsDB(recoveredGoals);
@@ -706,7 +706,7 @@ export default function App() {
       socket.off('campanhas-atualizadas');
       socket.off('config-atualizada');
     };
-  }, [globalMonth]);
+  }, []);
 
   // 2. AUTO-SAVE NA API ORACLE (Smart Diff)
   useEffect(() => {
@@ -737,11 +737,7 @@ export default function App() {
           });
 
           if (upserts.length > 0 || deletes.length > 0) {
-            await fetch(`${API_URL}/api/${endpoint}/sync`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ storeId: STORE_ID, upserts, deletes })
-            });
+            await syncCollectionDynamic(endpoint, upserts, deletes);
             hasChanges = true;
           }
         };
@@ -755,11 +751,7 @@ export default function App() {
         // Config Global
         const currentConfigStr = safeStr({ usersDB, goalsDB, scheduleData, monthlyOverrides, pricingData });
         if (cloudRefs.current.config !== '' && currentConfigStr !== cloudRefs.current.config) {
-          await fetch(`${API_URL}/api/config/sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ storeId: STORE_ID, configData: JSON.parse(currentConfigStr) })
-          });
+          await syncConfigData(JSON.parse(currentConfigStr));
           cloudRefs.current.config = currentConfigStr;
         }
 
@@ -836,14 +828,16 @@ export default function App() {
   // Observa caso os cargos do usuário logado mudem no Banco e os desloga/altera na hora
   useEffect(() => {
     if (globalUser && globalUser.username && isBackendReady) {
-      const currentDbUser = (usersDB || {})[globalUser.username] || safeAppUsers[globalUser.username];
-      if (currentDbUser && currentDbUser.role !== globalUser.role) {
-        if (currentDbUser.role === 'SUSPENDER') {
+      const upperUsername = globalUser.username.toUpperCase();
+      const rawUser = (usersDB || {})[upperUsername] || {}[globalUser.username] || {}[globalUser.username.toLowerCase()];
+      const currentDbUser = (rawUser && rawUser.role) ? rawUser : null;
+      if (currentDbUser && (currentDbUser.role !== globalUser.role || currentDbUser.onVacation)) {
+        if (currentDbUser.role === 'SUSPENDER' || currentDbUser.onVacation) {
           setGlobalUser(null);
           setSelectedSeller(null);
           localStorage.removeItem('sessionUser');
           setActiveTab('VENDA');
-          toast.error('Sua conta foi suspensa temporariamente.', { duration: 6000 });
+          toast.error(currentDbUser.onVacation ? 'Sua sessão foi encerrada por motivo de Férias.' : 'Sua conta foi suspensa temporariamente.', { duration: 6000 });
           return;
         }
         const updatedUser = { ...globalUser, role: currentDbUser.role, name: currentDbUser.name };
@@ -867,7 +861,7 @@ export default function App() {
     { name: 'REPROVADOS', icon: <AlertOctagon size={18} /> },
     { name: 'RESULTADO', icon: <BarChart3 size={18} /> },
     { name: 'SCRIPTS', icon: <Copy size={18} /> },
-    { name: 'SISTEMAS CLARO', icon: <Database size={18} /> },
+    { name: 'SISTEMAS', icon: <Database size={18} /> },
     { name: 'UR-RESIDENCIAL', icon: <Briefcase size={18} /> },
     { name: 'VENDA', icon: <CreditCard size={18} /> },
     { name: 'PARCIAL & FECHAMENTO', icon: <ClipboardCheck size={18} /> },
@@ -886,16 +880,22 @@ export default function App() {
   const hasMetaAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(globalUser?.role);
   const canEditMeta = ['GERENTE', 'SENIOR'].includes(globalUser?.role);
   const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(globalUser?.role);
+  const hasAreaLojasAccess = ['GERENTE', 'SENIOR', 'GEEK'].includes(globalUser?.role);
   const isVendedor = globalUser?.role === 'VENDEDOR';
 
   // --- LÓGICA DE LOGIN ---
   // Envio do formulário de autenticação global e/ou de senhas específicas
   const handleAuthSubmit = (e) => {
     e.preventDefault();
-    const userMatched = (usersDB || {})[authCredentials.user] || safeAppUsers[authCredentials.user];
+    const upperUser = authCredentials.user ? authCredentials.user.toUpperCase() : '';
+    const userMatched = (usersDB || {})[upperUser] || {}[authCredentials.user] || {}[authCredentials.user?.toLowerCase()];
     if (userMatched && userMatched.pass === authCredentials.password) {
       if (userMatched.role === 'SUSPENDER') {
         setAuthError('Conta suspensa temporariamente. Procure o Gerente.');
+        return;
+      }
+      if (userMatched.onVacation) {
+        setAuthError('Sua conta está bloqueada por motivo de Férias.');
         return;
       }
       if (authModal.requiredRole && authModal.requiredRole !== userMatched.role) {
@@ -922,7 +922,7 @@ export default function App() {
       if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'PARCIAL & FECHAMENTO' && !['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'ACESSOS' && userMatched.role !== 'GERENTE') setActiveTab('VENDA');
-      if (activeTab === 'ÁREA - LOJAS' && userMatched.role !== 'GERENTE') setActiveTab('VENDA');
+      if (activeTab === 'ÁREA - LOJAS' && !['GERENTE', 'SENIOR', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
     } else {
       setAuthError('Usuário ou senha incorretos. Acesso negado.');
     }
@@ -954,9 +954,9 @@ export default function App() {
   if (!globalUser) {
     return (
       <>
-        <Toaster position="top-right" />
+        <Toaster position="top-center" containerStyle={{ top: 80 }} />
         <Login 
-          usersDB={{ ...safeAppUsers, ...(usersDB || {}) }} 
+          usersDB={{ ...{}, ...(usersDB || {}) }} 
           setUsersDB={setUsersDB} 
           onLogin={(userData, username) => {
             const userWithTime = { ...userData, username, loginTime: Date.now() };
@@ -975,7 +975,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-[#F5F5F5] dark:bg-neutral-950 font-sans overflow-hidden print:overflow-visible print:h-auto print:block text-neutral-800 dark:text-neutral-100 print:bg-white transition-colors duration-500">
-      <Toaster position="top-right" />
+      <Toaster position="top-center" containerStyle={{ top: 80 }} />
 
       {/* Overlay da Barra Lateral em dispositivos Mobile */}
       {isSidebarOpen && (
@@ -986,8 +986,8 @@ export default function App() {
       <aside className={`${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:w-0 md:translate-x-0'} no-print overflow-hidden shrink-0 transition-all duration-500 ease-in-out bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col z-30 fixed md:relative top-0 left-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-none`}>
         <div className="h-16 flex items-center px-6 border-b border-neutral-100 dark:border-neutral-800 min-w-[16rem] shrink-0">
           <div className="flex items-center text-[#E3000F] font-bold text-xl tracking-tight">
-            <img src={claroLogo} alt="Logo Claro" className="w-22 h-14 m-0 object-contain -mr-3" />
-            <span>Painel Gestão</span>
+            <img src={wfLogo} alt="WorkFlow Logo" className="w-16 h-auto m-0 object-contain -mr-1" />
+            <span>WORKFLOW</span>
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto py-4 min-w-[16rem] scrollbar-hide">
@@ -998,7 +998,7 @@ export default function App() {
               if (section.name === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return null;
               if (section.name === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return null;
               if (section.name === 'ACESSOS' && !isGerente) return null;
-              if (section.name === 'ÁREA - LOJAS' && !isGerente) return null;
+              if (section.name === 'ÁREA - LOJAS' && !hasAreaLojasAccess) return null;
 
               return (
                 <li key={section.name}>
@@ -1088,17 +1088,7 @@ export default function App() {
               <BookOpen size={16} /> <span className="hidden lg:inline">Tutorial</span>
             </button>
 
-            {/* Seletor Global de Mês */}
-            <div className="hidden md:flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm animate-fade-in">
-              <CalendarDays size={16} className="text-[#E3000F]" />
-              <input 
-                type="month" 
-                value={globalMonth}
-                onChange={(e) => setGlobalMonth(e.target.value)}
-                className="bg-transparent text-sm font-bold text-neutral-700 dark:text-neutral-100 outline-none cursor-pointer"
-                title="Mês de Busca (Carregamento Sob Demanda)"
-              />
-            </div>
+            
 
             {/* Botão Wi-Fi para Clientes */}
             <button 
@@ -1183,7 +1173,7 @@ export default function App() {
 
             {/* Identificação de Empresa */}
             <div className="hidden sm:flex items-center justify-center mx-2">
-              <div className="text-[#E3000F] font-black text-xl tracking-tighter uppercase">{import.meta.env.VITE_STORE_NAME || 'CLARO UNIÃO OSASCO'} - {import.meta.env.VITE_STORE_CODE || 'AT1M'}</div>
+              <div className="text-[#E3000F] font-black text-xl tracking-tighter uppercase">{getCurrentStoreName()} - {getCurrentStoreCode()}</div>
             </div>
 
             {/* Dropdown/Perfil do Usuário Global Logado */}
@@ -1191,8 +1181,8 @@ export default function App() {
               {globalUser && (
                 <div className="flex items-center gap-2 sm:gap-3 group">
                   <div className="text-right flex flex-col justify-center">
-                    <div className="text-sm font-bold text-neutral-800 dark:text-neutral-100 leading-tight hidden sm:block">{globalUser?.name || 'Usuário'}</div>
-                    <div className="text-sm font-bold text-neutral-800 dark:text-neutral-100 leading-tight sm:hidden">{String(globalUser?.name || '').split(' ')[0] || 'Usuário'}</div>
+                    <div className="text-sm font-bold text-neutral-800 dark:text-neutral-100 leading-tight hidden sm:block">{String(globalUser?.name || '').split(' ').slice(0, 2).join(' ') || 'Usuário'}</div>
+                    <div className="text-sm font-bold text-neutral-800 dark:text-neutral-100 leading-tight sm:hidden">{String(globalUser?.name || '').split(' ').slice(0, 2).join(' ') || 'Usuário'}</div>
                     <div className="text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wide font-medium">{globalUser?.role || ''}</div>
                   </div>
                   <div className="relative cursor-pointer">
@@ -1222,10 +1212,10 @@ export default function App() {
             <Colaboradores selectedSeller={selectedSeller} setSelectedSeller={setSelectedSeller} isVendedor={isVendedor} globalUser={globalUser} salesData={salesData} goalsDB={goalsDB} usersDB={usersDB} setAuthModal={setAuthModal} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
           ) : activeTab === 'ESCALA DE TRABALHO' ? (
             <EscalaTrabalho canEditSchedule={canEditSchedule} scheduleData={scheduleData} setScheduleData={setScheduleData} monthlyOverrides={monthlyOverrides} setMonthlyOverrides={setMonthlyOverrides} hasAccess={hasScheduleAccess} setAuthModal={setAuthModal} usersDB={usersDB} />
-          ) : activeTab === 'SISTEMAS CLARO' ? (
-            <SistemasClaro />
+          ) : activeTab === 'SISTEMAS' ? (
+            <Sistemas />
           ) : activeTab === 'ACESSOS' ? (
-            <Acessos usersDB={usersDB} setUsersDB={setUsersDB} setScheduleData={setScheduleData} setMonthlyOverrides={setMonthlyOverrides} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} />
+            <Acessos setScheduleData={setScheduleData} setMonthlyOverrides={setMonthlyOverrides} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} />
           ) : activeTab === 'UR-RESIDENCIAL' ? (
             <UrResidencial salesData={salesData} setSalesData={handleSetSalesData} globalUser={globalUser} isGerente={isGerente} usersDB={usersDB} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
           ) : activeTab === 'PROPOSTA' ? (
@@ -1338,7 +1328,6 @@ export default function App() {
                 src={qrWifiImg} 
                 alt="QR Code Wi-Fi" 
                 className="w-full h-full object-contain rounded-xl" 
-                onError={(e) => e.target.src = 'https://via.placeholder.com/256?text=QR+Code+Wi-Fi'} 
               />
             </div>
 

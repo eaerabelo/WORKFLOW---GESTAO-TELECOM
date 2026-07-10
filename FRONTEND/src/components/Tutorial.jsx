@@ -1,78 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, X, Wrench } from 'lucide-react';
 
-import imgVenda1 from '../assets/VENDAS_TUTORIAL.png';
-import imgVenda2 from '../assets/VENDAS_TUTORIAL2.png';
-import imgVenda3 from '../assets/VENDAS_TUTORIAL3.png';
-import imgVenda4 from '../assets/VENDAS_TUTORIAL4.png';
-import imgVenda5 from '../assets/VENDAS_TUTORIAL5.png';
-import imgVenda6 from '../assets/VENDAS_TUTORIAL6.png';
-import imgCombo1 from '../assets/COMBO_TUTORIAL.png';
-import imgCombo2 from '../assets/COMBO_TUTORIAL2.png';
-import imgCombo3 from '../assets/COMBO_TUTORIAL3.png';
-import imgCombo4 from '../assets/COMBO_TUTORIAL4.png';
-import imgCombo5 from '../assets/COMBO_TUTORIAL5.png';
-import imgSistemas1 from '../assets/SISTEMAS_TUTORIAL.png';
-
+import imgFallback from '../assets/logo_WF.png';
 // =========================================================================
 // 📝 DADOS DOS TUTORIAIS (Insira seus prints e textos aqui depois!)
 // =========================================================================
 const TUTORIAIS_DATA = {
     'VENDA INDIVIDUAL': [
         {
-            imagem: imgVenda1,
+            imagem: imgFallback,
             titulo: '1. Iniciando o Registro',
             descricao: 'Na tela principal de Registro de Vendas Diárias, clique no botão vermelho "+ Nova Venda" localizado no canto superior direito para abrir o formulário de registro.'
         },
         {
-            imagem: imgVenda2,
+            imagem: imgFallback,
             titulo: '2. Selecionando a Modalidade',
             descricao: 'Na janela que se abrir, certifique-se de que a aba superior "VENDA INDIVIDUAL" esteja selecionada. Identifique os campos obrigatórios que precisarão ser preenchidos, como Vendedor, Produto Principal e CPF/CNPJ.'
         },
         {
-            imagem: imgVenda3,
+            imagem: imgFallback,
             titulo: '3. Informando o Vendedor',
             descricao: 'Com o contexto da venda marcado como "SINGLE", clique no campo "VENDEDOR" e escolha o nome do vendedor responsável pela venda na lista suspensa.'
         },
         {
-            imagem: imgVenda4,
+            imagem: imgFallback,
             titulo: '4. Escolhendo o Produto e Programas Adicionais',
             descricao: 'Clique no campo "PRODUTO PRINCIPAL" e selecione o plano ou item vendido (por exemplo, POS 50GB). Verifique se o campo "Receita" reflete o valor correto e, na seção inferior, informe se a venda possui algum programa adicional (marcando "NENHUM" caso não haja).'
         },
         {
-            imagem: imgVenda5,
+            imagem: imgFallback,
             titulo: '5. Preenchendo Dados do Cliente e Confirmando',
             descricao: 'Preencha os detalhes finais, como o "TIPO DE OPERAÇÃO" (ex: Ativação) e digite o "CPF / CNPJ" do cliente. Após revisar todas as informações na tela, clique no botão vermelho "Confirmar Venda" no canto inferior direito.'
         },
         {
-            imagem: imgVenda6,
+            imagem: imgFallback,
             titulo: '6. Validação do Registro',
             descricao: 'O formulário será fechado e o sistema exibirá uma notificação verde de "Venda registrada com sucesso!" no canto superior direito. O registro da nova venda aparecerá automaticamente como uma nova linha na sua tabela principal.'
         }
     ],
     'VENDA MÚLTIPLA (COMBO)': [
         {
-            imagem: imgCombo1,
+            imagem: imgFallback,
             titulo: '1. Acessando a Venda Múltipla',
             descricao: 'Após abrir a janela de nova venda, clique na aba "VENDA MÚLTIPLA (COMBO)" na parte superior. Note que, à direita, existe uma área chamada "RESUMO DO COMBO", que inicialmente indicará "Nenhum produto adicionado".'
         },
         {
-            imagem: imgCombo2,
+            imagem: imgFallback,
             titulo: '2. Selecionando o Primeiro Produto',
             descricao: 'No formulário à esquerda, clique no campo "PRODUTO" e escolha o primeiro plano ou serviço que fará parte do combo a partir da lista suspensa (ex: POS 500GB).'
         },
         {
-            imagem: imgCombo3,
+            imagem: imgFallback,
             titulo: '3. Detalhando a Operação e Inserindo no Resumo',
             descricao: 'Preencha as configurações específicas deste produto, definindo opções como o "TIPO DE OPERAÇÃO", a "OPERADORA" e se possui "M-PLAY". Ao terminar de preencher as regras do item, clique no botão preto "+ Adicionar Produto ao Combo" localizado na parte inferior. O item será transferido para a área de resumo à direita.'
         },
         {
-            imagem: imgCombo4,
+            imagem: imgFallback,
             titulo: '4. Adicionando Mais Itens e Finalizando o Combo',
             descricao: 'Repita os passos 2 e 3 para inserir os demais produtos da venda (a imagem mostra o resumo preenchido com três itens diferentes). Selecione o "VENDEDOR" responsável pela operação e, do lado direito, preencha os dados finais: "CPF / CNPJ DO TITULAR", número do "CONTRATO" (quando aplicável) e indique se há programas na aba "VENDA ADICIONAL". Clique no botão vermelho "Confirmar Venda Combo".'
         },
         {
-            imagem: imgCombo5,
+            imagem: imgFallback,
             titulo: '5. Visualização no Registro Geral',
             descricao: 'De volta à tela principal de Registro de Vendas Diárias, observe que os itens vendidos no combo não aparecem agrupados em uma única linha. O sistema registra cada produto do combo como uma linha individual na tabela, facilitando a visualização separada por tipo, receita e portabilidade para o mesmo cliente e vendedor.'
         }
@@ -91,11 +79,11 @@ const TUTORIAIS_DATA = {
             descricao: 'Acompanhe as suas metas de Gross, Receita e Residencial para ver quanto falta para atingir a meta e habilitar seu bônus de pagamento.'
         }
     ],
-    'SISTEMAS CLARO': [
+    'SISTEMAS': [
         {
-            imagem: imgSistemas1,
-            titulo: '1. Acessando a Central de Sistemas',
-            descricao: 'Ao acessar esta tela, você visualizará o "Portal de Sistemas Claro". Este ambiente funciona como um painel central (hub) cujo objetivo é fornecer acesso rápido e direto a todas as plataformas e ferramentas corporativas utilizadas na rotina.'
+            titulo: 'Acesso Rápido a Plataformas',
+            img: imgFallback,
+            descricao: 'Ao acessar esta tela, você visualizará o "Portal de Sistemas". Este ambiente funciona como um painel central (hub) cujo objetivo é fornecer acesso rápido e direto a todas as plataformas e ferramentas corporativas utilizadas na rotina.'
         }
     ]
 };
@@ -110,7 +98,7 @@ export function Tutorial({ onClose, defaultTab, globalUser }) {
         'VENDA', 'CONTROLE-SIMCARD', 'FATOR RV', 'RESULTADO', 'COLABORADORES', 
         'GESTÃO', 'ESCALA DE TRABALHO', 'UR-RESIDENCIAL', 'PROPOSTA', 'REPROVADOS', 
         'PARCIAL & FECHAMENTO', 'GEEK', 'SCRIPTS', 'CAMPANHAS', 'PRECIFICAÇÃO', 
-        'SISTEMAS CLARO'
+        'SISTEMAS'
     ];
 
     const modulos = modulosRaw.filter(mod => {

@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { X, Printer, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { applyCpfCnpjMask, applyCurrencyMask, parseCurrencyToFloat, applyContratoMask } from './masks';
-import ClaroLogoImg from '../assets/CLARO_LOGO.png';
+import { Activity } from 'lucide-react';
+import { getCurrentStoreName } from './stores';
+
+import wfLogo from '../assets/logo_WF.png';
 
 const ClaroLogo = () => (
-    <img src={ClaroLogoImg} alt="Logo Claro" className="h-9 w-auto print:h-8" />
+    <div className="flex items-center text-red-600 font-bold text-xl gap-2">
+        <img src={wfLogo} alt="WorkFlow Logo" className="h-9 w-auto print:h-8" />
+        <span>WorkFlow Contratos</span>
+    </div>
 );
 
 const SectionHeader = ({ number, title }) => (
@@ -52,7 +58,7 @@ export default function ClaroContractForm({ sale, onClose }) {
             vendedorCodigo: sale?.vendedor || '',
             codigoAprovacao: '',
             codigoLoja: import.meta.env.VITE_STORE_CODE || '',
-            lojaNome: import.meta.env.VITE_STORE_NAME || 'LOJA CLARO'
+            lojaNome: getCurrentStoreName()
         },
         titular: {
             nome: sale?.nomeCliente || '',
@@ -139,7 +145,7 @@ export default function ClaroContractForm({ sale, onClose }) {
         declaracao: {
             optInPrivacidade: 'SIM',
             optInPublicidade: 'SIM',
-            localEmissao: import.meta.env.VITE_STORE_NAME ? `${import.meta.env.VITE_STORE_NAME} - SP` : 'SÃO PAULO - SP',
+            localEmissao: `${getCurrentStoreName()} - SP`,
             dataEmissao: sale?.data ? (typeof sale.data === 'string' && sale.data.includes('-') ? new Date(sale.data + 'T12:00:00').toLocaleDateString('pt-BR') : sale.data) : new Date().toLocaleDateString('pt-BR'),
             aceite: false
         }

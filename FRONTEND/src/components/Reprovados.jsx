@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { AlertOctagon, Plus, Search, Calendar, Edit3, Trash2, X, Lock, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
@@ -7,10 +8,10 @@ import { applyCpfCnpjMask, getTodaySP } from '../utils/masks';
 export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGerente, isVendedor, usersDB = {}, globalMonth }) {
     const activeVendedores = Object.values(usersDB || {})
         .filter(u => !u?.role || u?.role === 'VENDEDOR')
-        .map(u => String(u?.name || '').split(' ')[0])
+        .map(u => String(u?.name || ''))
         .filter(Boolean);
         
-    const historicalVendedores = (reprovadosData || []).map(r => String(r.vendedor || '').split(' ')[0]).filter(Boolean);
+    const historicalVendedores = (reprovadosData || []).map(r => String(r.vendedor || '')).filter(Boolean);
     
     const safeVendedores = [...new Set([...activeVendedores, ...historicalVendedores])].sort();
 
@@ -70,7 +71,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
 
     const canEditDelete = (item) => {
         if (isGerente || ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'JOVEM APRENDIZ', 'GEEK'].includes(globalUser?.role)) return true;
-        if (isVendedor && (item.vendedor === globalUser?.name || item.vendedor === String(globalUser?.name || '').split(' ')[0])) return true;
+        if (isVendedor && (item.vendedor === globalUser?.name || item.vendedor === String(globalUser?.name || ''))) return true;
         return false;
     };
 
@@ -79,7 +80,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
         setEditingId(null);
         setFormData({
             data: getTodaySP(),
-            vendedor: (isVendedor && globalUser) ? String(globalUser?.name || '').split(' ')[0] : '',
+            vendedor: (isVendedor && globalUser) ? String(globalUser?.name || '') : '',
             produto: '',
             motivo: '',
             cliente: '',
@@ -247,7 +248,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
                                         filteredData.map(item => (
                                             <tr key={item.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800">
                                                 <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400 font-medium">{typeof item.data === 'string' && item.data.includes('-') ? new Date(item.data + 'T12:00:00').toLocaleDateString('pt-BR') : item.data}</td>
-                                                <td className="px-4 py-3 font-bold text-neutral-800 dark:text-neutral-200">{item.vendedor}</td>
+                                                <td className="px-4 py-3 font-bold text-neutral-800 dark:text-neutral-200">{getFirstName(item.vendedor)}</td>
                                                 <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{item.produto}</td>
                                                 <td className="px-4 py-3"><span className="bg-red-50 dark:bg-red-900/20 text-[#E3000F] border border-red-100 dark:border-red-900/30 px-2 py-1 rounded text-[10px] font-bold tracking-wider uppercase">{item.motivo}</span></td>
                                                 <td className="px-4 py-3 text-neutral-800 dark:text-neutral-200">{item.cliente}</td>
@@ -287,7 +288,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
                             {formError && (<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-[#E3000F] px-4 py-3 rounded-lg text-sm font-medium animate-fade-in">{formError}</div>)}
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Data <span className="text-[#E3000F]">*</span></label><input type="date" name="data" value={formData.data} onChange={handleFormChange} max={getTodaySP()} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" /></div>
-                                <div className="space-y-1.5 relative"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between"><span>Vendedor <span className="text-[#E3000F]">*</span></span>{isVendedor && <Lock size={12} className="text-[#E3000F]" />}</label><select name="vendedor" value={formData.vendedor} onChange={handleFormChange} disabled={isVendedor} className={`w-full px-3 py-2.5 rounded-lg outline-none text-sm border ${isVendedor ? 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-[#E3000F] cursor-not-allowed font-bold' : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 focus:ring-1 focus:ring-[#E3000F]'}`}><option className="bg-white dark:bg-neutral-900" value="">Selecione</option>{safeVendedores.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{v}</option>)}</select></div>
+                                <div className="space-y-1.5 relative"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between"><span>Vendedor <span className="text-[#E3000F]">*</span></span>{isVendedor && <Lock size={12} className="text-[#E3000F]" />}</label><select name="vendedor" value={formData.vendedor} onChange={handleFormChange} disabled={isVendedor} className={`w-full px-3 py-2.5 rounded-lg outline-none text-sm border ${isVendedor ? 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-[#E3000F] cursor-not-allowed font-bold' : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 focus:ring-1 focus:ring-[#E3000F]'}`}><option className="bg-white dark:bg-neutral-900" value="">Selecione</option>{safeVendedores.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)}</select></div>
                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Produto <span className="text-[#E3000F]">*</span></label><select name="produto" value={formData.produto} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option>{RESIDENTIAL_PRODUCTS.map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select></div>
                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Motivo de Recusa <span className="text-[#E3000F]">*</span></label><select name="motivo" value={formData.motivo} onChange={handleFormChange} className="w-full bg-red-50/50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-neutral-800 dark:text-neutral-100 font-semibold px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option>{MOTIVOS_OPTIONS.map(m => <option className="bg-white dark:bg-neutral-900" key={m} value={m}>{m}</option>)}</select></div>
                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Nome do Cliente <span className="text-[#E3000F]">*</span></label><input type="text" name="cliente" value={formData.cliente} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" placeholder="Nome completo" /></div>
