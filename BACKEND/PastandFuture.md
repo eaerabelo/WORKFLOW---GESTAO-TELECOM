@@ -85,6 +85,10 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - Removido o bloco contendo a imagem do QR Code de avaliação do Google da seção de propostas em `Proposta.jsx`.
 - **Envio do Projeto para o Git:**
   - Alterado o repositório remoto para `https://github.com/eaerabelo/WORKFLOW---GESTAO-TELECOM.git` e realizado o commit e envio (push) das alterações para a branch `atualizacao`.
+- **Atualização da Pasta Rules (Documentações do Projeto):**
+  - Atualizados e higienizados os arquivos `COMMENTS.md`, `PLSecurity.md`, `REGRAS_DE_NEGOCIO.md`, `README.md`, `Documentacao.md` e `GUIA_POR_CAMADAS.md` da pasta `rules/`.
+  - As atualizações removeram referências diretas à Claro para manter a confidencialidade e incluíram as novas regras do sistema (como carregamento instantâneo sem filtros do cabeçalho global, renderização visual apenas com o primeiro nome do vendedor, e mapeamento seguro de banco relacional e segurança no git).
+  - Comitadas e enviadas todas as documentações atualizadas para a branch `atualizacao`.
 
 ---
 
