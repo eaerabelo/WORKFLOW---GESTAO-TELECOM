@@ -1,6 +1,6 @@
-# Painel de Gestão Claro - Multi-Tenant
+# Painel de Gestão de Vendas - Multi-Tenant
 
-Este é o repositório do Frontend do Painel de Gestão Claro. O sistema evoluiu para uma arquitetura "Multi-Tenant", o que significa que o mesmo código-fonte serve para gerenciar múltiplas lojas (Osasco, Lapa, Calçadão), isolando os dados de cada uma no backend.
+Este é o repositório do Frontend do Painel de Gestão de Vendas. O sistema evoluiu para uma arquitetura "Multi-Tenant", o que significa que o mesmo código-fonte serve para gerenciar múltiplas lojas, isolando os dados de cada uma no backend.
 
 ## 🚀 Como Executar o Projeto Localmente
 
@@ -25,11 +25,11 @@ Para enviar as atualizações visuais e de código para a internet de forma isol
 ## ⚙️ Variáveis de Ambiente (.env)
 
 O projeto utiliza arquivos `.env` separados para cada loja (ex: `.env.osasco`). 
-Eles precisam conter:
+Ele precisa conter:
 
-* `VITE_API_URL`: O link do backend hospedado na Oracle Cloud (Ex: `http://168.138.130.96:3000`).
-* `VITE_STORE_NAME`: Nome da loja exibido no cabeçalho (Ex: `CLARO UNIÃO OSASCO`).
-* `VITE_STORE_CODE`: Código PDV da loja (Ex: `AT1M`).
+* `VITE_API_URL`: O link do backend hospedado na nuvem (Ex: `https://api-painel.137.131.172.16.nip.io`).
+* `VITE_STORE_NAME`: Nome da loja exibido no cabeçalho.
+* `VITE_STORE_CODE`: Código PDV da loja.
 
 ## 🛠️ Tecnologias Utilizadas
 

@@ -1,4 +1,4 @@
-# GUIA DE USO DO PAINEL CLARO (POR CAMADAS)
+# GUIA DE USO DO PAINEL DE GESTÃO (POR CAMADAS)
 
 Este documento detalha o fluxo de uso da plataforma, dividido em camadas operacionais. Ele serve como manual de integração para novos consultores e como guia de administração para líderes.
 
@@ -8,7 +8,7 @@ Este documento detalha o fluxo de uso da plataforma, dividido em camadas operaci
 
 ### Camada 1: Autenticação e Acesso
 - **Login Seguro:** O acesso é feito obrigatoriamente com a sua Matrícula (iniciada em 9 ou F) e sua senha pessoal.
-- **Tela de Login Personalizada:** O sistema se adapta ao seu dispositivo (PC ou Celular) carregando um papel de parede temático esticado (Claro Wallpaper), mudando o design de acordo com o tamanho da tela.
+- **Tela de Login Personalizada:** O sistema se adapta ao seu dispositivo (PC ou Celular) carregando um papel de parede temático esticado, mudando o design de acordo com o tamanho da tela.
 - **Sessão Inteligente:** A plataforma mantém você logado enquanto trabalha, mas por segurança, sua sessão expira automaticamente se você ficar inativo por 30 minutos ou se trocar de navegador.
 - **Modo Noturno:** Para quem atua horas no salão de vendas, clique no atalho de Sol/Lua para ativar a versão Escura do sistema. O tema realiza uma transição suave para não agredir os olhos e melhora a legibilidade de todas as tabelas.
 - **Central de Notificações:** Fique de olho no sininho (🔔) no topo da tela. Ele avisará automaticamente sempre que a Gestão atualizar suas Metas ou quando houver lembretes operacionais importantes.
@@ -21,17 +21,17 @@ Este documento detalha o fluxo de uso da plataforma, dividido em camadas operaci
 - **Prevenção de Duplicidade:** Se você lançar uma "Migração", o painel esconde a opção de "Portabilidade" sozinho. Em vendas de Combo, ao marcar a caixinha de "M-Play" para o primeiro produto, o sistema a esconderá para os próximos para não duplicar a sua meta sem necessidade!
 - **Venda Múltipla (Combo):** Quando um cliente levar muitos serviços (ex: Celular + Internet + TV + Dependentes), alterne para a aba "Venda Múltipla (Combo)". Você adiciona os produtos em um "carrinho" e o painel distribui CPFs, Contratos e Descontos automaticamente antes de registrar tudo de uma vez.
 - **Resumo Inteligente:** O painel conta até as vendas do serviço M-Play na barra inferior e, ao buscar relatórios de venda, ela vai mostrar desde a primeira venda disponível na história até o dia de hoje.
-- **Seus Registros:** Você é dono das suas vendas. Seu nome é preenchido automaticamente (apenas o primeiro nome) e você pode consultar seus registros a qualquer momento pelo calendário.
+- **Seus Registros:** Você é dono das suas vendas. Seu nome é preenchido automaticamente (apenas o primeiro nome) e você pode consultar seus registros a qualquer momento pelo seletor de datas.
 
 ### Camada 3: Atendimento e Negociação (Propostas)
 - **Simulador de Combos:** Você pode montar orçamentos (SINGLE, MULTI e MULTI 3P) em tempo real enquanto atende o cliente.
-- **Comparador Inteligente e IA:** Vá para a aba "Comparador Planos". Selecione duas opções de pacote. Clique em "Argumentos Via Gemini IA" e o nosso robô consultor criará frases e argumentos para você convencer o cliente a levar o pacote de maior valor!
+- **Comparador Inteligente e IA:** Vá para a aba "Comparador Planos". Selecione duas opções de pacote. Clique em "Argumentos Via IA" e o nosso robô consultor criará frases e argumentos para você convencer o cliente a levar o pacote de maior valor!
 - **Gatilhos de Venda:** Quando você monta um Combo Multi, o sistema cruza os descontos e emite um alerta na tela: *"Economia de R$ X ao ano!"*, ajudando a convencer o cliente.
 - **Compartilhamento Turbo:** Use o botão flutuante para mandar a proposta escrita direto no **WhatsApp** do cliente, ou clique em "Baixar como Imagem" para ter o encarte bonitinho salvo no seu PC para envio.
 
 ### Camada 4: Acompanhamento Pessoal (Colaboradores e Escala)
 - **Placar em Tempo Real:** Na aba "Colaboradores", você clica na sua própria foto para abrir seu Dashboard e ver exatamente quanto você já vendeu versus a sua meta individual do mês.
-- **Projeção Fator RV:** A aba "Fator RV" atua como um simulador e calcula sua comissão com base nas diretrizes. O Acelerador Automático Claro Multi (1.2x a 1.8x) agora é ativado pelo atingimento da sua meta individual de **M-Play**! O painel exibe **"Dicas de Foco"** dinâmicas (avisos de alerta, formais ou de sucesso) baseadas no seu desempenho. Lembre-se: o painel atua como um simulador, o sistema IW oficial continua sendo seu canal primário e definitivo de comissionamento.
+- **Projeção Fator RV:** A aba "Fator RV" atua como um simulador e calcula sua comissão com base nas diretrizes. O Acelerador Automático Multi (1.2x a 1.8x) agora é ativado pelo atingimento da sua meta individual de **M-Play**! O painel exibe **"Dicas de Foco"** dinâmicas (avisos de alerta, formais ou de sucesso) baseadas no seu desempenho. Lembre-se: o painel atua como um simulador, o sistema oficial continua sendo seu canal primário e definitivo de comissionamento.
 - **Hall da Fama (Gamificação):** As caixinhas dos melhores vendedores ganham destaque! Se você tiver a maior receita da loja no mês, receberá a coroa (👑) de Top 1. Se for o líder em Pós-pago, ganha a medalha (🥇) de Destaque Pós.
 - **Sua Escala:** Você tem permissão de leitura na Escala de Trabalho, podendo verificar seus horários, folgas programadas da semana ou exceções cadastradas pelo seu gerente.
 
@@ -45,7 +45,7 @@ Este documento detalha o fluxo de uso da plataforma, dividido em camadas operaci
 ### Camada 6: Ferramentas de Produtividade (Scripts e Wi-Fi)
 - **Wi-Fi Rápido:** Precisa conectar o cliente à internet da loja? Clique no ícone de Wi-Fi no topo da tela para abrir o QR Code e peça para o cliente escanear.
 - **Aba Geek:** O espaço de conhecimento. Uma prateleira cheia de materiais de treinamento, apostilas e arquivos úteis.
-- **Textos Prontos (Scripts):** Na aba "Scripts", você encontra os textos padrões da loja para solicitações (como Cancelamento, Troca de Chip, etc). O sistema já coloca o seu nome na assinatura automaticamente. Basta clicar no botão de copiar e colar no sistema da Claro!
+- **Textos Prontos (Scripts):** Na aba "Scripts", você encontra os textos padrões da loja para solicitações (como Cancelamento, Troca de Chip, etc). O sistema já coloca o seu nome na assinatura automaticamente. Basta clicar no botão de copiar e colar no sistema da operadora!
 
 ---
 

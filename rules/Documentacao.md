@@ -25,7 +25,7 @@ FRONTEND/
 │   │   ├── Campanha.jsx        # Gestão de Prêmios e Incentivos
 │   │   ├── Scripts.jsx         # Textos padrões para cópia rápida
 │   │   ├── Precificacao.jsx    # Gestão de preços (Em desenvolvimento)
-│   │   ├── SistemasClaro.jsx   # Links rápidos
+│   │   ├── Sistemas.jsx        # Links rápidos
 │   │   └── ProgressBar.jsx     # Componente visual genérico
 │   ├── utils/              # Funções auxiliares
 │   │   ├── constants.js        # Constantes (Metas, Preços Iniciais, Produtos)
@@ -72,7 +72,7 @@ Dashboard gerencial unificado.
 
 ### ParcialFechamento.jsx
 Montador automático de relatórios em texto para o WhatsApp.
-Puxa o dia atual de vendas e confronta com a "Necessidade Diária" baseada na Meta da loja, formatando tudo no padrão de cobrança da Claro de forma estruturada.
+Puxa o dia atual de vendas e confronta com a "Necessidade Diária" baseada na Meta da loja, formatando tudo no padrão de cobrança da operadora de forma estruturada.
 
 ### FatorRvv.jsx
 Simulador de contracheque e bússola de performance.
