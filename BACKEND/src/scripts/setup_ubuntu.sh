@@ -10,6 +10,6 @@ echo "==> Instalando PM2 (Gerenciador de Processos)..."
 sudo npm install -g pm2
 
 echo "==> Criando pasta do projeto..."
-mkdir -p ~/painelclaro/BACKEND
+mkdir -p ~/workflow/BACKEND
 
 echo "==> SETUP FINALIZADO COM SUCESSO!"

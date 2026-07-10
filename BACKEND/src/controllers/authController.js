@@ -208,7 +208,7 @@ const sendCodeEmail = async (email, nome, subject, messagePrefix) => {
     otpStore.set(email.toLowerCase(), { codigo, expiresAt });
 
     const fromEmail = process.env.MAILERSEND_FROM_EMAIL || "MS_rZJjXb@trial-yxj6xdqzq58g2wqz.mlsender.net";
-    const fromName = process.env.MAILERSEND_FROM_NAME || "Workflow Claro";
+    const fromName = process.env.MAILERSEND_FROM_NAME || "Workflow Gestão";
     
     const sentFrom = new Sender(fromEmail, fromName);
     const recipients = [new Recipient(email, nome || "Usuário")];
@@ -239,7 +239,7 @@ export const solicitarRecuperacao = async (req, res) => {
         const user = await getUserFromDB(username, null, false, email, null);
         if (!user) return res.status(404).json({ error: "Usuário não encontrado ou e-mail não confere com o cadastro." });
 
-        await sendCodeEmail(email, user.name, "Recuperação de Senha - Workflow Claro", "Recebemos uma solicitação de redefinição de senha para a sua conta.");
+        await sendCodeEmail(email, user.name, "Recuperação de Senha - Workflow", "Recebemos uma solicitação de redefinição de senha para a sua conta.");
         res.status(200).json({ success: true, message: "Código de recuperação enviado com sucesso." });
     } catch (error) {
         console.error("Erro ao solicitar recuperação:", error);
@@ -288,8 +288,8 @@ export const solicitarCadastro = async (req, res) => {
         }
 
         // Validação de E-mail
-        if (!email.toLowerCase().endsWith('@claro.com.br')) {
-            return res.status(400).json({ error: "O e-mail de cadastro deve ser corporativo (@claro.com.br)." });
+        if (!email.toLowerCase().includes('@')) {
+            return res.status(400).json({ error: "O e-mail de cadastro deve ser corporativo e conter '@'." });
         }
 
         // Validação de Idade (18 anos)
@@ -323,7 +323,7 @@ export const solicitarCadastro = async (req, res) => {
             return res.status(400).json({ error: "Este nome de usuário já está em uso no sistema." });
         }
 
-        await sendCodeEmail(email, nome, "Código de Confirmação - Workflow Claro", "Seu e-mail corporativo está sendo validado para um novo cadastro.");
+        await sendCodeEmail(email, nome, "Código de Confirmação - Workflow", "Seu e-mail corporativo está sendo validado para um novo cadastro.");
         res.status(200).json({ success: true, message: "Código enviado para o e-mail.", computedStoreId: storeId });
     } catch (error) {
         console.error("Erro ao solicitar cadastro:", error);

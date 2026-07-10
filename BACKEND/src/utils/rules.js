@@ -1,5 +1,5 @@
 /**
- * Arquivo centralizado de Regras de Negócio e Comissionamento da Claro.
+ * Arquivo centralizado de Regras de Negócio e Comissionamento da Operadora.
  * Protegido no Backend para evitar manipulação de comissões via navegador.
  */
 
@@ -10,7 +10,7 @@ export const TETO_RV_GEEK = 6000.00;
 export const TETO_RV_ASSISTENTE = 4000.00;
 export const TETO_RV_ADMINISTRATIVO = 2000.00;
 
-export const FATORES_CLARO_MULTI = {
+export const FATORES_ACELERADOR_MULTI = {
     FAIXA_1: 1.2, // 0.00% até 99.99% de Meta Multi
     FAIXA_2: 1.4, // 100.00% até 129.99%
     FAIXA_3: 1.6, // 130.00% até 159.99%
@@ -48,10 +48,10 @@ export const aplicarRegrasDeProduto = (sale, metricasVendedor = {}) => {
             const pctMplay = metricasVendedor.pctAtingimentoMplay || metricasVendedor.pctAtingimentoMPlay || 0;
             const temMplay = String(sale.mplay || '').toUpperCase() === 'SIM';
             if (temMplay) {
-                let fatorMulti = FATORES_CLARO_MULTI.FAIXA_1;
-                if (pctMplay >= 160.00) fatorMulti = FATORES_CLARO_MULTI.FAIXA_4;
-                else if (pctMplay >= 130.00) fatorMulti = FATORES_CLARO_MULTI.FAIXA_3;
-                else if (pctMplay >= 100.00) fatorMulti = FATORES_CLARO_MULTI.FAIXA_2;
+                let fatorMulti = FATORES_ACELERADOR_MULTI.FAIXA_1;
+                if (pctMplay >= 160.00) fatorMulti = FATORES_ACELERADOR_MULTI.FAIXA_4;
+                else if (pctMplay >= 130.00) fatorMulti = FATORES_ACELERADOR_MULTI.FAIXA_3;
+                else if (pctMplay >= 100.00) fatorMulti = FATORES_ACELERADOR_MULTI.FAIXA_2;
                 receitaBase *= fatorMulti;
             } else {
                 receitaBase *= 1.0;
@@ -67,10 +67,10 @@ export const aplicarRegrasDeProduto = (sale, metricasVendedor = {}) => {
             const pctMplay = metricasVendedor.pctAtingimentoMplay || metricasVendedor.pctAtingimentoMPlay || 0;
             const temMplay = String(sale.mplay || '').toUpperCase() === 'SIM';
             if (temMplay) {
-                let fatorMulti = FATORES_CLARO_MULTI.FAIXA_1;
-                if (pctMplay >= 160.00) fatorMulti = FATORES_CLARO_MULTI.FAIXA_4;
-                else if (pctMplay >= 130.00) fatorMulti = FATORES_CLARO_MULTI.FAIXA_3;
-                else if (pctMplay >= 100.00) fatorMulti = FATORES_CLARO_MULTI.FAIXA_2;
+                let fatorMulti = FATORES_ACELERADOR_MULTI.FAIXA_1;
+                if (pctMplay >= 160.00) fatorMulti = FATORES_ACELERADOR_MULTI.FAIXA_4;
+                else if (pctMplay >= 130.00) fatorMulti = FATORES_ACELERADOR_MULTI.FAIXA_3;
+                else if (pctMplay >= 100.00) fatorMulti = FATORES_ACELERADOR_MULTI.FAIXA_2;
                 receitaBase *= fatorMulti;
             } else {
                 receitaBase *= 1.0;

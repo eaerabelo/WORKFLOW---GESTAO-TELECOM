@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // O diretório deve ser absoluto onde estão os arquivos cwallet.sso e tnsnames.ora
-process.env.TNS_ADMIN = join(__dirname, '../../wallet_painelclaro');
+process.env.TNS_ADMIN = join(__dirname, '../../wallet_painel');
 
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 oracledb.fetchAsString = [oracledb.CLOB];
@@ -20,7 +20,7 @@ async function initOraclePool() {
     pool = await oracledb.createPool({
       user: "ADMIN",
       password: ENV.ORACLE_PASSWORD,
-      connectString: "painelclaro_high",
+      connectString: ENV.ORACLE_CONNECT_STRING,
       walletLocation: process.env.TNS_ADMIN,
       walletPassword: ENV.ORACLE_PASSWORD,
       poolMin: 1,

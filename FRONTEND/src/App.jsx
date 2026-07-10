@@ -1318,7 +1318,7 @@ export default function App() {
               <Wifi size={32} />
             </div>
             
-            <h2 className="text-2xl font-black text-neutral-800 dark:text-neutral-100 mb-2 tracking-tight">Wi-Fi CLARO_CLIENTE</h2>
+            <h2 className="text-2xl font-black text-neutral-800 dark:text-neutral-100 mb-2 tracking-tight">Wi-Fi LOJA_CLIENTE</h2>
             <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 leading-relaxed">
               Escaneie o QR Code abaixo para se conectar à internet automaticamente.
             </p>

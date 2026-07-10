@@ -38,7 +38,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
         });
 
         const sumTotals = { 
-            gross: 0, grossPme: 0, aparelho: 0, receitaAparelho: 0, seguro: 0, acessorio: 0, virtua: 0, virtuaPme: 0, tv: 0, mplay: 0, claroUp: 0,
+            gross: 0, grossPme: 0, aparelho: 0, receitaAparelho: 0, seguro: 0, acessorio: 0, virtua: 0, virtuaPme: 0, tv: 0, mplay: 0, upgradeUp: 0,
             posTt: 0, depPg: 0, depBl: 0, depGratis: 0, migraPos: 0, controle: 0, migraControle: 0, bl: 0, flex: 0,
             portabilidade: 0, ativacao: 0, migracao: 0, fixo: 0, fibra: 0, tvBox: 0, mesh: 0, pelicula: 0, receitaAcessorio: 0, trocafy: 0,
             grossDia: 0, totalRes: 0, contaTotal: 0, qtdaAcessorioFisico: 0
@@ -75,11 +75,11 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
                 else if (sub.includes('BANDA-LARGA') || sub.includes('BANDA LARGA') || sub.includes('BL') || pBase.includes('BL')) sumTotals.depBl += q;
                 else sumTotals.depPg += q;
             }
-            else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('CLARO NET VIRTUA')) sumTotals.bl += q;
+            else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('NET VIRTUA')) sumTotals.bl += q;
             else if (pBase.includes('FIBRA PME') || pBase.includes('UR PME')) sumTotals.virtuaPme += q;
             else if (pBase.includes('FIBRA') || pBase.includes('BANDA LARGA RESIDENCIAL')) sumTotals.fibra += q;
             else if (pBase.includes('TV-BOX')) sumTotals.tvBox += q;
-            else if (pBase.includes('CLARO TV+') || pBase.includes('TV') || pBase.includes('PONTO ADICIONAL')) sumTotals.tv += q;
+            else if (pBase.includes('TV+') || pBase.includes('TV') || pBase.includes('PONTO ADICIONAL')) sumTotals.tv += q;
             else if (pBase.includes('FIXO')) sumTotals.fixo += q;
             else if (pBase.includes('MESH')) sumTotals.mesh += q;
             if (pBase.includes('APARELHO')) { sumTotals.aparelho += q; sumTotals.receitaAparelho += rec; }
@@ -88,7 +88,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
             if (pBase.includes('PELÍCULA') || pBase.includes('PELICULA')) { sumTotals.pelicula += q; sumTotals.receitaAcessorio += recBruto; sumTotals.qtdaAcessorioFisico += q; }
 
             if (adds.includes('TROCAFY')) sumTotals.trocafy += 1;
-            if (adds.includes('CLARO UP')) sumTotals.claroUp += 1;
+            if (adds.includes('UPGRADE')) sumTotals.upgradeUp += 1;
             if (sale.mplay === 'SIM') sumTotals.mplay += 1;
 
             if (op === 'ATIVAÇÃO' && port !== 'SIM') sumTotals.ativacao += q;
@@ -114,7 +114,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
         metaAparelho: '', feitoAparelho: '', metaSeguro: '', feitoSeguro: '',
         metaAcessorio: '', feitoAcessorio: '', metaVirtua: '', feitoVirtua: '',
         metaVirtuaPme: '', feitoVirtuaPme: '', metaTv: '', feitoTv: '',
-        metaMplay: '', feitoMplay: '', feitoClaroUp: ''
+        metaMplay: '', feitoMplay: '', feitoUpgradeUp: ''
     });
 
     useEffect(() => {
@@ -125,7 +125,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
             metaAparelho: dailyGoals.aparelho || 0, feitoAparelho: totals.aparelho || 0, metaSeguro: dailyGoals.seguro || 0, feitoSeguro: totals.seguro || 0,
             metaAcessorio: dailyGoals.acessorio || 0, feitoAcessorio: (totals.acessorio + totals.pelicula) || 0, metaVirtua: dailyGoals.virtua || 0, feitoVirtua: totals.virtua || 0,
             metaVirtuaPme: dailyGoals.virtuaPme || 0, feitoVirtuaPme: totals.virtuaPme || 0, metaTv: dailyGoals.tv || 0, feitoTv: (totals.tv + totals.tvBox) || 0,
-            metaMplay: dailyGoals.mplay || 0, feitoMplay: totals.mplay || 0, feitoClaroUp: totals.claroUp || 0
+            metaMplay: dailyGoals.mplay || 0, feitoMplay: totals.mplay || 0, feitoUpgradeUp: totals.upgradeUp || 0
         }));
     }, [totals, dailyGoals]);
 
@@ -146,7 +146,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
 
     const handleSendWhatsApp = () => {
         const pad = (v) => String(v).padStart(2, '0');
-        const text = `Parcial ${form.hora}H\nÁrea ${form.area}\nLoja: ${form.loja}\n\nMETA HORA / FEITO\nSenhas: ${form.senhas || '0'}\nGross: ${pad(form.metaGross)}/${pad(form.feitoGross)}\nGross PME: ${pad(form.metaGrossPme)}/${pad(form.feitoGrossPme)}\nAparelho: ${pad(form.metaAparelho)}/${pad(form.feitoAparelho)}\nSeguro: ${pad(form.metaSeguro)}/${pad(form.feitoSeguro)}\nAcessórios: ${pad(form.metaAcessorio)}/${pad(form.feitoAcessorio)}\nVirtua: ${pad(form.metaVirtua)}/${pad(form.feitoVirtua)}\nVirtua PME: ${pad(form.metaVirtuaPme)}/${pad(form.feitoVirtuaPme)}\nTV: ${pad(form.metaTv)}/${pad(form.feitoTv)}\nMplay: ${pad(form.metaMplay)}/${pad(form.feitoMplay)}\nClaro Up: ${pad(form.feitoClaroUp)}`;
+        const text = `Parcial ${form.hora}H\nÁrea ${form.area}\nLoja: ${form.loja}\n\nMETA HORA / FEITO\nSenhas: ${form.senhas || '0'}\nGross: ${pad(form.metaGross)}/${pad(form.feitoGross)}\nGross PME: ${pad(form.metaGrossPme)}/${pad(form.feitoGrossPme)}\nAparelho: ${pad(form.metaAparelho)}/${pad(form.feitoAparelho)}\nSeguro: ${pad(form.metaSeguro)}/${pad(form.feitoSeguro)}\nAcessórios: ${pad(form.metaAcessorio)}/${pad(form.feitoAcessorio)}\nVirtua: ${pad(form.metaVirtua)}/${pad(form.feitoVirtua)}\nVirtua PME: ${pad(form.metaVirtuaPme)}/${pad(form.feitoVirtuaPme)}\nTV: ${pad(form.metaTv)}/${pad(form.feitoTv)}\nMplay: ${pad(form.metaMplay)}/${pad(form.feitoMplay)}\nUpgrade: ${pad(form.feitoUpgradeUp)}`;
         const encodedText = encodeURIComponent(text);
         window.open(`https://wa.me/?text=${encodedText}`, '_blank');
     };
@@ -194,17 +194,17 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
             `Conversão: ${conversao}%\n` +
             `*Trocafy: ${pad(totals.trocafy)}\n` +
             `Ação Boost: ${form.acaoBoost || '00'}\n` +
-            `Claro UP : ${pad(totals.claroUp)}`;
+            `Upgrade : ${pad(totals.upgradeUp)}`;
 
         const encodedText = encodeURIComponent(text);
         window.open(`https://wa.me/?text=${encodedText}`, '_blank');
     };
 
-    const MetricRow = ({ label, nameMeta, nameFeito, isClaroUp = false }) => (
+    const MetricRow = ({ label, nameMeta, nameFeito, isUpgradeUp = false }) => (
         <div className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-800/60 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors px-2 -mx-2 rounded-lg">
             <span className="text-xs sm:text-sm font-bold text-neutral-700 dark:text-neutral-300 w-28 shrink-0">{label}</span>
             <div className="flex items-center gap-1 sm:gap-2">
-                {!isClaroUp ? (
+                {!isUpgradeUp ? (
                     <div className="flex items-center gap-1.5"><Target size={14} className="text-neutral-400 hidden sm:block" /><input type="number" name={nameMeta} value={form[nameMeta]} onChange={handleChange} className="w-12 sm:w-14 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-2 py-1.5 rounded-lg text-center font-bold text-xs outline-none focus:border-[#E3000F] transition-all" /></div>
                 ) : (<div className="w-12 sm:w-14"></div>)}
                 <span className="text-neutral-300 dark:text-neutral-600 font-bold mx-1">/</span>
@@ -252,7 +252,7 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
                             </div>
                         </div>
                         <div className="p-4 sm:p-5">
-                            <MetricRow label="Gross" nameMeta="metaGross" nameFeito="feitoGross" /><MetricRow label="Gross PME" nameMeta="metaGrossPme" nameFeito="feitoGrossPme" /><MetricRow label="Aparelho" nameMeta="metaAparelho" nameFeito="feitoAparelho" /><MetricRow label="Seguro" nameMeta="metaSeguro" nameFeito="feitoSeguro" /><MetricRow label="Acessórios" nameMeta="metaAcessorio" nameFeito="feitoAcessorio" /><MetricRow label="Virtua" nameMeta="metaVirtua" nameFeito="feitoVirtua" /><MetricRow label="Virtua PME" nameMeta="metaVirtuaPme" nameFeito="feitoVirtuaPme" /><MetricRow label="TV" nameMeta="metaTv" nameFeito="feitoTv" /><MetricRow label="Mplay" nameMeta="metaMplay" nameFeito="feitoMplay" /><MetricRow label="Claro Up" nameMeta="" nameFeito="feitoClaroUp" isClaroUp={true} />
+                            <MetricRow label="Gross" nameMeta="metaGross" nameFeito="feitoGross" /><MetricRow label="Gross PME" nameMeta="metaGrossPme" nameFeito="feitoGrossPme" /><MetricRow label="Aparelho" nameMeta="metaAparelho" nameFeito="feitoAparelho" /><MetricRow label="Seguro" nameMeta="metaSeguro" nameFeito="feitoSeguro" /><MetricRow label="Acessórios" nameMeta="metaAcessorio" nameFeito="feitoAcessorio" /><MetricRow label="Virtua" nameMeta="metaVirtua" nameFeito="feitoVirtua" /><MetricRow label="Virtua PME" nameMeta="metaVirtuaPme" nameFeito="feitoVirtuaPme" /><MetricRow label="TV" nameMeta="metaTv" nameFeito="feitoTv" /><MetricRow label="Mplay" nameMeta="metaMplay" nameFeito="feitoMplay" /><MetricRow label="Upgrade" nameMeta="" nameFeito="feitoUpgradeUp" isUpgradeUp={true} />
                         </div>
                     </div>
                     <button onClick={handleSendWhatsApp} className="w-full px-8 py-3.5 bg-[#25D366] text-white font-bold rounded-xl hover:bg-[#1EBE57] transition-all shadow-lg shadow-[#25D366]/30 flex items-center justify-center gap-2 text-sm sm:text-base hover:-translate-y-0.5">

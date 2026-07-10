@@ -29,12 +29,12 @@ dist-ssr
 
 # Credentials, SSH keys, and Oracle wallets
 *.key
-wallet_painelclaro/
-Wallet_painelclaro.zip
+wallet_painel/
+Wallet_painel.zip
 serviceAccountKey.json
 BACKEND/serviceAccountKey.json
-BACKEND/wallet_painelclaro/
-BACKEND/Wallet_painelclaro.zip
+BACKEND/wallet_painel/
+BACKEND/Wallet_painel.zip
 
 # Binaries and archives
 cloudflared.exe
@@ -45,3 +45,9 @@ cloudflared.exe
 # Logs
 requests.log
 BACKEND/requests.log
+
+# Scratch scripts
+scratch/
+.agents/
+.firebase/
+.venv/

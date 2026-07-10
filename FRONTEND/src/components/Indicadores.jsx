@@ -96,11 +96,11 @@ export const Indicadores = ({ salesData = [], usersDB = {}, globalMonth, goalsDB
             else if (pBase.includes('CONTROLE')) { if (op.includes('MIGRA') || pBase.includes('MIGRA') || sub.includes('MIGRA')) migracaoControle += q; else controle += q; }
             else if (pBase.includes('FLEX')) { if (op.includes('MIGRA') || pBase.includes('MIGRA') || sub.includes('MIGRA')) migracaoControle += q; else flex += q; }
             else if (pBase.includes('DEPENDENTE') || pBase.includes('DEP')) { if (sub.includes('GRATUITO') || sub.includes('GRÁTIS') || sub.includes('GRATIS') || pBase.includes('GRÁTIS')) depGratis += q; else if (sub.includes('BANDA-LARGA') || sub.includes('BANDA LARGA')) depBl += q; else depPg += q; }
-            else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('CLARO NET VIRTUA')) bl += q;
+            else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('NET VIRTUA')) bl += q;
             else if (pBase.includes('FIBRA PME') || pBase.includes('UR PME')) urPme += q;
             else if (pBase.includes('FIBRA') || pBase.includes('BANDA LARGA RESIDENCIAL')) fibra += q;
             else if (pBase.includes('TV-BOX')) tvBox += q;
-            else if (pBase.includes('CLARO TV+') || pBase.includes('TV')) tv += q;
+            else if (pBase.includes('TV+') || pBase.includes('TV')) tv += q;
             else if (pBase.includes('FIXO') || pBase.includes('NET FONE')) fixo += q;
             else if (pBase.includes('APARELHO')) { aparelho += q; }
             else if (pBase.includes('ACESSÓRIO') || pBase.includes('ACESSORIO')) { acessorio += q; }
@@ -160,7 +160,7 @@ export const Indicadores = ({ salesData = [], usersDB = {}, globalMonth, goalsDB
                 isControle = true;
             } else if (pBase.includes('DEPENDENTE') || pBase.includes('DEP')) {
                 isGross = true;
-            } else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('CLARO NET VIRTUA')) {
+            } else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('NET VIRTUA')) {
                 isGross = true;
             } else if (pBase.includes('FLEX')) {
                 isGross = true;

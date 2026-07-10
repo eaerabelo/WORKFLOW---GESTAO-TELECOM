@@ -154,7 +154,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     if (pBase.includes('FIBRA') || pBase.includes('BANDA LARGA RESIDENCIAL')) {
                         volFibra += q;
                     }
-                    if (pBase.includes('CLARO TV+') || pBase.includes('TV')) {
+                    if (pBase.includes('TV+') || pBase.includes('TV')) {
                         volTv += q;
                     }
 
@@ -462,8 +462,8 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                     <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/30 p-3 rounded-xl">
                                                         <h4 className="text-[11px] font-bold text-orange-800 dark:text-orange-400 uppercase tracking-wider mb-1">Foco em Aparelhos</h4>
                                                         <p className="text-[10px] text-orange-600 dark:text-orange-300 leading-relaxed">
-                                                            {metrics.pctAtingimentoAparelho >= 70 ? "Meta de aparelhos à vista! Continue utilizando o Claro Troca para facilitar as vendas." : 
-                                                                metrics.pctAtingimentoAparelho >= 50 ? "Identifique os clientes elegíveis a upgrade de aparelho e apresente os benefícios do Claro UP." : 
+                                                            {metrics.pctAtingimentoAparelho >= 70 ? "Meta de aparelhos à vista! Continue utilizando o Troca para facilitar as vendas." : 
+                                                                metrics.pctAtingimentoAparelho >= 50 ? "Identifique os clientes elegíveis a upgrade de aparelho e apresente os benefícios do Upgrade." : 
                                                                     "Aviso: Volume de aparelhos muito baixo. Explore mais as vitrines interativas e condições de parcelamento em 21x."}
                                                         </p>
                                                     </div>
@@ -526,7 +526,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 p-3 rounded-xl">
                                                         <h4 className="text-[11px] font-bold text-blue-800 dark:text-blue-400 uppercase tracking-wider mb-1">Foco na Receita</h4>
                                                         <p className="text-[10px] text-blue-600 dark:text-blue-300 leading-relaxed">
-                                                            {metrics.pctAtingimento >= 70 ? "Você está quase lá! Foque em planos de maior valor, combos Claro Multi e oferte seguros e acessórios para bater a meta de receita." : 
+                                                            {metrics.pctAtingimento >= 70 ? "Você está quase lá! Foque em planos de maior valor, combos Operadora Multi e oferte seguros e acessórios para bater a meta de receita." : 
                                                                 metrics.pctAtingimento >= 50 ? "É necessário revisar as ofertas para aumentar o ticket médio. Foque na rentabilização oferecendo Upgrades e serviços adicionais." : 
                                                                     "Atenção: Resultado de receita muito abaixo do esperado. Mude sua estratégia de imediato e ofereça combos de alto valor em todo atendimento."}
                                                         </p>

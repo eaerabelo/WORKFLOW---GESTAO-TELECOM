@@ -252,11 +252,11 @@ export const getColaboradoresDashboard = async (req, res) => {
                         else if (sub.includes('BANDA-LARGA') || sub.includes('BANDA LARGA') || sub.includes('BL') || pBase.includes('BL')) depBl += q;
                         else depPg += q;
                     }
-                    else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('CLARO NET VIRTUA')) bl += q;
+                    else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('NET VIRTUA')) bl += q;
                     else if (pBase.includes('FIBRA PME') || pBase.includes('UR PME')) urPme += q;
                     else if (pBase.includes('FIBRA') || pBase.includes('BANDA LARGA RESIDENCIAL')) fibra += q;
                     else if (pBase.includes('TV-BOX')) tvBox += q;
-                    else if (pBase.includes('CLARO TV+') || pBase.includes('TV')) tv += q;
+                    else if (pBase.includes('TV+')) tv += q;
                     else if (pBase.includes('FIXO') || pBase.includes('NET FONE')) fixo += q;
                     else if (pBase.includes('APARELHO')) { aparelho += q; }
                     else if (pBase.includes('SEGURO')) seguro += q;

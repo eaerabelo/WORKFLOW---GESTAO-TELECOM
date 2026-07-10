@@ -11,8 +11,8 @@ export const saveUser = async (req, res) => {
             return res.status(400).json({ error: "Preencha todos os campos obrigatórios!" });
         }
 
-        if (!userData.email.toLowerCase().endsWith("@claro.com.br")) {
-            return res.status(400).json({ error: "O e-mail deve ser corporativo (@claro.com.br)." });
+        if (!userData.email.toLowerCase().includes("@")) {
+            return res.status(400).json({ error: "O e-mail deve ser corporativo e conter '@'." });
         }
 
         conn = await getOracleConnection();

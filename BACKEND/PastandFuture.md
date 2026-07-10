@@ -89,6 +89,10 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - Atualizados e higienizados os arquivos `COMMENTS.md`, `PLSecurity.md`, `REGRAS_DE_NEGOCIO.md`, `README.md`, `Documentacao.md` e `GUIA_POR_CAMADAS.md` da pasta `rules/`.
   - As atualizações removeram referências diretas à Claro para manter a confidencialidade e incluíram as novas regras do sistema (como carregamento instantâneo sem filtros do cabeçalho global, renderização visual apenas com o primeiro nome do vendedor, e mapeamento seguro de banco relacional e segurança no git).
   - Comitadas e enviadas todas as documentações atualizadas para a branch `atualizacao`.
+- **Atualização das Documentações da Raiz (README.md e PROFILE_README.md):**
+  - Atualizados os arquivos `README.md` e `PROFILE_README.md` da raiz do projeto para generalizar as referências de marcas (removendo referências diretas à Claro e ao Firebase, que foi substituído pelo banco relacional).
+  - Atualizada a árvore completa de diretórios do frontend e backend no manual para refletir com exatidão a estrutura atual do código-fonte (incluindo as pastas `context/`, `services/`, `styles/`, etc., no frontend e a arquitetura modularizada no backend).
+  - Enviadas as modificações para o repositório remoto.
 
 ---
 

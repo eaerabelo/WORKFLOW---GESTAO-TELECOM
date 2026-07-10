@@ -105,7 +105,7 @@ export const getAreaLojas = async (req, res) => {
             if (sub.includes("GRATUITO") || sub.includes("GRÁTIS") || sub.includes("GRATIS") || pBase.includes("GRÁTIS")) depGratis += q;
             else if (sub.includes("BANDA-LARGA") || sub.includes("BANDA LARGA")) depBl += q;
             else depPg += q;
-          } else if (pBase.includes("BANDA LARGA") || pBase === "BL" || pBase.includes("CLARO NET VIRTUA")) {
+          } else if (pBase.includes("BANDA LARGA") || pBase === "BL" || pBase.includes("NET VIRTUA")) {
             bl += q;
           } else if (pBase.includes("FIBRA PME") || pBase.includes("UR PME")) {
             urPme += q;
@@ -113,7 +113,7 @@ export const getAreaLojas = async (req, res) => {
             fibra += q;
           } else if (pBase.includes("TV-BOX")) {
             tvBox += q;
-          } else if (pBase.includes("CLARO TV+") || pBase.includes("TV")) {
+          } else if (pBase.includes("TV+")) {
             tv += q;
           } else if (pBase.includes("FIXO") || pBase.includes("NET FONE")) {
             fixo += q;

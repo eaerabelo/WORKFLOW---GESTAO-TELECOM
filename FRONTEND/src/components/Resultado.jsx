@@ -55,7 +55,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
         const sumTotals = {
             grossDia: 0, metaDia: 0, total: 0, posTt: 0, controle: 0, controleTotal: 0, posPagoTotal: 0, depPg: 0, depBl: 0, depGratis: 0, migracaoPos: 0, migracaoControle: 0, grossPme: 0,
             portabilidade: 0, bl: 0, flex: 0, receita: 0, fibra: 0, tv: 0, tvBox: 0, fixo: 0, mplay: 0, mesh: 0, urPme: 0,
-            totalRes: 0, aparelho: 0, receitaAparelho: 0, receitaAparelhoBruto: 0, seguro: 0, acessorio: 0, trocafy: 0, pelicula: 0, claroUp: 0, receitaAcessorio: 0, receitaAcessorioBruto: 0
+            totalRes: 0, aparelho: 0, receitaAparelho: 0, receitaAparelhoBruto: 0, seguro: 0, acessorio: 0, trocafy: 0, pelicula: 0, upgradeUp: 0, receitaAcessorio: 0, receitaAcessorioBruto: 0
         };
 
         const today = new Date();
@@ -84,7 +84,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
             let posTt = 0, controle = 0, depPg = 0, depBl = 0, depGratis = 0, migracaoPos = 0, migracaoControle = 0, grossPme = 0, portabilidade = 0;
             let bl = 0, flex = 0, receita = 0, fibra = 0, tv = 0, tvBox = 0, fixo = 0, mplay = 0, mesh = 0, urPme = 0, aparelho = 0;
-            let receitaAparelho = 0, receitaAparelhoBruto = 0, seguro = 0, acessorio = 0, trocafy = 0, pelicula = 0, claroUp = 0, receitaAcessorio = 0, receitaAcessorioBruto = 0;
+            let receitaAparelho = 0, receitaAparelhoBruto = 0, seguro = 0, acessorio = 0, trocafy = 0, pelicula = 0, upgradeUp = 0, receitaAcessorio = 0, receitaAcessorioBruto = 0;
 
             dailySales.forEach(sale => {
                 const pBase = String(sale.produtoBase || sale.produto || '').toUpperCase();
@@ -118,11 +118,11 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                     else if (sub.includes('BANDA-LARGA') || sub.includes('BANDA LARGA') || sub.includes('BL') || pBase.includes('BL')) depBl += q;
                     else depPg += q;
                 }
-                else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('CLARO NET VIRTUA')) bl += q;
+                else if (pBase.includes('BANDA LARGA') || pBase === 'BL' || pBase.includes('NET VIRTUA')) bl += q;
                 else if (pBase.includes('FIBRA PME') || pBase.includes('UR PME')) urPme += q;
                 else if (pBase.includes('FIBRA') || pBase.includes('BANDA LARGA RESIDENCIAL')) fibra += q;
                 else if (pBase.includes('TV-BOX')) tvBox += q;
-                else if (pBase.includes('CLARO TV+') || pBase.includes('TV')) tv += q;
+                else if (pBase.includes('TV+') || pBase.includes('TV')) tv += q;
                 else if (pBase.includes('FIXO') || pBase.includes('NET FONE')) fixo += q;
                 else if (pBase.includes('MESH')) mesh += q;
                 else if (pBase.includes('APARELHO')) { aparelho += q; receitaAparelho += rec; receitaAparelhoBruto += recBruto; }
@@ -131,7 +131,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                 else if (pBase.includes('PELÍCULA') || pBase.includes('PELICULA')) { acessorio += q; receitaAcessorio += rec; receitaAcessorioBruto += recBruto; }
 
                 if (adds.includes('TROCAFY')) trocafy += 1;
-                if (adds.includes('CLARO UP')) claroUp += 1;
+                if (adds.includes('UPGRADE')) upgradeUp += 1;
                 if (sale.mplay === 'SIM') mplay += 1;
             });
 
@@ -152,7 +152,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
             generatedRows.push({
                 data: dayStr, grossDia, metaDia, total: isFuture ? null : accumulatedGross, posTt, controle, controleTotal, posPagoTotal, depPg, depBl, depGratis, migracaoPos,
                 migracaoControle, grossPme, portabilidade, bl, flex, receita, fibra, tv, tvBox, fixo, mplay, mesh,
-                urPme, totalRes, aparelho, receitaAparelho, receitaAparelhoBruto, seguro, acessorio, trocafy, pelicula, claroUp, receitaAcessorio, receitaAcessorioBruto
+                urPme, totalRes, aparelho, receitaAparelho, receitaAparelhoBruto, seguro, acessorio, trocafy, pelicula, upgradeUp, receitaAcessorio, receitaAcessorioBruto
             });
 
             sumTotals.grossDia += grossDia; sumTotals.metaDia += metaDia; sumTotals.posTt += posTt; sumTotals.controle += controle; sumTotals.controleTotal += controleTotal; sumTotals.posPagoTotal += posPagoTotal;
@@ -161,7 +161,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
             sumTotals.portabilidade += portabilidade; sumTotals.bl += bl; sumTotals.flex += flex; sumTotals.receita += receita;
             sumTotals.fibra += fibra; sumTotals.tv += tv; sumTotals.tvBox += tvBox; sumTotals.fixo += fixo; sumTotals.mplay += mplay; sumTotals.mesh += mesh;
             sumTotals.urPme += urPme; sumTotals.totalRes += totalRes; sumTotals.receitaAparelho += receitaAparelho; sumTotals.receitaAparelhoBruto += receitaAparelhoBruto; sumTotals.aparelho += aparelho;
-            sumTotals.seguro += seguro; sumTotals.acessorio += acessorio; sumTotals.pelicula += pelicula; sumTotals.trocafy += trocafy; sumTotals.claroUp += claroUp; sumTotals.receitaAcessorio += receitaAcessorio; sumTotals.receitaAcessorioBruto += receitaAcessorioBruto;
+            sumTotals.seguro += seguro; sumTotals.acessorio += acessorio; sumTotals.pelicula += pelicula; sumTotals.trocafy += trocafy; sumTotals.upgradeUp += upgradeUp; sumTotals.receitaAcessorio += receitaAcessorio; sumTotals.receitaAcessorioBruto += receitaAcessorioBruto;
         }
 
         sumTotals.total = accumulatedGross;
@@ -178,7 +178,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
         { key: 'urPme', label: 'UR PME' }, { key: 'mesh', label: 'MESH' },
         { key: 'totalRes', label: 'TOTAL RES.', highlight: true }, { key: 'mplay', label: 'M-PLAY' }, { key: 'aparelho', label: 'APARELHOS (UN)' }, { key: 'receitaAparelho', label: 'REC. APARELHOS', isCurrency: true }, { key: 'receitaAparelhoBruto', label: 'REC. APARELHOS BRUTO', isCurrency: true },
         { key: 'seguro', label: 'SEGURO' }, { key: 'acessorio', label: 'ACESSÓRIOS (UN)' }, { key: 'receitaAcessorio', label: 'REC. ACESSÓRIOS', isCurrency: true }, { key: 'receitaAcessorioBruto', label: 'REC. ACESSÓRIOS BRUTO', isCurrency: true },
-        { key: 'trocafy', label: 'TROCAFY' }, { key: 'claroUp', label: 'CLARO UP' }
+        { key: 'trocafy', label: 'TROCAFY' }, { key: 'upgradeUp', label: 'UPGRADE' }
     ];
 
     const renderValue = (val, isCurrency) => {

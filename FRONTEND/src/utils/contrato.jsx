@@ -7,7 +7,7 @@ import { getCurrentStoreName } from './stores';
 
 import wfLogo from '../assets/logo_WF.png';
 
-const ClaroLogo = () => (
+const OperadoraLogo = () => (
     <div className="flex items-center text-red-600 font-bold text-xl gap-2">
         <img src={wfLogo} alt="WorkFlow Logo" className="h-9 w-auto print:h-8" />
         <span>WorkFlow Contratos</span>
@@ -49,7 +49,7 @@ const SelectField = ({ label, value, onChange, options, readOnly = false }) => (
     </div>
 );
 
-export default function ClaroContractForm({ sale, onClose }) {
+export default function OperadoraContractForm({ sale, onClose }) {
     // Preenche automaticamente com os dados da venda selecionada
     const [contractData, setContractData] = useState({
         metadados: {
@@ -89,7 +89,7 @@ export default function ClaroContractForm({ sale, onClose }) {
             imeiAparelho: '',
             valorInicialAparelho: '',
             descontoComercial: '',
-            descontoClaroClube: '',
+            descontoClube: '',
             valorFinalAparelho: '',
             permanencia: '12 Meses',
             multa: '',
@@ -137,7 +137,7 @@ export default function ClaroContractForm({ sale, onClose }) {
             agencia: '',
             conta: '',
         },
-        claroClube: {
+        clubeVantagens: {
             saldoAtual: '',
             pontosUtilizados: '',
             saldoRestante: ''
@@ -184,7 +184,7 @@ export default function ClaroContractForm({ sale, onClose }) {
         
         if (field === 'cpf') formattedValue = applyCpfCnpjMask(String(value));
         else if (field === 'protocolo') formattedValue = applyContratoMask(String(value));
-        else if (['mensalidade', 'valorInicialAparelho', 'descontoComercial', 'descontoClaroClube', 'valorFinalAparelho', 'multa', 'desconto', 'valorAparelhoChip', 'parcelamentoAparelhoValor'].includes(field)) {
+        else if (['mensalidade', 'valorInicialAparelho', 'descontoComercial', 'descontoClube', 'valorFinalAparelho', 'multa', 'desconto', 'valorAparelhoChip', 'parcelamentoAparelhoValor'].includes(field)) {
             formattedValue = applyCurrencyMask(String(value));
         } else if (['celular', 'celularProvisorio', 'telefoneFixo'].includes(field)) {
             let v = String(value).replace(/\D/g, '');
@@ -376,7 +376,7 @@ export default function ClaroContractForm({ sale, onClose }) {
                         {/* HEADER CORPORATIVO DO CONTRATO */}
                         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-neutral-200 dark:border-neutral-800 print:border-neutral-300">
                             <div className="flex items-center gap-4">
-                                <ClaroLogo />
+                                <OperadoraLogo />
                             </div>
                             <div className="text-right">
                                 <h1 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white print:text-black tracking-tight uppercase leading-none">Termo de Adesão e Contrato</h1>
@@ -428,7 +428,7 @@ export default function ClaroContractForm({ sale, onClose }) {
                                 <div className="sm:col-span-2 print:col-span-2"><InputField label="Promoção Aplicada" value={contractData.planoPrincipal.promocao} onChange={(e) => handleInputChange('planoPrincipal', 'promocao', e.target.value)} /></div>
                                 <div className="sm:col-span-4 print:col-span-4"><InputField label="Pacotes / Serviços (1 a 5)" value={contractData.planoPrincipal.pacotes} onChange={(e) => handleInputChange('planoPrincipal', 'pacotes', e.target.value)} /></div>
                                 
-                                <div className="sm:col-span-2 print:col-span-2"><InputField label="N° do Claro Chip (SIM CARD)" value={contractData.planoPrincipal.simCard} onChange={(e) => handleInputChange('planoPrincipal', 'simCard', e.target.value)} isMono={true} /></div>
+                                <div className="sm:col-span-2 print:col-span-2"><InputField label="N° do Chip da Operadora (SIM CARD)" value={contractData.planoPrincipal.simCard} onChange={(e) => handleInputChange('planoPrincipal', 'simCard', e.target.value)} isMono={true} /></div>
                                 <InputField label="N° Celular" value={contractData.planoPrincipal.celular} onChange={(e) => handleInputChange('planoPrincipal', 'celular', e.target.value)} isMono={true} />
                                 <InputField label="N° Celular Provisório" value={contractData.planoPrincipal.celularProvisorio} onChange={(e) => handleInputChange('planoPrincipal', 'celularProvisorio', e.target.value)} isMono={true} />
                                 
@@ -437,7 +437,7 @@ export default function ClaroContractForm({ sale, onClose }) {
                                 
                                 <InputField label="Valor Inicial Aparelho (R$)" value={contractData.planoPrincipal.valorInicialAparelho} onChange={(e) => handleInputChange('planoPrincipal', 'valorInicialAparelho', e.target.value)} />
                                 <InputField label="Desc. Benefício Comercial (R$)" value={contractData.planoPrincipal.descontoComercial} onChange={(e) => handleInputChange('planoPrincipal', 'descontoComercial', e.target.value)} />
-                                <InputField label="Desc. Claro Clube (R$)" value={contractData.planoPrincipal.descontoClaroClube} onChange={(e) => handleInputChange('planoPrincipal', 'descontoClaroClube', e.target.value)} />
+                                <InputField label="Desc. Clube de Vantagens (R$)" value={contractData.planoPrincipal.descontoClube} onChange={(e) => handleInputChange('planoPrincipal', 'descontoClube', e.target.value)} />
                                 <InputField label="Valor Final Aparelho (R$)" value={contractData.planoPrincipal.valorFinalAparelho} onChange={(e) => handleInputChange('planoPrincipal', 'valorFinalAparelho', e.target.value)} />
                                 
                                 <InputField label="Permanência" value={contractData.planoPrincipal.permanencia} onChange={(e) => handleInputChange('planoPrincipal', 'permanencia', e.target.value)} />
@@ -464,7 +464,7 @@ export default function ClaroContractForm({ sale, onClose }) {
                                                 <div className="sm:col-span-2 print:col-span-2"><InputField label="Promoção Aplicada" value={dep.promocao} onChange={(e) => handleDependenteChange(idx, 'promocao', e.target.value)} /></div>
                                                 <div className="sm:col-span-4 print:col-span-4"><InputField label="Pacotes / Serviços (1 a 5)" value={dep.pacotes} onChange={(e) => handleDependenteChange(idx, 'pacotes', e.target.value)} /></div>
                                                 
-                                                <div className="sm:col-span-2 print:col-span-2"><InputField label="N° do Claro Chip" value={dep.simCard} onChange={(e) => handleDependenteChange(idx, 'simCard', e.target.value)} isMono={true} /></div>
+                                                <div className="sm:col-span-2 print:col-span-2"><InputField label="N° do Chip da Operadora" value={dep.simCard} onChange={(e) => handleDependenteChange(idx, 'simCard', e.target.value)} isMono={true} /></div>
                                                 <InputField label="N° Celular" value={dep.celular} onChange={(e) => handleDependenteChange(idx, 'celular', e.target.value)} isMono={true} />
                                                 <InputField label="N° Celular Provisório" value={dep.celularProvisorio} onChange={(e) => handleDependenteChange(idx, 'celularProvisorio', e.target.value)} isMono={true} />
                                                 
@@ -590,11 +590,11 @@ export default function ClaroContractForm({ sale, onClose }) {
 
                         {/* SEÇÃO 07 */}
                         <section className="print:break-inside-avoid print:mt-2">
-                            <SectionHeader number="07" title="Claro Clube" />
+                            <SectionHeader number="07" title="Clube de Vantagens" />
                             <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-3 print:gap-2">
-                                <InputField label="Saldo de Pontos" type="number" value={contractData.claroClube.saldoAtual} onChange={(e) => handleInputChange('claroClube', 'saldoAtual', e.target.value)} />
-                                <InputField label="Pontos Utilizados nesta Data" type="number" value={contractData.claroClube.pontosUtilizados} onChange={(e) => handleInputChange('claroClube', 'pontosUtilizados', e.target.value)} />
-                                <InputField label="Saldo Restante de Pontos" type="number" value={contractData.claroClube.saldoRestante} onChange={(e) => handleInputChange('claroClube', 'saldoRestante', e.target.value)} />
+                                <InputField label="Saldo de Pontos" type="number" value={contractData.clubeVantagens.saldoAtual} onChange={(e) => handleInputChange('clubeVantagens', 'saldoAtual', e.target.value)} />
+                                <InputField label="Pontos Utilizados nesta Data" type="number" value={contractData.clubeVantagens.pontosUtilizados} onChange={(e) => handleInputChange('clubeVantagens', 'pontosUtilizados', e.target.value)} />
+                                <InputField label="Saldo Restante de Pontos" type="number" value={contractData.clubeVantagens.saldoRestante} onChange={(e) => handleInputChange('clubeVantagens', 'saldoRestante', e.target.value)} />
                             </div>
                         </section>
 
@@ -687,31 +687,31 @@ export default function ClaroContractForm({ sale, onClose }) {
                                         (b) Contrato de Permanência, caso tenha aderido;<br />
                                         (c) Sumário e Termo e Condições de Uso dos Planos de Serviço contratados;<br />
                                         (d) Regulamento de Promoções aplicáveis ao Plano de Serviço na data de contratação;<br />
-                                        (e) Termos e Condições de Uso de outros serviços da CLARO ou de terceiros contratados e/ou integrantes das ofertas a que aderi;
+                                        (e) Termos e Condições de Uso de outros serviços da OPERADORA ou de terceiros contratados e/ou integrantes das ofertas a que aderi;
                                     </p>
                                     <p className="mt-1.5">Concordei em receber os instrumentos mencionados acima no e-mail supra informado, tendo ciência de que poderei recebê-los impressos no momento da contratação, caso solicite as impressões;<br />
-                                        Os dados cadastrais informados são verdadeiros e serão mantidos atualizados junto a CLARO;<br />
+                                        Os dados cadastrais informados são verdadeiros e serão mantidos atualizados junto a OPERADORA;<br />
                                         Autorizei a consulta a órgãos restritivos de crédito e instituições assemelhadas;<br />
                                         Me foram apresentadas todas as opções de Planos de Serviço disponíveis, incluindo o Plano Básico e a escolha do Plano foi realizada por livre e espontânea vontade.<br />
-                                        Antes de aderir a este Plano, Oferta ou Promoção, consultei as tecnologias disponíveis para a localidade que intenciono usufruir dos serviços e o mapa de cobertura dos serviços Claro em https://www.claro.com.br/mapa-de-cobertura.</p>
+                                        Antes de aderir a este Plano, Oferta ou Promoção, consultei as tecnologias disponíveis para a localidade que intenciono usufruir dos serviços e o mapa de cobertura dos serviços Operadora em https://www.operadora.com.br/mapa-de-cobertura.</p>
                                     
                                     <p className="mt-1.5">Tenho conhecimento, entendi e estou de acordo com as seguintes condições detalhadas nos documentos integrantes dos contratos acima mencionados:</p>
                                     <p className="print:ml-4">
                                         (a) Valores Vigentes e Promocionais com e sem permanência mínima de 12 (doze) meses, regras de reajuste, vigência, funcionamento da portabilidade numérica, condições para transferência de titularidade de linha, serviços adicionais integrantes da oferta e contratados a parte, possibilidade ou não de inclusão de dependentes e hipóteses de encerramento/alteração de oferta;<br />
-                                        (b) Nenhuma oferta promocional da CLARO, ainda que realizada posteriormente por qualquer canal de venda, terá duração superior a 12 (doze) meses, podendo a CLARO retomar, ao final do prazo promocional, os valores vigentes praticados;<br />
+                                        (b) Nenhuma oferta promocional da OPERADORA, ainda que realizada posteriormente por qualquer canal de venda, terá duração superior a 12 (doze) meses, podendo a OPERADORA retomar, ao final do prazo promocional, os valores vigentes praticados;<br />
                                         (c) Serviços integrantes das franquias e da oferta e restrições de utilização, regras de mau uso e uso indevido, bem como as hipóteses de cobrança de excedente e/ou bloqueio de serviços após término da franquia;<br />
-                                        (d) A escolha do Código de Seleção da Prestadora (CSP) para a realização de ligações longa distância nacional (LDN) ou internacional (LDI) é do Cliente e serão aplicadas as tarifas da Operadora escolhida com faturamento na linha móvel da CLARO. Na franquia do Plano, se houver, as ligações LDN deverão obrigatoriamente ser realizadas com o CSP 21, sob pena de cobrança excedente;<br />
+                                        (d) A escolha do Código de Seleção da Prestadora (CSP) para a realização de ligações longa distância nacional (LDN) ou internacional (LDI) é do Cliente e serão aplicadas as tarifas da Operadora escolhida com faturamento na linha móvel da OPERADORA. Na franquia do Plano, se houver, as ligações LDN deverão obrigatoriamente ser realizadas com o CSP 21, sob pena de cobrança excedente;<br />
                                         (e) os serviços utilizados em roaming nacional ou internacional serão cobrados separadamente, caso não estejam contemplados no Plano contratado;<br />
-                                        (f) Autorizei a cobrança na fatura da CLARO de forma avulsa, conjunta ou na forma de combos de todos os serviços, aplicativos digitais, conteúdos, pacotes, dentre outros contratados junto a CLARO e/ou de terceiros com co-faturamento pela CLARO;<br />
+                                        (f) Autorizei a cobrança na fatura da OPERADORA de forma avulsa, conjunta ou na forma de combos de todos os serviços, aplicativos digitais, conteúdos, pacotes, dentre outros contratados junto a OPERADORA e/ou de terceiros com co-faturamento pela OPERADORA;<br />
                                         (g) A opção da Fatura Digital Total passará a vigorar após a validação do e-mail informado no ato da ativação;<br />
                                         (h) O Cliente é responsável por adquirir, a seu custo, o equipamento utilizado para acesso aos serviços contratados (tais como aparelho e chip), bem como pela compatibilidade e configurações deste. Declarando, ainda, ter conhecimento de que determinados aparelhos, por opção de seu fabricante, são comercializados sem acessórios, tais como, carregador (fonte e/ou cabo de alimentação) e/ou fones de ouvido.<br />
                                         (i) Na hipótese de cancelamento ou alteração das condições contratadas, o ASSINANTE não poderá se desobrigar do pagamento da multa contratual prevista acima;<br />
-                                        (j) A CLARO poderá usar a biometria facial ou impressão digital para garantir a proteção do Assinante, a segurança e controle nos processos de identificação e autenticação de cadastros;<br />
-                                        (l) Estou ciente sobre a funcionalidade do MINHA CLARO MÓVEL, onde terei acesso a consumo e detalhes do plano, detalhes de faturas, 2ª via de fatura com código de barras, suporte técnico para meu aparelho, meios de pagamento, renegociação e outros;<br />
+                                        (j) A OPERADORA poderá usar a biometria facial ou impressão digital para garantir a proteção do Assinante, a segurança e controle nos processos de identificação e autenticação de cadastros;<br />
+                                        (l) Estou ciente sobre a funcionalidade do MINHA OPERADORA MÓVEL, onde terei acesso a consumo e detalhes do plano, detalhes de faturas, 2ª via de fatura com código de barras, suporte técnico para meu aparelho, meios de pagamento, renegociação e outros;<br />
                                         (m) Na adesão a Oferta Combo Multi elegível, o ASSINANTE terá direito a dependentes sem custo adicional, conforme a seguir:<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;(i) Claro pós combo 50GB + 50GB Multi - 01 dependente sem custo adicional;<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;(ii) Claro pós combo 75GB + 75GB Multi - 02 dependentes sem custo adicional;<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;(iii) Claro pós combo 150GB + 150GB Multi - 03 dependentes sem custo adicional.
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(i) Pós combo 50GB + 50GB Multi - 01 dependente sem custo adicional;<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(ii) Pós combo 75GB + 75GB Multi - 02 dependentes sem custo adicional;<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(iii) Pós combo 150GB + 150GB Multi - 03 dependentes sem custo adicional.
                                     </p>
                                     
                                     <p className="mt-1.5">O valor de cada dependente promocional da oferta acima será mensalmente abatido do valor desse contrato diretamente na fatura do ASSINANTE, enquanto mantida a oferta Combo Multi, conforme disposto no Regulamento da Oferta. Valores correspondentes a contratações de serviços e funcionalidades adicionais para dependentes ou uso de excedente gerados por estes serão cobrados normalmente e não estão inclusos na oferta de isenção de mensalidade acima especificada.</p>
@@ -721,14 +721,14 @@ export default function ClaroContractForm({ sale, onClose }) {
                                     <p className="font-bold text-sm print:text-sm text-center mb-2 uppercase text-neutral-900 dark:text-white print:text-black">INFORMAÇÕES IMPORTANTES</p>
                                     <p>O Cliente adere ao Contrato do produto selecionado neste Termo de Adesão, e declara, sob as penas da lei, que:</p>
                                     <p className="print:ml-4">
-                                        a) seus dados cadastrais são verdadeiros e que se compromete a atualizá-las periodicamente, autorizando a CLARO a verificá-los junto aos órgãos restritivos de crédito e instituições assemelhadas;<br />
+                                        a) seus dados cadastrais são verdadeiros e que se compromete a atualizá-las periodicamente, autorizando a OPERADORA a verificá-los junto aos órgãos restritivos de crédito e instituições assemelhadas;<br />
                                         b) conhece as condições do Plano de Serviço, Promoções e/ou Pacotes ora contratados;<br />
                                         c) tem conhecimento que o valor da habilitação poderá ser cobrado conforme as condições promocionais apresentadas neste momento;<br />
                                         c) tem conhecimento que este instrumento integra (i) o Contrato de Prestação de Serviço de Tv Por Assinatura (SeAC), (iv) o Contrato de Permanência, (v) o Regulamento do Plano de Serviço e (iv) o(s) Regulamento(s) da Promoção, se aplicáveis, e concorda em receber estes instrumentos no e-mail acima informado, mas, caso queira recebê-los impressos no momento da contratação, basta solicitar as impressões;<br />
                                         d) tem conhecimento que, na hipótese de cancelamento ou alteração das condições contratadas, o Cliente não poderá se desobrigar do pagamento da multa contratual prevista no Contrato de Permanência;<br />
                                         e) a opção da Fatura Digital Total passará a vigorar após a validação do e-mail informado no ato da ativação;<br />
-                                        f) Autorizo a CLARO a lançar no documento de cobrança, de forma avulsa e/ou em combos e/ou ofertas conjuntas de serviços de telecomunicações, quando aplicável, os valores relacionados aos Serviços de Valor Adicionado, Aplicativos / Conteúdos Digitais, serviços suplementares, facilidades adicionais e/ou outros serviços contratados, prestados pela CLARO e/ou por terceiros;<br />
-                                        g) Estou ciente sobre a funcionalidade do MINHA CLARO RESIDENCIAL, onde através deste aplicativo poderei gerar a 2ª via de fatura, agendar visita técnica (acompanhando quem será o técnico que irá atender e onde ele está), alteração de rede/senha do Wi-Fi e consultar o Contrato de Permanência dos serviços contratados, entre outros;
+                                        f) Autorizo a OPERADORA a lançar no documento de cobrança, de forma avulsa e/ou em combos e/ou ofertas conjuntas de serviços de telecomunicações, quando aplicável, os valores relacionados aos Serviços de Valor Adicionado, Aplicativos / Conteúdos Digitais, serviços suplementares, facilidades adicionais e/ou outros serviços contratados, prestados pela OPERADORA e/ou por terceiros;<br />
+                                        g) Estou ciente sobre a funcionalidade do MINHA OPERADORA RESIDENCIAL, onde através deste aplicativo poderei gerar a 2ª via de fatura, agendar visita técnica (acompanhando quem será o técnico que irá atender e onde ele está), alteração de rede/senha do Wi-Fi e consultar o Contrato de Permanência dos serviços contratados, entre outros;
                                     </p>
                                 </div>
 
@@ -736,7 +736,7 @@ export default function ClaroContractForm({ sale, onClose }) {
                                     <p className="font-bold uppercase text-neutral-900 dark:text-white print:text-black mb-2 text-center text-sm print:text-sm">AUTORIZAÇÕES DE PRIVACIDADE E PUBLICIDADE</p>
                                     
                                     <p className="text-neutral-800 dark:text-neutral-200 print:text-black font-bold mb-1">
-                                        ESTOU CIENTE SOBRE O FORNECIMENTO PARA TERCEIROS DOS MEUS DADOS CADASTRAIS E/OU PESSOAIS, INCLUSIVE AS INFORMAÇÕES DE CONSUMO E REGISTRO DE COMPORTAMENTO DE UTILIZAÇÃO/NAVEGAÇÃO, NOS TERMOS DA LEI EM VIGOR E A POLÍTICA DE PRIVACIDADE DA CLARO DISPONÍVEL EM https://www.claro.com.br/privacidade/politica-de-privacidade?
+                                        ESTOU CIENTE SOBRE O FORNECIMENTO PARA TERCEIROS DOS MEUS DADOS CADASTRAIS E/OU PESSOAIS, INCLUSIVE AS INFORMAÇÕES DE CONSUMO E REGISTRO DE COMPORTAMENTO DE UTILIZAÇÃO/NAVEGAÇÃO, NOS TERMOS DA LEI EM VIGOR E A POLÍTICA DE PRIVACIDADE DA OPERADORA DISPONÍVEL EM https://www.operadora.com.br/privacidade/politica-de-privacidade?
                                     </p>
                                     <div className="flex gap-6 font-bold uppercase mb-2 text-neutral-900 dark:text-white print:text-black print:ml-4">
                                         <label className="flex items-center gap-2 cursor-pointer" onClick={() => handleInputChange('declaracao', 'optInPrivacidade', 'SIM')}>
@@ -755,7 +755,7 @@ export default function ClaroContractForm({ sale, onClose }) {
 
                                     <p className="text-neutral-800 dark:text-neutral-200 print:text-black font-bold mb-1">
                                         h) Autorizo o fornecimento para terceiros dos meus dados cadastrais e/ou pessoais, inclusive as informações de consumo e registro de comportamento de Utilização/navegação, nos termos da lei em vigor SIM / NÃO;<br />
-                                        i) ACEITO receber mensagens de cunho publicitário enviadas pela CLARO e/ou seus parceiros para meu aparelho / NÃO ACEITO receber mensagens de cunho publicitário enviadas pela CLARO e/ou seus parceiros para meu aparelho.
+                                        i) ACEITO receber mensagens de cunho publicitário enviadas pela OPERADORA e/ou seus parceiros para meu aparelho / NÃO ACEITO receber mensagens de cunho publicitário enviadas pela OPERADORA e/ou seus parceiros para meu aparelho.
                                     </p>
                                     <div className="flex gap-6 font-bold uppercase mb-2 text-neutral-900 dark:text-white print:text-black print:ml-4">
                                         <label className="flex items-center gap-2 cursor-pointer" onClick={() => handleInputChange('declaracao', 'optInPublicidade', 'SIM')}>
@@ -773,7 +773,7 @@ export default function ClaroContractForm({ sale, onClose }) {
                                     </div>
                                 </div>
                                 
-                                <p className="text-center font-bold text-neutral-900 dark:text-white print:text-black mt-2 text-xs print:text-[10px]">Para mais informações: acesse http://www.claro.com.br ou ligue 1052.</p>
+                                <p className="text-center font-bold text-neutral-900 dark:text-white print:text-black mt-2 text-xs print:text-[10px]">Para mais informações: acesse http://www.operadora.com.br ou ligue 1052.</p>
                             </div>
                             
                             <div className="hidden print:block mb-6 text-center text-[10px] font-bold">

@@ -411,7 +411,7 @@ export function Acessos({
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className="acessos-input-field"
-                  placeholder="exemplo@claro.com.br"
+                  placeholder="exemplo@corporativo.com.br"
                 />
               </div>
               <div className="space-y-1.5">

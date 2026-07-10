@@ -1,7 +1,7 @@
 {
-    "name": "painel-claro-backend",
+    "name": "workflow-gestao-backend",
     "version": "1.0.0",
-    "description": "Servidor e API do Painel de Gestão Claro",
+    "description": "Servidor e API do Painel de Gestão de Vendas",
     "main": "server.js",
     "type": "module",
     "scripts": {
