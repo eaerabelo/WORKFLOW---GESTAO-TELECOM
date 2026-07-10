@@ -77,9 +77,14 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 
 ### 2026-07-09 (Hoje)
 
-- **Ajuste na Importação de Regras do Fator RV no Backend:**
-  - Corrigido o caminho de importação das regras de negócio Claro no controlador `fatorRvController.js`, que estava buscando o arquivo `rules.js` na raiz da pasta `src/` em vez da pasta `src/utils/`.
-  - A alteração reestabeleceu o funcionamento correto do cálculo do Fator RV no servidor remoto da Oracle Cloud.
+- **Ajuste de Segurança e Configuração do .gitignore:**
+  - Configurado o arquivo `.gitignore` na raiz do projeto para ignorar todos os arquivos sensíveis de conexões, credenciais e chaves do Oracle VM, incluindo: chaves SSH (`*.key`), diretórios da carteira Oracle (`wallet_painelclaro/`), chaves Firebase (`serviceAccountKey.json`), executáveis e arquivos compactados (`*.zip`, `*.tar.gz`).
+- **Remoção de Referências a Claro nos Placeholders de Login:**
+  - Substituídos os placeholders de e-mail da tela de login (`Login.jsx`) que faziam referência a `@claro.com.br` por domínios corporativos genéricos `@corporativo.com.br`.
+- **Remoção de Imagem da Proposta (QR Code):**
+  - Removido o bloco contendo a imagem do QR Code de avaliação do Google da seção de propostas em `Proposta.jsx`.
+- **Envio do Projeto para o Git:**
+  - Alterado o repositório remoto para `https://github.com/eaerabelo/WORKFLOW---GESTAO-TELECOM.git` e realizado o commit e envio (push) das alterações para a branch `atualizacao`.
 
 ---
 
