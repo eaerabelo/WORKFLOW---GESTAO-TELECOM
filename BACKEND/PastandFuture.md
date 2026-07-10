@@ -93,6 +93,14 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - Atualizados os arquivos `README.md` e `PROFILE_README.md` da raiz do projeto para generalizar as referências de marcas (removendo referências diretas à Claro e ao Firebase, que foi substituído pelo banco relacional).
   - Atualizada a árvore completa de diretórios do frontend e backend no manual para refletir com exatidão a estrutura atual do código-fonte (incluindo as pastas `context/`, `services/`, `styles/`, etc., no frontend e a arquitetura modularizada no backend).
   - Enviadas as modificações para o repositório remoto.
+- **Higienização Completa de Citações a Claro (Sanitização Geral):**
+  - Removido o termo "Claro" (e variantes como Claro Clube, Claro UP, Claro Flex, Claro Net Virtua, Claro TV+, Claro Troca, Claro Trocafy, e a marca no modal de Wi-Fi e rodapé do painel) em todo o código-fonte rastreado do frontend e backend, substituindo por termos genéricos ("Operadora", "Upgrade", "FLEX", "NET VIRTUA", "TV+", "Trocafy", "Clube de Vantagens", etc.).
+  - Renomeada a pasta local da carteira Oracle de `wallet_painelclaro` para `wallet_painel` (e seu arquivo compactado de `Wallet_painelclaro.zip` para `Wallet_painel.zip`), atualizando o `.gitignore` e a importação de variáveis de ambiente no arquivo `oracle.js` para usar a nova nomenclatura e um fallback dinâmico (impedindo vazamentos e citando a marca no histórico rastreado do Git).
+  - Deletado o migrador obsoleto `migrate.html` que possuía referências explícitas no repositório.
+- **Compilação e Deploy (Firebase Hosting):**
+  - Executada a compilação de produção (`npm run build`) do frontend sem erros e efetuado o deploy do sistema atualizado no Firebase Hosting de destino (`https://workflow-sistema.web.app`).
+- **Commit e Push Final:**
+  - Adicionado o diretório `scratch/` e pastas temporárias no `.gitignore` raiz, realizado o commit geral das alterações higienizadas e efetuado o push para a branch `atualizacao` no GitHub.
 
 ---
 
