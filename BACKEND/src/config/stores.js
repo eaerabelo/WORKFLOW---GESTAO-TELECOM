@@ -9,6 +9,7 @@ export const STORES = [
   { id: "shopping_higienopolis", name: "HIGIENÓPOLIS", code: "LB24" },
   { id: "shopping_villa_lobos", name: "VILLA LOBOS", code: "LB43" },
   { id: "shopping_west_plaza", name: "WEST PLAZA", code: "LB36" },
+  { id: "shopping_raposo", name: "SHOPPING RAPOSO", code: "K7W8" },
 ];
 
 export const getStoreById = (id) => STORES.find(store => store.id === id);

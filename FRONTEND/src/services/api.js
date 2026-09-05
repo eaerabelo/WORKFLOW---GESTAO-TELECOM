@@ -138,8 +138,11 @@ export const syncSimcardsData = async (upserts, deletes) => {
 // ============================================================================
 // REPROVADOS (AUDITORIA): SE CONECTA COM O BANCO DE DADOS ORACLE PARA TRAZER OS DADOS
 // ============================================================================
-export const fetchReprovados = async (start, end) => {
-    const res = await authFetch(`${API_URL}/api/reprovados?start=${start}&end=${end}`);
+export const fetchReprovados = async (start = '', end = '') => {
+    let url = `${API_URL}/api/reprovados?_t=${Date.now()}`;
+    if (start) url += `&start=${start}`;
+    if (end) url += `&end=${end}`;
+    const res = await authFetch(url);
     return handleResponse(res);
 };
 

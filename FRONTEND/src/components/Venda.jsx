@@ -13,7 +13,7 @@ const safeProdutos = Array.isArray(PRODUTOS) ? PRODUTOS : [];
 
 export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB = {}, globalMonth }) => {
     const { pricingData } = usePricing();
-    const { PRICING_MOVEL = {}, FIBRA_OPTIONS = [], TV_BOX_OPTIONS = [], FIXO_OPTIONS = [], MESH_OPTIONS = [] } = pricingData || {};
+    const { PRICING_MOVEL = {}, FIBRA_OPTIONS = [], TV_BOX_OPTIONS = [], FIXO_OPTIONS = [], MESH_OPTIONS = [], DEPENDENTE_OPTIONS = [], SEGURO_OPTIONS = [] } = pricingData || {};
 
     const activeVendedores = Object.values(usersDB || {})
         .filter(u => !u?.role || u?.role === 'VENDEDOR')

@@ -28,8 +28,7 @@ O projeto utiliza arquivos `.env` separados para cada loja (ex: `.env.osasco`).
 Ele precisa conter:
 
 * `VITE_API_URL`: O link do backend hospedado na nuvem (Ex: `https://api-painel.137.131.172.16.nip.io`).
-* `VITE_STORE_NAME`: Nome da loja exibido no cabeçalho.
-* `VITE_STORE_CODE`: Código PDV da loja.
+
 
 ## 🛠️ Tecnologias Utilizadas
 

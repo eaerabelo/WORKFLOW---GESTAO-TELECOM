@@ -765,7 +765,7 @@ export default function App() {
       } catch (error) {
         console.error("Erro no Auto-Save Oracle:", error);
       }
-    }, 1500);
+    }, 200);
     return () => clearTimeout(timeoutId);
   }, [salesData, simcardsData, reprovadosData, geekDocs, campanhasData, goalsDB, scheduleData, monthlyOverrides, usersDB, pricingData, isBackendReady]);
 
@@ -855,9 +855,9 @@ export default function App() {
     { name: 'COLABORADORES', icon: <Users size={18} /> },
     { name: 'CONTROLE-SIMCARD', icon: <Phone size={18} /> },
     { name: 'ESCALA DE TRABALHO', icon: <CalendarDays size={18} /> },
-    { name: 'FATOR RV', icon: <Calculator size={18} /> },
+    // { name: 'FATOR RV', icon: <Calculator size={18} /> }, // Oculto temporariamente a pedido
     { name: 'GESTÃO', icon: <Target size={18} /> },
-    { name: 'PROPOSTA', icon: <FileText size={18} /> },
+    // { name: 'PROPOSTA', icon: <FileText size={18} /> }, // Oculto temporariamente a pedido
     { name: 'REPROVADOS', icon: <AlertOctagon size={18} /> },
     { name: 'RESULTADO', icon: <BarChart3 size={18} /> },
     { name: 'SCRIPTS', icon: <Copy size={18} /> },
@@ -865,7 +865,7 @@ export default function App() {
     { name: 'UR-RESIDENCIAL', icon: <Briefcase size={18} /> },
     { name: 'VENDA', icon: <CreditCard size={18} /> },
     { name: 'PARCIAL & FECHAMENTO', icon: <ClipboardCheck size={18} /> },
-    { name: 'ÁREA - LOJAS', icon: <MapIcon size={18} /> },
+    // { name: 'ÁREA - LOJAS', icon: <MapIcon size={18} /> }, // Oculto temporariamente a pedido
     { name: 'GEEK', icon: <Cpu size={18} /> }
   ].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -998,7 +998,8 @@ export default function App() {
               if (section.name === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return null;
               if (section.name === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return null;
               if (section.name === 'ACESSOS' && !isGerente) return null;
-              if (section.name === 'ÁREA - LOJAS' && !hasAreaLojasAccess) return null;
+              // if (section.name === 'ÁREA - LOJAS' && !hasAreaLojasAccess) return null; // Já oculto no array
+
 
               return (
                 <li key={section.name}>

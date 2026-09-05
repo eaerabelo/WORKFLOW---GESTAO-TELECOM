@@ -1,6 +1,6 @@
-# 🖥️ Frontend SPA - Painel de Gestão de Vendas (React + Vite)
+# 🖥️ Frontend SPA - WORKFLOW SISTEMA TELECOM (React + Vite)
 
-Este é o diretório da Single Page Application (SPA) do **Painel de Gestão de Vendas**, uma interface de usuário extremamente rica, moderna e interativa desenvolvida com **React.js**, **Vite** e **Tailwind CSS**. 
+Este é o diretório da Single Page Application (SPA) do **WORKFLOW SISTEMA TELECOM**, uma interface de usuário extremamente rica, moderna e interativa desenvolvida com **React.js**, **Vite** e **Tailwind CSS**. 
 
 O frontend foi projetado para operar com **alta performance, sincronização em tempo real (WebSockets)** e responsividade total, servindo como uma central completa de visualização e controle operacional para lojas do setor de telecomunicações.
 

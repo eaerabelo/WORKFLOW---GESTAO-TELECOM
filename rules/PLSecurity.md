@@ -5,7 +5,7 @@
 Esta política estabelece as diretrizes de segurança da informação para proteger a integridade, confidencialidade e disponibilidade dos dados processados no **Painel de Gestão de Vendas**, garantindo a conformidade com as normas da empresa e com a Lei Geral de Proteção de Dados (LGPD).
 
 ## 2. CONTROLE DE ACESSO E AUTENTICAÇÃO
-* **Credenciais Únicas:** O acesso ao sistema é estritamente individual. É expressamente proibido o compartilhamento de senhas ou matrículas entre colaboradores.
+* **Credenciais Únicas e 2FA (OTP):** O acesso ao sistema exige a senha e, obrigatoriamente, a validação de um código de 6 dígitos enviado ao e-mail corporativo do colaborador (MailerSend), com trava anti-spam de 60 segundos. É expressamente proibido o compartilhamento de códigos OTP.
 * **Padrão de Matrícula:** Para garantir a rastreabilidade, apenas matrículas válidas iniciadas com `9` ou `F` são aceitas no registro.
 * **E-mail Corporativo:** A criação de contas está restrita ao domínio corporativo da companhia (`@corporativo.com.br`). E-mails pessoais não são autorizados.
 * **Sessão e Inatividade:** Para prevenir acessos indevidos em computadores de salão de vendas (terminais compartilhados), a sessão do usuário expira automaticamente após **30 minutos de inatividade** ou ao trocar de navegador.

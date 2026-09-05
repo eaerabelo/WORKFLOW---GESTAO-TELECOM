@@ -58,6 +58,16 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
     const [resetCode, setResetCode] = useState('');
     const [newPass, setNewPass] = useState('');
 
+    const [resendTimer, setResendTimer] = useState(0);
+
+    useEffect(() => {
+        let interval;
+        if (resendTimer > 0) {
+            interval = setInterval(() => setResendTimer(prev => prev - 1), 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendTimer]);
+
     const handleLogin = async (e) => {
         e.preventDefault();
         const user = loginUser.trim().toUpperCase();
@@ -133,6 +143,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             setTempRegData({ newUser, userUpper, isManagerSetup, computedStoreId: res.computedStoreId });
             toast.success('Código de confirmação enviado para seu e-mail!', { id: 'regEmailToast' });
             setRegStep(2);
+            setResendTimer(60);
         } catch (error) {
             console.error("ERRO COMPLETO CATCH:", error);
             toast.error(error.message || 'Falha ao solicitar cadastro.', { id: 'regEmailToast', duration: 8000 });
@@ -179,6 +190,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             await solicitarRecuperacaoAPI(userUpper, forgotEmail);
             toast.success('Código de recuperação enviado para seu e-mail!', { id: 'emailToast' });
             setForgotStep(2);
+            setResendTimer(60);
         } catch (error) {
             toast.error(error.message || 'Falha ao solicitar recuperação.', { id: 'emailToast' });
         }
@@ -314,6 +326,9 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                         </div>
                                     </div>
                                     <button type="submit" className="w-full py-3 mt-4 bg-[#E3000F] text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Confirmar e Cadastrar</button>
+                                    <button type="button" disabled={resendTimer > 0} onClick={handleRegister} className="w-full py-2 mt-2 bg-transparent text-neutral-500 dark:text-neutral-400 font-bold rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50">
+                                        {resendTimer > 0 ? `Aguarde ${resendTimer}s para reenviar` : 'Reenviar Código'}
+                                    </button>
                                 </form>
                             )}
                         </div>
@@ -337,6 +352,9 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                     <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Código de Verificação</label><div className="relative mt-1"><Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-center tracking-widest text-lg font-mono" /></div></div>
                                     <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Digite sua nova senha" className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
                                     <button type="submit" className="w-full py-3 bg-neutral-900 dark:bg-neutral-800 text-white font-bold rounded-xl hover:bg-black dark:hover:bg-neutral-700 transition-colors shadow-lg">Redefinir Senha</button>
+                                    <button type="button" disabled={resendTimer > 0} onClick={handleForgotRequest} className="w-full py-2 mt-2 bg-transparent text-neutral-500 dark:text-neutral-400 font-bold rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50">
+                                        {resendTimer > 0 ? `Aguarde ${resendTimer}s para reenviar` : 'Reenviar Código'}
+                                    </button>
                                 </form>
                             )}
                         </div>

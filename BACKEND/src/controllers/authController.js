@@ -14,7 +14,8 @@ const STORES = [
     { id: 'shopping_higienopolis', name: 'HIGIENÓPOLIS', code: 'LB24' },
     { id: 'lapa', name: 'LAPA', code: 'FKJ6' },
     { id: 'shopping_villa_lobos', name: 'VILLA LOBOS', code: 'LB43' },
-    { id: 'shopping_west_plaza', name: 'WEST PLAZA', code: 'LB36' }
+    { id: 'shopping_west_plaza', name: 'WEST PLAZA', code: 'LB36' },
+    { id: 'shopping_raposo', name: 'SHOPPING RAPOSO', code: 'K7W8' }
 ];
 
 const validarSenha = (password) => {
@@ -221,12 +222,9 @@ const sendCodeEmail = async (email, nome, subject, messagePrefix) => {
                   <p>Seu código de segurança é: <strong>${codigo}</strong></p>
                   <p><em>Este código expira em 15 minutos.</em></p>`);
 
-    try {
-        await mailerSend.email.send(emailParams);
-    } catch (error) {
-        console.error("Erro no MailerSend, mas prosseguindo no ambiente de dev. CÓDIGO GERADO:", codigo);
-        // Em dev, a gente não trava o cadastro se o e-mail falhar. O usuário pode ver o código no console.
-    }
+    mailerSend.email.send(emailParams).catch(error => {
+        console.error("Erro no MailerSend no background. CÓDIGO GERADO:", codigo);
+    });
 };
 
 export const solicitarRecuperacao = async (req, res) => {
@@ -311,11 +309,13 @@ export const solicitarCadastro = async (req, res) => {
         }
 
         // Mapeamento da Loja
-        const expectedStoreCode = isManagerSetup ? 'DEV' : STORES.find(s => s.code.toUpperCase() === storeCode.toUpperCase())?.code;
-        if (!isManagerSetup && !expectedStoreCode) {
+        const matchedStore = STORES.find(s => s.code.toUpperCase() === storeCode.toUpperCase());
+        if (!isManagerSetup && !matchedStore) {
             return res.status(400).json({ error: "Código da loja inválido. Verifique com a liderança." });
         }
-        const storeId = isManagerSetup ? 'DEFAULT' : STORES.find(s => s.code.toUpperCase() === storeCode.toUpperCase()).id;
+        
+        // Se for managerSetup e ele informou um código de loja válido, joga ele na loja. Senão, vai pro DEFAULT.
+        const storeId = matchedStore ? matchedStore.id : 'DEFAULT';
 
         // Verifica se o usuário já existe globalmente
         const user = await getUserFromDB(username, null, false, null, null);

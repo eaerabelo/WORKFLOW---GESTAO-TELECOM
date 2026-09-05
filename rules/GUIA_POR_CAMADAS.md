@@ -7,7 +7,7 @@ Este documento detalha o fluxo de uso da plataforma, dividido em camadas operaci
 ## PARTE 1: GUIA DO CONSULTOR (VISÃO DO VENDEDOR)
 
 ### Camada 1: Autenticação e Acesso
-- **Login Seguro:** O acesso é feito obrigatoriamente com a sua Matrícula (iniciada em 9 ou F) e sua senha pessoal.
+- **Login Seguro (2FA):** O acesso é feito obrigatoriamente com a sua Matrícula, sua senha pessoal e a inserção de um Código de Verificação (OTP) de 6 dígitos enviado na hora para o seu e-mail.
 - **Tela de Login Personalizada:** O sistema se adapta ao seu dispositivo (PC ou Celular) carregando um papel de parede temático esticado, mudando o design de acordo com o tamanho da tela.
 - **Sessão Inteligente:** A plataforma mantém você logado enquanto trabalha, mas por segurança, sua sessão expira automaticamente se você ficar inativo por 30 minutos ou se trocar de navegador.
 - **Modo Noturno:** Para quem atua horas no salão de vendas, clique no atalho de Sol/Lua para ativar a versão Escura do sistema. O tema realiza uma transição suave para não agredir os olhos e melhora a legibilidade de todas as tabelas.

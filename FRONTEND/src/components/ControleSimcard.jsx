@@ -786,7 +786,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                                     <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-64 min-w-[256px]">Observação</th>
                                                     <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-32 min-w-[128px]">Ações</th>
                                                 </tr>
-                                            ) : currentTab === 'FALTAS' ? (
+                                            ) : currentTab === 'ACOMPANHAR' ? (
                                                 <tr>
                                                     <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-44 min-w-[176px]">{isFisico ? 'SIMCARD Físico' : 'E-SIM Virtual'}</th>
                                                     <th className="border border-[#A00000] dark:border-red-950 px-3 py-2.5 font-bold tracking-wider text-center w-24 min-w-[96px]">Data</th>
@@ -839,21 +839,21 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                                                     <EditableCell {...commonProps} field="numProvisorio" colIdx={4} value={item.numProvisorio} maskType="telefone" className="font-mono text-neutral-800 dark:text-neutral-200" />
                                                                 </>
                                                             )}
-                                                            {currentTab === 'FALTAS' && (
+                                                            {currentTab === 'ACOMPANHAR' && (
                                                                 <EditableCell {...commonProps} field="vendedor" colIdx={2} value={item.vendedor ? item.vendedor.split(' ')[0] : ''} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
                                                             )}
-                                                            <EditableCell {...commonProps} field="ov" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 5 : (currentTab === 'FALTAS' ? 3 : 2)} value={item.ov} maskType="upper" className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                            <EditableCell {...commonProps} field="codAutorizacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 6 : (currentTab === 'FALTAS' ? 4 : 3)} value={item.codAutorizacao} className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                            <EditableCell {...commonProps} field="cpf" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 7 : (currentTab === 'FALTAS' ? 5 : 4)} value={item.cpf} maskType="cpf" className="font-mono text-neutral-800 dark:text-neutral-200" />
-                                                            <EditableCell {...commonProps} field="plano" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 8 : (currentTab === 'FALTAS' ? 6 : 5)} value={item.plano} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
-                                                            <EditableCell {...commonProps} field="cliente" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 9 : (currentTab === 'FALTAS' ? 7 : 6)} value={item.cliente} maskType="upper" className="uppercase text-neutral-800 dark:text-neutral-200" />
-                                                            {currentTab !== 'SOBREPOSIÇÃO' && currentTab !== 'FALTAS' && (
+                                                            <EditableCell {...commonProps} field="ov" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 5 : (currentTab === 'ACOMPANHAR' ? 3 : 2)} value={item.ov} maskType="upper" className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                            <EditableCell {...commonProps} field="codAutorizacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 6 : (currentTab === 'ACOMPANHAR' ? 4 : 3)} value={item.codAutorizacao} className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                            <EditableCell {...commonProps} field="cpf" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 7 : (currentTab === 'ACOMPANHAR' ? 5 : 4)} value={item.cpf} maskType="cpf" className="font-mono text-neutral-800 dark:text-neutral-200" />
+                                                            <EditableCell {...commonProps} field="plano" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 8 : (currentTab === 'ACOMPANHAR' ? 6 : 5)} value={item.plano} maskType="upper" className="font-bold uppercase text-neutral-800 dark:text-neutral-200" />
+                                                            <EditableCell {...commonProps} field="cliente" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 9 : (currentTab === 'ACOMPANHAR' ? 7 : 6)} value={item.cliente} maskType="upper" className="uppercase text-neutral-800 dark:text-neutral-200" />
+                                                            {currentTab !== 'SOBREPOSIÇÃO' && currentTab !== 'ACOMPANHAR' && (
                                                                 <>
                                                                     <SelectableCell {...commonProps} field="pagamento" colIdx={7} value={item.pagamento} />
                                                                     <EditableCell {...commonProps} field="valor" colIdx={8} value={item.valor} maskType="valor" placeholder="R$ 0,00" className="font-bold text-neutral-800 dark:text-neutral-200" />
                                                                 </>
                                                             )}
-                                                            <EditableCell {...commonProps} field="observacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 10 : (currentTab === 'FALTAS' ? 8 : 9)} value={item.observacao} className="text-neutral-600 dark:text-neutral-400" />
+                                                            <EditableCell {...commonProps} field="observacao" colIdx={currentTab === 'SOBREPOSIÇÃO' ? 10 : (currentTab === 'ACOMPANHAR' ? 8 : 9)} value={item.observacao} className="text-neutral-600 dark:text-neutral-400" />
                                                             <td className="border border-neutral-200 dark:border-neutral-800 p-0 text-center align-middle">
                                                                 <div className="flex items-center justify-center gap-1.5 h-full min-h-[36px] px-2">
                                                                     {canModifySimcard && (
@@ -871,9 +871,6 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                                                     </button>
                                                                 </div>
                                                             </td>
-                                             3+
-                                             
-                                             
                                                         </tr>
                                                     );
                                                 })

@@ -33,9 +33,7 @@ FRONTEND/
 │   │   └── excelImporter.js    # Lógica de leitura de arquivos .xlsx
 │   ├── index.css           # Configurações do Tailwind e Estilos Globais
 │   └── main.jsx            # Ponto de inicialização do React
-├── .env.osasco             # Variáveis de ambiente da Loja Osasco
-├── .env.lapa               # Variáveis de ambiente da Loja Lapa
-├── .env.calcadao           # Variáveis de ambiente da Loja Calçadão
+├── .env                  # Variáveis de ambiente (VITE_API_URL)
 ├── package.json            # Dependências e scripts de execução
 ├── tailwind.config.js      # Configurações de design do TailwindCSS
 └── vite.config.js          # Configuração do empacotador (Build/Dev Server)
@@ -47,7 +45,7 @@ FRONTEND/
 É o contêiner mestre. Controla o menu lateral, tema Dark/Light, renderização das abas e hospeda a conexão WebSocket e os métodos globais (`handleSetSalesData`, `handleUndo`). Aqui também reside o `Smart Diff`, que garante envios otimizados de dados para o Backend.
 
 ### Login.jsx
-Lida com a autenticação e cadastro de novos usuários. Integra o **EmailJS** para o fluxo de "Esqueci minha Senha", onde um código de 4 dígitos é enviado para o e-mail corporativo do consultor.
+Lida com a autenticação e cadastro de novos usuários. Integra com o **Back-End (MailerSend)** para o fluxo de Login Seguro (2FA) e "Esqueci minha Senha", enviando um código OTP de 6 dígitos com trava anti-spam de 1 minuto.
 
 ### Venda.jsx
 Formulário de entrada de faturamento. 

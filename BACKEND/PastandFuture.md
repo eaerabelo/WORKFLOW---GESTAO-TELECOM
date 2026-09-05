@@ -110,6 +110,9 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 
 - [x] Correção de bugs visuais de nomes e alertas.
 - [x] Persistência total de vendas no banco de dados Oracle.
+- [x] Implementação de Trava Anti-Spam de 1 minuto no envio de OTP (MailerSend).
+- [x] Correção de artefatos visuais de UI (Ex: Simcard 3+ fix).
+- [x] Restrição severa da aba ACESSOS vinculada ao RBAC de GERENTE na API e Frontend.
 - [ ] Monitoramento contínuo de logs de erro na VM para garantir estabilidade.
 
 ### 🔮 Futuro Planejado (Próximas Sprints)

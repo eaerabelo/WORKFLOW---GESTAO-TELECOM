@@ -23,7 +23,7 @@ A aplicação foi projetada utilizando uma arquitetura **Client-Server Serverles
 - `lucide-react` - Pacote de ícones minimalistas e modernos.
 - `react-hot-toast` - Notificações (Toasts) acessíveis e elegantes.
 - `xlsx` - Manipulação, importação e exportação de planilhas nativas do Excel.
-- `emailjs-com` (ou `@emailjs/browser`) - Envio de e-mails transacionais client-side (Recuperação de senhas).
+- **MailerSend API** - Envio de e-mails OTP transacionais server-side seguro via nosso backend (Cadastro e Login com trava anti-spam).
 - `socket.io-client` - Túnel bidirecional de web sockets.
 - `tailwindcss` - Framework CSS utility-first que acelerou massivamente a estilização e responsividade (Dark Mode incluso).
 
