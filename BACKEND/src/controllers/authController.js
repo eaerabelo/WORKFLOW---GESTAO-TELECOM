@@ -224,6 +224,7 @@ const sendCodeEmail = async (email, nome, subject, messagePrefix) => {
 
     mailerSend.email.send(emailParams).catch(error => {
         console.error("Erro no MailerSend no background. CÓDIGO GERADO:", codigo);
+        if (error.body) console.error("Detalhes do erro:", error.body);
     });
 };
 
