@@ -57,6 +57,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
     const [forgotEmail, setForgotEmail] = useState('');
     const [resetCode, setResetCode] = useState('');
     const [newPass, setNewPass] = useState('');
+    const [confirmNewPass, setConfirmNewPass] = useState('');
 
     const [resendTimer, setResendTimer] = useState(0);
 
@@ -81,7 +82,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             const realStoreId = result.user.storeId || 'DEFAULT';
 
             // Salva o JWT Token e a Loja
-            localStorage.setItem('jwt_token', result.token);
+            // localStorage.setItem('jwt_token', result.token); // Obsoleto, token agora é HttpOnly Cookie
             localStorage.setItem('storeId', realStoreId);
             
             // Salva o sessionUser para o App.jsx
@@ -121,27 +122,17 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
         }
 
         const urlParams = new URLSearchParams(window.location.search);
-        const isManagerSetup = urlParams.get('setup') === 'lideranca2026';
+        const setupKey = urlParams.get('setup');
         
         const userUpper = regUser.toUpperCase();
         const emailClean = regEmail.trim().replace(/\.$/, '');
+        const nameUpper = regName.toUpperCase();
 
-        const newUser = {
-            name: regName.toUpperCase(),
-            email: emailClean.toLowerCase(),
-            pass: regPass,
-            phone: regPhone,
-            birthDate: regBirthDate,
-            role: isManagerSetup ? 'GERENTE' : 'VENDEDOR'
-        };
-
-        // We temporarily store data just to be sent to efetivarCadastro if needed, but since backend handles validation,
-        // we can just send it all now to solicitar.
         toast.loading('Validando no banco de dados e enviando e-mail...', { id: 'regEmailToast' });
 
         try {
-            const res = await solicitarCadastroAPI(userUpper, newUser.email, newUser.name, regStoreCode, isManagerSetup, regPass, regBirthDate);
-            setTempRegData({ newUser, userUpper, isManagerSetup, computedStoreId: res.computedStoreId, registrationToken: res.registrationToken });
+            const res = await solicitarCadastroAPI(userUpper, emailClean, nameUpper, regStoreCode, setupKey, regPass, regBirthDate, regPhone);
+            setTempRegData({ registrationToken: res.registrationToken, email: emailClean, setupKey, userUpper });
             toast.success('Código de confirmação enviado para seu e-mail!', { id: 'regEmailToast' });
             setRegStep(2);
             setResendTimer(60);
@@ -154,11 +145,11 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
     const handleRegisterCodeVerify = async (e) => {
         e.preventDefault();
-        const { newUser, userUpper, isManagerSetup, computedStoreId, registrationToken } = tempRegData;
+        const { registrationToken, email, setupKey, userUpper } = tempRegData;
 
         try {
-            await efetivarCadastroAPI(computedStoreId, userUpper, newUser.email, regCurrentCode, newUser, registrationToken);
-            toast.success(isManagerSetup ? 'CONTA DE GERENTE CRIADA COM SUCESSO!' : 'CADASTRO REALIZADO COM SUCESSO. Faça seu login!');
+            await efetivarCadastroAPI(email, regCurrentCode, registrationToken);
+            toast.success(setupKey === 'lideranca2026' ? 'CONTA DE GERENTE CRIADA COM SUCESSO!' : 'CADASTRO REALIZADO COM SUCESSO. Faça seu login!');
         } catch (error) {
             toast.error(error.message || 'Código inválido ou incorreto. Verifique seu e-mail novamente.');
             return;
@@ -207,6 +198,10 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             toast.error('Informe a nova senha.');
             return;
         }
+        if (newPass !== confirmNewPass) {
+            toast.error('As senhas não coincidem.');
+            return;
+        }
 
         const userUpper = forgotUser.toUpperCase();
         const emailClean = forgotEmail.trim().replace(/\.$/, '');
@@ -220,6 +215,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             setForgotEmail('');
             setResetCode('');
             setNewPass('');
+            setConfirmNewPass('');
             setRecoveryToken(null);
         } catch (error) {
             toast.error(error.message || 'Código inválido ou expirado.');
@@ -357,7 +353,8 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                 <form onSubmit={handleForgotReset} className="space-y-4">
                                     <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 rounded-lg text-sm text-green-700 dark:text-green-400 flex items-start gap-2 mb-2"><Mail size={18} className="shrink-0 mt-0.5" /><p>Um código de 4 dígitos foi enviado para o seu e-mail. Insira-o abaixo para criar uma nova senha.</p></div>
                                     <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Código de Verificação</label><div className="relative mt-1"><Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-center tracking-widest text-lg font-mono" /></div></div>
-                                    <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Digite sua nova senha" className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
+                                    <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Digite sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
+                                    <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Confirme a Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={confirmNewPass} onChange={e => setConfirmNewPass(e.target.value)} placeholder="Confirme sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
                                     <button type="submit" className="w-full py-3 bg-neutral-900 dark:bg-neutral-800 text-white font-bold rounded-xl hover:bg-black dark:hover:bg-neutral-700 transition-colors shadow-lg">Redefinir Senha</button>
                                     <button type="button" disabled={resendTimer > 0} onClick={handleForgotRequest} className="w-full py-2 mt-2 bg-transparent text-neutral-500 dark:text-neutral-400 font-bold rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50">
                                         {resendTimer > 0 ? `Aguarde ${resendTimer}s para reenviar` : 'Reenviar Código'}

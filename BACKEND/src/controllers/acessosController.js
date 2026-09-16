@@ -88,11 +88,9 @@ export const deleteUser = async (req, res) => {
     try {
         const storeId = req.storeId; // via middleware
         const { username } = req.params;
-        const { role } = req.body; // Role quem enviou a requisição (frontend mandava isso antes, mas é melhor pegar via middleware. Vamos manter a checagem)
-
         const requestingUserRole = req.user ? req.user.role : null;
-        if (role !== "GERENTE" && requestingUserRole !== "GERENTE" && requestingUserRole !== "ADMINISTRAÇÃO") {
-            return res.status(403).json({ error: "Ação bloqueada. Apenas o Gerente possui permissão para excluir usuários." });
+        if (requestingUserRole !== "GERENTE" && requestingUserRole !== "ADMINISTRAÇÃO") {
+            return res.status(403).json({ error: "Ação bloqueada. Apenas o Gerente ou Administração possuem permissão para excluir usuários." });
         }
 
         if (!username) {
@@ -132,35 +130,5 @@ export const deleteUser = async (req, res) => {
 };
 
 export const unlockCofre = async (req, res) => {
-    let conn;
-    try {
-        const storeId = req.storeId || 'uniao_osasco'; // Use o middleware para pegar o storeId real ou pega do user logado
-        const { masterPass } = req.body;
-        // Validação da senha no backend para evitar vazamento no frontend
-        if (masterPass === "DEV2026" || masterPass === "MASTER") {
-            conn = await getOracleConnection();
-            const usersResult = await conn.execute(`SELECT * FROM USUARIOS WHERE STORE_ID = :storeId OR STORE_ID = 'DEFAULT'`, { storeId });
-            let usersDB = {};
-            for (let row of usersResult.rows) {
-                usersDB[row.USERNAME] = {
-                    username: row.USERNAME,
-                    name: row.NAME,
-                    role: row.ROLE,
-                    pass: row.PASS,
-                    phone: row.PHONE,
-                    email: row.EMAIL,
-                    birthDate: row.BIRTH_DATE,
-                    vacationStart: row.VACATION_START,
-                    vacationEnd: row.VACATION_END
-                };
-            }
-            res.json({ success: true, message: "Cofre desbloqueado!", usersDB });
-        } else {
-            res.status(401).json({ error: "Senha de desenvolvedor incorreta!" });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    } finally {
-        if (conn) await conn.close();
-    }
+    return res.status(403).json({ error: "Ação bloqueada por AppSec. Credenciais globais não são mais permitidas no sistema." });
 };

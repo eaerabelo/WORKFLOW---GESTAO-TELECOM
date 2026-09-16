@@ -1,17 +1,25 @@
 // JWT SECRET GERADO NA CRIPTOGRAFIA DO LOGIN - NÃO ALTERAR - ATENÇÃO!!!
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_telecom_2026';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error("FALHA CRÍTICA DE SEGURANÇA: JWT_SECRET não configurado no .env");
+}
 
 export const requireAuth = (req, res, next) => {
-    // Pegar o cabeçalho de autorização
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "Acesso não autorizado. Token JWT ausente." });
+    // Tenta pegar o token do cookie (mais seguro) ou do cabeçalho de autorização (fallback)
+    let token = req.cookies?.jwt_token;
+    
+    if (!token) {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        }
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: "Acesso não autorizado. Token JWT ausente." });
+    }
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);

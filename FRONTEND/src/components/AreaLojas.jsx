@@ -358,8 +358,8 @@ export const AreaLojas = ({ globalMonth }) => {
                                 <span className="area-lojas-detail-value">
                                   {focusedIndicator.isCurrency
                                     ? applyCurrencyMask(
-                                        seller[focusedIndicator.key],
-                                      )
+                                      seller[focusedIndicator.key],
+                                    )
                                     : seller[focusedIndicator.key]}
                                 </span>
                               </div>

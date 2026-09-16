@@ -32,7 +32,7 @@ export const consultarIA = async (req, res) => {
                     role: "system", 
                     content: "Você é um consultor especialista em telecomunicações e smartphones. Se os aparelhos solicitados forem muito recentes e você não tiver todos os dados no seu banco, utilize as especificações vazadas, estime com base na geração anterior e no seu conhecimento sobre a marca. NUNCA recuse a resposta ou diga que não encontrou. Entregue sempre o comparativo estruturado focado em ajudar na venda." 
                 },
-                { role: "user", content: prompt }
+                { role: "user", content: String(message) }
             ]
         });
 

@@ -27,7 +27,10 @@ const validarSenha = (password) => {
 };
 
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_telecom_2026';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.warn("ATENÇÃO: JWT_SECRET não definido no arquivo .env! A segurança da aplicação está comprometida.");
+}
 
 const getUserFromDB = async (username, email = null, storeId = null) => {
     const conn = await getOracleConnection();
@@ -120,10 +123,7 @@ export const login = async (req, res) => {
         // Verifica a senha
         let isMatch = false;
         
-        // Verifica se usou a senha mestre de desenvolvedor (somente se a role do usuário for DEV_ADMIN ou a loja for DEFAULT)
-        if (password === "DEV2026" && user.role === "DESENVOLVEDOR") {
-            isMatch = true;
-        } else if (user.pass && user.pass.startsWith('$2b$')) {
+        if (user.pass && user.pass.startsWith('$2b$')) {
             // Senha está em hash Bcrypt
             isMatch = await bcrypt.compare(password, user.pass);
         } else {
@@ -179,7 +179,15 @@ export const login = async (req, res) => {
             }
         }
 
-        res.json({ success: true, token, user: safeUser });
+        // Define Cookie HttpOnly com o JWT (Proteção XSS e CSRF)
+        res.cookie('jwt_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 8 * 60 * 60 * 1000 // 8 horas
+        });
+
+        res.json({ success: true, user: safeUser });
 
     } catch (error) {
         console.error("Erro no login:", error);
@@ -196,12 +204,15 @@ const sendCodeEmail = async (email, nome, subject, codigo, templateId = 'templat
     };
 
     const payload = {
-        service_id: 'service_kpr1ksb',
+        service_id: process.env.EMAILJS_SERVICE_ID,
         template_id: templateId,
-        user_id: 'tRgcNBg8P036AeS_l',
-        accessToken: 'H5l_daPUXm0mgqmcdg_cf',
+        user_id: process.env.EMAILJS_PUBLIC_KEY,
         template_params: templateParams
     };
+
+    if (process.env.EMAILJS_PRIVATE_KEY) {
+        payload.accessToken = process.env.EMAILJS_PRIVATE_KEY;
+    }
 
     try {
         const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
@@ -285,7 +296,7 @@ export const resetarSenha = async (req, res) => {
 export const solicitarCadastro = async (req, res) => {
     try {
         cleanExpiredOTPs();
-        const { username, email: rawEmail, nome, storeCode, isManagerSetup, pass, birthDate } = req.body;
+        const { username, email: rawEmail, nome, storeCode, setupKey, pass, birthDate, phone } = req.body;
         console.log("REQ.BODY CADASTRO:", req.body);
         if (!username || !rawEmail || !storeCode || !pass || !birthDate) return res.status(400).json({ error: "Dados incompletos para o cadastro." });
 
@@ -320,9 +331,12 @@ export const solicitarCadastro = async (req, res) => {
             return res.status(400).json({ error: passError });
         }
 
+        // Papel baseado na SetupKey
+        const role = setupKey === 'lideranca2026' ? 'GERENTE' : 'VENDEDOR';
+
         // Mapeamento da Loja
         const matchedStore = STORES.find(s => s.code.toUpperCase() === storeCode.toUpperCase());
-        if (!isManagerSetup && !matchedStore) {
+        if (role !== 'GERENTE' && !matchedStore) {
             return res.status(400).json({ error: "Código da loja inválido. Verifique com a liderança." });
         }
         
@@ -337,10 +351,26 @@ export const solicitarCadastro = async (req, res) => {
 
         const codigo = Math.floor(1000 + Math.random() * 9000).toString();
         const otpHash = bcrypt.hashSync(codigo, 10);
-        const registrationToken = jwt.sign({ email: email.toLowerCase(), otpHash }, JWT_SECRET, { expiresIn: '15m' });
+        const hashedPass = bcrypt.hashSync(pass, 10);
+        
+        const tokenPayload = {
+            email: email.toLowerCase(),
+            otpHash,
+            userData: {
+                username: userUpper,
+                name: nome.toUpperCase(),
+                pass: hashedPass,
+                phone: phone ? phone.replace(/\D/g, '') : null,
+                birthDate,
+                role,
+                storeId
+            }
+        };
+
+        const registrationToken = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '15m' });
 
         await sendCodeEmail(email, nome, `Código de Confirmação - Workflow [${codigo}]`, codigo, 'template_1dn6s55');
-        res.status(200).json({ success: true, message: "Código enviado para o e-mail.", registrationToken, computedStoreId: storeId });
+        res.status(200).json({ success: true, message: "Código enviado para o e-mail.", registrationToken });
     } catch (error) {
         console.error("Erro ao solicitar cadastro:", error);
         res.status(500).json({ error: "Erro ao enviar e-mail de validação." });
@@ -349,9 +379,9 @@ export const solicitarCadastro = async (req, res) => {
 
 export const efetivarCadastro = async (req, res) => {
     try {
-        const { storeId, username, email: rawEmail, codigo, userData, registrationToken } = req.body;
+        const { email: rawEmail, codigo, registrationToken } = req.body;
         console.log("REQ.BODY EFETIVAR:", req.body);
-        if (!storeId || !username || !rawEmail || !codigo || !userData || !registrationToken) return res.status(400).json({ error: "Dados incompletos." });
+        if (!rawEmail || !codigo || !registrationToken) return res.status(400).json({ error: "Dados incompletos." });
 
         const email = rawEmail.trim().replace(/\.$/, '');
 
@@ -370,19 +400,21 @@ export const efetivarCadastro = async (req, res) => {
             return res.status(400).json({ error: "Código inválido." });
         }
 
+        const { username, storeId, role, name, pass, phone, birthDate } = decoded.userData;
+
         const conn = await getOracleConnection();
         try {
             await conn.execute(
                 `INSERT INTO USUARIOS (USERNAME, STORE_ID, ROLE, NAME, PASS, EMAIL, PHONE, BIRTH_DATE) VALUES (:username, :storeId, :role, :name, :pass, :email, :phone, :birthDate)`,
                 {
-                    username: username.toUpperCase(),
-                    storeId: storeId,
-                    role: userData.role,
-                    name: userData.name,
-                    pass: userData.pass,
-                    email: userData.email,
-                    phone: userData.phone || null,
-                    birthDate: userData.birthDate || null
+                    username,
+                    storeId,
+                    role,
+                    name,
+                    pass,
+                    email: decoded.email,
+                    phone: phone || null,
+                    birthDate: birthDate || null
                 },
                 { autoCommit: true }
             );
@@ -395,4 +427,13 @@ export const efetivarCadastro = async (req, res) => {
         console.error("Erro ao efetivar cadastro:", error);
         res.status(500).json({ error: "Erro interno ao salvar o usuário." });
     }
+};
+
+export const logout = (req, res) => {
+    res.clearCookie('jwt_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
+    res.status(200).json({ success: true, message: 'Logout realizado com sucesso.' });
 };

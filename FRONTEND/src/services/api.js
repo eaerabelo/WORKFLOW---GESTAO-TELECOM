@@ -6,15 +6,10 @@
 // Utilizando variável de ambiente para não quebrar em produção!
 export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
 
-export const getAuthToken = () => localStorage.getItem('jwt_token');
+export const getAuthToken = () => null; // Obsoleto. O navegador envia o Cookie automaticamente.
 
 export const authFetch = async (url, options = {}) => {
-    const token = getAuthToken();
-    const headers = { ...options.headers };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    return fetch(url, { ...options, headers });
+    return fetch(url, { ...options, credentials: 'include' });
 };
 
 // Helper para padronizar erros
@@ -43,6 +38,7 @@ export const loginAPI = async (username, password) => {
     const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, password })
     });
     return handleResponse(res);
@@ -52,6 +48,7 @@ export const solicitarRecuperacaoAPI = async (username, email) => {
     const res = await fetch(`${API_URL}/api/auth/esqueci-senha/solicitar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, email })
     });
     return handleResponse(res);
@@ -61,18 +58,20 @@ export const resetarSenhaAPI = async (username, email, codigo, newPass, recovery
     const res = await fetch(`${API_URL}/api/auth/esqueci-senha/resetar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, email, codigo, newPass, recoveryToken })
     });
     return handleResponse(res);
 };
 
-export const solicitarCadastroAPI = async (username, email, nome, storeCode, isManagerSetup, pass, birthDate) => {
+export const solicitarCadastroAPI = async (username, email, nome, storeCode, setupKey, pass, birthDate, phone) => {
     console.log(`FETCHING TO: ${API_URL}/api/auth/cadastro/solicitar`);
     try {
         const res = await fetch(`${API_URL}/api/auth/cadastro/solicitar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, nome, storeCode, isManagerSetup, pass, birthDate })
+            credentials: 'include',
+            body: JSON.stringify({ username, email, nome, storeCode, setupKey, pass, birthDate, phone })
         });
         return await handleResponse(res);
     } catch (error) {
@@ -81,11 +80,20 @@ export const solicitarCadastroAPI = async (username, email, nome, storeCode, isM
     }
 };
 
-export const efetivarCadastroAPI = async (storeId, username, email, codigo, userData, registrationToken) => {
+export const efetivarCadastroAPI = async (email, codigo, registrationToken) => {
     const res = await fetch(`${API_URL}/api/auth/cadastro/efetivar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeId, username, email, codigo, userData, registrationToken })
+        credentials: 'include',
+        body: JSON.stringify({ email, codigo, registrationToken })
+    });
+    return handleResponse(res);
+};
+
+export const logoutAPI = async () => {
+    const res = await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
     });
     return handleResponse(res);
 };

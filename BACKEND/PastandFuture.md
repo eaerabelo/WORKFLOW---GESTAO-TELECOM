@@ -102,6 +102,18 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - **Commit e Push Final:**
   - Adicionado o diretório `scratch/` e pastas temporárias no `.gitignore` raiz, realizado o commit geral das alterações higienizadas e efetuado o push para a branch `atualizacao` no GitHub.
 
+### 2026-09-15 (Hoje)
+
+- **Correção da Integração EmailJS (Recuperação e Cadastro):**
+  - Identificada falha silenciosa no backend onde o `authController.js` estava falhando na API do EmailJS devido à ausência das variáveis de ambiente na VM (Secret Hardening anterior).
+  - Extração das chaves legadas e injeção controlada de `EMAILJS_SERVICE_ID`, `EMAILJS_PUBLIC_KEY` e geração de nova `JWT_SECRET` forte no arquivo `BACKEND/.env` (UTF-8).
+  - Atualização do controller para suportar o uso seguro via REST API ignorando `accessToken` se não exigido pela camada gratuita da conta.
+- **Reforço de Segurança no Fluxo de Recuperação de Senha (Frontend):**
+  - Implementado o campo "Confirme a Nova Senha" no componente `Login.jsx` (durante o step de redefinição).
+  - Adicionada validação estrita no frontend (`newPass !== confirmNewPass`) bloqueando requisições não coincidentes para evitar erros humanos na criação da credencial.
+- **Compilação e Deploy Final (Frontend):**
+  - Compilação (`npm run build`) e novo deploy (`firebase deploy --only hosting`) finalizados com sucesso para `workflow-sistema.web.app`.
+
 ---
 
 ## 📌 Status Atual e Próximos Passos (Futuro)

@@ -55,7 +55,8 @@ import qrWifiImg from "./assets/QR_CODEWIFI.png";
 import { 
   fetchStatus, fetchSales, fetchConfig, fetchSimcards, 
   fetchReprovados, fetchGeekDocs, fetchCampanhas, 
-  syncCollectionDynamic, syncConfigData 
+  syncCollectionDynamic, fetchColaboradoresDashboard,
+  logoutAPI
 } from './services/api.js';
 import { getCurrentStoreName, getCurrentStoreCode } from './utils/stores.js';
 
@@ -777,6 +778,7 @@ export default function App() {
     let timeoutId;
 
     const logout = () => {
+      logoutAPI().catch(e => console.error(e));
       setGlobalUser(null);
       setSelectedSeller(null);
       localStorage.removeItem('sessionUser');
@@ -833,6 +835,7 @@ export default function App() {
       const currentDbUser = (rawUser && rawUser.role) ? rawUser : null;
       if (currentDbUser && (currentDbUser.role !== globalUser.role || currentDbUser.onVacation)) {
         if (currentDbUser.role === 'SUSPENDER' || currentDbUser.onVacation) {
+          logoutAPI().catch(e => console.error(e));
           setGlobalUser(null);
           setSelectedSeller(null);
           localStorage.removeItem('sessionUser');
@@ -930,6 +933,7 @@ export default function App() {
 
   // Logout manual e remoção de credenciais
   const handleLogout = () => {
+    logoutAPI().catch(e => console.error(e));
     setGlobalUser(null);
     setSelectedSeller(null);
     localStorage.removeItem('sessionUser');

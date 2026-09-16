@@ -25,6 +25,7 @@ import { requestLogger } from './src/middlewares/logger.js';
 import { errorHandler } from './src/middlewares/errorHandler.js';
 import { ENV } from './src/config/env.js';
 import { initCronJobs } from './src/jobs/cronJobs.js';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 app.set('trust proxy', 1); // Confia no Nginx para o X-Forwarded-For (Rate Limiter)
@@ -56,7 +57,8 @@ const io = new Server(httpServer, {
             }
             callback(null, true);
         },
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 app.set('io', io); // Injetando o Socket.io no app para as rotas poderem usar!
@@ -88,8 +90,10 @@ app.use(cors({
         callback(null, true);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Store-ID', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Store-ID', 'Accept'],
+    credentials: true
 }));
+app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(requestLogger); // Log de todas as requisições
@@ -163,7 +167,7 @@ app.get('/api/test-db', async (req, res) => {
 /**
  * ROTA DE INTELIGÊNCIA ARTIFICIAL
  */
-app.post('/api/consultar-ia', consultarIA);
+app.post('/api/consultar-ia', requireAuth, consultarIA);
 
 // ============================================================================
 // 🔥 FUNÇÕES ÚTEIS PARA O BANCO ORACLE
@@ -184,7 +188,7 @@ app.use('/api/reprovados', requireAuth, reprovadosRoutes);
 app.use('/api/campanhas', requireAuth, campanhasRoutes);
 app.use('/api/acessos', requireAuth, acessosRoutes);
 app.use('/api/geek-docs', requireAuth, geekDocsRoutes);
-app.use('/api/config', configRoutes);
+app.use('/api/config', requireAuth, configRoutes);
 app.use('/api/calcular', requireAuth, calcRoutes);
 app.use('/api/area-lojas', requireAuth, areaLojasRoutes);
 app.use('/api/updates', updatesRoutes); // Rotas de atualizacoes (A autenticacao ja esta na rota se necessario)
