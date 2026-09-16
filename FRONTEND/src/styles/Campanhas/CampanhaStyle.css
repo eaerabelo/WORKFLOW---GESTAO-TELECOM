@@ -186,11 +186,11 @@
    MODAL DE CAMPANHA
 ========================================= */
 .campanha-modal-overlay {
-  @apply fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center;
+  @apply fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center;
 }
 
 .campanha-modal-container {
-  @apply bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-lg animate-fade-in flex flex-col transition-colors;
+  @apply bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-fade-in flex flex-col transition-colors;
 }
 
 .campanha-modal-header {

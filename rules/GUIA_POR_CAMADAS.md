@@ -73,3 +73,11 @@ As camadas a seguir possuem privilégios escalados. O perfil Sênior tem forte v
 - **Cofre de Acessos Invisível:** A aba do Cofre exige uma Master Key para ser aberta. Na listagem de equipe, cada colaborador possui uma "Tag Colorida" identificando perfeitamente o seu nível de acesso.
 - **Visibilidade Plena:** O Cofre revela as senhas de todos os usuários em texto puro (Plain-Text) e permite a elevação de cargo (promover vendedor a gerente).
 - **Exclusão Segura:** Ao excluir um colaborador demitido, o sistema executa uma limpeza profunda, varrendo a Escala de Trabalho e o painel de Reprovados e apagando o nome do ex-funcionário em todos os formatos. Suas "Vendas Feitas" antigas, no entanto, são salvas para o histórico contábil da loja não corromper.
+
+---
+> **ATUALIZAÇÃO DE ARQUITETURA (SETEMBRO 2026):**
+> - **Autenticação:** O sistema de validação de e-mails via otpStore (memória) foi integralmente substituído por **JWT (JSON Web Token)** assinado.
+> - **Email:** O serviço de envio de e-mails (antigo MailerSend) foi migrado para a **API REST do EmailJS** executada exclusivamente do backend, garantindo segurança contra interceptação.
+> - **Frontend (Responsividade):** Melhorias de rolagem nativa em Modais de sobreposição (Acessos, Campanhas).
+> - **Permissões:** Módulo 'Escala de Trabalho' estritamente restrito a GERENTE, SENIOR, ADMIN e DESENVOLVEDOR.
+---

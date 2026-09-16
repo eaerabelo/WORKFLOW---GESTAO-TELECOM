@@ -876,7 +876,7 @@ export default function App() {
   
   const canModifySimcard = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'JOVEM APRENDIZ', 'GEEK'].includes(globalUser?.role);
   const canEditSchedule = isGerente;
-  const hasScheduleAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(globalUser?.role);
+  const hasScheduleAccess = ['GERENTE'].includes(globalUser?.role);
   const hasMetaAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(globalUser?.role);
   const canEditMeta = ['GERENTE', 'SENIOR'].includes(globalUser?.role);
   const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(globalUser?.role);
@@ -919,7 +919,7 @@ export default function App() {
       setAuthModal({ isOpen: false, pendingAction: null, pendingId: null, requiredRole: null });
       setAuthCredentials({ user: '', password: '' });
       if (activeTab === 'GESTÃO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(userMatched.role)) setActiveTab('VENDA');
-      if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
+      if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'PARCIAL & FECHAMENTO' && !['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'ACESSOS' && userMatched.role !== 'GERENTE') setActiveTab('VENDA');
       if (activeTab === 'ÁREA - LOJAS' && !['GERENTE', 'SENIOR', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
@@ -1247,7 +1247,7 @@ export default function App() {
 
         <footer className="w-full bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 py-3 shrink-0 no-print flex items-center justify-center transition-colors duration-500">
           <p className="text-[10px] sm:text-xs text-neutral-400 font-semibold tracking-widest uppercase text-center px-4 whitespace-nowrap">
-            <span className="hidden sm:inline">&copy; {new Date().getFullYear()} Todos os direitos reservados <span className="text-[#E3000F] mx-1">-</span> Desenvolvido por Matheus Rabelo <span className="text-[#E3000F] mx-1">-</span></span>
+            <span className="hidden sm:inline">&copy; 2026 Todos os direitos reservados <span className="text-[#E3000F] mx-1">-</span> Desenvolvido por Matheus Rabelo <span className="text-[#E3000F] mx-1">-</span> PROJETO I9 IDEIAS QUE TRANSFORMAM</span>
             <span className="sm:hidden">&copy; {new Date().getFullYear()} Dev: Matheus Rabelo</span>
           </p>
         </footer>

@@ -144,3 +144,11 @@
 - **REGRA 63 (BÔNUS E EXCEÇÕES PME):** O Dashboard contém "Dicas de Foco" dinâmicas que alteram seu tom de abordagem (Alerta <50%, Formal 50-69%, Encorajador >=70%) para engajar o vendedor. Vendas PME e Flex Recarga não compõem as metas quantitativas (Gross), mas somam integralmente na Receita (Fator 100%).
 - **REGRA 64 (BÔNUS ACIMA DA META):** Se o atingimento de determinados produtos (Pós, Fibra e TV) passar de 100%, é acrescentado ao Vendedor um Bônus Unitário Variável de R$10 por venda. Se passar de 115%, remunera R$15 por venda na Etapa 3.
 - **REGRA 65 (NPS):** O painel do Fator RV fornece um indicador interativo para inserção da Nota NPS (Qualidade). Caso o índice inserido seja maior ou igual a 8.0, o sistema adiciona passivamente o bônus de 5,00% sobre o total da remuneração final.
+
+---
+> **ATUALIZAÇÃO DE ARQUITETURA (SETEMBRO 2026):**
+> - **Autenticação:** O sistema de validação de e-mails via otpStore (memória) foi integralmente substituído por **JWT (JSON Web Token)** assinado.
+> - **Email:** O serviço de envio de e-mails (antigo MailerSend) foi migrado para a **API REST do EmailJS** executada exclusivamente do backend, garantindo segurança contra interceptação.
+> - **Frontend (Responsividade):** Melhorias de rolagem nativa em Modais de sobreposição (Acessos, Campanhas).
+> - **Permissões:** Módulo 'Escala de Trabalho' estritamente restrito a GERENTE, SENIOR, ADMIN e DESENVOLVEDOR.
+---

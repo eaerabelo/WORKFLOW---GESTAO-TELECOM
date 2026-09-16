@@ -57,11 +57,11 @@ export const solicitarRecuperacaoAPI = async (username, email) => {
     return handleResponse(res);
 };
 
-export const resetarSenhaAPI = async (username, email, codigo, newPass) => {
+export const resetarSenhaAPI = async (username, email, codigo, newPass, recoveryToken) => {
     const res = await fetch(`${API_URL}/api/auth/esqueci-senha/resetar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, codigo, newPass })
+        body: JSON.stringify({ username, email, codigo, newPass, recoveryToken })
     });
     return handleResponse(res);
 };
@@ -81,11 +81,11 @@ export const solicitarCadastroAPI = async (username, email, nome, storeCode, isM
     }
 };
 
-export const efetivarCadastroAPI = async (storeId, username, email, codigo, userData) => {
+export const efetivarCadastroAPI = async (storeId, username, email, codigo, userData, registrationToken) => {
     const res = await fetch(`${API_URL}/api/auth/cadastro/efetivar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeId, username, email, codigo, userData })
+        body: JSON.stringify({ storeId, username, email, codigo, userData, registrationToken })
     });
     return handleResponse(res);
 };

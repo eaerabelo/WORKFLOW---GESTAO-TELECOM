@@ -23,7 +23,7 @@ A aplicação foi projetada utilizando uma arquitetura **Client-Server Serverles
 - `lucide-react` - Pacote de ícones minimalistas e modernos.
 - `react-hot-toast` - Notificações (Toasts) acessíveis e elegantes.
 - `xlsx` - Manipulação, importação e exportação de planilhas nativas do Excel.
-- **MailerSend API** - Envio de e-mails OTP transacionais server-side seguro via nosso backend (Cadastro e Login com trava anti-spam).
+- **EmailJS (via REST API) API** - Envio de e-mails OTP transacionais server-side seguro via nosso backend (Cadastro e Login com trava anti-spam).
 - `socket.io-client` - Túnel bidirecional de web sockets.
 - `tailwindcss` - Framework CSS utility-first que acelerou massivamente a estilização e responsividade (Dark Mode incluso).
 
@@ -61,3 +61,11 @@ Pensando na evolução do produto como uma ferramenta estratégica para a compan
 ---
 
 🔗 **Link do Repositório:** [https://github.com/eaerabelo/WORKFLOW---GESTAO-TELECOM.git]
+
+---
+> **ATUALIZAÇÃO DE ARQUITETURA (SETEMBRO 2026):**
+> - **Autenticação:** O sistema de validação de e-mails via otpStore (memória) foi integralmente substituído por **JWT (JSON Web Token)** assinado.
+> - **Email:** O serviço de envio de e-mails (antigo MailerSend) foi migrado para a **API REST do EmailJS** executada exclusivamente do backend, garantindo segurança contra interceptação.
+> - **Frontend (Responsividade):** Melhorias de rolagem nativa em Modais de sobreposição (Acessos, Campanhas).
+> - **Permissões:** Módulo 'Escala de Trabalho' estritamente restrito a GERENTE, SENIOR, ADMIN e DESENVOLVEDOR.
+---

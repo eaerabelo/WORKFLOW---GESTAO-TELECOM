@@ -124,10 +124,11 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
         const isManagerSetup = urlParams.get('setup') === 'lideranca2026';
         
         const userUpper = regUser.toUpperCase();
+        const emailClean = regEmail.trim().replace(/\.$/, '');
 
         const newUser = {
             name: regName.toUpperCase(),
-            email: regEmail.toLowerCase(),
+            email: emailClean.toLowerCase(),
             pass: regPass,
             phone: regPhone,
             birthDate: regBirthDate,
@@ -140,7 +141,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
         try {
             const res = await solicitarCadastroAPI(userUpper, newUser.email, newUser.name, regStoreCode, isManagerSetup, regPass, regBirthDate);
-            setTempRegData({ newUser, userUpper, isManagerSetup, computedStoreId: res.computedStoreId });
+            setTempRegData({ newUser, userUpper, isManagerSetup, computedStoreId: res.computedStoreId, registrationToken: res.registrationToken });
             toast.success('Código de confirmação enviado para seu e-mail!', { id: 'regEmailToast' });
             setRegStep(2);
             setResendTimer(60);
@@ -153,10 +154,10 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
     const handleRegisterCodeVerify = async (e) => {
         e.preventDefault();
-        const { newUser, userUpper, isManagerSetup, computedStoreId } = tempRegData;
+        const { newUser, userUpper, isManagerSetup, computedStoreId, registrationToken } = tempRegData;
 
         try {
-            await efetivarCadastroAPI(computedStoreId, userUpper, newUser.email, regCurrentCode, newUser);
+            await efetivarCadastroAPI(computedStoreId, userUpper, newUser.email, regCurrentCode, newUser, registrationToken);
             toast.success(isManagerSetup ? 'CONTA DE GERENTE CRIADA COM SUCESSO!' : 'CADASTRO REALIZADO COM SUCESSO. Faça seu login!');
         } catch (error) {
             toast.error(error.message || 'Código inválido ou incorreto. Verifique seu e-mail novamente.');
@@ -181,13 +182,17 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
         setRegStoreCode('');
     };
 
+    const [recoveryToken, setRecoveryToken] = useState(null);
+
     const handleForgotRequest = async (e) => {
         e.preventDefault();
         const userUpper = forgotUser.toUpperCase();
+        const emailClean = forgotEmail.trim().replace(/\.$/, '');
         toast.loading('Buscando usuário no banco de dados e enviando E-mail...', { id: 'emailToast' });
 
         try {
-            await solicitarRecuperacaoAPI(userUpper, forgotEmail);
+            const res = await solicitarRecuperacaoAPI(userUpper, emailClean);
+            setRecoveryToken(res.recoveryToken);
             toast.success('Código de recuperação enviado para seu e-mail!', { id: 'emailToast' });
             setForgotStep(2);
             setResendTimer(60);
@@ -204,9 +209,10 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
         }
 
         const userUpper = forgotUser.toUpperCase();
+        const emailClean = forgotEmail.trim().replace(/\.$/, '');
 
         try {
-            await resetarSenhaAPI(userUpper, forgotEmail, resetCode, newPass);
+            await resetarSenhaAPI(userUpper, emailClean, resetCode, newPass, recoveryToken);
             toast.success('Senha alterada com sucesso! Faça seu login.');
             setForgotStep(1);
             setView('LOGIN');
@@ -214,6 +220,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             setForgotEmail('');
             setResetCode('');
             setNewPass('');
+            setRecoveryToken(null);
         } catch (error) {
             toast.error(error.message || 'Código inválido ou expirado.');
         }

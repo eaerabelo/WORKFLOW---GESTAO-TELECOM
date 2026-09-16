@@ -1,7 +1,6 @@
 import { getOracleConnection } from '../config/oracle.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import fs from 'fs';
 
 
@@ -29,21 +28,6 @@ const validarSenha = (password) => {
 
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_telecom_2026';
-
-const mailerSend = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY || "dummy",
-});
-
-const otpStore = new Map();
-
-const cleanExpiredOTPs = () => {
-    const now = Date.now();
-    for (const [email, data] of otpStore.entries()) {
-        if (now > data.expiresAt) {
-            otpStore.delete(email);
-        }
-    }
-};
 
 const getUserFromDB = async (username, email = null, storeId = null) => {
     const conn = await getOracleConnection();
@@ -203,43 +187,56 @@ export const login = async (req, res) => {
     }
 };
 
-const sendCodeEmail = async (email, nome, subject, messagePrefix) => {
-    const codigo = Math.floor(1000 + Math.random() * 9000).toString();
-    const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutos
-    otpStore.set(email.toLowerCase(), { codigo, expiresAt });
+const sendCodeEmail = async (email, nome, subject, codigo, templateId = 'template_6wuyizw') => {
+    const templateParams = {
+        to_name: nome || 'Usuário',
+        to_email: email,
+        codigo: codigo,
+        message: codigo
+    };
 
-    const fromEmail = process.env.MAILERSEND_FROM_EMAIL || "MS_rZJjXb@trial-yxj6xdqzq58g2wqz.mlsender.net";
-    const fromName = process.env.MAILERSEND_FROM_NAME || "Workflow Gestão";
-    
-    const sentFrom = new Sender(fromEmail, fromName);
-    const recipients = [new Recipient(email, nome || "Usuário")];
-    const emailParams = new EmailParams()
-        .setFrom(sentFrom)
-        .setTo(recipients)
-        .setSubject(subject)
-        .setHtml(`<h3>Olá ${nome || 'Usuário'}!</h3>
-                  <p>${messagePrefix}</p>
-                  <p>Seu código de segurança é: <strong>${codigo}</strong></p>
-                  <p><em>Este código expira em 15 minutos.</em></p>`);
+    const payload = {
+        service_id: 'service_kpr1ksb',
+        template_id: templateId,
+        user_id: 'tRgcNBg8P036AeS_l',
+        accessToken: 'H5l_daPUXm0mgqmcdg_cf',
+        template_params: templateParams
+    };
 
-    mailerSend.email.send(emailParams).catch(error => {
-        console.error("Erro no MailerSend no background. CÓDIGO GERADO:", codigo);
-        if (error.body) console.error("Detalhes do erro:", error.body);
-    });
+    try {
+        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText);
+        }
+    } catch (error) {
+        console.error("Erro no EmailJS no background. CÓDIGO GERADO:", codigo);
+        console.error("Detalhes do erro:", error.message);
+    }
 };
 
 export const solicitarRecuperacao = async (req, res) => {
     try {
-        cleanExpiredOTPs();
-        const { username, email } = req.body;
-        if (!username || !email) return res.status(400).json({ error: "Usuário e E-mail são obrigatórios." });
+        const { username, email: rawEmail } = req.body;
+        if (!username || !rawEmail) return res.status(400).json({ error: "Usuário e E-mail são obrigatórios." });
+
+        const email = rawEmail.trim().replace(/\.$/, '');
 
         // Lookup user by username and email globally (storeId = null)
         const user = await getUserFromDB(username, null, false, email, null);
         if (!user) return res.status(404).json({ error: "Usuário não encontrado ou e-mail não confere com o cadastro." });
 
-        await sendCodeEmail(email, user.name, "Recuperação de Senha - Workflow", "Recebemos uma solicitação de redefinição de senha para a sua conta.");
-        res.status(200).json({ success: true, message: "Código de recuperação enviado com sucesso." });
+        const codigo = Math.floor(1000 + Math.random() * 9000).toString();
+        const otpHash = bcrypt.hashSync(codigo, 10);
+        const recoveryToken = jwt.sign({ email: email.toLowerCase(), otpHash }, JWT_SECRET, { expiresIn: '15m' });
+
+        await sendCodeEmail(email, user.name, `Recuperação de Senha - Workflow [${codigo}]`, codigo, 'template_6wuyizw');
+        res.status(200).json({ success: true, message: "Código de recuperação enviado com sucesso.", recoveryToken });
     } catch (error) {
         console.error("Erro ao solicitar recuperação:", error);
         res.status(500).json({ error: "Erro ao enviar e-mail de recuperação." });
@@ -248,15 +245,28 @@ export const solicitarRecuperacao = async (req, res) => {
 
 export const resetarSenha = async (req, res) => {
     try {
-        cleanExpiredOTPs();
-        const { username, email, codigo, newPass } = req.body;
-        if (!username || !email || !codigo || !newPass) return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+        const { username, email: rawEmail, codigo, newPass, recoveryToken } = req.body;
+        if (!username || !rawEmail || !codigo || !newPass || !recoveryToken) return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+
+        const email = rawEmail.trim().replace(/\.$/, '');
 
         const passError = validarSenha(newPass);
         if (passError) return res.status(400).json({ error: passError });
 
-        const data = otpStore.get(email.toLowerCase());
-        if (!data || data.codigo !== codigo) return res.status(400).json({ error: "Código inválido ou expirado." });
+        let decoded;
+        try {
+            decoded = jwt.verify(recoveryToken, JWT_SECRET);
+        } catch (err) {
+            return res.status(400).json({ error: "Sessão expirada ou código inválido." });
+        }
+
+        if (decoded.email !== email.toLowerCase()) {
+            return res.status(400).json({ error: "E-mail inválido para esta sessão." });
+        }
+
+        if (!bcrypt.compareSync(codigo, decoded.otpHash)) {
+            return res.status(400).json({ error: "Código inválido." });
+        }
 
         const user = await getUserFromDB(username, null, false, email, null);
         if (!user) {
@@ -265,7 +275,6 @@ export const resetarSenha = async (req, res) => {
 
         await updateUserPasswordInDB(username, newPass);
 
-        otpStore.delete(email.toLowerCase());
         res.status(200).json({ success: true, message: "Senha alterada com sucesso." });
     } catch (error) {
         console.error("Erro ao resetar senha:", error);
@@ -276,9 +285,11 @@ export const resetarSenha = async (req, res) => {
 export const solicitarCadastro = async (req, res) => {
     try {
         cleanExpiredOTPs();
-        const { username, email, nome, storeCode, isManagerSetup, pass, birthDate } = req.body;
+        const { username, email: rawEmail, nome, storeCode, isManagerSetup, pass, birthDate } = req.body;
         console.log("REQ.BODY CADASTRO:", req.body);
-        if (!username || !email || !storeCode || !pass || !birthDate) return res.status(400).json({ error: "Dados incompletos para o cadastro." });
+        if (!username || !rawEmail || !storeCode || !pass || !birthDate) return res.status(400).json({ error: "Dados incompletos para o cadastro." });
+
+        const email = rawEmail.trim().replace(/\.$/, '');
 
         // Validação do Prefixo
         const userUpper = username.toUpperCase();
@@ -324,8 +335,12 @@ export const solicitarCadastro = async (req, res) => {
             return res.status(400).json({ error: "Este nome de usuário já está em uso no sistema." });
         }
 
-        await sendCodeEmail(email, nome, "Código de Confirmação - Workflow", "Seu e-mail corporativo está sendo validado para um novo cadastro.");
-        res.status(200).json({ success: true, message: "Código enviado para o e-mail.", computedStoreId: storeId });
+        const codigo = Math.floor(1000 + Math.random() * 9000).toString();
+        const otpHash = bcrypt.hashSync(codigo, 10);
+        const registrationToken = jwt.sign({ email: email.toLowerCase(), otpHash }, JWT_SECRET, { expiresIn: '15m' });
+
+        await sendCodeEmail(email, nome, `Código de Confirmação - Workflow [${codigo}]`, codigo, 'template_1dn6s55');
+        res.status(200).json({ success: true, message: "Código enviado para o e-mail.", registrationToken, computedStoreId: storeId });
     } catch (error) {
         console.error("Erro ao solicitar cadastro:", error);
         res.status(500).json({ error: "Erro ao enviar e-mail de validação." });
@@ -334,13 +349,26 @@ export const solicitarCadastro = async (req, res) => {
 
 export const efetivarCadastro = async (req, res) => {
     try {
-        cleanExpiredOTPs();
-        const { storeId, username, email, codigo, userData } = req.body;
+        const { storeId, username, email: rawEmail, codigo, userData, registrationToken } = req.body;
         console.log("REQ.BODY EFETIVAR:", req.body);
-        if (!storeId || !username || !email || !codigo || !userData) return res.status(400).json({ error: "Dados incompletos." });
+        if (!storeId || !username || !rawEmail || !codigo || !userData || !registrationToken) return res.status(400).json({ error: "Dados incompletos." });
 
-        const data = otpStore.get(email.toLowerCase());
-        if (!data || data.codigo !== codigo) return res.status(400).json({ error: "Código inválido ou expirado." });
+        const email = rawEmail.trim().replace(/\.$/, '');
+
+        let decoded;
+        try {
+            decoded = jwt.verify(registrationToken, JWT_SECRET);
+        } catch (err) {
+            return res.status(400).json({ error: "Sessão expirada ou código inválido." });
+        }
+
+        if (decoded.email !== email.toLowerCase()) {
+            return res.status(400).json({ error: "E-mail inválido para esta sessão." });
+        }
+
+        if (!bcrypt.compareSync(codigo, decoded.otpHash)) {
+            return res.status(400).json({ error: "Código inválido." });
+        }
 
         const conn = await getOracleConnection();
         try {
@@ -362,7 +390,6 @@ export const efetivarCadastro = async (req, res) => {
             await conn.close();
         }
 
-        otpStore.delete(email.toLowerCase());
         res.status(200).json({ success: true, message: "Cadastro realizado com sucesso." });
     } catch (error) {
         console.error("Erro ao efetivar cadastro:", error);

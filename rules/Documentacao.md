@@ -45,7 +45,7 @@ FRONTEND/
 É o contêiner mestre. Controla o menu lateral, tema Dark/Light, renderização das abas e hospeda a conexão WebSocket e os métodos globais (`handleSetSalesData`, `handleUndo`). Aqui também reside o `Smart Diff`, que garante envios otimizados de dados para o Backend.
 
 ### Login.jsx
-Lida com a autenticação e cadastro de novos usuários. Integra com o **Back-End (MailerSend)** para o fluxo de Login Seguro (2FA) e "Esqueci minha Senha", enviando um código OTP de 6 dígitos com trava anti-spam de 1 minuto.
+Lida com a autenticação e cadastro de novos usuários. Integra com o **Back-End (EmailJS (via REST API))** para o fluxo de Login Seguro (2FA) e "Esqueci minha Senha", enviando um código OTP de 6 dígitos com trava anti-spam de 1 minuto.
 
 ### Venda.jsx
 Formulário de entrada de faturamento. 
@@ -75,3 +75,11 @@ Puxa o dia atual de vendas e confronta com a "Necessidade Diária" baseada na Me
 ### FatorRvv.jsx
 Simulador de contracheque e bússola de performance.
 Dispara os dados das vendas para a API e retorna a provisão financeira baseada nas travas de Elegibilidade (Atingir 80% das 3 metas). Exibe mensagens motivacionais e estratégicas ("Dicas de Foco") caso alguma meta esteja atrasada, guiando o vendedor sobre o que ele precisa focar para alavancar seu resultado.
+
+---
+> **ATUALIZAÇÃO DE ARQUITETURA (SETEMBRO 2026):**
+> - **Autenticação:** O sistema de validação de e-mails via otpStore (memória) foi integralmente substituído por **JWT (JSON Web Token)** assinado.
+> - **Email:** O serviço de envio de e-mails (antigo MailerSend) foi migrado para a **API REST do EmailJS** executada exclusivamente do backend, garantindo segurança contra interceptação.
+> - **Frontend (Responsividade):** Melhorias de rolagem nativa em Modais de sobreposição (Acessos, Campanhas).
+> - **Permissões:** Módulo 'Escala de Trabalho' estritamente restrito a GERENTE, SENIOR, ADMIN e DESENVOLVEDOR.
+---

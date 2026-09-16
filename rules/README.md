@@ -43,3 +43,11 @@ Ele precisa conter:
 
 **Desenvolvido por Matheus Rabelo**
 *Focado na otimização da rotina comercial, gerencial e administrativa de equipes de telecomunicações.*
+
+---
+> **ATUALIZAÇÃO DE ARQUITETURA (SETEMBRO 2026):**
+> - **Autenticação:** O sistema de validação de e-mails via otpStore (memória) foi integralmente substituído por **JWT (JSON Web Token)** assinado.
+> - **Email:** O serviço de envio de e-mails (antigo MailerSend) foi migrado para a **API REST do EmailJS** executada exclusivamente do backend, garantindo segurança contra interceptação.
+> - **Frontend (Responsividade):** Melhorias de rolagem nativa em Modais de sobreposição (Acessos, Campanhas).
+> - **Permissões:** Módulo 'Escala de Trabalho' estritamente restrito a GERENTE, SENIOR, ADMIN e DESENVOLVEDOR.
+---
