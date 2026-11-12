@@ -1,10 +1,251 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock, ArrowLeft, Key, Mail, Calendar, Smartphone, Store, Activity, ShieldCheck, FileText, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { loginAPI, solicitarRecuperacaoAPI, resetarSenhaAPI, solicitarCadastroAPI, efetivarCadastroAPI, fetchStatus } from '../services/api.js';
 import wfLogo from '../assets/logo_WF.png';
 import desktopBg from '../assets/DESKTOP_PAGE.jpeg';
 import mobileBg from '../assets/MOBILE_PAGE.jpg';
+
+/**
+ * 1. COMPONENTE DA LOGO ANIMADA (Escrita e Desescrita Contínua)
+ */
+export const AnimatedWFLogo = ({ className = "w-36 h-24", duration = 6.2, delay = 0 }) => {
+  const uid = useRef(`wf-${Math.random().toString(36).substring(2, 9)}`).current;
+
+  return (
+    <>
+      <style>{`
+        @keyframes wfWriteErase1 {
+          0%, 4% { stroke-dashoffset: 100; opacity: 0; }
+          6% { opacity: 1; }
+          22%, 72% { stroke-dashoffset: 0; opacity: 1; }
+          88%, 100% { stroke-dashoffset: -100; opacity: 0; }
+        }
+        @keyframes wfWriteErase2 {
+          0%, 14% { stroke-dashoffset: 100; opacity: 0; }
+          16% { opacity: 1; }
+          36%, 74% { stroke-dashoffset: 0; opacity: 1; }
+          90%, 100% { stroke-dashoffset: -100; opacity: 0; }
+        }
+        @keyframes wfWriteErase3 {
+          0%, 26% { stroke-dashoffset: 100; opacity: 0; }
+          28% { opacity: 1; }
+          46%, 76% { stroke-dashoffset: 0; opacity: 1; }
+          92%, 100% { stroke-dashoffset: -100; opacity: 0; }
+        }
+        @keyframes wfWriteErase4 {
+          0%, 36% { stroke-dashoffset: 100; opacity: 0; }
+          38% { opacity: 1; }
+          56%, 78% { stroke-dashoffset: 0; opacity: 1; }
+          94%, 100% { stroke-dashoffset: -100; opacity: 0; }
+        }
+        @keyframes wfArrowPop {
+          0%, 50% { opacity: 0; transform: translate(-14px, 10px) scale(0.45); }
+          60%, 78% { opacity: 1; transform: translate(0px, 0px) scale(1); }
+          92%, 100% { opacity: 0; transform: translate(12px, -8px) scale(0.6); }
+        }
+
+        .wf-stroke-1 {
+          stroke-dasharray: 100;
+          animation: wfWriteErase1 var(--cycle, 6.2s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          animation-delay: var(--delay, 0s);
+        }
+        .wf-stroke-2 {
+          stroke-dasharray: 100;
+          animation: wfWriteErase2 var(--cycle, 6.2s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          animation-delay: var(--delay, 0s);
+        }
+        .wf-stroke-3 {
+          stroke-dasharray: 100;
+          animation: wfWriteErase3 var(--cycle, 6.2s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          animation-delay: var(--delay, 0s);
+        }
+        .wf-stroke-4 {
+          stroke-dasharray: 100;
+          animation: wfWriteErase4 var(--cycle, 6.2s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          animation-delay: var(--delay, 0s);
+        }
+        .wf-arrowhead {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: wfArrowPop var(--cycle, 6.2s) cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+          animation-delay: var(--delay, 0s);
+        }
+      `}</style>
+
+      <svg
+        viewBox="0 0 520 320"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+        style={{ '--cycle': `${duration}s`, '--delay': `${delay}s` }}
+      >
+        <defs>
+          <linearGradient id={`${uid}-leftGrad`} x1="90" y1="60" x2="225" y2="265" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FF9E00" />
+            <stop offset="55%" stopColor="#FF7700" />
+            <stop offset="100%" stopColor="#E04800" />
+          </linearGradient>
+
+          <linearGradient id={`${uid}-loopGrad`} x1="165" y1="265" x2="310" y2="65" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FF7B00" />
+            <stop offset="50%" stopColor="#FF4D00" />
+            <stop offset="100%" stopColor="#E61E14" />
+          </linearGradient>
+
+          <linearGradient id={`${uid}-rightUGrad`} x1="275" y1="175" x2="395" y2="265" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#D9230F" />
+            <stop offset="50%" stopColor="#E61919" />
+            <stop offset="100%" stopColor="#DF1522" />
+          </linearGradient>
+
+          <linearGradient id={`${uid}-arrowRibbonTop`} x1="272" y1="185" x2="435" y2="75" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FF6D00" />
+            <stop offset="45%" stopColor="#F52814" />
+            <stop offset="100%" stopColor="#E3121E" />
+          </linearGradient>
+
+          <linearGradient id={`${uid}-arrowRibbonFold`} x1="315" y1="185" x2="445" y2="95" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#D8220E" />
+            <stop offset="100%" stopColor="#B80818" />
+          </linearGradient>
+
+          <mask id={`${uid}-weaveMask`}>
+            <rect x="0" y="0" width="520" height="320" fill="white" />
+            <path d="M 162 222 L 245 72" stroke="black" strokeWidth="38" strokeLinecap="round" />
+            <path d="M 162 200 C 154 228, 158 258, 178 274" stroke="black" strokeWidth="36" strokeLinecap="round" />
+          </mask>
+        </defs>
+
+        <g mask={`url(#${uid}-weaveMask)`}>
+          <path d="M 162 248 L 106 135 C 88 96, 142 66, 164 108 L 222 220" stroke={`url(#${uid}-leftGrad)`} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-1" />
+        </g>
+
+        <path d="M 278 182 L 306 234 C 322 263, 358 263, 374 234 L 402 178" stroke={`url(#${uid}-rightUGrad)`} strokeWidth="25" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-3" />
+
+        <path d="M 232 98 C 250 64, 304 92, 286 126 L 228 234 C 210 268, 156 240, 174 206 Z" stroke={`url(#${uid}-loopGrad)`} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-2" />
+
+        <path d="M 278 168 C 292 198, 326 196, 342 162 C 360 124, 386 102, 418 98" stroke={`url(#${uid}-arrowRibbonFold)`} strokeWidth="22" strokeLinecap="round" pathLength="100" className="wf-stroke-4" />
+        <path d="M 275 162 C 290 192, 322 190, 338 154 C 356 114, 382 88, 416 84" stroke={`url(#${uid}-arrowRibbonTop)`} strokeWidth="18" strokeLinecap="round" pathLength="100" className="wf-stroke-4" />
+
+        <g className="wf-arrowhead">
+          <path d="M 388 42 L 464 78 L 404 96 L 388 42 Z" fill="#E51520" />
+          <path d="M 404 96 L 464 78 L 402 142 L 404 96 Z" fill="#C50B18" />
+        </g>
+      </svg>
+    </>
+  );
+};
+
+/**
+ * 2. COMPONENTE DE BACKGROUND (Fundo Preto Puro + Canvas de Partículas e Ondas Reativas)
+ */
+export const AnimatedBackground = ({ children }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const mouse = { x: width / 2, y: height / 2, targetX: width / 2, targetY: height / 2 };
+    const handleMouseMove = (e) => {
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const particles = Array.from({ length: 45 }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: Math.random() * 2.5 + 0.8,
+      vx: (Math.random() - 0.3) * 0.35,
+      vy: -(Math.random() * 0.45 + 0.15),
+      alpha: Math.random() * 0.6 + 0.2,
+      hue: Math.random() > 0.4 ? '#FF7A00' : '#E51520',
+    }));
+
+    let time = 0;
+    const render = () => {
+      time += 0.008;
+      mouse.x += (mouse.targetX - mouse.x) * 0.06;
+      mouse.y += (mouse.targetY - mouse.y) * 0.06;
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 480);
+      spotGrad.addColorStop(0, 'rgba(255, 110, 0, 0.13)');
+      spotGrad.addColorStop(0.5, 'rgba(229, 21, 32, 0.06)');
+      spotGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = spotGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        const yOffset = height * (0.25 + i * 0.25);
+        ctx.moveTo(0, yOffset);
+        for (let x = 0; x <= width; x += 40) {
+          const y =
+            yOffset +
+            Math.sin(x * 0.0025 + time + i * 1.5) * 50 +
+            Math.cos(x * 0.0012 - time * 0.7) * 30;
+          ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = i === 1 ? 'rgba(229, 21, 32, 0.14)' : 'rgba(255, 136, 0, 0.12)';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
+
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.y < -10) p.y = height + 10;
+        if (p.x > width + 10) p.x = -10;
+        if (p.x < -10) p.x = width + 10;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.hue;
+        ctx.globalAlpha = p.alpha * (0.6 + Math.sin(time * 2 + p.x) * 0.4);
+        ctx.shadowColor = p.hue;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  return (
+    <div className="relative min-h-screen w-full bg-[#000000] text-slate-100 flex flex-col items-center justify-center p-4 overflow-hidden">
+      <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-0" />
+      <div className="relative z-10 w-full flex flex-col items-center justify-center">
+        {children}
+      </div>
+    </div>
+  );
+};
 
 export function Login({ usersDB, setUsersDB, onLogin }) {
     const [view, setView] = useState('LOGIN'); // 'LOGIN', 'REGISTER', 'FORGOT'
@@ -220,14 +461,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
     };
 
     return (
-        <div
-            className="min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-500 relative bg-no-repeat bg-center"
-            style={{
-                backgroundImage: `url(${isMobile ? mobileBg : desktopBg})`,
-                backgroundSize: '100% 100%',
-                backgroundColor: '#111'
-            }}
-        >
+        <AnimatedBackground>
 
             {holidayMessage && (
                 <div className="w-full max-w-md mb-6 bg-gradient-to-br from-[#E3000F] to-red-800 text-white p-6 rounded-2xl shadow-xl border border-red-500/50 animate-fade-in text-center relative overflow-hidden z-10">
@@ -247,7 +481,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             <div className="bg-white dark:bg-neutral-900 w-full max-w-md rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden transition-colors duration-500 relative z-10">
                 <div className="bg-black py-4 px-6 text-center relative overflow-hidden">
                     <div className="w-52 h-20 mx-auto mb-1 flex items-center justify-center">
-                        <img src={wfLogo} alt="WorkFlow Logo" className="w-full h-full object-contain" />
+                        <AnimatedWFLogo className="w-full h-full object-contain" />
                     </div>
                     <h2 className="text-2xl font-extrabold text-white tracking-wide">WorkFlow</h2>
                     <p className="text-neutral-400 text-xs mt-0.5 font-medium">Plataforma Integrada de Gestão Telecom</p>
@@ -530,6 +764,6 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                     </div>
                 </div>
             )}
-        </div>
+        </AnimatedBackground>
     );
 } 
