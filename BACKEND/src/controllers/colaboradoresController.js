@@ -43,7 +43,10 @@ export const getColaboradoresDashboard = async (req, res) => {
 
         const usersResult = await conn.execute(`SELECT * FROM USUARIOS WHERE STORE_ID = :storeId OR STORE_ID = 'DEFAULT'`, { storeId });
         let usersDB = {};
+        let sellerProfilesMap = {};
+        const profilesDB = configData.profilesDB || {};
         for (let row of usersResult.rows) {
+            const prof = profilesDB[row.USERNAME] || profilesDB[String(row.USERNAME || '').toUpperCase()] || {};
             usersDB[row.USERNAME] = {
                 username: row.USERNAME,
                 name: row.NAME,
@@ -53,13 +56,47 @@ export const getColaboradoresDashboard = async (req, res) => {
                 email: row.EMAIL,
                 birthDate: row.BIRTH_DATE,
                 vacationStart: row.VACATION_START,
-                vacationEnd: row.VACATION_END
+                vacationEnd: row.VACATION_END,
+                photoUrl: prof.photoUrl || ''
             };
+            if (row.NAME) {
+                sellerProfilesMap[String(row.NAME).trim()] = {
+                    username: row.USERNAME,
+                    photoUrl: prof.photoUrl || '',
+                    featuredIndicator: prof.featuredIndicator || ''
+                };
+            }
         }
+        Object.values(profilesDB).forEach(prof => {
+            if (prof && prof.name && prof.photoUrl) {
+                sellerProfilesMap[String(prof.name).trim()] = {
+                    username: prof.username || '',
+                    photoUrl: prof.photoUrl,
+                    featuredIndicator: prof.featuredIndicator || ''
+                };
+            }
+        });
         const activeMetas = goalsDB[isoMonth] || METAS_PADRAO;
 
         // 2. Fetch Sales
-        const sales = await queryTable('VENDAS', storeId, startStr, endStr);
+        const nameAliasMap = {};
+        for (const u of Object.values(usersDB)) {
+            const prof = profilesDB[u.username] || profilesDB[String(u.username || '').toUpperCase()] || {};
+            if (Array.isArray(prof.previousNames) && u.name) {
+                prof.previousNames.forEach(oldN => {
+                    if (oldN) nameAliasMap[String(oldN).trim().toUpperCase()] = u.name;
+                });
+            }
+        }
+
+        const rawSales = await queryTable('VENDAS', storeId, startStr, endStr);
+        const sales = (rawSales || []).map(s => {
+            const vUpper = String(s?.vendedor || '').trim().toUpperCase();
+            if (vUpper && nameAliasMap[vUpper]) {
+                return { ...s, vendedor: nameAliasMap[vUpper] };
+            }
+            return s;
+        });
 
         // 3. Identificar vendedores ativos e históricos
         const activeVendedores = Object.values(usersDB)
@@ -111,7 +148,8 @@ export const getColaboradoresDashboard = async (req, res) => {
                 totalReceita: 0, volControle: 0, volPosPago: 0, volPosTotal: 0, 
                 volFibra: 0, volTv: 0, volUrTotal: 0, volAparelho: 0, volAcessorio: 0, 
                 volPelicula: 0, volSeguro: 0, volMesh: 0, volTrocafy: 0, volMPlay: 0, 
-                receitaAparelho: 0, receitaAcessorio: 0
+                receitaAparelho: 0, receitaAcessorio: 0,
+                volMigracao: 0, volAtivacao: 0, volPortabilidade: 0
             };
             sellerDailyData[seller] = {
                 sales: []
@@ -160,8 +198,25 @@ export const getColaboradoresDashboard = async (req, res) => {
 
                 metrics.totalReceita += Number(sale.comissao !== undefined ? sale.comissao : sale.receita) || 0;
                 const p = String(sale.produto || '').toUpperCase();
+                const pBase = String(sale.produtoBase || sale.produto || '').toUpperCase();
+                const op = String(sale.tipoOperacao || sale.operacao || '').toUpperCase();
+                const sub = String(sale.subOption || sale.subtipo || '').toUpperCase();
+                const port = String(sale.portabilidade || '').toUpperCase();
                 const qtda = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
                 const rec = Number(sale.receita) || 0;
+
+                const isMovelLine = p.includes('POS') || p.includes('PÓS') || p.includes('CONTROLE') || p.includes('DEPENDENTE') || p.includes('BANDA LARGA') || p.includes('FLEX') || pBase.includes('PME');
+                const isMigra = op.includes('MIGRA') || pBase.includes('MIGRA') || sub.includes('MIGRA');
+                const isPort = port === 'SIM' || op.includes('PORT');
+
+                // Regra de Operações: Ativação não deve entrar Portabilidade, somente ativação pura
+                if (isPort) {
+                    metrics.volPortabilidade += qtda;
+                } else if (isMigra) {
+                    metrics.volMigracao += qtda;
+                } else if (op.includes('ATIVA') || isMovelLine) {
+                    metrics.volAtivacao += qtda;
+                }
 
                 if (p.includes('CONTROLE') || p.includes('FLEX')) metrics.volControle += qtda;
                 if (p.includes('POS') || p.includes('DEPENDENTE') || p.includes('BANDA LARGA')) metrics.volPosPago += qtda;
@@ -292,7 +347,8 @@ export const getColaboradoresDashboard = async (req, res) => {
             individualMetas,
             sellerMetricsMap,
             rankings,
-            sellerDailyData
+            sellerDailyData,
+            sellerProfilesMap
         });
 
     } catch (error) {

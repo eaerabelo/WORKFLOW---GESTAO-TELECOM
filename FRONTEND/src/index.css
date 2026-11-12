@@ -2,6 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   PLACEHOLDERS SUAVES E QUASE IMPERCEPTÍVEIS EM TODAS AS SEÇÕES
+   ========================================================================== */
+input::placeholder,
+textarea::placeholder {
+  color: rgba(163, 163, 163, 0.28) !important;
+  font-weight: 400 !important;
+  opacity: 1 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgba(115, 115, 115, 0.25) !important;
+  font-weight: 400 !important;
+  opacity: 1 !important;
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE MOBILE CALIBRADA (SAMSUNG S25, S25 PLUS & S25 ULTRA)
+   - S25: ~360px | S25+: ~384px-412px | S25 Ultra: ~412px-440px
+   - Reduz proporcionalmente textos, espaçamentos, cards, tabelas e ícones
+   ========================================================================== */
+@media screen and (max-width: 640px) {
+  html,
+  body {
+    font-size: 13px;
+    -webkit-text-size-adjust: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Reduz todos os ícones Lucide no celular para eliminar poluição visual */
+  svg.lucide {
+    transform: scale(0.8);
+    transform-origin: center;
+    flex-shrink: 0;
+  }
+
+  /* Oculta ou reduz marcas d'água e ícones decorativos gigantes no mobile */
+  svg.lucide[width="150"],
+  svg.lucide[width="120"],
+  svg.lucide[width="100"],
+  svg.lucide[width="80"] {
+    width: 44px !important;
+    height: 44px !important;
+    opacity: 0.05 !important;
+  }
+
+  svg.lucide[width="64"],
+  svg.lucide[width="48"],
+  svg.lucide[width="40"],
+  svg.lucide[width="36"],
+  svg.lucide[width="32"] {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  svg.lucide[width="28"],
+  svg.lucide[width="24"],
+  svg.lucide[width="22"],
+  svg.lucide[width="20"] {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* Tabelas mais enxutas e legíveis em telas verticais sem quebrar paddings customizados */
+  table th,
+  table td {
+    padding: 0.35rem 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  /* Botões, inputs e selects mais compactos no celular */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 0.8rem !important;
+  }
+}
+
+@media screen and (max-width: 385px) {
+  /* Ajuste fino adicional para Samsung S25 base (360px) */
+  html {
+    font-size: 12.25px;
+  }
+}
+
 /* Regras customizadas que usamos no final do App.jsx */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -44,8 +132,6 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:horizontal:hover {
   background-color: rgba(227, 0, 15, 0.8);
 }
-
-
 
 @media print {
   body * {

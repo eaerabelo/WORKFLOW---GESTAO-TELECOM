@@ -3,7 +3,7 @@ import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { Plus, MonitorPlay, AlertCircle, X, Check, Lock, Briefcase, Trash2, Edit3, Calendar, Search, Upload, FileDown, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
-import { PRODUTOS_CONTRATO_OBRIGATORIO, PRODUTOS } from '../utils/constants';
+import { PRODUTOS_CONTRATO_OBRIGATORIO, PRODUTOS, DEFAULT_SEGURO_OPTIONS, DEFAULT_DEPENDENTE_OPTIONS } from '../utils/constants';
 import { usePricing } from '../context/PricingContext';
 import { applyCpfCnpjMask, applyContratoMask, applyCurrencyMask, parseCurrencyToFloat, getTodaySP } from '../utils/masks';
 import { parseExcelSales } from '../utils/excelImporter';
@@ -14,6 +14,8 @@ const safeProdutos = Array.isArray(PRODUTOS) ? PRODUTOS : [];
 export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB = {}, globalMonth }) => {
     const { pricingData } = usePricing();
     const { PRICING_MOVEL = {}, FIBRA_OPTIONS = [], TV_BOX_OPTIONS = [], FIXO_OPTIONS = [], MESH_OPTIONS = [], DEPENDENTE_OPTIONS = [], SEGURO_OPTIONS = [] } = pricingData || {};
+    const safeSeguroOptions = (Array.isArray(SEGURO_OPTIONS) && SEGURO_OPTIONS.length > 0) ? SEGURO_OPTIONS : DEFAULT_SEGURO_OPTIONS;
+    const safeDependenteOptions = (Array.isArray(DEPENDENTE_OPTIONS) && DEPENDENTE_OPTIONS.length > 0) ? DEPENDENTE_OPTIONS : DEFAULT_DEPENDENTE_OPTIONS;
 
     const activeVendedores = Object.values(usersDB || {})
         .filter(u => !u?.role || u?.role === 'VENDEDOR')
@@ -94,10 +96,16 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         if (produto === 'TV-BOX' && subOption) return TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.[combo] || TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.['SINGLE'] || TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
         if (produto === 'FIXO' && subOption) return FIXO_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
         if (produto === 'MESH' && subOption) return MESH_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
-        if (produto === 'SEGURO' && subOption) return SEGURO_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
+        if (produto === 'SEGURO' && subOption) {
+            const found = safeSeguroOptions.find(o => o.label === subOption);
+            if (found?.prices?.UNICO !== undefined) return found.prices.UNICO;
+            const match = String(subOption).match(/R\$\s*([\d,.]+)/);
+            if (match) return parseFloat(match[1].replace(',', '.'));
+            return 0;
+        }
         if (produto === 'DEPENDENTE' && subOption) {
             if (subOption === 'DEPENDENTE ANTIGO') return 50.00;
-            return DEPENDENTE_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
+            return safeDependenteOptions.find(o => o.label === subOption)?.prices?.UNICO || 0;
         }
         return null;
     };
@@ -113,10 +121,10 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         if (formData.produto === 'TV-BOX') return TV_BOX_OPTIONS;
         if (formData.produto === 'FIXO') return FIXO_OPTIONS;
         if (formData.produto === 'MESH') return MESH_OPTIONS;
-        if (formData.produto === 'SEGURO') return SEGURO_OPTIONS;
+        if (formData.produto === 'SEGURO') return safeSeguroOptions;
         if (formData.produto === 'DEPENDENTE') {
-            const extended = [...(DEPENDENTE_OPTIONS || [])];
-            if (!extended.some(o => o.label === 'DEPENDENTE ANTIGO')) extended.push({ label: 'DEPENDENTE ANTIGO' });
+            const extended = [...(safeDependenteOptions || [])];
+            if (!extended.some(o => o.label === 'DEPENDENTE ANTIGO')) extended.push({ label: 'DEPENDENTE ANTIGO', prices: { UNICO: 50.00 } });
             return extended;
         }
         return [];
@@ -230,7 +238,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         const finalOperadoraOrigem = (isMovel && finalPortabilidade === 'SIM' && tipoOperacao === 'ATIVAÇÃO') ? formData.operadoraOrigem : '';
         const finalMplay = showMplay ? mplay : 'NÃO';
 
-        if (!vendedor || !data || !qtda || !produto || receita === '' || !cpf || (isMovel && !finalPortabilidade) || (showMplay && !mplay)) { setFormError('Atenção: Você precisa preencher todas as informações obrigatórias para incluir a venda.'); return; }
+        if (!vendedor || !data || !qtda || !produto || receita === '' || (isMovel && !finalPortabilidade) || (showMplay && !mplay)) { setFormError('Atenção: Você precisa preencher todas as informações obrigatórias para incluir a venda.'); return; }
         if (isMovel && finalPortabilidade === 'SIM' && tipoOperacao === 'ATIVAÇÃO' && !formData.operadoraOrigem) { setFormError('Atenção: Selecione a operadora de origem da portabilidade.'); return; }
         if (getSubOptions().length > 0 && !subOption) { setFormError('Atenção: Selecione a especificação (Plano/Velocidade) do produto.'); return; }
         if (isServico && !tipoOperacao) { setFormError('Atenção: Selecione o Tipo de Operação (Ativação, Upgrade, etc).'); return; }
@@ -262,6 +270,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             receita: valorParaGravar,
             comissao: valorComissao,
             valorBruto: receitaFloat,
+            cpf: '',
             contrato: requiresContrato ? contrato : '-',
             portabilidade: finalPortabilidade,
             operadoraOrigem: finalOperadoraOrigem,
@@ -345,7 +354,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
 
     const handleSubmitCombo = () => {
         if (comboItems.length === 0) { setFormError('Adicione pelo menos um produto ao combo.'); return; }
-        if (!comboGlobal.cpf) { setFormError('O CPF / CNPJ do titular é obrigatório para o combo.'); return; }
+        // CPF / CNPJ do titular agora é opcional no combo
 
         const hasResidential = comboItems.some(i => (PRODUTOS_CONTRATO_OBRIGATORIO || []).includes(i.produtoBase || i.produto));
         if (hasResidential && !comboGlobal.contrato) { setFormError('O Contrato é obrigatório, pois há produtos residenciais adicionados no combo.'); return; }
@@ -383,7 +392,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             novasVendas.push({
                 id: currentId++, vendedor: item.vendedor, data: convertToBRDate(item.data), qtda: item.qtda, portabilidade: item.portabilidade, operadoraOrigem: item.operadoraOrigem, combo: item.combo,
                 produtoBase: item.produtoBase || item.produto, subOption: item.subOption, produto: item.subOption ? `${item.produtoBase || item.produto} (${item.subOption})` : (item.produtoBase || item.produto),
-                receita: valorComissao, comissao: valorComissao, valorBruto: receitaFloat, cpf: comboGlobal.cpf, contrato: isItemResidential ? comboGlobal.contrato : '-',
+                receita: valorComissao, comissao: valorComissao, valorBruto: receitaFloat, cpf: '', contrato: isItemResidential ? comboGlobal.contrato : '-',
                 mplay: item.mplay, adicionais: cleanedAdicionais, tipoOperacao: item.tipoOperacao, seguroOption: item.seguroOption || '',
                 ...(cidadeAuto && isItemResidential ? { cidade: cidadeAuto } : {})
             });
@@ -392,7 +401,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                 const precoSeguro = calculatePrice('SEGURO', 'SINGLE', item.seguroOption) || 0;
                 novasVendas.unshift({
                     id: currentId++, vendedor: item.vendedor, data: convertToBRDate(item.data), qtda: 1, portabilidade: 'NÃO', operadoraOrigem: '', combo: 'SINGLE', produtoBase: 'SEGURO',
-                    subOption: item.seguroOption, produto: `SEGURO (${item.seguroOption})`, receita: precoSeguro, comissao: precoSeguro, valorBruto: precoSeguro, cpf: comboGlobal.cpf,
+                    subOption: item.seguroOption, produto: `SEGURO (${item.seguroOption})`, receita: precoSeguro, comissao: precoSeguro, valorBruto: precoSeguro, cpf: '',
                     contrato: '-', mplay: 'NÃO', adicionais: [], tipoOperacao: ''
                 });
             }
@@ -480,7 +489,6 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             'Operadora Origem': sale.operadoraOrigem || '-',
             'Operação': sale.tipoOperacao || '-',
             'Receita (R$)': sale.receita,
-            'CPF/CNPJ': sale.cpf,
             'Contrato': sale.contrato,
             'M-Play': sale.mplay,
             'Adicionais': Array.isArray(sale.adicionais) ? sale.adicionais.join(', ') : ''
@@ -504,7 +512,6 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             'Portabilidade': 'NÃO',
             'Operadora Origem': '-',
             'Receita (R$)': 124.90,
-            'CPF/CNPJ': '000.000.000-00',
             'Contrato': 'Opcional',
             'M-Play': 'NÃO',
             'Adicionais': 'SEGURO, TROCAFY',
@@ -555,7 +562,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={16} />
                                 <input
                                     type="text"
-                                    placeholder="Buscar Vendedor, Produto, CPF/CNPJ, Operadora..."
+                                    placeholder="Buscar Vendedor, Produto, Contrato, Operadora..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full sm:w-56 pl-9 pr-4 py-1.5 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 rounded-lg text-sm outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] transition-all"
@@ -602,7 +609,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                 <div className="overflow-auto flex-1">
                     <table className="w-full text-sm text-left whitespace-nowrap">
                         <thead className="text-xs text-neutral-500 dark:text-neutral-400 uppercase bg-neutral-50/80 dark:bg-neutral-800/80 sticky top-0 border-b border-neutral-200 dark:border-neutral-800 z-10">
-                            <tr><th className="px-6 py-4 font-medium tracking-wider">Vendedor</th><th className="px-6 py-4 font-medium tracking-wider">Data</th><th className="px-6 py-4 font-medium tracking-wider">Produto</th><th className="px-6 py-4 font-medium tracking-wider">Tipo</th><th className="px-6 py-4 font-medium tracking-wider text-center">Qtda</th><th className="px-6 py-4 font-medium tracking-wider">Portabilidade</th><th className="px-6 py-4 font-medium tracking-wider text-center">Operação</th><th className="px-6 py-4 font-medium tracking-wider">Receita (R$)</th><th className="px-6 py-4 font-medium tracking-wider">CPF/CNPJ</th><th className="px-6 py-4 font-medium tracking-wider">Contrato</th><th className="px-6 py-4 font-medium tracking-wider">M-Play</th><th className="px-6 py-4 font-medium tracking-wider text-center">Adicional</th><th className="px-6 py-4 font-medium tracking-wider text-center">Ações</th></tr>
+                            <tr><th className="px-6 py-4 font-medium tracking-wider">Vendedor</th><th className="px-6 py-4 font-medium tracking-wider">Data</th><th className="px-6 py-4 font-medium tracking-wider">Produto</th><th className="px-6 py-4 font-medium tracking-wider">Tipo</th><th className="px-6 py-4 font-medium tracking-wider text-center">Qtda</th><th className="px-6 py-4 font-medium tracking-wider">Portabilidade</th><th className="px-6 py-4 font-medium tracking-wider text-center">Operação</th><th className="px-6 py-4 font-medium tracking-wider">Receita (R$)</th><th className="px-6 py-4 font-medium tracking-wider">Contrato</th><th className="px-6 py-4 font-medium tracking-wider">M-Play</th><th className="px-6 py-4 font-medium tracking-wider text-center">Adicional</th><th className="px-6 py-4 font-medium tracking-wider text-center">Ações</th></tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                             {filteredSales.map((sale, index) => (
@@ -624,7 +631,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                     </td>
                                     <td className="px-6 py-3 text-center"><span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${sale.tipoOperacao === 'ATIVAÇÃO' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : sale.tipoOperacao === 'MIGRAÇÃO' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' : 'text-neutral-400'}`}>{sale.tipoOperacao || '-'}</span></td>
                                     <td className="px-6 py-3 font-medium text-neutral-800 dark:text-neutral-200">{applyCurrencyMask(sale.receita)}</td>
-                                    <td className="px-6 py-3 text-neutral-500 dark:text-neutral-400 font-mono text-xs">{sale.cpf}</td><td className="px-6 py-3 text-neutral-500 dark:text-neutral-400 font-mono text-xs">{sale.contrato}</td>
+                                    <td className="px-6 py-3 text-neutral-500 dark:text-neutral-400 font-mono text-xs">{sale.contrato}</td>
                                     <td className="px-6 py-3"><span className={`flex items-center gap-1.5 text-xs font-medium ${sale.mplay === 'SIM' ? 'text-[#E3000F]' : 'text-neutral-400 dark:text-neutral-500'}`}>{sale.mplay === 'SIM' ? <MonitorPlay size={14} /> : <div className="w-3.5 h-3.5 rounded-full border border-neutral-300 dark:border-neutral-600"></div>}{sale.mplay}</span></td>
                                     <td className="px-6 py-3 text-center">{Array.isArray(sale.adicionais) && sale.adicionais.length > 0 ? (<div className="flex justify-center gap-1.5 flex-wrap">{sale.adicionais.map(ad => (<span key={ad} className="bg-[#E3000F]/10 text-[#E3000F] px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">{ad}</span>))}</div>) : <span className="text-neutral-300 text-xs">-</span>}</td>
                                     <td className="px-6 py-3 text-center">
@@ -708,11 +715,11 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                 <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Seguro do Aparelho</label>
                                                 <select name="seguroOption" value={formData.seguroOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium text-blue-600 dark:text-blue-400">
                                                     <option className="bg-white dark:bg-neutral-900 text-neutral-500" value="">Sem Seguro</option>
-                                                    {SEGURO_OPTIONS.map(o => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={o.label} value={o.label}>{o.label}</option>)}
+                                                    {safeSeguroOptions.map(o => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={o.label} value={o.label}>{o.label}</option>)}
                                                 </select>
                                             </div>
                                         )}
-                                        <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">CPF / CNPJ <span className="text-[#E3000F]">*</span></label><input type="text" name="cpf" value={formData.cpf} onChange={handleFormChange} placeholder="000.000.000-00" className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono" /></div>
+                                        {/* Campo CPF removido (LGPD - não armazena mais dado pessoal na venda) */}
                                         <div className="space-y-1.5 relative"><label className={`text-xs font-bold uppercase tracking-wider flex justify-between ${requiresContrato ? 'text-neutral-500 dark:text-neutral-400' : 'text-neutral-400 dark:text-neutral-500'}`}><span>Contrato {requiresContrato && <span className="text-[#E3000F]">*</span>}</span>{!requiresContrato && <Lock size={12} />}</label><input type="text" name="contrato" value={formData.contrato} onChange={handleFormChange} placeholder={requiresContrato ? "Ex: 000/000000000" : "Não aplicável"} disabled={!requiresContrato} className={`w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border ${requiresContrato ? 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100' : 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-400 dark:text-neutral-500 cursor-not-allowed'}`} /></div>
                                         {showMplay && (<div className="space-y-1.5 animate-fade-in"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">M-Play <span className="text-[#E3000F]">*</span></label><select name="mplay" value={formData.mplay} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option><option className="bg-white dark:bg-neutral-900" value="SIM">SIM</option><option className="bg-white dark:bg-neutral-900" value="NÃO">NÃO</option></select></div>)}
                                     </div>
@@ -763,7 +770,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                         <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Seguro do Aparelho</label>
                                                         <select name="seguroOption" value={formData.seguroOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium text-blue-600 dark:text-blue-400">
                                                             <option className="bg-white dark:bg-neutral-900 text-neutral-500" value="">Sem Seguro</option>
-                                                            {SEGURO_OPTIONS.map(o => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={o.label} value={o.label}>{o.label}</option>)}
+                                                            {safeSeguroOptions.map(o => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={o.label} value={o.label}>{o.label}</option>)}
                                                         </select>
                                                     </div>
                                                 )}
@@ -800,7 +807,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                         </div>
 
                                         <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-700 shrink-0">
-                                            <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">CPF / CNPJ do Titular <span className="text-[#E3000F]">*</span></label><input type="text" value={comboGlobal.cpf} onChange={e => setComboGlobal({ ...comboGlobal, cpf: applyCpfCnpjMask(e.target.value) })} placeholder="000.000.000-00" className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 px-3 py-2.5 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] text-sm font-mono text-neutral-800 dark:text-neutral-100" /></div>
+                                            {/* Campo CPF do Titular removido (LGPD - não armazena mais dado pessoal na venda) */}
                                             
                                             {(() => {
                                                 const hasResidential = comboItems.some(i => (PRODUTOS_CONTRATO_OBRIGATORIO || []).includes(i.produtoBase || i.produto));

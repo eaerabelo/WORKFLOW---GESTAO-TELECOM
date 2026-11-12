@@ -18,6 +18,8 @@ import authRoutes from './src/routes/authRoutes.js';
 import updatesRoutes from './src/routes/updatesRoutes.js';
 import sistemasRoutes from './src/routes/sistemasRoutes.js';
 import colaboradoresRoutes from './src/routes/colaboradoresRoutes.js';
+import profileRoutes from './src/controllers/profile.js';
+import helpRoutes from './src/controllers/help.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { requireAuth } from './src/middlewares/authMiddleware.js';
@@ -194,6 +196,8 @@ app.use('/api/area-lojas', requireAuth, areaLojasRoutes);
 app.use('/api/updates', updatesRoutes); // Rotas de atualizacoes (A autenticacao ja esta na rota se necessario)
 app.use('/api/sistemas', sistemasRoutes);
 app.use('/api/colaboradores', requireAuth, colaboradoresRoutes);
+app.use('/api/profile', requireAuth, profileRoutes);
+app.use('/api/help', requireAuth, helpRoutes);
 
 // Middleware de tratamento de erros SEMPRE por último nas rotas!
 app.use(errorHandler);

@@ -82,7 +82,9 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             const realStoreId = result.user.storeId || 'DEFAULT';
 
             // Salva o JWT Token e a Loja
-            // localStorage.setItem('jwt_token', result.token); // Obsoleto, token agora é HttpOnly Cookie
+            if (result.token) {
+                localStorage.setItem('jwt_token', result.token);
+            }
             localStorage.setItem('storeId', realStoreId);
             
             // Salva o sessionUser para o App.jsx
@@ -312,7 +314,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                             {regStep === 2 && (
                                 <form onSubmit={handleRegisterCodeVerify} className="space-y-4">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <button type="button" onClick={() => { setRegStep(1); setRegCurrentCode(''); setRegExpectedCode(''); setTempRegData(null); }} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 transition-colors">
+                                        <button type="button" onClick={() => { setRegStep(1); setRegCurrentCode(''); setTempRegData(null); }} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 transition-colors">
                                             <ArrowLeft size={18} />
                                         </button>
                                         <h3 className="font-bold text-lg text-neutral-800 dark:text-neutral-100">Confirmar E-mail Corporativo</h3>

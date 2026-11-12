@@ -6,10 +6,15 @@
 // Utilizando variável de ambiente para não quebrar em produção!
 export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
 
-export const getAuthToken = () => null; // Obsoleto. O navegador envia o Cookie automaticamente.
+export const getAuthToken = () => localStorage.getItem('jwt_token');
 
 export const authFetch = async (url, options = {}) => {
-    return fetch(url, { ...options, credentials: 'include' });
+    const token = getAuthToken();
+    const headers = { ...(options.headers || {}) };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return fetch(url, { ...options, headers, credentials: 'include' });
 };
 
 // Helper para padronizar erros
@@ -247,6 +252,50 @@ export const syncCollectionDynamic = async (endpoint, upserts, deletes) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ upserts, deletes })
+    });
+    return handleResponse(res);
+};
+
+
+// ============================================================================
+// PERFIL (profile.js) E AJUDA / ARGUMENTAÇÕES (help.js)
+// ============================================================================
+export const fetchProfileAPI = async (username) => {
+    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const res = await authFetch(`${API_URL}/api/profile?username=${encodeURIComponent(username || '')}&storeId=${encodeURIComponent(storeId)}`);
+    return handleResponse(res);
+};
+
+export const saveProfileAPI = async (username, profile) => {
+    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const res = await authFetch(`${API_URL}/api/profile/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, storeId, profile })
+    });
+    return handleResponse(res);
+};
+
+export const fetchHelpAPI = async () => {
+    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const res = await authFetch(`${API_URL}/api/help?storeId=${encodeURIComponent(storeId)}`);
+    return handleResponse(res);
+};
+
+export const createArgumentacaoAPI = async (payload) => {
+    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const res = await authFetch(`${API_URL}/api/help/argumentacao`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, storeId })
+    });
+    return handleResponse(res);
+};
+
+export const deleteArgumentacaoAPI = async (id) => {
+    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const res = await authFetch(`${API_URL}/api/help/argumentacao/${encodeURIComponent(id)}?storeId=${encodeURIComponent(storeId)}`, {
+        method: 'DELETE'
     });
     return handleResponse(res);
 };

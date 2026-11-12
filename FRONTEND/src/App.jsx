@@ -6,7 +6,7 @@ import {
   Menu, X, Search, ChevronRight, UserPlus,
   Users, BarChart3, FileText, Database, Home,
   Target, AlertOctagon, Phone, CreditCard, Briefcase, AlertCircle, Check, Lock,
-  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap, AlertTriangle, WifiOff, Map as MapIcon, Loader2, Activity
+  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap, AlertTriangle, WifiOff, Map as MapIcon, Loader2, Activity, HelpCircle, User
 } from 'lucide-react';
 
 // Importação de biblioteca de Toasts para feedback visual de ações em tela
@@ -48,6 +48,8 @@ import { Campanha, checkHasNewCampanha } from './components/Campanha.jsx';
 import { Tutorial } from './components/Tutorial.jsx';
 import { Atualizacoes } from './components/Atualizacoes.jsx';
 import { AreaLojas } from './components/AreaLojas.jsx';
+import { Profile } from './components/profile.jsx';
+import { Help } from './components/help.jsx';
 import wfLogo from './assets/logo_WF.png';
 import qrWifiImg from "./assets/QR_CODEWIFI.png";
 
@@ -55,7 +57,7 @@ import qrWifiImg from "./assets/QR_CODEWIFI.png";
 import { 
   fetchStatus, fetchSales, fetchConfig, fetchSimcards, 
   fetchReprovados, fetchGeekDocs, fetchCampanhas, 
-  syncCollectionDynamic, fetchColaboradoresDashboard,
+  syncCollectionDynamic, syncConfigData, fetchColaboradoresDashboard,
   logoutAPI
 } from './services/api.js';
 import { getCurrentStoreName, getCurrentStoreCode } from './utils/stores.js';
@@ -135,13 +137,17 @@ export default function App() {
   const [globalUser, setGlobalUser] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sessionUser');
-      if (saved) {
+      const token = localStorage.getItem('jwt_token');
+      if (saved && token) {
         try {
           const parsed = JSON.parse(saved);
           // Só mantém o login se não passou de 30 minutos sem atividade
           if (Date.now() - parsed.loginTime < 30 * 60 * 1000) return parsed;
           localStorage.removeItem('sessionUser');
+          localStorage.removeItem('jwt_token');
         } catch (e) { }
+      } else if (saved && !token) {
+        localStorage.removeItem('sessionUser');
       }
     }
     return null;
@@ -662,6 +668,15 @@ export default function App() {
         const recoveredPricing = (config && config.pricingData && Object.keys(config.pricingData).length > 0) ? config.pricingData : {};
 
         setUsersDB(recoveredUsers);
+        setGlobalUser(prev => {
+          if (!prev || !prev.username) return prev;
+          const uKey = String(prev.username).toUpperCase();
+          const dbU = recoveredUsers[uKey] || recoveredUsers[prev.username] || Object.values(recoveredUsers).find(u => String(u?.username || '').toUpperCase() === uKey);
+          if (!dbU) return prev;
+          const next = { ...prev, name: dbU.name || prev.name, photoUrl: dbU.photoUrl ?? prev.photoUrl ?? '' };
+          localStorage.setItem('sessionUser', JSON.stringify(next));
+          return next;
+        });
         setGoalsDB(recoveredGoals);
         setPricingData(recoveredPricing);
         if (config && config.scheduleData) setScheduleData(config.scheduleData);
@@ -855,7 +870,7 @@ export default function App() {
   const sidebarSections = [
     { name: 'ACESSOS', icon: <Key size={18} /> },
     { name: 'CAMPANHAS', icon: <Megaphone size={18} /> },
-    { name: 'COLABORADORES', icon: <Users size={18} /> },
+    { name: 'VISÃO 360', icon: <Users size={18} /> },
     { name: 'CONTROLE-SIMCARD', icon: <Phone size={18} /> },
     { name: 'ESCALA DE TRABALHO', icon: <CalendarDays size={18} /> },
     // { name: 'FATOR RV', icon: <Calculator size={18} /> }, // Oculto temporariamente a pedido
@@ -885,6 +900,32 @@ export default function App() {
   const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(globalUser?.role);
   const hasAreaLojasAccess = ['GERENTE', 'SENIOR', 'GEEK'].includes(globalUser?.role);
   const isVendedor = globalUser?.role === 'VENDEDOR';
+  const [standaloneView, setStandaloneView] = useState(null); // null | 'PROFILE' | 'HELP'
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const handleProfileUpdated = (updatedProfile) => {
+    if (!updatedProfile) return;
+    setGlobalUser(prev => {
+      if (!prev) return prev;
+      const oldName = prev.name;
+      const newName = updatedProfile.name || prev.name;
+      const newPhoto = updatedProfile.photoUrl !== undefined ? updatedProfile.photoUrl : prev.photoUrl;
+      const next = { ...prev, name: newName, photoUrl: newPhoto };
+      localStorage.setItem('sessionUser', JSON.stringify(next));
+      if (prev.username) {
+        const uKey = String(prev.username).toUpperCase();
+        setUsersDB(uPrev => ({
+          ...uPrev,
+          [uKey]: { ...(uPrev[uKey] || {}), name: newName, photoUrl: newPhoto }
+        }));
+      }
+      if (oldName && newName && oldName.trim().toUpperCase() !== newName.trim().toUpperCase()) {
+        setSalesData(sPrev => (sPrev || []).map(s => String(s?.vendedor || '').trim().toUpperCase() === oldName.trim().toUpperCase() ? { ...s, vendedor: newName } : s));
+        setSelectedSeller(selPrev => (selPrev && String(selPrev).trim().toUpperCase() === oldName.trim().toUpperCase()) ? newName : selPrev);
+      }
+      return next;
+    });
+  };
 
   // --- LÓGICA DE LOGIN ---
   // Envio do formulário de autenticação global e/ou de senhas específicas
@@ -924,7 +965,6 @@ export default function App() {
       if (activeTab === 'GESTÃO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'PARCIAL & FECHAMENTO' && !['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(userMatched.role)) setActiveTab('VENDA');
-      if (activeTab === 'ACESSOS' && userMatched.role !== 'GERENTE') setActiveTab('VENDA');
       if (activeTab === 'ÁREA - LOJAS' && !['GERENTE', 'SENIOR', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
     } else {
       setAuthError('Usuário ou senha incorretos. Acesso negado.');
@@ -937,6 +977,7 @@ export default function App() {
     setGlobalUser(null);
     setSelectedSeller(null);
     localStorage.removeItem('sessionUser');
+    localStorage.removeItem('jwt_token');
     if (activeTab === 'GESTÃO' || activeTab === 'ESCALA DE TRABALHO' || activeTab === 'ACESSOS' || activeTab === 'PARCIAL & FECHAMENTO' || activeTab === 'ÁREA - LOJAS') setActiveTab('VENDA');
   };
 
@@ -951,6 +992,32 @@ export default function App() {
         <div className="w-12 h-12 border-4 border-[#E3000F] border-t-transparent rounded-full animate-spin"></div>
         <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm animate-pulse">Conectando ao Servidor Principal (Oracle) e Sincronizando Banco de Dados...</p>
       </div>
+    );
+  }
+
+  // Telas Individuais (Perfil e Ajuda) - saem da tela principal mantendo a mesma URL
+  if (globalUser && standaloneView === 'PROFILE') {
+    return (
+      <>
+        <Toaster position="top-center" containerStyle={{ top: 80 }} />
+        <Profile
+          globalUser={globalUser}
+          onBack={() => setStandaloneView(null)}
+          onProfileUpdated={handleProfileUpdated}
+        />
+      </>
+    );
+  }
+
+  if (globalUser && standaloneView === 'HELP') {
+    return (
+      <>
+        <Toaster position="top-center" containerStyle={{ top: 80 }} />
+        <Help
+          globalUser={globalUser}
+          onBack={() => setStandaloneView(null)}
+        />
+      </>
     );
   }
 
@@ -988,20 +1055,19 @@ export default function App() {
 
       {/* Sidebar - Menu de Navegação Esquerdo */}
       <aside className={`${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:w-0 md:translate-x-0'} no-print overflow-hidden shrink-0 transition-all duration-500 ease-in-out bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col z-30 fixed md:relative top-0 left-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-none`}>
-        <div className="h-16 flex items-center px-6 border-b border-neutral-100 dark:border-neutral-800 min-w-[16rem] shrink-0">
-          <div className="flex items-center text-[#E3000F] font-bold text-xl tracking-tight">
-            <img src={wfLogo} alt="WorkFlow Logo" className="w-16 h-auto m-0 object-contain -mr-1" />
+        <div className="h-12 sm:h-16 flex items-center px-4 sm:px-6 border-b border-neutral-100 dark:border-neutral-800 min-w-[16rem] shrink-0">
+          <div className="flex items-center text-[#E3000F] font-bold text-base sm:text-xl tracking-tight whitespace-nowrap">
+            <img src={wfLogo} alt="WorkFlow Logo" className="w-11 sm:w-16 h-auto m-0 object-contain -mr-1" />
             <span>WORKFLOW</span>
           </div>
         </div>
-        <nav className="flex-1 overflow-y-auto py-4 min-w-[16rem] scrollbar-hide">
-          <div className="px-4 mb-2 text-xs font-semibold text-neutral-400 dark:text-neutral-500 tracking-wider">MÓDULOS (A-Z)</div>
-          <ul className="space-y-1 px-3">
+        <nav className="flex-1 overflow-y-auto py-2.5 sm:py-4 min-w-[16rem] scrollbar-hide">
+          <div className="px-4 mb-2 text-xs font-semibold text-neutral-400 dark:text-neutral-500 tracking-wider whitespace-nowrap">MÓDULOS (A-Z)</div>
+          <ul className="space-y-1 px-2.5 sm:px-3">
             {sidebarSections.map((section) => {
               if (section.name === 'GESTÃO' && !hasMetaAccess) return null;
               if (section.name === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return null;
               if (section.name === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return null;
-              if (section.name === 'ACESSOS' && !isGerente) return null;
               // if (section.name === 'ÁREA - LOJAS' && !hasAreaLojasAccess) return null; // Já oculto no array
 
 
@@ -1016,13 +1082,13 @@ export default function App() {
                       }
                       if (window.innerWidth < 768) setIsSidebarOpen(false); 
                     }} 
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === section.name ? 'bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F]' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
+                    className={`w-full flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 ${activeTab === section.name ? 'bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F]' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
                     title={activeTab === section.name ? "Clique para recolher o menu lateral" : ""}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className={`${activeTab === section.name ? 'text-[#E3000F]' : 'text-neutral-400'}`}>{section.icon}</span>
-                      <div className="flex items-center gap-1.5">
-                        {section.name}
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <span className={`shrink-0 ${activeTab === section.name ? 'text-[#E3000F]' : 'text-neutral-400'}`}>{section.icon}</span>
+                      <div className="flex items-center gap-1.5 whitespace-nowrap truncate">
+                        <span className="whitespace-nowrap truncate">{section.name}</span>
                         {section.name === 'GEEK' && hasNewGeek && (
                           <span className="flex h-2 w-2 relative">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -1047,31 +1113,31 @@ export default function App() {
 
         {/* MONITORAMENTO DO BANCO DE DADOS (ORACLE) */}
         {dbSizeMB !== null && (
-          <div className="px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 shrink-0">
-            <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400" title="Tamanho atual do banco de dados na Oracle">
-              <Database size={14} className="text-[#E3000F]" />
-              <span>Oracle DB: {Number(dbSizeMB).toFixed(2)} MB</span>
+          <div className="px-5 py-2.5 border-t border-neutral-100/80 dark:border-neutral-800/60 bg-transparent shrink-0">
+            <div className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400/75 dark:text-neutral-500/65 tracking-wide select-none" title="Armazenamento utilizado e teto máximo do banco de dados">
+              <Database size={11} className="text-neutral-400/65 dark:text-neutral-500/55 shrink-0" />
+              <span>ARMAZENAMENTO: {Number(dbSizeMB).toFixed(2)} MB / 20 GB</span>
             </div>
           </div>
         )}
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden print:overflow-visible print:h-auto print:block bg-white dark:bg-neutral-950">
+      <main className="flex-1 min-w-0 max-w-full flex flex-col h-full overflow-hidden print:overflow-visible print:h-auto print:block bg-white dark:bg-neutral-950">
 
         {/* Cabeçalho de Ações e Informações */}
-        <header className="h-16 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between px-4 lg:px-8 shrink-0 no-print transition-colors duration-500">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md text-neutral-500 dark:text-neutral-400 transition-colors"><Menu size={20} /></button>
+        <header className="h-12 sm:h-16 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between px-2 sm:px-4 lg:px-8 shrink-0 no-print transition-colors duration-500 gap-1 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 flex-1">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 sm:p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md text-neutral-500 dark:text-neutral-400 transition-colors shrink-0"><Menu size={20} /></button>
             <h1 
               onDoubleClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-              className="text-lg font-medium text-neutral-800 dark:text-neutral-100 hidden sm:block cursor-pointer select-none hover:text-[#E3000F] transition-colors"
+              className="text-[10.5px] sm:text-lg font-bold sm:font-medium text-neutral-800 dark:text-neutral-100 whitespace-nowrap truncate cursor-pointer select-none hover:text-[#E3000F] transition-colors tracking-tight sm:tracking-normal"
               title="Duplo clique para expandir/recolher o menu lateral"
             >
               {activeTab}
             </h1>
           </div>
-          <div className="flex items-center gap-2 sm:gap-5">
+          <div className="flex items-center gap-1 sm:gap-5 shrink-0">
 
             {/* Botão de Desfazer Exclusão */}
             {undoStack.length > 0 && (
@@ -1177,25 +1243,63 @@ export default function App() {
             </div>
 
             {/* Identificação de Empresa */}
-            <div className="hidden sm:flex items-center justify-center mx-2">
-              <div className="text-[#E3000F] font-black text-xl tracking-tighter uppercase">{getCurrentStoreName()} - {getCurrentStoreCode()}</div>
+            <div className="flex items-center justify-center mx-1 sm:mx-2">
+              <div className="text-[#E3000F] font-black text-[10px] sm:text-xl tracking-tight sm:tracking-tighter uppercase whitespace-nowrap">{getCurrentStoreName()} <span className="hidden sm:inline">- {getCurrentStoreCode()}</span></div>
             </div>
 
             {/* Dropdown/Perfil do Usuário Global Logado */}
             <div className="pl-2 sm:pl-4 border-l border-neutral-200 dark:border-neutral-800">
               {globalUser && (
-                <div className="flex items-center gap-2 sm:gap-3 group">
+                <div className="flex items-center gap-2 sm:gap-3 group relative cursor-pointer select-none" onClick={() => setIsUserMenuOpen(prev => !prev)} onMouseLeave={() => setIsUserMenuOpen(false)}>
                   <div className="text-right flex flex-col justify-center">
                     <div className="text-sm font-bold text-neutral-800 dark:text-neutral-100 leading-tight hidden sm:block">{String(globalUser?.name || '').split(' ').slice(0, 2).join(' ') || 'Usuário'}</div>
-                    <div className="text-sm font-bold text-neutral-800 dark:text-neutral-100 leading-tight sm:hidden">{String(globalUser?.name || '').split(' ').slice(0, 2).join(' ') || 'Usuário'}</div>
-                    <div className="text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wide font-medium">{globalUser?.role || ''}</div>
+                    <div className="text-[11px] font-bold text-neutral-800 dark:text-neutral-100 leading-tight sm:hidden">{String(globalUser?.name || '').split(' ')[0] || 'Usuário'}</div>
+                    <div className="text-[8px] sm:text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wide font-medium">{globalUser?.role || ''}</div>
                   </div>
                   <div className="relative cursor-pointer">
-                    <div className="w-10 h-10 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-full flex items-center justify-center border border-red-100 dark:border-[#E3000F]/20 group-hover:bg-[#E3000F] group-hover:text-white transition-colors">
-                      {isGerente ? <Crown size={18} /> : <UserCircle size={22} />}
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-full flex items-center justify-center border border-red-100 dark:border-[#E3000F]/20 group-hover:bg-[#E3000F] group-hover:text-white transition-colors overflow-hidden">
+                      {(globalUser?.photoUrl || usersDB?.[String(globalUser?.username || '').toUpperCase()]?.photoUrl) ? <img src={globalUser?.photoUrl || usersDB?.[String(globalUser?.username || '').toUpperCase()]?.photoUrl} alt="Avatar" className="w-full h-full rounded-full object-cover" /> : (isGerente ? <Crown size={18} /> : <UserCircle size={22} />)}
                     </div>
-                    <div onClick={handleLogout} className="absolute top-12 right-0 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-xl rounded-xl py-2 w-32 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex items-center justify-center gap-2 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 z-50">
-                      <LogOut size={16} /> Sair
+                    <div onClick={(e) => e.stopPropagation()} className={`absolute top-10 sm:top-12 right-0 pt-2 w-64 transition-all duration-200 z-50 ${isUserMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'}`}>
+                      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xl rounded-2xl overflow-hidden">
+                        {/* Pré-visualização do Login + Nome */}
+                        <div className="px-4 py-3 bg-gradient-to-r from-neutral-50 to-red-50/40 dark:from-neutral-800/80 dark:to-[#E3000F]/10 border-b border-neutral-100 dark:border-neutral-800">
+                          <div className="text-[9px] font-black uppercase tracking-widest text-[#E3000F] mb-0.5">Sessão Ativa</div>
+                          <div className="text-xs font-black text-neutral-900 dark:text-white tracking-tight break-words leading-snug">
+                            {String(globalUser?.username || 'LOGIN').toUpperCase()} - {String(globalUser?.name || 'USUÁRIO').toUpperCase()}
+                          </div>
+                          <div className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase mt-0.5">{globalUser?.role || 'COLABORADOR'}</div>
+                        </div>
+                        {/* Opções: Perfil, Ajuda e Sair */}
+                        <div className="p-1.5 space-y-0.5">
+                          <button
+                            type="button"
+                            onClick={() => { setIsUserMenuOpen(false); setStandaloneView('PROFILE'); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-[#E3000F] dark:hover:text-[#E3000F] transition-colors text-left"
+                          >
+                            <User size={15} className="text-[#E3000F]" />
+                            <span>Perfil</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setIsUserMenuOpen(false); setStandaloneView('HELP'); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-[#E3000F] dark:hover:text-[#E3000F] transition-colors text-left"
+                          >
+                            <HelpCircle size={15} className="text-[#E3000F]" />
+                            <span>Ajuda</span>
+                          </button>
+                          <div className="my-1 border-t border-neutral-100 dark:border-neutral-800"></div>
+                          <button
+                            type="button"
+                            onClick={() => { setIsUserMenuOpen(false); handleLogout(); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+                          >
+                            <LogOut size={15} />
+                            <span>Sair</span>
+                          </button>
+                        </div>
+                      </div>
+                      {/* Menu Completo Renderizado Acima */}
                     </div>
                   </div>
                 </div>
@@ -1204,7 +1308,7 @@ export default function App() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto print:overflow-visible print:h-auto print:block print:p-0 print:bg-white p-2 sm:p-4 lg:p-8 bg-neutral-50 dark:bg-neutral-950 print-area-wrapper transition-colors duration-500">
+        <div className="flex-1 min-w-0 max-w-full overflow-y-auto overflow-x-hidden print:overflow-visible print:h-auto print:block print:p-0 print:bg-white p-1.5 sm:p-4 lg:p-8 bg-neutral-50 dark:bg-neutral-950 print-area-wrapper transition-colors duration-500">
 
           {/* Roteador/Renderizador do Conteúdo Principal conforme as Abas ativas */}
           {activeTab === 'GESTÃO' ? (
@@ -1213,7 +1317,7 @@ export default function App() {
             <Venda salesData={salesData} setSalesData={handleSetSalesData} isVendedor={isVendedor} globalUser={globalUser} usersDB={usersDB} globalMonth={globalMonth} />
           ) : activeTab === 'CONTROLE-SIMCARD' ? (
             <ControleSimcard simcardsData={simcardsData} setSimcardsData={handleSetSimcardsData} canModifySimcard={canModifySimcard} globalUser={globalUser} setAuthModal={setAuthModal} usersDB={usersDB} />
-          ) : activeTab === 'COLABORADORES' ? (
+          ) : (activeTab === 'VISÃO 360' || activeTab === 'COLABORADORES') ? (
             <Colaboradores selectedSeller={selectedSeller} setSelectedSeller={setSelectedSeller} isVendedor={isVendedor} globalUser={globalUser} salesData={salesData} goalsDB={goalsDB} usersDB={usersDB} setAuthModal={setAuthModal} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
           ) : activeTab === 'ESCALA DE TRABALHO' ? (
             <EscalaTrabalho canEditSchedule={canEditSchedule} scheduleData={scheduleData} setScheduleData={setScheduleData} monthlyOverrides={monthlyOverrides} setMonthlyOverrides={setMonthlyOverrides} hasAccess={hasScheduleAccess} setAuthModal={setAuthModal} usersDB={usersDB} />

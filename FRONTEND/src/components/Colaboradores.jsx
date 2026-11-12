@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Smartphone, Home, Watch, ShieldCheck, Zap, MonitorPlay, Calendar, Lock, Users, Crown, Medal, FileText, Target } from 'lucide-react';
-import { applyCurrencyMask } from '../utils/masks';
+import { ArrowLeft, Smartphone, Home, Watch, ShieldCheck, Zap, MonitorPlay, Calendar, Lock, Users, Crown, Medal, FileText, Target, Activity } from 'lucide-react';
+import { applyCurrencyMask, getTodaySP } from '../utils/masks';
 import { ProgressBar } from './ProgressBar.jsx';
 import toast from 'react-hot-toast';
 import { METAS_PADRAO } from '../utils/constants';
 import { fetchColaboradoresDashboard } from '../services/api';
 
-export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, globalUser, setAuthModal, globalMonth, setGlobalMonth }) => {
+export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, globalUser, salesData = [], setAuthModal, globalMonth, setGlobalMonth, usersDB = {} }) => {
     const [activeSubTab, setActiveSubTab] = useState('DESEMPENHO');
     const monthFilter = globalMonth;
     const setMonthFilter = setGlobalMonth;
@@ -30,13 +30,31 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
             }
         };
         loadData();
-    }, [monthFilter]);
+    }, [monthFilter, globalUser?.name, globalUser?.photoUrl]);
 
     const safeVendedores = dashboardData?.safeVendedores || [];
     const individualMetas = dashboardData?.individualMetas || METAS_PADRAO;
     const sellerMetricsMap = dashboardData?.sellerMetricsMap || {};
     const rankings = dashboardData?.rankings || {};
     const sellerDailyData = dashboardData?.sellerDailyData || {};
+    const sellerProfilesMap = dashboardData?.sellerProfilesMap || {};
+
+    const getSellerPhoto = (sellerName) => {
+        if (!sellerName) return '';
+        const targetUpper = String(sellerName).trim().toUpperCase();
+        if (globalUser?.name && String(globalUser.name).trim().toUpperCase() === targetUpper && globalUser?.photoUrl !== undefined) {
+            return globalUser.photoUrl || '';
+        }
+        const matchedUser = Object.values(usersDB || {}).find(u => u && String(u.name || '').trim().toUpperCase() === targetUpper);
+        if (matchedUser && matchedUser.photoUrl !== undefined) {
+            return matchedUser.photoUrl || '';
+        }
+        if (sellerProfilesMap[sellerName]?.photoUrl) {
+            return sellerProfilesMap[sellerName].photoUrl;
+        }
+        const matchedProfileKey = Object.keys(sellerProfilesMap).find(k => String(k).trim().toUpperCase() === targetUpper);
+        return matchedProfileKey ? (sellerProfilesMap[matchedProfileKey]?.photoUrl || '') : '';
+    };
 
     const {
         topReceitaName, topReceitaName2, topReceitaName3,
@@ -45,11 +63,55 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
     } = rankings;
 
     const getSellerMetrics = (sellerName) => {
-        return sellerMetricsMap[sellerName] || {
+        const base = sellerMetricsMap[sellerName] || {
             totalReceita: 0, volControle: 0, volPosPago: 0, volPosTotal: 0,
             volFibra: 0, volTv: 0, volUrTotal: 0, volAparelho: 0, volAcessorio: 0,
             volPelicula: 0, volSeguro: 0, volMesh: 0, volTrocafy: 0, volMPlay: 0
         };
+
+        // Garante cálculo em tempo real de Migrações, Ativações e Portabilidade
+        let volMigracao = base.volMigracao;
+        let volAtivacao = base.volAtivacao;
+        let volPortabilidade = base.volPortabilidade;
+
+        if (volMigracao === undefined || volAtivacao === undefined || volPortabilidade === undefined) {
+            volMigracao = 0;
+            volAtivacao = 0;
+            volPortabilidade = 0;
+            (salesData || []).forEach(sale => {
+                if (String(sale.vendedor || '') !== sellerName || !sale.data) return;
+                let saleMonth = '';
+                if (sale.data.includes('/')) {
+                    const parts = sale.data.split('/');
+                    if (parts.length === 3) saleMonth = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+                } else if (sale.data.includes('-')) {
+                    saleMonth = sale.data.slice(0, 7);
+                }
+                if (saleMonth !== monthFilter) return;
+
+                const p = String(sale.produto || '').toUpperCase();
+                const pBase = String(sale.produtoBase || sale.produto || '').toUpperCase();
+                const op = String(sale.tipoOperacao || sale.operacao || '').toUpperCase();
+                const sub = String(sale.subOption || sale.subtipo || '').toUpperCase();
+                const port = String(sale.portabilidade || '').toUpperCase();
+                const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
+
+                const isMovelLine = p.includes('POS') || p.includes('PÓS') || p.includes('CONTROLE') || p.includes('DEPENDENTE') || p.includes('BANDA LARGA') || p.includes('FLEX') || pBase.includes('PME');
+                const isMigra = op.includes('MIGRA') || pBase.includes('MIGRA') || sub.includes('MIGRA');
+                const isPort = port === 'SIM' || op.includes('PORT');
+
+                // Regra de Operações: Ativação não deve entrar Portabilidade, somente ativação pura
+                if (isPort) {
+                    volPortabilidade += q;
+                } else if (isMigra) {
+                    volMigracao += q;
+                } else if (op.includes('ATIVA') || isMovelLine) {
+                    volAtivacao += q;
+                }
+            });
+        }
+
+        return { ...base, volMigracao, volAtivacao, volPortabilidade };
     };
 
     const handleSellerClick = (seller) => {
@@ -60,6 +122,33 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
             setSelectedSeller(seller);
         }
     };
+
+    // ================================================================
+    // CÁLCULO DE TENDÊNCIA DE META (RUN RATE)
+    // Ritmo Diário = Realizado ÷ Dias Corridos
+    // Projeção = Ritmo Diário × Dias Totais do Mês
+    // Tendência % = (Projeção ÷ Meta) × 100
+    // ================================================================
+    const { trendElapsedDays, trendTotalDays, isCurrentMonth } = (() => {
+        const [yStr, mStr] = String(monthFilter || '').split('-');
+        const yy = parseInt(yStr, 10);
+        const mm = parseInt(mStr, 10);
+        if (!yy || !mm) return { trendElapsedDays: null, trendTotalDays: null, isCurrentMonth: false };
+        const total = new Date(yy, mm, 0).getDate();
+        
+        // Uso estrito do horário de São Paulo para evitar distorções de fuso horário
+        const todayStr = getTodaySP();
+        const [cyStr, cmStr, cdStr] = todayStr.split('-');
+        const cy = parseInt(cyStr, 10);
+        const cm = parseInt(cmStr, 10);
+        const cd = parseInt(cdStr, 10);
+
+        if (yy === cy && mm === cm) {
+            return { trendElapsedDays: Math.max(1, cd), trendTotalDays: total, isCurrentMonth: true };
+        }
+        return { trendElapsedDays: null, trendTotalDays: null, isCurrentMonth: false };
+    })();
+    const trendProps = { elapsedDays: trendElapsedDays, totalDays: trendTotalDays, isCurrentMonth };
 
     const dailyDataForSeller = selectedSeller ? sellerDailyData[selectedSeller] : null;
     const dailyRows = dailyDataForSeller ? dailyDataForSeller.dailyRows : [];
@@ -86,36 +175,36 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
     };
 
     return (
-        <div className="flex flex-col min-h-full animate-fade-in transition-colors">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 bg-white dark:bg-neutral-900 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-[#E3000F]/10 flex items-center justify-center text-[#E3000F]">
-                        <Users size={22} />
+        <div className="flex flex-col min-h-full w-full max-w-full min-w-0 animate-fade-in transition-colors">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3.5 sm:mb-6 gap-2.5 sm:gap-4 bg-white dark:bg-neutral-900 p-3 sm:p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm shrink-0">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-red-50 dark:bg-[#E3000F]/10 flex items-center justify-center text-[#E3000F] shrink-0">
+                        <Users size={20} />
                     </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">Desempenho da Equipe</h2>
-                            <span className="bg-[#E3000F] text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-sm sm:text-lg font-bold text-neutral-800 dark:text-neutral-100 truncate">Desempenho da Equipe</h2>
+                            <span className="bg-[#E3000F] text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-sm shrink-0">
                                 {safeVendedores.length} Vendedores
                             </span>
                         </div>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Acompanhe o atingimento de metas mês a mês.</p>
+                        <p className="text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-medium truncate">Acompanhe o atingimento de metas mês a mês.</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 bg-neutral-50 dark:bg-neutral-800 p-2 rounded-xl border border-neutral-200 dark:border-neutral-700 w-full sm:w-auto">
-                    <Calendar size={18} className="text-neutral-500 dark:text-neutral-400 ml-2" />
+                <div className="flex items-center gap-2 sm:gap-3 bg-neutral-50 dark:bg-neutral-800 p-1.5 sm:p-2 rounded-xl border border-neutral-200 dark:border-neutral-700 w-full sm:w-auto">
+                    <Calendar size={16} className="text-neutral-500 dark:text-neutral-400 ml-1.5 sm:ml-2 shrink-0" />
                     <input
                         type="month"
                         value={monthFilter}
                         onChange={(e) => setMonthFilter(e.target.value)}
-                        className="bg-transparent text-sm font-bold text-neutral-700 dark:text-neutral-100 outline-none pr-2 cursor-pointer focus:text-[#E3000F] w-full sm:w-auto"
+                        className="bg-transparent text-xs sm:text-sm font-bold text-neutral-700 dark:text-neutral-100 outline-none pr-2 cursor-pointer focus:text-[#E3000F] w-full sm:w-auto"
                     />
                 </div>
             </div>
 
             {!selectedSeller ? (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6">
                         {safeVendedores.map(seller => {
                             const isRestricted = isVendedor && seller !== globalUser?.name && seller !== String(globalUser?.name || '');
                             const metrics = isRestricted ? null : sellerMetricsMap[seller];
@@ -127,59 +216,105 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
                             const isTopAcessorio = seller === topAcessorioName;
                             const isTopAparelho = seller === topAparelhoName;
                             const isTopResidencial = seller === topResidencialName;
+                            const pctRecMobile = (!isRestricted && metrics && individualMetas.receita > 0)
+                                ? Math.round((metrics.totalReceita / individualMetas.receita) * 100)
+                                : 0;
                             return (
-                                <div key={seller} onClick={() => handleSellerClick(seller)} className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:border-[#E3000F]/30 dark:hover:border-[#E3000F]/50 transition-all cursor-pointer group relative overflow-hidden">
+                                <div key={seller} onClick={() => handleSellerClick(seller)} className="bg-white dark:bg-neutral-900 rounded-2xl p-3 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-lg hover:border-[#E3000F]/30 dark:hover:border-[#E3000F]/50 active:scale-[0.98] sm:active:scale-100 transition-all cursor-pointer group relative overflow-hidden">
                                     {isRestricted && (
-                                        <div className="absolute top-4 right-4 text-neutral-300 dark:text-neutral-600 group-hover:text-[#E3000F] dark:group-hover:text-[#E3000F] transition-colors" title="Acesso Sigiloso">
-                                            <Lock size={16} />
+                                        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-neutral-300 dark:text-neutral-600 group-hover:text-[#E3000F] dark:group-hover:text-[#E3000F] transition-colors" title="Acesso Sigiloso">
+                                            <Lock size={15} />
                                         </div>
                                     )}
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-[#E3000F] font-bold text-lg group-hover:bg-[#E3000F] group-hover:text-white transition-colors shrink-0">
-                                            {seller.charAt(0)}
+                                    {!isRestricted && metrics && (
+                                        <div className="sm:hidden absolute top-3 right-3">
+                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${pctRecMobile >= 100 ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800' : 'bg-red-50 text-[#E3000F] border-red-200/70 dark:bg-[#E3000F]/15 dark:text-red-400 dark:border-[#E3000F]/30'}`}>
+                                                {pctRecMobile}% Meta
+                                            </span>
                                         </div>
-                                        <div className="flex-1 min-w-0 pr-2">
-                                            <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-lg truncate" title={seller}>{seller.split(' ').slice(0, 2).join(' ')}</h3>
-                                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                                <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded uppercase tracking-wider">Vendedor</span>
-                                                {isTopReceita && <span className="text-[10px] font-bold text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 px-1.5 py-0.5 rounded flex items-center gap-1" title="Vendedor com maior Receita"><Crown size={12} className="text-yellow-600 dark:text-yellow-500" /> Top 1</span>}
-                                                {isTopReceita2 && <span className="text-[10px] font-bold text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded flex items-center gap-1" title="Vendedor com a 2ª maior Receita"><Medal size={12} className="text-slate-500 dark:text-slate-400" /> Top 2</span>}
-                                                {isTopReceita3 && <span className="text-[10px] font-bold text-amber-800 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded flex items-center gap-1" title="Vendedor com a 3ª maior Receita"><Medal size={12} className="text-amber-600 dark:text-amber-500" /> Top 3</span>}
-                                                {isTopPos && <span className="text-[10px] font-bold text-blue-700 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded flex items-center gap-1" title="Vendedor com mais Pós-pago"><Medal size={12} className="text-blue-600 dark:text-blue-500" /> Destaque Pós</span>}
-                                                {isTopControle && <span className="text-[10px] font-bold text-purple-700 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded flex items-center gap-1" title="Vendedor com mais Controle"><Medal size={12} className="text-purple-600 dark:text-purple-500" /> Destaque Controle</span>}
-                                                {isTopAparelho && <span className="text-[10px] font-bold text-pink-700 bg-pink-100 dark:bg-pink-900/30 dark:text-pink-400 px-1.5 py-0.5 rounded flex items-center gap-1" title="Vendedor com mais Aparelhos"><Medal size={12} className="text-pink-600 dark:text-pink-500" /> Destaque Aparelho</span>}
-                                                {isTopAcessorio && <span className="text-[10px] font-bold text-orange-700 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 px-1.5 py-0.5 rounded flex items-center gap-1" title="Vendedor com mais Acessórios"><Medal size={12} className="text-orange-600 dark:text-orange-500" /> Destaque Acessórios</span>}
-                                                {isTopResidencial && <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded flex items-center gap-1" title="Vendedor com mais Vendas Residenciais"><Medal size={12} className="text-emerald-600 dark:text-emerald-500" /> Destaque Residencial</span>}
+                                    )}
+                                    <div className="flex items-center gap-2.5 sm:gap-4 mb-2.5 sm:mb-4">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-[#E3000F] font-bold text-sm sm:text-lg group-hover:bg-[#E3000F] group-hover:text-white transition-colors shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-700 ring-2 ring-[#E3000F]/15 sm:ring-0">
+                                            {getSellerPhoto(seller) ? (
+                                                <img src={getSellerPhoto(seller)} alt={seller} className="w-full h-full object-cover rounded-full" />
+                                            ) : (
+                                                seller.charAt(0)
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0 pr-14 sm:pr-2">
+                                            <h3 className="font-extrabold sm:font-bold text-neutral-800 dark:text-neutral-100 text-sm sm:text-lg truncate leading-tight" title={seller}>{seller.split(' ').slice(0, 2).join(' ')}</h3>
+                                            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-1">
+                                                <span className="text-[8.5px] sm:text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 sm:px-2 py-0.5 rounded uppercase tracking-wider">Vendedor</span>
+                                                {isTopReceita && <span className="text-[8.5px] sm:text-[10px] font-bold text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 sm:gap-1" title="Vendedor com maior Receita"><Crown size={11} className="text-yellow-600 dark:text-yellow-500" /> Top 1</span>}
+                                                {isTopReceita2 && <span className="text-[8.5px] sm:text-[10px] font-bold text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded flex items-center gap-0.5 sm:gap-1" title="Vendedor com a 2ª maior Receita"><Medal size={11} className="text-slate-500 dark:text-slate-400" /> Top 2</span>}
+                                                {isTopReceita3 && <span className="text-[8.5px] sm:text-[10px] font-bold text-amber-800 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 sm:gap-1" title="Vendedor com a 3ª maior Receita"><Medal size={11} className="text-amber-600 dark:text-amber-500" /> Top 3</span>}
+                                                {isTopPos && <span className="text-[8.5px] sm:text-[10px] font-bold text-blue-700 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 sm:gap-1" title="Vendedor com mais Pós-pago"><Medal size={11} className="text-blue-600 dark:text-blue-500" /> Destaque Pós</span>}
+                                                {isTopControle && <span className="text-[8.5px] sm:text-[10px] font-bold text-purple-700 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 sm:gap-1" title="Vendedor com mais Controle"><Medal size={11} className="text-purple-600 dark:text-purple-500" /> Destaque Controle</span>}
+                                                {isTopAparelho && <span className="text-[8.5px] sm:text-[10px] font-bold text-pink-700 bg-pink-100 dark:bg-pink-900/30 dark:text-pink-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 sm:gap-1" title="Vendedor com mais Aparelhos"><Medal size={11} className="text-pink-600 dark:text-pink-500" /> Destaque Aparelho</span>}
+                                                {isTopAcessorio && <span className="text-[8.5px] sm:text-[10px] font-bold text-orange-700 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 sm:gap-1" title="Vendedor com mais Acessórios"><Medal size={11} className="text-orange-600 dark:text-orange-500" /> Destaque Acessórios</span>}
+                                                {isTopResidencial && <span className="text-[8.5px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 sm:gap-1" title="Vendedor com mais Vendas Residenciais"><Medal size={11} className="text-emerald-600 dark:text-emerald-500" /> Destaque Residencial</span>}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+                                    <div className="pt-2.5 sm:pt-4 border-t border-neutral-100 dark:border-neutral-800">
                                         {isRestricted ? (
-                                            <div className="flex flex-col items-center justify-center py-2 opacity-50">
-                                                <Lock size={20} className="mb-1 text-neutral-400 dark:text-neutral-500" />
-                                                <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">Acesso Sigiloso</span>
+                                            <div className="flex sm:flex-col items-center justify-center gap-2 sm:gap-0 py-1 sm:py-2 opacity-50">
+                                                <Lock size={16} className="sm:mb-1 text-neutral-400 dark:text-neutral-500" />
+                                                <span className="text-[9.5px] sm:text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">Acesso Sigiloso</span>
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="flex justify-between items-end mb-2 gap-2">
-                                                    <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Receita (Mês)</span>
-                                                    <div className="text-right shrink-0">
-                                                        <span className="text-xl font-bold text-neutral-800 dark:text-neutral-100">{applyCurrencyMask(metrics.totalReceita)}</span>
-                                                        <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500 ml-1">/ {applyCurrencyMask(individualMetas.receita)}</span>
+                                                {/* VISUAL LÚDICO DE APLICATIVO SOMENTE NO CELULAR (< 640px) */}
+                                                <div className="sm:hidden space-y-2">
+                                                    <div className="w-full h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full transition-all duration-700 ${pctRecMobile >= 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#E3000F] to-rose-500'}`}
+                                                            style={{ width: `${Math.min(pctRecMobile, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-1.5">
+                                                        <div className="bg-red-50/60 dark:bg-[#E3000F]/10 border border-red-100/80 dark:border-[#E3000F]/20 rounded-xl p-1.5 text-center min-w-0">
+                                                            <div className="text-[8px] font-extrabold uppercase tracking-wider text-[#E3000F] truncate">Receita</div>
+                                                            <div className="text-[11px] font-black text-neutral-900 dark:text-white truncate mt-0.5">{applyCurrencyMask(metrics.totalReceita)}</div>
+                                                            <div className="text-[7.5px] font-semibold text-neutral-400 dark:text-neutral-500 truncate">/ {applyCurrencyMask(individualMetas.receita)}</div>
+                                                        </div>
+                                                        <div className="bg-blue-50/60 dark:bg-blue-950/25 border border-blue-100/80 dark:border-blue-900/30 rounded-xl p-1.5 text-center min-w-0">
+                                                            <div className="text-[8px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 truncate">Pós Total</div>
+                                                            <div className="text-xs font-black text-neutral-900 dark:text-white leading-tight mt-0.5">
+                                                                {metrics.volPosTotal} <span className="text-[8.5px] font-bold text-neutral-400">/ {Number.isInteger(individualMetas.posTotal) ? individualMetas.posTotal : individualMetas.posTotal.toFixed(1)}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="bg-emerald-50/60 dark:bg-emerald-950/25 border border-emerald-100/80 dark:border-emerald-900/30 rounded-xl p-1.5 text-center min-w-0">
+                                                            <div className="text-[8px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate">UR Total</div>
+                                                            <div className="text-xs font-black text-neutral-900 dark:text-white leading-tight mt-0.5">
+                                                                {metrics.volUrTotal} <span className="text-[8.5px] font-bold text-neutral-400">/ {Number.isInteger(individualMetas.urTotal) ? individualMetas.urTotal : individualMetas.urTotal.toFixed(1)}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex justify-between items-end gap-2">
-                                                    <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Pós Total</span>
-                                                    <div className="text-right shrink-0">
-                                                        <span className="text-xl font-bold text-neutral-800 dark:text-neutral-100">{metrics.volPosTotal}</span>
-                                                        <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500 ml-1">/ {Number.isInteger(individualMetas.posTotal) ? individualMetas.posTotal : individualMetas.posTotal.toFixed(1)}</span>
+
+                                                {/* VISUAL PADRÃO DESKTOP / TABLET (>= 640px) */}
+                                                <div className="hidden sm:block space-y-3">
+                                                    <div className="flex justify-between items-end mb-2 gap-2">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Receita (Mês)</span>
+                                                        <div className="text-right shrink-0">
+                                                            <span className="text-xl font-bold text-neutral-800 dark:text-neutral-100">{applyCurrencyMask(metrics.totalReceita)}</span>
+                                                            <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500 ml-1">/ {applyCurrencyMask(individualMetas.receita)}</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex justify-between items-end gap-2">
-                                                    <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">UR Total</span>
-                                                    <div className="text-right shrink-0">
-                                                        <span className="text-xl font-bold text-neutral-800 dark:text-neutral-100">{metrics.volUrTotal}</span>
-                                                        <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500 ml-1">/ {Number.isInteger(individualMetas.urTotal) ? individualMetas.urTotal : individualMetas.urTotal.toFixed(1)}</span>
+                                                    <div className="flex justify-between items-end gap-2">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">Pós Total</span>
+                                                        <div className="text-right shrink-0">
+                                                            <span className="text-xl font-bold text-neutral-800 dark:text-neutral-100">{metrics.volPosTotal}</span>
+                                                            <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500 ml-1">/ {Number.isInteger(individualMetas.posTotal) ? individualMetas.posTotal : individualMetas.posTotal.toFixed(1)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-between items-end gap-2">
+                                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase">UR Total</span>
+                                                        <div className="text-right shrink-0">
+                                                            <span className="text-xl font-bold text-neutral-800 dark:text-neutral-100">{metrics.volUrTotal}</span>
+                                                            <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500 ml-1">/ {Number.isInteger(individualMetas.urTotal) ? individualMetas.urTotal : individualMetas.urTotal.toFixed(1)}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </>
@@ -191,26 +326,33 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
                     </div>
                 </>
             ) : (
-                <div className="flex flex-col h-full animate-fade-in transition-colors">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 bg-white dark:bg-neutral-900 p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm gap-4 shrink-0">
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setSelectedSeller(null)} className="p-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-neutral-600 dark:text-neutral-300 transition-colors">
-                                <ArrowLeft size={20} />
+                <div className="flex flex-col h-full w-full max-w-full min-w-0 animate-fade-in transition-colors">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-3.5 sm:mb-4 bg-white dark:bg-neutral-900 p-3.5 sm:p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm gap-3 sm:gap-4 shrink-0">
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                            <button onClick={() => setSelectedSeller(null)} className="p-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-neutral-600 dark:text-neutral-300 transition-colors shrink-0">
+                                <ArrowLeft size={18} />
                             </button>
-                            <div>
-                                <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">Desempenho: <span className="text-[#E3000F] uppercase">{selectedSeller}</span></h2>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Acompanhamento detalhado de Meta x Realizado.</p>
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-[#E3000F] font-bold text-sm sm:text-base shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-700">
+                                {getSellerPhoto(selectedSeller) ? (
+                                    <img src={getSellerPhoto(selectedSeller)} alt={selectedSeller} className="w-full h-full object-cover rounded-full" />
+                                ) : (
+                                    String(selectedSeller || '').charAt(0)
+                                )}
+                            </div>
+                            <div className="min-w-0">
+                                <h2 className="text-sm sm:text-xl font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 flex-wrap truncate">Desempenho: <span className="text-[#E3000F] uppercase truncate">{selectedSeller}</span></h2>
+                                <p className="text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-medium truncate">Acompanhamento detalhado de Meta x Realizado.</p>
                             </div>
                         </div>
-                        <div className="md:min-w-[300px] lg:min-w-[340px] w-full md:w-auto mt-2 md:mt-0">
-                            <ProgressBar label="RECEITA TOTAL" realizado={getSellerMetrics(selectedSeller).totalReceita} meta={individualMetas.receita} isCurrency={true} isDark={false} />
+                        <div className="md:min-w-[300px] lg:min-w-[340px] w-full md:w-auto mt-1 md:mt-0">
+                            <ProgressBar label="RECEITA TOTAL" realizado={getSellerMetrics(selectedSeller).totalReceita} meta={individualMetas.receita} isCurrency={true} isDark={false} {...trendProps} />
                         </div>
                     </div>
 
-                    <div className="flex overflow-x-auto scrollbar-hide border-b border-neutral-200 dark:border-neutral-800 mb-6 shrink-0" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
-                        <button onClick={() => setActiveSubTab('DESEMPENHO')} className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${activeSubTab === 'DESEMPENHO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Visão Geral</button>
-                        <button onClick={() => setActiveSubTab('DIARIO')} className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${activeSubTab === 'DIARIO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Resultado Diário</button>
-                        <button onClick={() => setActiveSubTab('NECESSIDADE_DIARIA')} className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${activeSubTab === 'NECESSIDADE_DIARIA' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Necessidade Diária</button>
+                    <div className="grid grid-cols-3 sm:flex overflow-x-auto scrollbar-hide bg-neutral-200/70 dark:bg-neutral-900 sm:bg-transparent p-1 sm:p-0 rounded-xl sm:rounded-none sm:border-b border-neutral-200 dark:border-neutral-800 mb-4 sm:mb-6 shrink-0 gap-1 sm:gap-0" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
+                        <button onClick={() => setActiveSubTab('DESEMPENHO')} className={`px-2 sm:px-6 py-2 sm:py-3 text-[10px] sm:text-sm font-black sm:font-bold uppercase tracking-tight sm:tracking-wider transition-all rounded-lg sm:rounded-none sm:border-b-2 truncate ${activeSubTab === 'DESEMPENHO' ? 'bg-white dark:bg-neutral-800 sm:bg-white sm:dark:bg-neutral-900 text-[#E3000F] shadow-sm sm:shadow-none sm:border-[#E3000F]' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>DASHBOARD</button>
+                        <button onClick={() => setActiveSubTab('DIARIO')} className={`px-2 sm:px-6 py-2 sm:py-3 text-[10px] sm:text-sm font-black sm:font-bold uppercase tracking-tight sm:tracking-wider transition-all rounded-lg sm:rounded-none sm:border-b-2 truncate ${activeSubTab === 'DIARIO' ? 'bg-white dark:bg-neutral-800 sm:bg-white sm:dark:bg-neutral-900 text-[#E3000F] shadow-sm sm:shadow-none sm:border-[#E3000F]' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Resultado Diário</button>
+                        <button onClick={() => setActiveSubTab('NECESSIDADE_DIARIA')} className={`px-2 sm:px-6 py-2 sm:py-3 text-[10px] sm:text-sm font-black sm:font-bold uppercase tracking-tight sm:tracking-wider transition-all rounded-lg sm:rounded-none sm:border-b-2 truncate ${activeSubTab === 'NECESSIDADE_DIARIA' ? 'bg-white dark:bg-neutral-800 sm:bg-white sm:dark:bg-neutral-900 text-[#E3000F] shadow-sm sm:shadow-none sm:border-[#E3000F]' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Necessidade Diária</button>
                     </div>
 
                     {activeSubTab === 'NECESSIDADE_DIARIA' ? (() => {
@@ -275,26 +417,26 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
                         ];
 
                         return (
-                            <div className="flex-1 pb-6 pr-2 space-y-6 overflow-y-auto scrollbar-thin">
-                                <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col relative overflow-hidden">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <div className="p-2 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-lg"><Target size={20} /></div>
-                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-lg uppercase tracking-wide">Necessidade Diária</h3>
+                            <div className="flex-1 pb-6 space-y-4 sm:space-y-6 overflow-y-auto scrollbar-thin">
+                                <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col relative overflow-hidden">
+                                    <div className="flex items-center gap-2 mb-3 sm:mb-6">
+                                        <div className="p-2 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-lg"><Target size={18} /></div>
+                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-sm sm:text-lg uppercase tracking-wide">Necessidade Diária</h3>
                                     </div>
-                                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6">
+                                    <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mb-4 sm:mb-6">
                                         Acompanhe quanto você precisa vender diariamente para atingir as metas do mês atual. O cálculo divide o saldo restante pelos dias que faltam para o mês acabar.
                                     </p>
 
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
                                         {necessidadeData.map((ind, i) => (
-                                            <div key={i} className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-[#E3000F]/30 transition-colors">
-                                                <div className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-1">{ind.label}</div>
-                                                <div className={`text-xl font-black ${ind.label === 'Receita (R$)' ? 'text-[#E3000F]' : 'text-neutral-800 dark:text-neutral-100'}`}>
-                                                    {ind.nec.isBatida ? <span className="text-sm font-bold text-green-500">Meta Batida 🎉</span> :
-                                                        ind.nec.isEncerrado ? <span className="text-sm font-bold text-neutral-400">Mês encerrado</span> :
+                                            <div key={i} className="bg-neutral-50 dark:bg-neutral-800/50 p-3 sm:p-4 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-[#E3000F]/30 transition-colors min-w-0">
+                                                <div className="text-[9px] sm:text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider sm:tracking-widest mb-1 truncate">{ind.label}</div>
+                                                <div className={`text-sm sm:text-xl font-black truncate ${ind.label === 'Receita (R$)' ? 'text-[#E3000F]' : 'text-neutral-800 dark:text-neutral-100'}`}>
+                                                    {ind.nec.isBatida ? <span className="text-xs sm:text-sm font-bold text-green-500">Meta Batida 🎉</span> :
+                                                        ind.nec.isEncerrado ? <span className="text-xs sm:text-sm font-bold text-neutral-400">Mês encerrado</span> :
                                                             (ind.isCurrency ? applyCurrencyMask(ind.nec.porDia) + ' /dia' : Math.ceil(ind.nec.porDia) + ' /dia')}
                                                 </div>
-                                                <div className="text-[9px] text-neutral-400 dark:text-neutral-500 mt-2 font-bold">
+                                                <div className="text-[8.5px] sm:text-[9px] text-neutral-400 dark:text-neutral-500 mt-1.5 sm:mt-2 font-bold truncate">
                                                     Faltam: {ind.isCurrency ? applyCurrencyMask(ind.nec.faltam) : ind.nec.faltam.toFixed(0)}
                                                 </div>
                                             </div>
@@ -304,66 +446,291 @@ export const Colaboradores = ({ selectedSeller, setSelectedSeller, isVendedor, g
                             </div>
                         );
                     })() : activeSubTab === 'DESEMPENHO' ? (
-                        <div className="flex-1 pb-6 pr-2 space-y-6 overflow-y-auto">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm lg:col-span-2 flex flex-col relative overflow-hidden group">
+                        <div className="flex-1 pb-6 space-y-4 sm:space-y-6 overflow-y-auto">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                                <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm lg:col-span-2 flex flex-col relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none"><Smartphone size={150} /></div>
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <div className="p-2 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-lg"><Smartphone size={20} /></div>
-                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-lg uppercase tracking-wide">GROSS TOTAL</h3>
+                                    <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                                        <div className="p-2 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-lg"><Smartphone size={18} /></div>
+                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-sm sm:text-lg uppercase tracking-wide">GROSS TOTAL</h3>
                                     </div>
-                                    <div className="mb-8">
-                                        <ProgressBar label="PÓS TOTAL (Pós + Controle + Dependentes + Flex)" realizado={getSellerMetrics(selectedSeller).volPosTotal} meta={individualMetas.posTotal} />
+                                    <div className="mb-5 sm:mb-8">
+                                        <ProgressBar label="PÓS TOTAL (Pós + Controle + Dependentes + Flex)" realizado={getSellerMetrics(selectedSeller).volPosTotal} meta={individualMetas.posTotal} {...trendProps} />
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-6 border-t border-neutral-100 dark:border-neutral-800 mt-auto">
-                                        <ProgressBar label="Individual: PÓS-PAGO" realizado={getSellerMetrics(selectedSeller).volPosPago} meta={individualMetas.posPago} />
-                                        <ProgressBar label="Individual: CONTROLE" realizado={getSellerMetrics(selectedSeller).volControle} meta={individualMetas.controle} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5 sm:gap-y-4 pt-4 sm:pt-6 border-t border-neutral-100 dark:border-neutral-800 mt-auto">
+                                        <ProgressBar label="Individual: PÓS-PAGO" realizado={getSellerMetrics(selectedSeller).volPosPago} meta={individualMetas.posPago} {...trendProps} />
+                                        <ProgressBar label="Individual: CONTROLE" realizado={getSellerMetrics(selectedSeller).volControle} meta={individualMetas.controle} {...trendProps} />
                                     </div>
                                 </div>
 
-                                <div className="bg-neutral-900 dark:bg-neutral-950 rounded-3xl p-6 shadow-sm text-white flex flex-col relative overflow-hidden">
+                                <div className="bg-neutral-900 dark:bg-neutral-950 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm text-white flex flex-col relative overflow-hidden">
                                     <div className="absolute -bottom-4 -right-4 p-8 opacity-10 pointer-events-none"><Home size={120} /></div>
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <div className="p-2 bg-neutral-700 text-white rounded-lg"><Home size={20} /></div>
-                                        <h3 className="font-bold text-white text-lg uppercase tracking-wide">UR-Residencial</h3>
+                                    <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                                        <div className="p-2 bg-neutral-700 text-white rounded-lg"><Home size={18} /></div>
+                                        <h3 className="font-bold text-white text-sm sm:text-lg uppercase tracking-wide">UR-Residencial</h3>
                                     </div>
-                                    <div className="mb-8"><ProgressBar label="UR TOTAL (Fibra + TV)" realizado={getSellerMetrics(selectedSeller).volUrTotal} meta={individualMetas.urTotal} isDark={true} /></div>
-                                    <div className="grid grid-cols-2 gap-3 mt-auto pt-6 border-t border-neutral-700 dark:border-neutral-800">
-                                        <div className="flex flex-col justify-center bg-neutral-800/80 dark:bg-neutral-800 p-4 rounded-2xl border border-neutral-700/50 hover:bg-neutral-800 transition-colors">
-                                            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Zap size={14} className="text-[#E3000F]" />Fibras</span>
-                                            <div className="flex items-baseline gap-1.5"><span className="text-4xl font-black text-white leading-none">{getSellerMetrics(selectedSeller).volFibra}</span><span className="text-sm font-bold text-neutral-500 dark:text-neutral-400 mb-1">/ {Number.isInteger(individualMetas.fibra) ? individualMetas.fibra : individualMetas.fibra.toFixed(1)}</span></div>
+                                    <div className="mb-5 sm:mb-8"><ProgressBar label="UR TOTAL (Fibra + TV)" realizado={getSellerMetrics(selectedSeller).volUrTotal} meta={individualMetas.urTotal} isDark={true} {...trendProps} /></div>
+                                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mt-auto pt-4 sm:pt-6 border-t border-neutral-700 dark:border-neutral-800">
+                                        <div className="flex flex-col justify-center bg-neutral-800/80 dark:bg-neutral-800 p-3 sm:p-4 rounded-2xl border border-neutral-700/50 hover:bg-neutral-800 transition-colors">
+                                            <span className="text-[10px] sm:text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1.5 sm:mb-2 flex items-center gap-1"><Zap size={13} className="text-[#E3000F]" />Fibras</span>
+                                            <div className="flex items-baseline gap-1"><span className="text-2xl sm:text-4xl font-black text-white leading-none">{getSellerMetrics(selectedSeller).volFibra}</span><span className="text-xs sm:text-sm font-bold text-neutral-500 dark:text-neutral-400 mb-0.5">/ {Number.isInteger(individualMetas.fibra) ? individualMetas.fibra : individualMetas.fibra.toFixed(1)}</span></div>
                                         </div>
-                                        <div className="flex flex-col justify-center bg-neutral-800/80 dark:bg-neutral-800 p-4 rounded-2xl border border-neutral-700/50 hover:bg-neutral-800 transition-colors">
-                                            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><MonitorPlay size={14} className="text-[#E3000F]" /> TV BOX</span>
-                                            <div className="flex items-baseline gap-1.5"><span className="text-4xl font-black text-white leading-none">{getSellerMetrics(selectedSeller).volTv}</span><span className="text-sm font-bold text-neutral-500 dark:text-neutral-400 mb-1">/ {Number.isInteger(individualMetas.tv) ? individualMetas.tv : individualMetas.tv.toFixed(1)}</span></div>
+                                        <div className="flex flex-col justify-center bg-neutral-800/80 dark:bg-neutral-800 p-3 sm:p-4 rounded-2xl border border-neutral-700/50 hover:bg-neutral-800 transition-colors">
+                                            <span className="text-[10px] sm:text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1.5 sm:mb-2 flex items-center gap-1"><MonitorPlay size={13} className="text-[#E3000F]" /> TV BOX</span>
+                                            <div className="flex items-baseline gap-1"><span className="text-2xl sm:text-4xl font-black text-white leading-none">{getSellerMetrics(selectedSeller).volTv}</span><span className="text-xs sm:text-sm font-bold text-neutral-500 dark:text-neutral-400 mb-0.5">/ {Number.isInteger(individualMetas.tv) ? individualMetas.tv : individualMetas.tv.toFixed(1)}</span></div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <div className="p-2 bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 rounded-lg"><Watch size={20} /></div>
-                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-sm uppercase tracking-wide">APARELHOS & ACESSORIOS</h3>
+                                <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col">
+                                    <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                                        <div className="p-2 bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 rounded-lg"><Watch size={18} /></div>
+                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-xs sm:text-sm uppercase tracking-wide">DEVICES</h3>
                                     </div>
-                                    <div className="space-y-6 mt-auto">
-                                        <ProgressBar label="Aparelhos" realizado={getSellerMetrics(selectedSeller).volAparelho} meta={individualMetas.aparelho} />
-                                        <ProgressBar label="Acessórios" realizado={getSellerMetrics(selectedSeller).volAcessorio} meta={individualMetas.acessorio} />
-                                        <ProgressBar label="Películas" realizado={getSellerMetrics(selectedSeller).volPelicula} meta={individualMetas.pelicula} />
+                                    <div className="space-y-4 sm:space-y-6 mt-auto">
+                                        <ProgressBar label="Aparelhos" realizado={getSellerMetrics(selectedSeller).volAparelho} meta={individualMetas.aparelho} {...trendProps} />
+                                        <ProgressBar label="Acessórios" realizado={getSellerMetrics(selectedSeller).volAcessorio} meta={individualMetas.acessorio} {...trendProps} />
+                                        <ProgressBar label="Películas" realizado={getSellerMetrics(selectedSeller).volPelicula} meta={individualMetas.pelicula} {...trendProps} />
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm lg:col-span-2 flex flex-col">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 rounded-lg"><ShieldCheck size={20} /></div>
-                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-sm uppercase tracking-wide">SERVIÇOS ADICIONAIS</h3>
+                                <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col">
+                                    <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 rounded-lg"><ShieldCheck size={18} /></div>
+                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-xs sm:text-sm uppercase tracking-wide">SERVIÇOS ADICIONAIS</h3>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mt-auto">
-                                        <ProgressBar label="Seguro (Proteção Móvel)" realizado={getSellerMetrics(selectedSeller).volSeguro} meta={individualMetas.seguro} />
-                                        <ProgressBar label="Anexação M-Play" realizado={getSellerMetrics(selectedSeller).volMPlay} meta={individualMetas.mplay} />
-                                        <ProgressBar label="Trocafy" realizado={getSellerMetrics(selectedSeller).volTrocafy} meta={individualMetas.trocafy} />
-                                        <ProgressBar label="Equipamento MESH" realizado={getSellerMetrics(selectedSeller).volMesh} meta={individualMetas.mesh} />
+                                    <div className="space-y-3.5 sm:space-y-4 mt-auto">
+                                        <ProgressBar label="Seguro (Proteção Móvel)" realizado={getSellerMetrics(selectedSeller).volSeguro} meta={individualMetas.seguro} {...trendProps} />
+                                        <ProgressBar label="Anexação M-Play" realizado={getSellerMetrics(selectedSeller).volMPlay} meta={individualMetas.mplay} {...trendProps} />
+                                        <ProgressBar label="Trocafy" realizado={getSellerMetrics(selectedSeller).volTrocafy} meta={individualMetas.trocafy} {...trendProps} />
+                                        <ProgressBar label="Equipamento MESH" realizado={getSellerMetrics(selectedSeller).volMesh} meta={individualMetas.mesh} {...trendProps} />
                                     </div>
                                 </div>
+
+                                {(() => {
+                                    const m = getSellerMetrics(selectedSeller);
+                                    const qtdAtivacao = Number(m.volAtivacao) || 0;
+                                    const qtdMigracao = Number(m.volMigracao) || 0;
+                                    const qtdPortabilidade = Number(m.volPortabilidade) || 0;
+                                    const totalOp = (qtdAtivacao + qtdMigracao + qtdPortabilidade) || 0;
+
+                                    const pctAtivacao = totalOp > 0 ? Math.round((qtdAtivacao / totalOp) * 100) : 0;
+                                    const pctMigracao = totalOp > 0 ? Math.round((qtdMigracao / totalOp) * 100) : 0;
+                                    const pctPortabilidade = totalOp > 0 ? Math.round((qtdPortabilidade / totalOp) * 100) : 0;
+
+                                    const statusItems = [
+                                        {
+                                            label: 'ATIVAÇÕES PURAS',
+                                            qtd: qtdAtivacao,
+                                            pct: pctAtivacao,
+                                            barColor: 'bg-[#E3000F]',
+                                            badgeStyle: 'bg-red-100 text-[#E3000F] dark:bg-[#E3000F]/20 dark:text-red-400'
+                                        },
+                                        {
+                                            label: 'MIGRAÇÕES',
+                                            qtd: qtdMigracao,
+                                            pct: pctMigracao,
+                                            barColor: 'bg-amber-500',
+                                            badgeStyle: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                        },
+                                        {
+                                            label: 'PORTABILIDADE',
+                                            qtd: qtdPortabilidade,
+                                            pct: pctPortabilidade,
+                                            barColor: 'bg-emerald-500',
+                                            badgeStyle: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                        }
+                                    ];
+
+                                    return (
+                                        <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col relative overflow-hidden">
+                                            <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="p-2 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-lg shrink-0">
+                                                        <Activity size={18} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-xs sm:text-sm uppercase tracking-wide truncate">STATUS DE OPERAÇÕES</h3>
+                                                        <p className="text-[9.5px] sm:text-[10px] font-medium text-neutral-400 dark:text-neutral-500 truncate">Ativação Pura, Migrações e Portabilidade</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 shrink-0">
+                                                    {totalOp} Gross
+                                                </span>
+                                            </div>
+
+                                            <div className="space-y-3 sm:space-y-5 mt-auto">
+                                                {statusItems.map((st, idx) => (
+                                                    <div key={idx} className="bg-neutral-50/70 dark:bg-neutral-800/40 p-2.5 sm:p-3.5 rounded-2xl border border-neutral-100 dark:border-neutral-800">
+                                                        <div className="flex justify-between items-end mb-1.5 sm:mb-2 gap-2">
+                                                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 truncate">{st.label}</span>
+                                                            <div className="flex items-baseline gap-1.5 sm:gap-2 shrink-0">
+                                                                <span className="text-lg sm:text-2xl font-black text-neutral-800 dark:text-neutral-100 leading-none">{st.qtd}</span>
+                                                                <span className="text-[9px] sm:text-[10px] font-bold uppercase text-neutral-400 dark:text-neutral-500">un</span>
+                                                                <span className={`text-[10px] sm:text-xs font-extrabold px-1.5 sm:px-2 py-0.5 rounded-md ${st.badgeStyle}`}>
+                                                                    {st.pct}%
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="w-full bg-neutral-200/80 dark:bg-neutral-700 rounded-full h-2 sm:h-2.5 overflow-hidden">
+                                                            <div
+                                                                className={`${st.barColor} h-full rounded-full transition-all duration-1000`}
+                                                                style={{ width: `${Math.min(st.pct, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* ===================== ANÁLISE DETALHADA DE ANEXAÇÃO ===================== */}
+                                {(() => {
+                                    const m = getSellerMetrics(selectedSeller);
+                                    const aparelhos = Number(m.volAparelho) || 0;
+                                    // Regras de anexação por aparelho vendido
+                                    const regras = [
+                                        { key: 'pelicula', label: 'Películas', ratio: 1, real: Number(m.volPelicula) || 0, regra: '1 película por aparelho', color: 'bg-sky-500' },
+                                        { key: 'acessorio', label: 'Acessórios', ratio: 3, real: Number(m.volAcessorio) || 0, regra: '3 acessórios por aparelho', color: 'bg-orange-500' },
+                                        { key: 'seguro', label: 'Seguro', ratio: 1, real: Number(m.volSeguro) || 0, regra: '1 seguro por aparelho (1:1)', color: 'bg-blue-600' },
+                                        { key: 'trocafy', label: 'Trocafy', ratio: 1, real: Number(m.volTrocafy) || 0, regra: '1 Trocafy por aparelho (1:1)', color: 'bg-violet-500' }
+                                    ].map(r => {
+                                        const esperado = aparelhos * r.ratio;
+                                        const perdido = Math.max(0, esperado - r.real);
+                                        const pct = esperado > 0 ? Math.round((r.real / esperado) * 100) : 0;
+                                        return { ...r, esperado, perdido, pct };
+                                    });
+                                    const totalEsperado = regras.reduce((a, r) => a + r.esperado, 0);
+                                    const totalReal = regras.reduce((a, r) => a + Math.min(r.real, r.esperado), 0);
+                                    const totalPerdido = regras.reduce((a, r) => a + r.perdido, 0);
+                                    const indiceGeral = totalEsperado > 0 ? Math.round((totalReal / totalEsperado) * 100) : 0;
+
+                                    return (
+                                        <div className="lg:col-span-2 bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col min-w-0">
+                                            <div className="flex items-center justify-between gap-2 mb-4 sm:mb-5 min-w-0">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="p-2 bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 rounded-lg shrink-0"><Watch size={18} /></div>
+                                                    <div className="min-w-0">
+                                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-xs sm:text-sm uppercase tracking-wide truncate">ANÁLISE DE ANEXAÇÃO</h3>
+                                                        <p className="text-[9.5px] sm:text-[10px] font-medium text-neutral-400 dark:text-neutral-500 truncate">Base: {aparelhos} aparelho(s) vendido(s) no mês</p>
+                                                    </div>
+                                                </div>
+                                                <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-full border shrink-0 whitespace-nowrap ${indiceGeral >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800' : indiceGeral >= 60 ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800' : 'bg-red-50 text-[#E3000F] border-red-200 dark:bg-[#E3000F]/15 dark:text-red-400 dark:border-[#E3000F]/30'}`}>
+                                                    Índice: {indiceGeral}%
+                                                </span>
+                                            </div>
+
+                                            {aparelhos === 0 ? (
+                                                <div className="flex-1 flex flex-col items-center justify-center text-center py-6 text-neutral-400 dark:text-neutral-500">
+                                                    <Smartphone size={28} className="mb-2 opacity-40" />
+                                                    <span className="text-xs font-bold">Nenhum aparelho vendido no período.</span>
+                                                    <span className="text-[10px]">A anexação é calculada a partir de cada aparelho vendido.</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                                                        {regras.map(r => (
+                                                            <div key={r.key} className="bg-neutral-50/70 dark:bg-neutral-800/40 p-3 rounded-2xl border border-neutral-100 dark:border-neutral-800 min-w-0">
+                                                                <div className="flex justify-between items-center gap-2 mb-1">
+                                                                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-neutral-700 dark:text-neutral-200 whitespace-nowrap truncate">{r.label}</span>
+                                                                    <span className={`text-[10px] sm:text-xs font-extrabold px-1.5 py-0.5 rounded-md shrink-0 ${r.pct >= 100 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-[#E3000F] dark:bg-red-900/30 dark:text-red-400'}`}>{r.pct}%</span>
+                                                                </div>
+                                                                <div className="text-[9px] sm:text-[10px] text-neutral-400 dark:text-neutral-500 font-semibold mb-2 whitespace-nowrap truncate">Regra: {r.regra}</div>
+                                                                <div className="w-full bg-neutral-200/80 dark:bg-neutral-700 rounded-full h-2 overflow-hidden mb-2">
+                                                                    <div className={`${r.pct >= 100 ? 'bg-green-500' : r.color} h-full rounded-full transition-all duration-1000`} style={{ width: `${Math.min(r.pct, 100)}%` }} />
+                                                                </div>
+                                                                <div className="flex justify-between items-center gap-2 text-[10px] sm:text-[11px] font-bold">
+                                                                    <span className="text-neutral-600 dark:text-neutral-300 whitespace-nowrap">Feito: <strong className="text-neutral-900 dark:text-white">{r.real}</strong> / {r.esperado}</span>
+                                                                    {r.perdido > 0 ? (
+                                                                        <span className="text-[#E3000F] dark:text-red-400 whitespace-nowrap">Deixou de anexar: {r.perdido}</span>
+                                                                    ) : (
+                                                                        <span className="text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Anexação completa ✓</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <div className="mt-3 sm:mt-4 p-3 rounded-2xl bg-neutral-900 dark:bg-neutral-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300">Oportunidades não anexadas no mês</span>
+                                                        <span className="text-sm sm:text-base font-black text-amber-300 whitespace-nowrap">{totalPerdido} itens ({totalReal} de {totalEsperado} esperados)</span>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* ===================== RANKING DE OPERADORAS (PORTABILIDADE) ===================== */}
+                                {(() => {
+                                    const counts = {};
+                                    (salesData || []).forEach(sale => {
+                                        if (String(sale.vendedor || '').trim().toUpperCase() !== String(selectedSeller || '').trim().toUpperCase()) return;
+                                        if (String(sale.portabilidade || '').toUpperCase() !== 'SIM' || !sale.data) return;
+                                        let saleMonth = '';
+                                        if (sale.data.includes('/')) {
+                                            const parts = sale.data.split('/');
+                                            if (parts.length === 3) saleMonth = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+                                        } else if (sale.data.includes('-')) {
+                                            saleMonth = sale.data.slice(0, 7);
+                                        }
+                                        if (saleMonth !== monthFilter) return;
+                                        const op = String(sale.operadoraOrigem || 'NÃO INFORMADA').trim().toUpperCase() || 'NÃO INFORMADA';
+                                        const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
+                                        counts[op] = (counts[op] || 0) + q;
+                                    });
+                                    const lista = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                                    const totalPort = lista.reduce((a, [, v]) => a + v, 0);
+                                    const lider = lista[0];
+
+                                    return (
+                                        <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col min-w-0">
+                                            <div className="flex items-center justify-between gap-2 mb-4 sm:mb-5 min-w-0">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0"><Target size={18} /></div>
+                                                    <div className="min-w-0">
+                                                        <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-xs sm:text-sm uppercase tracking-wide truncate">PORTABILIDADE POR OPERADORA</h3>
+                                                        <p className="text-[9.5px] sm:text-[10px] font-medium text-neutral-400 dark:text-neutral-500 truncate">De onde vêm os clientes portados</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 shrink-0 whitespace-nowrap">{totalPort} Port.</span>
+                                            </div>
+
+                                            {lista.length === 0 ? (
+                                                <div className="flex-1 flex flex-col items-center justify-center text-center py-6 text-neutral-400 dark:text-neutral-500">
+                                                    <Target size={28} className="mb-2 opacity-40" />
+                                                    <span className="text-xs font-bold">Nenhuma portabilidade no período.</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="mb-3 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50 flex items-center justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <span className="block text-[9px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Mais pedidos de portabilidade</span>
+                                                            <span className="text-base sm:text-lg font-black text-neutral-900 dark:text-white whitespace-nowrap truncate">{lider[0]}</span>
+                                                        </div>
+                                                        <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 shrink-0">{totalPort > 0 ? Math.round((lider[1] / totalPort) * 100) : 0}%</span>
+                                                    </div>
+                                                    <div className="space-y-2.5">
+                                                        {lista.map(([op, qtd], idx) => {
+                                                            const pct = totalPort > 0 ? Math.round((qtd / totalPort) * 100) : 0;
+                                                            return (
+                                                                <div key={op} className="min-w-0">
+                                                                    <div className="flex justify-between items-center mb-1 gap-2">
+                                                                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 whitespace-nowrap truncate">{idx + 1}º {op}</span>
+                                                                        <span className="text-[10px] sm:text-xs font-black text-neutral-800 dark:text-neutral-100 shrink-0 whitespace-nowrap">{qtd} un • {pct}%</span>
+                                                                    </div>
+                                                                    <div className="w-full bg-neutral-200/80 dark:bg-neutral-700 rounded-full h-2 overflow-hidden">
+                                                                        <div className={`${idx === 0 ? 'bg-emerald-500' : 'bg-neutral-400 dark:bg-neutral-500'} h-full rounded-full transition-all duration-1000`} style={{ width: `${pct}%` }} />
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </div>
                     ) : (

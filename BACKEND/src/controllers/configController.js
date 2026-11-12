@@ -48,6 +48,15 @@ export const getConfig = async (req, res) => {
                 if (prefs.lastSeenUpdateVersion) user.lastSeenUpdateVersion = prefs.lastSeenUpdateVersion;
             }
 
+            // Mesclar foto e destaque do perfil (profilesDB)
+            if (configData && configData.profilesDB) {
+                const prof = configData.profilesDB[row.USERNAME] || configData.profilesDB[String(row.USERNAME || '').toUpperCase()];
+                if (prof) {
+                    if (prof.photoUrl) user.photoUrl = prof.photoUrl;
+                    if (prof.customHighlight) user.customHighlight = prof.customHighlight;
+                }
+            }
+
             usersDB[row.USERNAME] = user;
         }
 
@@ -92,6 +101,31 @@ export const syncConfig = async (req, res) => {
         }
 
         conn = await getOracleConnection();
+
+        // Preserva profilesDB, customArgumentacoes e userPreferences já salvos no banco
+        const existingRes = await conn.execute(
+            `SELECT DOCUMENT_DATA FROM CONFIGURACOES WHERE STORE_ID = :storeId`,
+            { storeId }
+        );
+        if (existingRes.rows.length > 0 && existingRes.rows[0].DOCUMENT_DATA) {
+            try {
+                const existingDoc = JSON.parse(existingRes.rows[0].DOCUMENT_DATA);
+                if (existingDoc.profilesDB && !configData.profilesDB) {
+                    configData.profilesDB = existingDoc.profilesDB;
+                }
+                if (existingDoc.customArgumentacoes && !configData.customArgumentacoes) {
+                    configData.customArgumentacoes = existingDoc.customArgumentacoes;
+                }
+                if (existingDoc.userPreferences) {
+                    configData.userPreferences = {
+                        ...existingDoc.userPreferences,
+                        ...(configData.userPreferences || {})
+                    };
+                }
+            } catch (e) {
+                console.error("Erro ao mesclar config existente:", e);
+            }
+        }
 
         await conn.execute(
             `MERGE INTO CONFIGURACOES c

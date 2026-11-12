@@ -65,6 +65,9 @@ export function Acessos({
       if (response && response.usersDB) {
         setUsersDB(response.usersDB);
       }
+      if (response && response.token) {
+        localStorage.setItem('jwt_token', response.token);
+      }
       setIsUnlocked(true);
       toast.success("Cofre de Acessos Desbloqueado!");
     } catch (error) {
@@ -135,8 +138,7 @@ export function Acessos({
     if (
       !formData.name ||
       !formData.username ||
-      !formData.password ||
-      !formData.email
+      !formData.password
     ) {
       toast.error("Preencha os campos obrigatórios!");
       return;
@@ -157,6 +159,9 @@ export function Acessos({
       });
       if (response && response.usersDB) {
           setUsersDB(response.usersDB);
+      }
+      if (response && response.token) {
+          localStorage.setItem('jwt_token', response.token);
       }
       toast.success(
         editingUsername

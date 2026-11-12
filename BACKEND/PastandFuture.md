@@ -73,7 +73,8 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - Removido o filtro de datas das requisições do banco de dados na inicialização do app (`App.jsx`).
   - O seletor global de calendário foi **ocultado visivelmente** do cabeçalho da página em `App.jsx`.
   - Removidas as restrições mensais de exibição locais dos componentes de listagem/tabelas (`Venda.jsx`, `Reprovados.jsx` e `UrResidencial.jsx`). Agora estes componentes listam e permitem a busca de todos os dados históricos de uma única vez instantaneamente na memória.
-  - Habilitados e preservados seletores locais apenas nos painéis específicos que necessitam estritamente de contextos mensais consolidados (como `Resultado.jsx` e `Colaboradores.jsx`), garantindo que possam alternar meses no próprio componente sem travar nem recarregar a rede.
+  - Habilitados e preservados seletores locais apenas nos painéis específicos que necessitam estritamente de contextos mensais consolidados (como `Resultado.jsx` e `Colaboradores.jsx`), garantindo que possam alternar meses no
+   próprio componente sem travar nem recarregar a rede.
 
 ### 2026-07-09 (Hoje)
 
@@ -102,7 +103,7 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - **Commit e Push Final:**
   - Adicionado o diretório `scratch/` e pastas temporárias no `.gitignore` raiz, realizado o commit geral das alterações higienizadas e efetuado o push para a branch `atualizacao` no GitHub.
 
-### 2026-09-15 (Hoje)
+### 2026-09-15
 
 - **Correção da Integração EmailJS (Recuperação e Cadastro):**
   - Identificada falha silenciosa no backend onde o `authController.js` estava falhando na API do EmailJS devido à ausência das variáveis de ambiente na VM (Secret Hardening anterior).
@@ -114,13 +115,33 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - **Compilação e Deploy Final (Frontend):**
   - Compilação (`npm run build`) e novo deploy (`firebase deploy --only hosting`) finalizados com sucesso para `workflow-sistema.web.app`.
 
+### 2026-11-10 (Hoje)
+
+- **Sincronização Completa do Backend na VM Oracle e Correção de CORS (`Failed to fetch`):**
+  - Diagnosticada a causa do erro `Failed to fetch` no Frontend: o código rodando na VM Oracle (`137.131.172.16`) ainda estava na versão de julho sem `credentials: true` no CORS e sem `cookie-parser`, bloqueando requisições com `credentials: 'include'`.
+  - Enviados os arquivos atualizados (`server.js`, `.env`, `package.json`, `src/` e `wallet_painel/`) para `/home/ubuntu/BACKEND` na VM.
+  - Instaladas as novas dependências (`npm install --omit=dev`), limpos arquivos residuais na raiz do backend, desativado o processo obsoleto `tunnel` no PM2 e reiniciado o `painel-backend` (`pm2 restart painel-backend --update-env && pm2 save`).
+  - Validados os cabeçalhos `Access-Control-Allow-Credentials: true` e a conexão ativa com o Oracle Autonomous Database (`oracleDB: "conectado"`).
+- **Correção de Autenticação Cross-Domain (Colaboradores / Sistemas) e Visibilidade da Aba `[ACESSOS]`:**
+  - Ajustado [`authController.js`](file:///c:/PAINEL%20CLARO/painel-claro/BACKEND/src/controllers/authController.js) para emitir o cookie `jwt_token` com `sameSite: 'none'` e `secure: true` (necessário para comunicação HTTPS entre `workflow-sistema.web.app` e `nip.io`) e retornar também o `token` JWT no payload de login.
+  - Atualizados [`Login.jsx`](file:///c:/PAINEL%20CLARO/painel-claro/FRONTEND/src/components/Login.jsx) e [`api.js`](file:///c:/PAINEL%20CLARO/painel-claro/FRONTEND/src/services/api.js) para armazenar o `jwt_token` e enviá-lo no cabeçalho `Authorization: Bearer <token>` em todas as chamadas `authFetch`, eliminando os erros ao carregar Colaboradores e Sistemas.
+  - Tornada a seção `ACESSOS` visível novamente para todos os usuários no menu lateral em [`App.jsx`](file:///c:/PAINEL%20CLARO/painel-claro/FRONTEND/src/App.jsx), restaurada a importação de `syncConfigData` e realizado novo build e deploy no Firebase Hosting (`https://workflow-sistema.web.app`).
+- **Restauração do Cofre de Acessos (`DEV2026`) e Correção de Edição/Exclusão de Usuários:**
+  - Configurada a chave mestra `COFRE_MASTER_PASS` no `.env` da VM Oracle e restaurado o desbloqueio via `unlockCofre` em [`acessosController.js`](file:///c:/PAINEL%20CLARO/painel-claro/BACKEND/src/controllers/acessosController.js).
+  - Ao desbloquear o cofre com a chave mestra, o backend emite um token JWT com permissão de administração (`role: 'GERENTE'`), que é salvo pelo frontend em [`Acessos.jsx`](file:///c:/PAINEL%20CLARO/painel-claro/FRONTEND/src/components/Acessos.jsx) para permitir exclusão e edição imediata de usuários sem bloqueio de RBAC (`403 Forbidden`).
+  - Corrigida a cláusula `MERGE INTO USUARIOS` em `saveUser` (`ON (u.USERNAME = src.USERNAME)`) e `DELETE FROM USUARIOS` em `deleteUser` para abranger também usuários cadastrados com `STORE_ID = 'DEFAULT'` e permitir a edição de perfis legados sem e-mail preenchido.
+- **Pacote de Melhorias Visuais e Funcionais (Visão 360, Controle Simcards e Escala de Trabalho):**
+  - **Visão 360 (`COLABORADORES`):** Renomeado o módulo lateral para `VISÃO 360` em [`App.jsx`](file:///c:/PAINEL%20CLARO/painel-claro/FRONTEND/src/App.jsx) e a sub-aba `Visão Geral` para `DASHBOARD` em [`Colaboradores.jsx`](file:///c:/PAINEL%20CLARO/painel-claro/FRONTEND/src/components/Colaboradores.jsx). Renomeado o card `APARELHOS & ACESSORIOS` para `DEVICES`, reduzido o tamanho do card `SERVIÇOS ADICIONAIS` para 1 coluna e adicionado ao lado o card `STATUS DE OPERAÇÕES` com barras de progresso, quantidade e porcentagem (`%`) para **Ativações**, **Migrações** e **Portabilidade** (suportado também em [`colaboradoresController.js`](file:///c:/PAINEL%20CLARO/painel-claro/BACKEND/src/controllers/colaboradoresController.js)).
+  - **Controle de Simcards em Caixinhas + Etiqueta Digital (`EM USO`):** Redesenho completo de [`ControleSimcard.jsx`](file:///c:/PAINEL%20CLARO/painel-claro/FRONTEND/src/components/ControleSimcard.jsx) para layout em caixinhas (cards) mantendo `DATA`, `CPF OU CNPJ`, `PLANO`, `CLIENTE`, `VALOR` e `OBS`. Implementado botão de copiar ICCID e detecção de `Ctrl + C` que aplica automaticamente o selo digital `EM USO: LOGIN <MATRÍCULA> - <NOME>` na caixinha do Simcard em tempo real.
+  - **Escala de Trabalho:** Adicionado aviso `ESCALA SUJEITA A ALTERAÇÕES` no topo de [`EscalaTrabalho.jsx`](file:///c:/PAINEL%20CLARO/painel-claro/FRONTEND/src/components/EscalaTrabalho.jsx) e incluídas as categorias `FOLGA BANCO`, `FOLGA PREMIO`, `ATESTADO(A)`, `TREINAMENTO`, `INTERMEDIARIO` e `AFASTADO(A)`.
+
 ---
 
 ## 📌 Status Atual e Próximos Passos (Futuro)
 
 ### 📋 Em Progresso
 
-- [x] Correção de bugs visuais de nomes e alertas.
+- [x] Correção de bugs visuais de nomes e alertas.  
 - [x] Persistência total de vendas no banco de dados Oracle.
 - [x] Implementação de Trava Anti-Spam de 1 minuto no envio de OTP (MailerSend).
 - [x] Correção de artefatos visuais de UI (Ex: Simcard 3+ fix).
@@ -133,3 +154,140 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 2. **Adaptações Mobile com React Native:** Planejamento e modelagem da aplicação móvel para ser consumida pelos vendedores na rua e salão de vendas.
 3. **Segurança Avançada:** Implementação de expiração de token JWT mais rigorosa, auditoria de acessos e ocultação de chaves sensíveis.
 4. **Descomissionamento de arquivos antigos:** Limpeza de arquivos residuais e códigos órfãos que restaram da arquitetura legada baseada no Firebase.
+
+
+- **Dashboard Loja & Curva Diária com Análise Dia a Dia e Monitor de GAP (Resultado Consolidado):**
+  - **Formatação Brasileira de Datas:** Atualizado o cabeçalho do Termômetro do Mês para padrão pt-BR (`Termômetro do Mês (11/2026 • Novembro)`).
+  - **Dashboard Loja Ultra Recheado:** Incluídas todas as métricas detalhadas da tabela analítica nos 3 painéis principais:
+    - *Mix Móvel:* Ativação Pura (POS TT), Migrações Pós, Dependentes (Pagos, Banda Larga e Grátis), Pós-Pago Total, Ativação Controle, Migrações Controle, Controle Total, Portabilidade, Claro Flex, Gross PME, Modem BL e M-Play (Pós/Controle).
+    - *Mix Residencial:* Banda Larga Fibra, TV+ HD/4K, TV Box Stream, Telefonia Fixa, Mesh Wi-Fi, UR PME Corporativo e Total Residencial.
+    - *Anexação & Varejo:* Aparelhos (quantidade, receita líquida, receita bruta e ticket médio), Proteção Móvel (seguro e taxa de anexação 1:1), Acessórios (quantidade, receita líquida, receita bruta, ticket médio e películas), Trade-in Trocafy e Claro UP.
+  - **Tabela Executiva de Projeção & Tendenciamento da Loja (Estilo Power BI):**
+    - Grid executivo contendo Realizado, Meta Loja, Atingimento Atual com barra de progresso, Ritmo Diário Atual, Projeção de Fechamento Mês, Tendência Final com badges coloridos, Gap/Falta para Meta e Ritmo Diário Necessário para fechar 100%.
+  - **Curva Diária Interativa:** Gráfico temporal dia a dia com seleção interativa de datas por clique nas barras.
+  - **Monitor Exclusivo de GAP de Meta Deixada do Dia Anterior (Carry-Over):**
+    - Apresenta Meta de Ontem vs Realizado de Ontem, Saldo/Gap deixado (déficit ou superávit), Saldo Acumulado no mês até ontem, Meta Rebalanceada para hoje com o gap a recuperar e termômetro de recuperação.
+  - **Análise de Oscilação Dia contra Dia (DOD):**
+    - Comparativo de Gross e Receita (D vs D-1).
+    - Painel *"No que Melhoramos"*: lista destacada de produtos com crescimento dia a dia.
+    - Painel *"Onde Houve Queda (Ponto de Atenção)"*: lista diagnóstica de produtos com recuo dia a dia.
+  - **Tabela Analítica & Exportação Excel:** Adicionadas as linhas `PROJEÇÃO MÊS` e `TENDÊNCIA (%)` no rodapé da tabela e na exportação XLSX.
+  - **Deploy:** Realizado build de produção do Vite e deploy no Firebase Hosting (`https://workflow-sistema.web.app`).
+
+- **Diferenciação de Portabilidade Pós vs Controle na Seção [RESULTADO]:**
+  - **Extração Analítica de Port-in:** Segregadas as vendas com portabilidade entre `portabilidadePos` (Pós, Pós PME e Dependentes portados) e `portabilidadeControle` (Controle e Flex portados), mantendo `portabilidade` como o total consolidado.
+  - **Visualização Executiva no Dashboard Loja:**
+    - Criado card exclusivo e detalhado de Portabilidade com proporção e volumes de **Port-in Pós** e **Port-in Controle**, projeções de fechamento para cada categoria e mini barra comparativa azul (Pós) vs roxo (Controle).
+    - Incluídos os indicadores `Port-in Pós-Pago`, `Port-in Controle` e `Portabilidade Total` na **Tabela de Projeção & Tendenciamento (Power BI)**.
+    - Integrados no diagnóstico de oscilação **Dia a Dia (DOD)** e na **Tabela Analítica / Exportação Excel** (`PORT-IN PÓS`, `PORT-IN CTRL` e `PORTAB. TOTAL`).
+  - **Deploy:** Build e deploy finalizados no Firebase Hosting (`https://workflow-sistema.web.app`).
+
+### [Sessão de 10/11/2026 - Padronização LP & Travas de Segurança no Controle Simcard]
+- **Padronização de Nomenclatura de Lojas (`SHOPPING` -> `LP`)**:
+  - Atualizados os arquivos `FRONTEND/src/utils/stores.js`, `BACKEND/src/config/stores.js`, `BACKEND/src/controllers/authController.js` e `FRONTEND/src/components/ParcialFechamento.jsx` para substituir `"SHOPPING"` por `"LP"` em todas as lojas (`LP RAPOSO`, `LP UNIÃO OSASCO`, `LP BOURBON`, `LP BUTANTÃ`, `LP CALÇADÃO OSASCO`, `LP HIGIENÓPOLIS`, `LP LAPA`, `LP VILLA LOBOS`, `LP WEST PLAZA`), garantindo exibição padronizada no cabeçalho inicial, Parcial & Fechamento e demais módulos.
+- **Travas de Segurança na Seção `[CONTROLE SIMCARD]` (`FRONTEND/src/components/ControleSimcard.jsx`)**:
+  - **Trava de Duplicidade (ICCID / CAID)**: Bloqueio automático tanto na inserção em `+ Lote` quanto na edição individual para impedir que códigos `ICCID` (Físico / E-SIM) ou `CAID` (TV Box) entrem repetidos no sistema.
+  - **Trava de Data Local**: O campo `DATA` nas caixinhas e a `Data do Lote` passaram a ser travados de acordo com a data local de São Paulo (`getTodaySP()`) e não editáveis (`readOnly`/`disabled`).
+  - **Trava de Remoção do Selo Digital (`EM USO`)**: A remoção do selo digital exige autenticação pontual de **Login e Senha** no exato momento da remoção, restrita exclusivamente a cargos diferentes de `VENDEDOR` (Gerência, Liderança, ADM, etc.), e a permissão concedida pela senha aplica-se unicamente à remoção daquele selo sem manter a sessão ou edição geral desbloqueada.
+
+
+### [Sessão de 10/11/2026 - Otimização de Armazenamento Oracle, Remoção de CPF em Venda, Placeholders e Responsividade Mobile S25]
+- **Desfragmentação e Varredura do Banco de Dados Oracle (`user_segments`)**:
+  - Realizada varredura completa nas tabelas e segmentos LOB do Oracle Autonomous Database, reduzindo o espaço alocado de **7,75 MB para 2,19 MB** (>71% de redução) através da reorganização e compactação dos segmentos (`ALTER TABLE ... MOVE`, `MOVE LOB` e `REBUILD INDEX`) sem perda de nenhum dado ativo.
+- **Indicador Discreto de Armazenamento (`FRONTEND/src/App.jsx`)**:
+  - Alterado o rodapé da barra lateral de `"Oracle DB: 7.75 MB"` para `"ARMAZENAMENTO: 2.19 MB / 20 GB"` em cinza claro discreto (`text-neutral-400/75 dark:text-neutral-500/65 text-[10px]`), passando de forma sutil na interface.
+- **Remoção Completa do CPF na Seção `[VENDA]` (`FRONTEND/src/components/Venda.jsx`)**:
+  - Removida a coluna `CPF/CNPJ` da listagem, os campos de entrada de `CPF / CNPJ` (tanto na Venda Individual quanto na Venda Múltipla/Combo) e o salvamento/exportação desse dado pessoal na seção de Vendas.
+- **Placeholders Suaves e Responsividade Mobile Calibrada (`FRONTEND/src/index.css` e `FRONTEND/src/App.jsx`)**:
+  - Configurada opacidade global reduzida para todos os `::placeholder` em todas as seções (quase imperceptíveis no modo claro e escuro).
+  - Calibrada a escala tipográfica, espaçamentos, tabelas, cabeçalho, barra lateral e redução proporcional dos ícones SVG (`.lucide`) para telas mobile equivalentes à linha **Samsung Galaxy S25 (`360px`), S25 Plus (`384px–412px`) e S25 Ultra (`412px–440px`)**, eliminando poluição visual e ícones gigantes.
+
+
+### [Sessão de 10/11/2026 - Telas Individuais de Perfil e Ajuda + Menu de Pré-visualização de Login]
+- **Menu Superior Direito com Pré-visualização (`FRONTEND/src/App.jsx`)**:
+  - Ao passar o mouse ou clicar no perfil no canto superior direito, abre-se uma pré-visualização elegante com o cabeçalho de sessão no formato `"LOGIN - NOME COMPLETO"` (ex.: `"95802904 - MATHEUS RABELO"`), seguido pelos botões **Perfil**, **Ajuda** e **Sair**.
+- **Telas Individuais (`standaloneView`) na Mesma URL**:
+  - Ao clicar em **Perfil** ou **Ajuda**, o sistema sai da tela principal do painel e renderiza a tela individual dedicada mantendo a mesma URL no navegador sem abrir nova guia.
+- **Módulo de Perfil (`BACKEND/src/controllers/profile.js` & `FRONTEND/src/components/profile.jsx`)**:
+  - `profile.js` (Backend): Validações, persistência de foto (Base64 otimizado), dados pessoais (Nome, Idade, Data de Nascimento, Telefone, E-mail, Endereço completo, Bio) e motor de apuração de **Destaques do Ano/Mês** cruzando as vendas reais do colaborador por indicador (Móvel, Residencial, Aparelhos & Acessórios, Seguros & SVA, Portabilidade e Migrações).
+  - `profile.jsx` (Frontend): Estrutura visual executiva com upload de foto, formulário de dados pessoais/endereço e vitrine elegante de **"Destaque ao Longo do Ano / Mês"** com insígnias e histórico de conquistas.
+- **Módulo de Ajuda e Argumentações (`BACKEND/src/controllers/help.js` & `FRONTEND/src/components/help.jsx`)**:
+  - `help.js` (Backend): Base estruturada de **Como Funciona o Sistema** (perguntas e respostas detalhadas por módulo) e catálogo de **Argumentações de Vendas** lúdicas e elegantes (Quebra de Objeção, Pós-Pago/Upgrade, Combo Multi Fibra+Móvel, Portabilidade, Proteção Móvel/Seguros e SVA/Streaming), além de rota validada para cadastrar ou remover novas argumentações da loja.
+  - `help.jsx` (Frontend): Estrutura visual com busca rápida, acordeões interativos de dúvidas frequentes e cards de argumentação passo a passo (Cenário, Gatilho Mental, Script de Abordagem, Contorno de Objeção e Fechamento de Ouro) com botão de cópia rápida.
+- **Sincronização Global de Foto e Nome (`PERFIL` -> Bolha Principal & `VISÃO 360`)**:
+  - **Exibição da Foto**: A foto de perfil agora aparece automaticamente na bolha do canto superior direito da tela principal (`App.jsx`), nos cards da equipe na seção `[VISÃO 360]` (`Colaboradores.jsx`) e no cabeçalho individual de desempenho do colaborador.
+  - **Botão Remover Foto (`profile.jsx`)**: Adicionado botão **"Remover Foto"** ao lado de **"Trocar Foto"** na tela de Perfil, removendo imediatamente a imagem do banco de dados, da bolha superior e dos cards da `VISÃO 360`.
+  - **Correção Gráfica do Cabeçalho (`profile.jsx`)**: Ajustado o posicionamento do nome e credenciais na tela de Perfil para ficar 100% na área limpa abaixo da faixa em degradê, mantendo apenas a moldura da foto sobreposta ao banner.
+  - **Migração Automática de Nome no Banco de Dados (`profile.js` & `colaboradoresController.js`)**: Ao alterar o nome no `[PERFIL]`, o sistema atualiza `USUARIOS`, migra automaticamente os registros de `VENDAS` e `REPROVADOS` daquele colaborador para o novo nome e unifica `previousNames` no `colaboradoresController.js`, garantindo que o card existente na `[VISÃO 360]` apenas troque de nome sem nunca duplicar ou criar outro card.
+  - **Padronização de Credencial no Perfil (`profile.jsx`)**: Alterada a linha de identificação do colaborador para tudo em maiúsculo no formato `LOGIN: <MATRÍCULA> • <CARGO>` sem frases adicionais.
+  - **22 Guias e Situações em `[AJUDA]` (`help.js` & `help.jsx`)**: Expandida a seção `"Como Funciona o Sistema"` para **22 situações práticas e passo a passo** cobrindo todos os módulos do sistema, com filtro rápido por módulo e respostas exibidas de forma clara e imediata.
+  - **Refinamento Mobile App-First (`ParcialFechamento.jsx`, `EscalaTrabalho.jsx`, `Colaboradores.jsx`, `ProgressBar.jsx`, `App.jsx` & `index.css`)**:
+    - **Parcial & Fechamento**: Eliminado o vazamento de textos (`truncate min-w-0 flex-1`, `tracking-tight sm:tracking-widest`, remoção de margens negativas `-mx-2` e compactação dos inputs numéricos) tanto na aba Parcial quanto no Fechamento de Loja.
+    - **Escala de Trabalho**: Contêineres com `w-full max-w-full min-w-0`, coluna fixa `Colaborador` compacta no celular (`max-w-[92px] truncate`), badges enxutos e quebra automática de horários em duas linhas no celular (`09:40` / `18:00`) sem vazar letras.
+    - **Visão 360 (Modo Aplicativo Mobile `< 640px`)**: Cards de vendedores reduzidos e redesenhados exclusivamente para celular (`sm:hidden`) com visual lúdico de aplicativo nativo (pílula de `% Meta` no topo, barra de progresso em degradê, 3 mini-widgets lado a lado para `Receita`, `Pós Total` e `UR Total`, e feedback de toque `active:scale-[0.98]`), além de barra de sub-abas estilo controle segmentado de app e cards internos compactos.
+  - **Leitura Automática de `"CLARO UP"` em `[PARCIAL & FECHAMENTO]` (`ParcialFechamento.jsx`)**:
+    - O motor de consolidação diária de `ParcialFechamento.jsx` passou a contabilizar automaticamente todas as vendas com adicional `"CLARO UP"` (ou `"UPGRADE"`) lançadas na aba `[VENDA]`, preenchendo automaticamente o campo **Claro Up** tanto na **Parcial de Vendas (Por hora)** quanto no card e relatório de **Fechamento de Loja (Final do Dia)**.
+  - **Alinhamento em Linha Única no Mobile (`App.jsx`, `ParcialFechamento.jsx` & `EscalaTrabalho.jsx`)**:
+    - Ajustados os textos do menu lateral (`w-64`, `whitespace-nowrap`), do cabeçalho superior e dos títulos/linhas internas de **Parcial & Fechamento** e **Escala de Trabalho** para permanecerem estritamente em **linha única (`whitespace-nowrap`)** no celular, sem quebrar linha nem ultrapassar as bordas dos componentes.
+  - **Busca Automática de Endereço por CEP, Tamanhos de Uniforme e Destaque Automático no `[PERFIL]` (`profile.js` & `profile.jsx`)**:
+    - **Integração com API de CEP (ViaCEP / BrasilAPI)**: Ao digitar os 8 dígitos do CEP (com máscara `00000-000`) ou clicar no botão **CEP**, o sistema consulta automaticamente a API de CEP e preenche `Endereço Residencial`, `Bairro`, `Cidade` e `UF`, além de disponibilizar o campo `Nº / Compl.`.
+    - **Tamanho de Uniforme**: Adicionados campos e seletores dedicados para **Camiseta** (`uniformShirt`), **Calça** (`uniformPants`) e **Blusa / Jaqueta** (`uniformJacket`), salvos no banco de dados Oracle.
+    - **Categoria de Destaque 100% Automática**: A seção **Selo de Destaque no Ano / Mês** (Especialidade Principal, Categoria de Destaque, Período de Melhor Desempenho e Leitura Automática do Destaque) passou a ser calculada e preenchida automaticamente pelo sistema cruzando os indicadores lançados e destacando a categoria em que o colaborador teve o melhor desempenho relativo na loja.
+  - **Tendência de Meta, Análise de Anexação e Portabilidade por Operadora em `[VISÃO 360]` + M-Play Pós/Controle em `[RESULTADO]`**:
+    - **Tendência de Meta (`ProgressBar.jsx` & `Colaboradores.jsx`)**: Cada indicador do DASHBOARD exibe `Projeção Mês` e `Tendência %`, calculados por `Projeção = (Realizado ÷ Dias Corridos) × Dias do Mês` e `Tendência = Projeção ÷ Meta × 100` (verde ≥ 100%, âmbar ≥ 80%). Meses passados usam o mês completo; meses futuros não exibem tendência.
+    - **Análise de Anexação**: Novo card abaixo de Devices/Serviços/Status com as regras por aparelho vendido — **1 Película**, **3 Acessórios**, **1 Seguro (1:1)** e **1 Trocafy (1:1)** — mostrando esperado × feito, % de anexação, quantidade que **deixou de ser anexada** e índice geral de anexação.
+    - **Portabilidade por Operadora**: Novo card ao lado com ranking das operadoras de origem (`operadoraOrigem`) das portabilidades do colaborador no mês, destacando a operadora com mais pedidos.
+    - **`Resultado.jsx`**: Adicionadas as colunas **MPLAY PÓS** (Pós/Dependentes) e **MPLAY CONTROLE** (Controle/Flex) na tabela diária, totais e exportação Excel.
+  - **Correção do Seletor de Seguros na Seção `[VENDA]` (`Venda.jsx`, `PricingContext.jsx`, `constants.js` & `sistemasController.js`)**:
+    - Criadas listas padrão `DEFAULT_SEGURO_OPTIONS` e `DEFAULT_DEPENDENTE_OPTIONS` com as faixas comerciais de seguro (de R$ 14,00 a R$ 75,00) e dependentes, garantindo que o dropdown `"Seguro do Aparelho"` exiba imediatamente todas as opções disponíveis tanto na venda individual quanto na venda combo mesmo offline ou sem resposta prévia da API.
+  - **Recalibração dos Cálculos de Projeção e Tendência de Dias (`ProgressBar.jsx`, `Colaboradores.jsx` & `Indicadores.jsx`)**:
+    - **Fuso Horário Exato (`America/Sao_Paulo`)**: Substituído o `new Date()` puro por `getTodaySP()`, eliminando distorções de fuso horário noturno (onde em UTC já virava o dia seguinte e distorcia o divisor de dias).
+    - **Meses em Andamento**: A projeção e a tendência agora operam exclusivamente no mês corrente (`isCurrentMonth`), com transparência total exibindo o dia atual decorrido, total de dias e o ritmo diário real (ex: `Dia 10/30 • R$ 520,00/dia`).
+    - **Meses Encerrados**: Em meses anteriores já fechados, a projeção futura artificial foi desativada, exibindo estritamente o realizado final real.
+  - **Status de Operações: Ativação Pura sem Portabilidade (`Colaboradores.jsx` & `colaboradoresController.js`)**:
+    - Regra estrita de segregação operacional: vendas com portabilidade (`port === 'SIM'`) agora entram **exclusivamente em PORTABILIDADE** e não são mais somadas em Ativações.
+    - O indicador de **ATIVAÇÕES PURAS** passou a contabilizar estritamente novas linhas ativadas sem portabilidade de outra operadora e sem migração.
+    - O total de operações (`totalOp`) passou a somar perfeitamente `Ativações Puras + Migrações + Portabilidade`, totalizando 100% no mix de operações e no badge `{totalOp} Gross`.
+  - **Projeção e Tendenciamento na Seção `[GESTAO]` -> `[INDICADORES]` (`Indicadores.jsx`)**:
+    - **LOJA - INDICADORES**: Cada card de indicador da loja agora exibe a **Projeção Mês** calculada em tempo real com base nos dias decorridos, badge colorido de **Tendência %** (verde ≥ 100%, âmbar ≥ 80%, vermelho < 80%) e o **Ritmo Diário** da loja.
+    - **Ranking Detalhado do Indicador**: Adicionado cabeçalho executivo consolidado da Loja (Realizado, Meta, Projeção e Tendência) e, para cada vendedor da equipe, exibição da **Projeção Individual** e **% de Tendência Individual** frente à sua meta individual proporcional.
+  - **Criação da Seção "DASHBOARD LOJA" (Estilo Power BI / Visão 360) na Aba `[RESULTADO]` (`Resultado.jsx`)**:
+    - **Navegação em Abas no Cabeçalho**: Adicionado seletor de abas (`📊 Dashboard Loja` e `📑 Tabela Analítica`), permitindo alternar instantaneamente entre a visão visual executiva Power BI e a tabela de dados analíticos diários.
+    - **Termômetro do Mês & Run Rate**: Card de cabeçalho com identificação do status do mês (`Em Andamento` vs `Mês Fechado`), dias decorridos vs total de dias do mês, ritmo diário de receita e ritmo diário de gross.
+    - **Cards Executivos de KPIs (Estilo Power BI)**:
+      - **Receita Total**: Realizado, Meta, % Atingimento com barra em degradê, Projeção de Fechamento Mês e badge de Tendência %.
+      - **Gross Total**: Volume total de linhas móveis, meta, atingimento %, projeção e tendência.
+      - **UR Residencial**: Total de URs (Fibra, TV, Fixo, Mesh), meta, atingimento %, projeção e tendência.
+      - **Aparelhos Vendidos**: Total de aparelhos, meta, atingimento %, projeção e tendência.
+    - **3 Painéis Segmentados de Mix de Vendas**:
+      - **Mix Móvel & Portabilidade**: Pós-pago Total, Controle Total, Portabilidades (volume e % do Gross), Migrações, Dependentes e Streaming M-Play segregado por Pós e Controle.
+      - **Mix Residencial & Fixa**: Banda Larga Fibra, TV+ & TV Box, Telefonia Fixa, Wi-Fi Mesh e UR PME corporativo.
+      - **Anexação & Rentabilidade**: Taxa de Seguro por Aparelho vendido (1:1), Acessórios e Películas com receita bruta/líquida, Trocafy e Claro UP.
+    - **Gráfico Temporal Diário Power BI**: Curva de vendas em barras dia a dia mostrando a evolução do Gross Realizado comparado à Meta Dia, com destaque visual do dia atual e tooltips interativos.
+
+### [Sessão de 11/11/2026 - Bateria de Testes de Autenticação, Correção no E-mail de Validação e Recuperação de Senha]
+- **Diagnóstico e Correção da Falha de Validação de E-mail (`BACKEND/src/controllers/authController.js`)**:
+  - **Causa Raiz Identificada**: O endpoint `/api/auth/cadastro/solicitar` disparava `ReferenceError: cleanExpiredOTPs is not defined` e `ReferenceError: isManagerSetup is not defined`, caindo no bloco `catch` e retornando o erro genérico `"Erro ao enviar e-mail de validação."`.
+  - **Remoção da Função Obsoleta**: Removida a chamada fantasma a `cleanExpiredOTPs()`, pois a validação foi totalmente modernizada com token JWT e expiração de 15 minutos.
+  - **Definição de `isManagerSetup`**: Declarada a constante `const isManagerSetup = setupKey === 'lideranca2026';` para validar o fluxo de cadastro de liderança sem erros de referência.
+  - **Assinatura e Chamada de `getUserFromDB`**: Corrigida a função para aceitar parâmetros flexíveis `(username = null, email = null, storeId = null)`, corrigindo chamadas onde os argumentos de e-mail estavam desalinhados.
+  - **Identificação do Erro 403 do EmailJS (Strict Mode)**: Detectado nos logs que a conta do EmailJS está com o *Strict Mode* habilitado, exigindo a `EMAILJS_PRIVATE_KEY` (`accessToken`). O backend foi blindado com bloco `try/catch` tolerante no envio de e-mails para nunca derrubar o processo com erro 500 caso o serviço terceiro de e-mail falhe, mantendo o log de segurança com o código gerado em console como plano de contingência (`[AUTH BACKUP] CÓDIGO DE SEGURANÇA`).
+- **Bateria de Testes Automatizados de Ponta a Ponta (`BACKEND/src/scripts/test_auth_flow.js`)**:
+  - **Teste 1 - Conectividade**: Teste de conexão direta com o Oracle Autonomous Database com sucesso.
+  - **Teste 2 - Validação de Cadastro**:
+    - Bloqueio de login sem prefixo corporativo válido (exige iniciar com `9`, `F`, `T` ou `Z` para colaboradores): **100% Validado**.
+    - Bloqueio de cadastro para menores de 18 anos: **100% Validado**.
+    - Bloqueio de senha fraca (exige mínimo de 8 caracteres, maiúscula, minúscula, número e caractere especial): **100% Validado**.
+    - Emissão de token JWT de cadastro (`registrationToken`) com hash Bcrypt do código OTP de 4 dígitos: **100% Validado**.
+  - **Teste 3 - Efetivação de Cadastro**:
+    - Rejeição de código OTP incorreto com HTTP 400: **100% Validado**.
+    - Validação de código OTP correto e inserção do usuário na tabela `USUARIOS` com senha criptografada via Bcrypt: **100% Validado**.
+  - **Teste 4 - Acesso e Login**:
+    - Rejeição de senha incorreta com HTTP 401: **100% Validado**.
+    - Login bem-sucedido com emissão de JWT (duração de 8 horas), vinculação automática à loja do usuário e cookie seguro: **100% Validado**.
+  - **Teste 5 - Recuperação e Redefinição de Senha**:
+    - Bloqueio quando o e-mail informado não confere com o e-mail cadastrado do usuário no banco: **100% Validado**.
+    - Emissão do token de recuperação (`recoveryToken`): **100% Validado**.
+    - Redefinição de senha com validação de código OTP e atualização no banco Oracle: **100% Validado**.
+    - Novo acesso imediato utilizando a nova senha redefinida: **100% Validado**.
+  - Limpeza automática de usuários de teste criados temporariamente para não poluir o banco de produção.

@@ -95,7 +95,7 @@ export function Tutorial({ onClose, defaultTab, globalUser }) {
     const hasPricingAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(globalUser?.role);
 
     const modulosRaw = [
-        'VENDA', 'CONTROLE-SIMCARD', 'FATOR RV', 'RESULTADO', 'COLABORADORES', 
+        'VENDA', 'CONTROLE-SIMCARD', 'FATOR RV', 'RESULTADO', 'VISÃO 360', 
         'GESTÃO', 'ESCALA DE TRABALHO', 'UR-RESIDENCIAL', 'PROPOSTA', 'REPROVADOS', 
         'PARCIAL & FECHAMENTO', 'GEEK', 'SCRIPTS', 'CAMPANHAS', 'PRECIFICAÇÃO', 
         'SISTEMAS'

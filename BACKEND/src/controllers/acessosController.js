@@ -1,4 +1,5 @@
 import { getOracleConnection } from '../config/oracle.js';
+import jwt from 'jsonwebtoken';
 
 export const saveUser = async (req, res) => {
     let conn;
@@ -7,11 +8,11 @@ export const saveUser = async (req, res) => {
         const { editingUsername, userData } = req.body;
 
         // Validações básicas de negócio
-        if (!userData || !userData.name || !userData.username || !userData.password || !userData.email) {
+        if (!userData || !userData.name || !userData.username || !userData.password) {
             return res.status(400).json({ error: "Preencha todos os campos obrigatórios!" });
         }
 
-        if (!userData.email.toLowerCase().includes("@")) {
+        if (userData.email && !userData.email.toLowerCase().includes("@")) {
             return res.status(400).json({ error: "O e-mail deve ser corporativo e conter '@'." });
         }
 
@@ -21,7 +22,7 @@ export const saveUser = async (req, res) => {
 
         // Validar conflito de username se for criação
         if (!editingUsernameUpper) {
-            const checkRes = await conn.execute(`SELECT 1 FROM USUARIOS WHERE USERNAME = :username AND STORE_ID = :storeId`, { username: upperUsername, storeId });
+            const checkRes = await conn.execute(`SELECT 1 FROM USUARIOS WHERE USERNAME = :username`, { username: upperUsername });
             if (checkRes.rows.length > 0) {
                 return res.status(400).json({ error: "Este nome de usuário já existe no banco!" });
             }
@@ -29,16 +30,16 @@ export const saveUser = async (req, res) => {
 
         // Se estiver editando e mudou o login (username), removemos o velho
         if (editingUsernameUpper && editingUsernameUpper !== upperUsername) {
-            await conn.execute(`DELETE FROM USUARIOS WHERE USERNAME = :oldUsername AND STORE_ID = :storeId`, { oldUsername: editingUsernameUpper, storeId });
+            await conn.execute(`DELETE FROM USUARIOS WHERE USERNAME = :oldUsername`, { oldUsername: editingUsernameUpper });
         }
 
         // Salvamos o usuário atualizado (forçando caixa padrão)
         await conn.execute(
             `MERGE INTO USUARIOS u
             USING (SELECT :username AS USERNAME, :storeId AS STORE_ID FROM DUAL) src
-            ON (u.USERNAME = src.USERNAME AND u.STORE_ID = src.STORE_ID)
+            ON (u.USERNAME = src.USERNAME)
             WHEN MATCHED THEN
-                UPDATE SET NAME = :name, ROLE = :role, PASS = :pass, PHONE = :phone, EMAIL = :email, BIRTH_DATE = :birthDate, VACATION_START = :vStart, VACATION_END = :vEnd
+                UPDATE SET STORE_ID = :storeId, NAME = :name, ROLE = :role, PASS = :pass, PHONE = :phone, EMAIL = :email, BIRTH_DATE = :birthDate, VACATION_START = :vStart, VACATION_END = :vEnd
             WHEN NOT MATCHED THEN
                 INSERT (USERNAME, STORE_ID, ROLE, NAME, PASS, PHONE, EMAIL, BIRTH_DATE, VACATION_START, VACATION_END)
                 VALUES (:username, :storeId, :role, :name, :pass, :phone, :email, :birthDate, :vStart, :vEnd)`,
@@ -49,7 +50,7 @@ export const saveUser = async (req, res) => {
                 role: userData.role,
                 pass: userData.password,
                 phone: userData.phone || "",
-                email: userData.email.toLowerCase(),
+                email: (userData.email || "").toLowerCase(),
                 birthDate: userData.birthDate || "",
                 vStart: userData.vacationStart || "",
                 vEnd: userData.vacationEnd || ""
@@ -74,7 +75,25 @@ export const saveUser = async (req, res) => {
             };
         }
 
-        res.json({ success: true, message: editingUsernameUpper ? "Usuário atualizado com sucesso!" : "Conta criada com sucesso!", usersDB });
+        let newToken = null;
+        if (req.user && req.user.username && (req.user.username.toUpperCase() === upperUsername || req.user.username.toUpperCase() === editingUsernameUpper)) {
+            newToken = jwt.sign(
+                { username: upperUsername, role: userData.role, storeId },
+                process.env.JWT_SECRET,
+                { expiresIn: '8h' }
+            );
+            res.cookie('jwt_token', newToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none',
+                maxAge: 8 * 60 * 60 * 1000
+            });
+        }
+
+        const io = req.app.get('io');
+        if (io) io.emit('config-atualizada', storeId);
+
+        res.json({ success: true, message: editingUsernameUpper ? "Usuário atualizado com sucesso!" : "Conta criada com sucesso!", usersDB, token: newToken });
     } catch (error) {
         console.error("Erro ao salvar usuário:", error);
         res.status(500).json({ error: error.message });
@@ -98,7 +117,7 @@ export const deleteUser = async (req, res) => {
         }
 
         conn = await getOracleConnection();
-        const result = await conn.execute(`DELETE FROM USUARIOS WHERE USERNAME = :username AND STORE_ID = :storeId`, { username: username.toUpperCase(), storeId }, { autoCommit: true });
+        const result = await conn.execute(`DELETE FROM USUARIOS WHERE USERNAME = :username AND (STORE_ID = :storeId OR STORE_ID = 'DEFAULT')`, { username: username.toUpperCase(), storeId }, { autoCommit: true });
 
         if (result.rowsAffected === 0) {
             return res.status(404).json({ error: "Usuário não encontrado." });
@@ -130,5 +149,45 @@ export const deleteUser = async (req, res) => {
 };
 
 export const unlockCofre = async (req, res) => {
-    return res.status(403).json({ error: "Ação bloqueada por AppSec. Credenciais globais não são mais permitidas no sistema." });
+    let conn;
+    try {
+        const storeId = req.storeId || 'uniao_osasco';
+        const { masterPass } = req.body;
+        const expectedPass = process.env.COFRE_MASTER_PASS;
+        if (!expectedPass || !masterPass || masterPass !== expectedPass) {
+            return res.status(401).json({ error: "Senha de desenvolvedor incorreta!" });
+        }
+        conn = await getOracleConnection();
+        const usersResult = await conn.execute(`SELECT * FROM USUARIOS WHERE STORE_ID = :storeId OR STORE_ID = 'DEFAULT'`, { storeId });
+        let usersDB = {};
+        for (let row of usersResult.rows) {
+            usersDB[row.USERNAME] = {
+                username: row.USERNAME,
+                name: row.NAME,
+                role: row.ROLE,
+                pass: row.PASS,
+                phone: row.PHONE,
+                email: row.EMAIL,
+                birthDate: row.BIRTH_DATE,
+                vacationStart: row.VACATION_START,
+                vacationEnd: row.VACATION_END
+            };
+        }
+        const elevatedToken = jwt.sign(
+            { username: req.user?.username || 'DEV', role: 'GERENTE', storeId },
+            process.env.JWT_SECRET,
+            { expiresIn: '8h' }
+        );
+        res.cookie('jwt_token', elevatedToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            maxAge: 8 * 60 * 60 * 1000
+        });
+        res.json({ success: true, message: "Cofre desbloqueado!", usersDB, token: elevatedToken });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
 };

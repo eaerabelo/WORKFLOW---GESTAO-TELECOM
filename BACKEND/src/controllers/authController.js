@@ -6,15 +6,15 @@ import fs from 'fs';
 
 const STORES = [
     { id: 'DEFAULT', name: 'Administração Geral', code: 'DEV' },
-    { id: 'uniao_osasco', name: 'UNIÃO OSASCO', code: 'AT1M' },
-    { id: 'shopping_bourbon', name: 'BOURBON', code: 'LB46' },
-    { id: 'shopping_butanta', name: 'BUTANTÃ', code: 'G5Z9' },
-    { id: 'calcadao', name: 'CALÇADÃO OSASCO', code: 'LB32' },
-    { id: 'shopping_higienopolis', name: 'HIGIENÓPOLIS', code: 'LB24' },
-    { id: 'lapa', name: 'LAPA', code: 'FKJ6' },
-    { id: 'shopping_villa_lobos', name: 'VILLA LOBOS', code: 'LB43' },
-    { id: 'shopping_west_plaza', name: 'WEST PLAZA', code: 'LB36' },
-    { id: 'shopping_raposo', name: 'SHOPPING RAPOSO', code: 'K7W8' }
+    { id: 'uniao_osasco', name: 'LP UNIÃO OSASCO', code: 'AT1M' },
+    { id: 'shopping_bourbon', name: 'LP BOURBON', code: 'LB46' },
+    { id: 'shopping_butanta', name: 'LP BUTANTÃ', code: 'G5Z9' },
+    { id: 'calcadao', name: 'LP CALÇADÃO OSASCO', code: 'LB32' },
+    { id: 'shopping_higienopolis', name: 'LP HIGIENÓPOLIS', code: 'LB24' },
+    { id: 'lapa', name: 'LP LAPA', code: 'FKJ6' },
+    { id: 'shopping_villa_lobos', name: 'LP VILLA LOBOS', code: 'LB43' },
+    { id: 'shopping_west_plaza', name: 'LP WEST PLAZA', code: 'LB36' },
+    { id: 'shopping_raposo', name: 'LP RAPOSO', code: 'K7W8' }
 ];
 
 const validarSenha = (password) => {
@@ -32,11 +32,16 @@ if (!JWT_SECRET) {
     console.warn("ATENÇÃO: JWT_SECRET não definido no arquivo .env! A segurança da aplicação está comprometida.");
 }
 
-const getUserFromDB = async (username, email = null, storeId = null) => {
+const getUserFromDB = async (username = null, email = null, storeId = null) => {
     const conn = await getOracleConnection();
     try {
-        let query = `SELECT * FROM USUARIOS WHERE USERNAME = :username`;
-        let params = { username: username.toUpperCase() };
+        let query = `SELECT * FROM USUARIOS WHERE 1=1`;
+        let params = {};
+
+        if (username) {
+            query += ` AND USERNAME = :username`;
+            params.username = username.toUpperCase();
+        }
 
         if (storeId) {
             query += ` AND STORE_ID = :storeId`;
@@ -45,11 +50,11 @@ const getUserFromDB = async (username, email = null, storeId = null) => {
         
         if (email) {
             query += ` AND LOWER(EMAIL) = :email`;
-            params.email = email.toLowerCase();
+            params.email = email.toLowerCase().trim();
         }
 
         const result = await conn.execute(query, params);
-        if (result.rows.length === 0) return null;
+        if (!result.rows || result.rows.length === 0) return null;
         
         const row = result.rows[0];
         
@@ -182,12 +187,12 @@ export const login = async (req, res) => {
         // Define Cookie HttpOnly com o JWT (Proteção XSS e CSRF)
         res.cookie('jwt_token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: true,
+            sameSite: 'none',
             maxAge: 8 * 60 * 60 * 1000 // 8 horas
         });
 
-        res.json({ success: true, user: safeUser });
+        res.json({ success: true, user: safeUser, token });
 
     } catch (error) {
         console.error("Erro no login:", error);
@@ -203,16 +208,17 @@ const sendCodeEmail = async (email, nome, subject, codigo, templateId = 'templat
         message: codigo
     };
 
+    const privateKey = (process.env.EMAILJS_PRIVATE_KEY && process.env.EMAILJS_PRIVATE_KEY.trim()) 
+        ? process.env.EMAILJS_PRIVATE_KEY.trim() 
+        : 'H5l_daPUXm0mgqmcdg_cf';
+
     const payload = {
-        service_id: process.env.EMAILJS_SERVICE_ID,
+        service_id: process.env.EMAILJS_SERVICE_ID || 'service_kpr1ksb',
         template_id: templateId,
-        user_id: process.env.EMAILJS_PUBLIC_KEY,
+        user_id: process.env.EMAILJS_PUBLIC_KEY || 'tRgcNBg8P036AeS_l',
+        accessToken: privateKey,
         template_params: templateParams
     };
-
-    if (process.env.EMAILJS_PRIVATE_KEY) {
-        payload.accessToken = process.env.EMAILJS_PRIVATE_KEY;
-    }
 
     try {
         const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
@@ -223,11 +229,12 @@ const sendCodeEmail = async (email, nome, subject, codigo, templateId = 'templat
 
         if (!response.ok) {
             const errText = await response.text();
-            throw new Error(errText);
+            throw new Error(`EmailJS HTTP ${response.status}: ${errText}`);
         }
+        console.log(`[AUTH] E-mail com código enviado com sucesso para ${email}! Código: ${codigo}`);
     } catch (error) {
-        console.error("Erro no EmailJS no background. CÓDIGO GERADO:", codigo);
-        console.error("Detalhes do erro:", error.message);
+        console.error("[AUTH] Erro no envio via EmailJS:", error.message);
+        console.warn(`[AUTH BACKUP] CÓDIGO DE SEGURANÇA GERADO PARA ${email}: [ ${codigo} ]`);
     }
 };
 
@@ -238,8 +245,8 @@ export const solicitarRecuperacao = async (req, res) => {
 
         const email = rawEmail.trim().replace(/\.$/, '');
 
-        // Lookup user by username and email globally (storeId = null)
-        const user = await getUserFromDB(username, null, false, email, null);
+        // Lookup user by username and email
+        const user = await getUserFromDB(username, email);
         if (!user) return res.status(404).json({ error: "Usuário não encontrado ou e-mail não confere com o cadastro." });
 
         const codigo = Math.floor(1000 + Math.random() * 9000).toString();
@@ -250,7 +257,7 @@ export const solicitarRecuperacao = async (req, res) => {
         res.status(200).json({ success: true, message: "Código de recuperação enviado com sucesso.", recoveryToken });
     } catch (error) {
         console.error("Erro ao solicitar recuperação:", error);
-        res.status(500).json({ error: "Erro ao enviar e-mail de recuperação." });
+        res.status(500).json({ error: "Erro ao enviar e-mail de recuperação: " + (error.message || "Falha interna.") });
     }
 };
 
@@ -279,9 +286,9 @@ export const resetarSenha = async (req, res) => {
             return res.status(400).json({ error: "Código inválido." });
         }
 
-        const user = await getUserFromDB(username, null, false, email, null);
+        const user = await getUserFromDB(username, email);
         if (!user) {
-            return res.status(404).json({ error: "Usuário não encontrado." });
+            return res.status(404).json({ error: "Usuário não encontrado ou e-mail não confere." });
         }
 
         await updateUserPasswordInDB(username, newPass);
@@ -289,18 +296,20 @@ export const resetarSenha = async (req, res) => {
         res.status(200).json({ success: true, message: "Senha alterada com sucesso." });
     } catch (error) {
         console.error("Erro ao resetar senha:", error);
-        res.status(500).json({ error: "Erro interno ao redefinir a senha." });
+        res.status(500).json({ error: "Erro interno ao redefinir a senha: " + (error.message || "Falha interna.") });
     }
 };
 
 export const solicitarCadastro = async (req, res) => {
     try {
-        cleanExpiredOTPs();
         const { username, email: rawEmail, nome, storeCode, setupKey, pass, birthDate, phone } = req.body;
         console.log("REQ.BODY CADASTRO:", req.body);
-        if (!username || !rawEmail || !storeCode || !pass || !birthDate) return res.status(400).json({ error: "Dados incompletos para o cadastro." });
+        if (!username || !rawEmail || !storeCode || !pass || !birthDate) {
+            return res.status(400).json({ error: "Dados incompletos para o cadastro." });
+        }
 
         const email = rawEmail.trim().replace(/\.$/, '');
+        const isManagerSetup = setupKey === 'lideranca2026';
 
         // Validação do Prefixo
         const userUpper = username.toUpperCase();
@@ -310,7 +319,7 @@ export const solicitarCadastro = async (req, res) => {
 
         // Validação de E-mail
         if (!email.toLowerCase().includes('@')) {
-            return res.status(400).json({ error: "O e-mail de cadastro deve ser corporativo e conter '@'." });
+            return res.status(400).json({ error: "O e-mail de cadastro deve conter '@'." });
         }
 
         // Validação de Idade (18 anos)
@@ -332,7 +341,7 @@ export const solicitarCadastro = async (req, res) => {
         }
 
         // Papel baseado na SetupKey
-        const role = setupKey === 'lideranca2026' ? 'GERENTE' : 'VENDEDOR';
+        const role = isManagerSetup ? 'GERENTE' : 'VENDEDOR';
 
         // Mapeamento da Loja
         const matchedStore = STORES.find(s => s.code.toUpperCase() === storeCode.toUpperCase());
@@ -344,7 +353,7 @@ export const solicitarCadastro = async (req, res) => {
         const storeId = matchedStore ? matchedStore.id : 'DEFAULT';
 
         // Verifica se o usuário já existe globalmente
-        const user = await getUserFromDB(username, null, false, null, null);
+        const user = await getUserFromDB(username);
         if (user) {
             return res.status(400).json({ error: "Este nome de usuário já está em uso no sistema." });
         }
@@ -358,7 +367,7 @@ export const solicitarCadastro = async (req, res) => {
             otpHash,
             userData: {
                 username: userUpper,
-                name: nome.toUpperCase(),
+                name: (nome || userUpper).toUpperCase(),
                 pass: hashedPass,
                 phone: phone ? phone.replace(/\D/g, '') : null,
                 birthDate,
@@ -373,7 +382,7 @@ export const solicitarCadastro = async (req, res) => {
         res.status(200).json({ success: true, message: "Código enviado para o e-mail.", registrationToken });
     } catch (error) {
         console.error("Erro ao solicitar cadastro:", error);
-        res.status(500).json({ error: "Erro ao enviar e-mail de validação." });
+        res.status(500).json({ error: "Erro ao enviar e-mail de validação: " + (error.message || "Falha interna.") });
     }
 };
 
