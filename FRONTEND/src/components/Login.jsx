@@ -237,9 +237,35 @@ export const AnimatedBackground = ({ children }) => {
     };
   }, []);
 
+  // Lista de posições dos logotipos WF espalhados no fundo com tempos assíncronos
+  const bgLogos = [
+    { top: '8%', left: '6%', scale: 'scale-95', rot: '-rotate-6', dur: 7.4, delay: 0.2, opacity: 'opacity-[0.16]' },
+    { top: '65%', left: '5%', scale: 'scale-110', rot: 'rotate-3', dur: 8.2, delay: 1.5, opacity: 'opacity-[0.14]' },
+    { top: '12%', right: '7%', scale: 'scale-100', rot: 'rotate-6', dur: 7.8, delay: 0.8, opacity: 'opacity-[0.16]' },
+    { top: '70%', right: '6%', scale: 'scale-90', rot: '-rotate-3', dur: 8.6, delay: 2.1, opacity: 'opacity-[0.14]' },
+    { top: '38%', left: '15%', scale: 'scale-75', rot: 'rotate-2', dur: 9.0, delay: 1.1, opacity: 'opacity-[0.09]' },
+    { top: '42%', right: '16%', scale: 'scale-75', rot: '-rotate-3', dur: 8.4, delay: 2.7, opacity: 'opacity-[0.09]' },
+  ];
+
   return (
     <div className="relative min-h-screen w-full bg-[#000000] text-slate-100 flex flex-col items-center justify-center p-4 overflow-hidden">
+      {/* Camada do Canvas (Ondas e Partículas) */}
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-0" />
+
+      {/* Camada dos Logos WF Flutuando no Fundo */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        {bgLogos.map((item, idx) => (
+          <div
+            key={idx}
+            style={{ top: item.top, left: item.left, right: item.right }}
+            className={`absolute ${item.scale} ${item.rot} ${item.opacity}`}
+          >
+            <AnimatedWFLogo className="w-64 h-44" duration={item.dur} delay={item.delay} />
+          </div>
+        ))}
+      </div>
+
+      {/* Conteúdo Central */}
       <div className="relative z-10 w-full flex flex-col items-center justify-center">
         {children}
       </div>
