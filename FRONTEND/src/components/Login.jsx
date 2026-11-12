@@ -504,41 +504,47 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                 </div>
             )}
 
-            <div className="bg-white dark:bg-neutral-900 w-full max-w-md rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden transition-colors duration-500 relative z-10">
-                <div className="bg-black py-4 px-6 text-center relative overflow-hidden">
-                    <div className="w-52 h-20 mx-auto mb-1 flex items-center justify-center">
+            <div className="w-full max-w-md rounded-3xl bg-[#090b10]/90 backdrop-blur-2xl border border-white/10 ring-1 ring-white/5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95),0_0_40px_rgba(227,0,15,0.12)] overflow-hidden transition-all duration-500 relative z-10">
+                {/* Filete luminoso decorativo superior */}
+                <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#E3000F] to-transparent opacity-90" />
+
+                <div className="pt-6 pb-4 px-6 text-center relative overflow-hidden">
+                    {/* Glow sutil por trás do logo */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-28 bg-[#E3000F]/15 blur-3xl pointer-events-none rounded-full" />
+
+                    <div className="w-52 h-20 mx-auto mb-2 flex items-center justify-center relative">
                         <AnimatedWFLogo className="w-full h-full object-contain" />
                     </div>
-                    <h2 className="text-2xl font-extrabold text-white tracking-wide">WorkFlow</h2>
-                    <p className="text-neutral-400 text-xs mt-0.5 font-medium">Plataforma Integrada de Gestão Telecom</p>
+                    <h2 className="text-2xl font-black text-white tracking-wider">WorkFlow</h2>
+                    <p className="text-neutral-400 text-[11px] font-semibold uppercase tracking-widest mt-0.5">Plataforma Integrada de Gestão Telecom</p>
 
                     {/* SELO DE SEGURANÇA */}
-                    <div className="inline-flex items-center gap-2 mt-3 px-3.5 py-1.5 bg-emerald-500/15 border border-emerald-500/60 rounded-full text-[11px] uppercase tracking-wider text-emerald-300 shadow-md shadow-emerald-500/20 backdrop-blur-sm">
-                        <ShieldCheck size={15} className="text-emerald-400 shrink-0" strokeWidth={2.5} />
-                        <span className="font-black tracking-wide text-emerald-300">ACESSO AO SISTEMA SEGURO E AUTENTICADO</span>
+                    <div className="inline-flex items-center gap-2 mt-3 px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/50 rounded-full text-[10.5px] uppercase tracking-wider text-emerald-300 shadow-md shadow-emerald-500/20 backdrop-blur-md">
+                        <ShieldCheck size={14} className="text-emerald-400 shrink-0" strokeWidth={2.5} />
+                        <span className="font-extrabold tracking-wide text-emerald-300">ACESSO AO SISTEMA SEGURO E AUTENTICADO</span>
                     </div>
                 </div>
 
-                <div className="p-6">
+                <div className="px-7 pb-7 pt-2">
                     {view === 'LOGIN' && (
                         <div className="animate-fade-in">
                             <form onSubmit={handleLogin} className="space-y-4">
-                                <h3 className="font-bold text-lg text-neutral-800 dark:text-neutral-100 mb-4 text-center">Faça seu Login</h3>
+                                <h3 className="font-bold text-sm text-neutral-300 mb-3 text-center uppercase tracking-wider">Acesso ao Painel</h3>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-                                    <input type="text" value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Usuário ( Login )" required className="w-full pl-10 pr-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] uppercase text-sm font-medium" />
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
+                                    <input type="text" value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Usuário ( Login )" required className="w-full pl-10 pr-4 py-3 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none uppercase text-sm font-medium transition-all" />
                                 </div>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-                                    <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Senha de Acesso" required className="w-full pl-10 pr-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" />
+                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
+                                    <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Senha de Acesso" required className="w-full pl-10 pr-4 py-3 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm transition-all" />
                                 </div>
-                                <button type="submit" className="w-full py-3 bg-[#E3000F] text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Entrar</button>
+                                <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30 active:scale-[0.99] text-sm tracking-wide">Entrar no Sistema</button>
 
                                 <div className="flex flex-col gap-2 mt-4 text-center">
-                                    <button type="button" onClick={() => setView('FORGOT')} className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-[#E3000F] dark:hover:text-[#E3000F] transition-colors">Esqueci minha senha</button>
-                                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-2"></div>
-                                    <span className="text-sm text-neutral-500 dark:text-neutral-400">Ainda não tem acesso?</span>
-                                    <button type="button" onClick={() => setView('REGISTER')} className="text-sm font-bold text-[#E3000F] hover:text-red-700 transition-colors">Cadastre-se agora</button>
+                                    <button type="button" onClick={() => setView('FORGOT')} className="text-xs font-semibold text-neutral-400 hover:text-white transition-colors">Esqueci minha senha</button>
+                                    <div className="border-t border-white/10 my-2"></div>
+                                    <span className="text-xs text-neutral-400">Ainda não tem acesso?</span>
+                                    <button type="button" onClick={() => setView('REGISTER')} className="text-xs font-bold text-[#E3000F] hover:text-red-400 transition-colors uppercase tracking-wider">Cadastre-se agora</button>
                                 </div>
                             </form>
                         </div>
@@ -549,35 +555,35 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                             {regStep === 1 && (
                                 <form onSubmit={handleRegister} className="space-y-3.5">
                                     <div className="flex items-center gap-3 mb-3">
-                                        <button type="button" onClick={() => setView('LOGIN')} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 transition-colors">
+                                        <button type="button" onClick={() => setView('LOGIN')} className="p-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 text-neutral-300 transition-colors">
                                             <ArrowLeft size={18} />
                                         </button>
-                                        <h3 className="font-bold text-lg text-neutral-800 dark:text-neutral-100">Criar Nova Conta</h3>
+                                        <h3 className="font-bold text-base text-white">Criar Nova Conta</h3>
                                     </div>
                                     <div className="space-y-2.5">
                                         <div>
-                                            <label className="text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 ml-1">Nome Completo <span className="text-[#E3000F]">*</span></label>
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Nome Completo <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5">
                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="text" value={regName} onChange={e => setRegName(e.target.value)} placeholder="Ex: João da Silva" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] uppercase text-sm" />
+                                                <input type="text" value={regName} onChange={e => setRegName(e.target.value)} placeholder="Ex: João da Silva" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none uppercase text-sm transition-all" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 ml-1">Usuário / Login <span className="text-[#E3000F]">*</span></label>
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Usuário / Login <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5">
                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="text" value={regUser} onChange={e => setRegUser(e.target.value)} placeholder="Inicia com 9, F, Z ou T" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] uppercase text-sm font-mono" />
+                                                <input type="text" value={regUser} onChange={e => setRegUser(e.target.value)} placeholder="Inicia com 9, F, Z ou T" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none uppercase text-sm font-mono transition-all" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 ml-1">E-mail <span className="text-[#E3000F]">*</span></label>
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">E-mail <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5">
                                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="Ex: seunome@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] text-sm" />
+                                                <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="Ex: seunome@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm transition-all" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 ml-1">Celular <span className="text-[#E3000F]">*</span></label>
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Celular <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5">
                                                 <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
                                                 <input type="text" maxLength={15} value={regPhone} onChange={e => {
@@ -587,11 +593,11 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                                     if (v.length > 7) masked = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
                                                     else if (v.length > 2) masked = `(${v.slice(0, 2)}) ${v.slice(2)}`;
                                                     setRegPhone(masked);
-                                                }} placeholder="Ex: (11) 90000-0000" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] text-sm font-mono" />
+                                                }} placeholder="Ex: (11) 90000-0000" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm font-mono transition-all" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 ml-1">Data de Nascimento (18+ Anos) <span className="text-[#E3000F]">*</span></label>
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Data de Nascimento (18+ Anos) <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5">
                                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
                                                 <input
@@ -611,34 +617,34 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                                         setRegBirthDate(val);
                                                     }}
                                                     required
-                                                    className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-xl outline-none focus:border-[#E3000F] text-sm"
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white rounded-xl outline-none text-sm transition-all"
                                                 />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 ml-1">Código da Loja <span className="text-[#E3000F]">*</span></label>
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Código da Loja <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5">
                                                 <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="text" value={regStoreCode} onChange={e => setRegStoreCode(e.target.value.toUpperCase())} placeholder="Solicite ao Gerente (Ex: AT1M)" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] text-sm font-mono uppercase" />
+                                                <input type="text" value={regStoreCode} onChange={e => setRegStoreCode(e.target.value.toUpperCase())} placeholder="Solicite ao Gerente (Ex: AT1M)" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm font-mono uppercase transition-all" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 ml-1">Senha <span className="text-[#E3000F]">*</span></label>
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Senha <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5">
                                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="password" value={regPass} onChange={e => setRegPass(e.target.value)} placeholder="Mínimo 8 caracteres, letras, números e símbolos" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] text-sm" />
+                                                <input type="password" value={regPass} onChange={e => setRegPass(e.target.value)} placeholder="Mínimo 8 caracteres, letras, números e símbolos" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm transition-all" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 ml-1">Confirme a Senha <span className="text-[#E3000F]">*</span></label>
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Confirme a Senha <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5">
                                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="password" value={regConfirmPass} onChange={e => setRegConfirmPass(e.target.value)} placeholder="Confirme a mesma senha" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] text-sm" />
+                                                <input type="password" value={regConfirmPass} onChange={e => setRegConfirmPass(e.target.value)} placeholder="Confirme a mesma senha" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm transition-all" />
                                             </div>
                                         </div>
 
                                         {/* TERMOS DE USO E PRIVACIDADE */}
-                                        <div className="pt-2 pb-1 border-t border-neutral-100 dark:border-neutral-800">
+                                        <div className="pt-2 pb-1 border-t border-white/10">
                                             <label className="flex items-start gap-2.5 cursor-pointer select-none">
                                                 <input
                                                     type="checkbox"
@@ -647,7 +653,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                                     required
                                                     className="mt-0.5 w-4 h-4 rounded text-[#E3000F] focus:ring-[#E3000F] cursor-pointer"
                                                 />
-                                                <span className="text-xs text-neutral-600 dark:text-neutral-300 leading-tight">
+                                                <span className="text-xs text-neutral-300 leading-tight">
                                                     Li e declaro estar ciente dos{' '}
                                                     <button
                                                         type="button"
@@ -661,30 +667,30 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                             </label>
                                         </div>
                                     </div>
-                                    <button type="submit" className="w-full py-3 bg-neutral-900 dark:bg-neutral-800 text-white font-bold rounded-xl hover:bg-black dark:hover:bg-neutral-700 transition-colors shadow-lg">Continuar Cadastro</button>
+                                    <button type="submit" className="w-full py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl border border-white/10 transition-colors shadow-lg">Continuar Cadastro</button>
                                 </form>
                             )}
                             {regStep === 2 && (
                                 <form onSubmit={handleRegisterCodeVerify} className="space-y-4">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <button type="button" onClick={() => { setRegStep(1); setRegCurrentCode(''); setTempRegData(null); }} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 transition-colors">
+                                        <button type="button" onClick={() => { setRegStep(1); setRegCurrentCode(''); setTempRegData(null); }} className="p-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 text-neutral-300 transition-colors">
                                             <ArrowLeft size={18} />
                                         </button>
-                                        <h3 className="font-bold text-lg text-neutral-800 dark:text-neutral-100">Confirmar E-mail</h3>
+                                        <h3 className="font-bold text-base text-white">Confirmar E-mail</h3>
                                     </div>
-                                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-lg text-sm text-red-700 dark:text-red-400 flex items-start gap-2 mb-4">
-                                        <Mail size={18} className="shrink-0 mt-0.5" />
+                                    <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-xl text-xs text-red-300 flex items-start gap-2 mb-4">
+                                        <Mail size={18} className="shrink-0 mt-0.5 text-red-400" />
                                         <p>Enviamos um código de verificação para <strong>{regEmail}</strong>. Insira-o abaixo para concluirmos a criação da sua conta.</p>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Código de Confirmação</label>
+                                        <label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Código de Confirmação</label>
                                         <div className="relative mt-1">
                                             <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-                                            <input type="text" value={regCurrentCode} onChange={e => setRegCurrentCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-center tracking-widest text-lg font-mono" />
+                                            <input type="text" value={regCurrentCode} onChange={e => setRegCurrentCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-center tracking-widest text-lg font-mono" />
                                         </div>
                                     </div>
-                                    <button type="submit" className="w-full py-3 mt-4 bg-[#E3000F] text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Confirmar e Cadastrar</button>
-                                    <button type="button" disabled={resendTimer > 0} onClick={handleRegister} className="w-full py-2 mt-2 bg-transparent text-neutral-500 dark:text-neutral-400 font-bold rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50">
+                                    <button type="submit" className="w-full py-3 mt-4 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30">Confirmar e Cadastrar</button>
+                                    <button type="button" disabled={resendTimer > 0} onClick={handleRegister} className="w-full py-2 mt-2 bg-transparent text-neutral-400 font-bold rounded-xl hover:bg-white/5 transition-colors disabled:opacity-50 text-xs">
                                         {resendTimer > 0 ? `Aguarde ${resendTimer}s para reenviar` : 'Reenviar Código'}
                                     </button>
                                 </form>
@@ -695,27 +701,27 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                     {view === 'FORGOT' && (
                         <div className="animate-fade-in">
                             <div className="flex items-center gap-3 mb-4">
-                                <button type="button" onClick={() => { setView('LOGIN'); setForgotStep(1); }} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 transition-colors">
+                                <button type="button" onClick={() => { setView('LOGIN'); setForgotStep(1); }} className="p-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 text-neutral-300 transition-colors">
                                     <ArrowLeft size={18} />
                                 </button>
-                                <h3 className="font-bold text-lg text-neutral-800 dark:text-neutral-100">Recuperação de Senha</h3>
+                                <h3 className="font-bold text-base text-white">Recuperação de Senha</h3>
                             </div>
                             {forgotStep === 1 && (
                                 <form onSubmit={handleForgotRequest} className="space-y-4">
-                                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">Informe seu Login e E-mail cadastrado para enviarmos um código de verificação.</p>
-                                    <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Seu Login</label><div className="relative mt-1"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="text" value={forgotUser} onChange={e => setForgotUser(e.target.value)} placeholder="Ex: F123456 ou 98765432" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] uppercase text-sm font-mono" /></div></div>
-                                    <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">E-mail Cadastrado <span className="text-[#E3000F]">*</span></label><div className="relative mt-1"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="Ex: email@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
-                                    <button type="submit" className="w-full py-3 bg-[#E3000F] text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Enviar E-mail de Verificação</button>
+                                    <p className="text-xs text-neutral-400 mb-4">Informe seu Login e E-mail cadastrado para enviarmos um código de verificação.</p>
+                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Seu Login</label><div className="relative mt-1"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="text" value={forgotUser} onChange={e => setForgotUser(e.target.value)} placeholder="Ex: F123456 ou 98765432" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] uppercase text-sm font-mono" /></div></div>
+                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">E-mail Cadastrado <span className="text-[#E3000F]">*</span></label><div className="relative mt-1"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="Ex: email@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
+                                    <button type="submit" className="w-full py-3 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30">Enviar E-mail de Verificação</button>
                                 </form>
                             )}
                             {forgotStep === 2 && (
                                 <form onSubmit={handleForgotReset} className="space-y-4">
-                                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 rounded-lg text-sm text-green-700 dark:text-green-400 flex items-start gap-2 mb-2"><Mail size={18} className="shrink-0 mt-0.5" /><p>Um código de 4 dígitos foi enviado para o seu e-mail. Insira-o abaixo para criar uma nova senha.</p></div>
-                                    <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Código de Verificação</label><div className="relative mt-1"><Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-center tracking-widest text-lg font-mono" /></div></div>
-                                    <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Digite sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
-                                    <div><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase ml-1">Confirme a Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={confirmNewPass} onChange={e => setConfirmNewPass(e.target.value)} placeholder="Confirme sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
-                                    <button type="submit" className="w-full py-3 bg-neutral-900 dark:bg-neutral-800 text-white font-bold rounded-xl hover:bg-black dark:hover:bg-neutral-700 transition-colors shadow-lg">Redefinir Senha</button>
-                                    <button type="button" disabled={resendTimer > 0} onClick={handleForgotRequest} className="w-full py-2 mt-2 bg-transparent text-neutral-500 dark:text-neutral-400 font-bold rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50">
+                                    <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-xs text-emerald-300 flex items-start gap-2 mb-2"><Mail size={18} className="shrink-0 mt-0.5 text-emerald-400" /><p>Um código de 4 dígitos foi enviado para o seu e-mail. Insira-o abaixo para criar uma nova senha.</p></div>
+                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Código de Verificação</label><div className="relative mt-1"><Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-center tracking-widest text-lg font-mono" /></div></div>
+                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Digite sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
+                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Confirme a Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={confirmNewPass} onChange={e => setConfirmNewPass(e.target.value)} placeholder="Confirme sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
+                                    <button type="submit" className="w-full py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl border border-white/10 transition-colors shadow-lg">Redefinir Senha</button>
+                                    <button type="button" disabled={resendTimer > 0} onClick={handleForgotRequest} className="w-full py-2 mt-2 bg-transparent text-neutral-400 font-bold rounded-xl hover:bg-white/5 transition-colors disabled:opacity-50 text-xs">
                                         {resendTimer > 0 ? `Aguarde ${resendTimer}s para reenviar` : 'Reenviar Código'}
                                     </button>
                                 </form>
@@ -724,12 +730,12 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                     )}
 
                     {/* RODAPÉ DO CARD COM VERSÃO E TERMOS */}
-                    <div className="mt-5 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[11px] text-neutral-400">
-                        <span className="font-mono font-bold tracking-tight">WorkFlow v2.5.0</span>
+                    <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-neutral-400">
+                        <span className="font-mono font-bold tracking-tight text-neutral-400">WorkFlow v2.5.0</span>
                         <button
                             type="button"
                             onClick={() => setShowTermsModal(true)}
-                            className="hover:text-[#E3000F] underline transition-colors cursor-pointer"
+                            className="hover:text-white underline transition-colors cursor-pointer"
                         >
                             Termos de Uso & Privacidade
                         </button>
@@ -739,41 +745,41 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
             {/* MODAL DE TERMOS DE USO E PRIVACIDADE */}
             {showTermsModal && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-800 p-6 flex flex-col max-h-[85vh] animate-scale-up">
-                        <div className="flex items-center gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                            <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 text-[#E3000F] flex items-center justify-center shrink-0">
+                <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-[#0b0d13] w-full max-w-lg rounded-3xl shadow-2xl border border-white/15 p-6 flex flex-col max-h-[85vh] animate-scale-up text-white">
+                        <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+                            <div className="w-10 h-10 rounded-xl bg-red-500/10 text-[#E3000F] border border-red-500/30 flex items-center justify-center shrink-0">
                                 <FileText size={20} />
                             </div>
                             <div>
-                                <h3 className="font-extrabold text-base text-neutral-800 dark:text-neutral-100">Termos de Uso e Política de Privacidade</h3>
+                                <h3 className="font-extrabold text-base text-white">Termos de Uso e Política de Privacidade</h3>
                                 <p className="text-xs text-neutral-400">WorkFlow Gestão Telecom • Versão 2.5.0</p>
                             </div>
                         </div>
 
-                        <div className="overflow-y-auto scrollbar-thin py-4 space-y-3.5 text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed pr-1">
-                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60">
-                                <h4 className="font-bold text-neutral-800 dark:text-neutral-100 uppercase text-[11px] mb-1">1. Finalidade do Sistema</h4>
+                        <div className="overflow-y-auto scrollbar-thin py-4 space-y-3.5 text-xs text-neutral-300 leading-relaxed pr-1">
+                            <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/10">
+                                <h4 className="font-bold text-white uppercase text-[11px] mb-1">1. Finalidade do Sistema</h4>
                                 <p>O WorkFlow é uma ferramenta operacional exclusiva para gestão comercial, acompanhamento de metas, controle de simcards, escala e suporte operacional das equipes autorizadas de telecomunicação.</p>
                             </div>
 
-                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60">
-                                <h4 className="font-bold text-neutral-800 dark:text-neutral-100 uppercase text-[11px] mb-1">2. Confidencialidade e Dados Pessoais (LGPD)</h4>
+                            <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/10">
+                                <h4 className="font-bold text-white uppercase text-[11px] mb-1">2. Confidencialidade e Dados Pessoais (LGPD)</h4>
                                 <p>É estritamente vedado o uso das informações para fins alheios à operação. Dados cadastrais e de vendas são armazenados de forma criptografada em banco de dados seguro Oracle com hash Bcrypt e conformidade com a LGPD.</p>
                             </div>
 
-                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60">
-                                <h4 className="font-bold text-neutral-800 dark:text-neutral-100 uppercase text-[11px] mb-1">3. Responsabilidade do Usuário</h4>
+                            <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/10">
+                                <h4 className="font-bold text-white uppercase text-[11px] mb-1">3. Responsabilidade do Usuário</h4>
                                 <p>A senha de acesso é individual e intransferível. O compartilhamento de credenciais ou simulação de dados acarretará suspensão imediata da conta e comunicação à liderança.</p>
                             </div>
 
-                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60">
-                                <h4 className="font-bold text-neutral-800 dark:text-neutral-100 uppercase text-[11px] mb-1">4. Auditoria e Rastreabilidade</h4>
+                            <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/10">
+                                <h4 className="font-bold text-white uppercase text-[11px] mb-1">4. Auditoria e Rastreabilidade</h4>
                                 <p>Todas as ações (lançamentos de vendas, cópias de ICCID e edições de dados) são registradas com data, hora e matrícula do colaborador para integridade da operação.</p>
                             </div>
                         </div>
 
-                        <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-end gap-2">
+                        <div className="pt-3 border-t border-white/10 flex justify-end gap-2">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -781,7 +787,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                     setShowTermsModal(false);
                                     toast.success('Você deu o ciente nos Termos de Uso.');
                                 }}
-                                className="px-4 py-2.5 bg-[#E3000F] text-white font-bold rounded-xl text-xs hover:bg-red-700 transition-colors flex items-center gap-1.5 shadow-md shadow-red-500/20"
+                                className="px-4 py-2.5 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl text-xs hover:from-red-600 hover:to-red-800 transition-all flex items-center gap-1.5 shadow-md shadow-red-600/30"
                             >
                                 <CheckCircle size={15} />
                                 Estou Ciente e Concordo
