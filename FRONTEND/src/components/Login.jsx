@@ -253,9 +253,9 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                     <p className="text-neutral-400 text-xs mt-0.5 font-medium">Plataforma Integrada de Gestão Telecom</p>
 
                     {/* SELO DE SEGURANÇA */}
-                    <div className="inline-flex items-center gap-1.5 mt-2.5 px-3 py-1 bg-[#E3000F]/15 border border-[#E3000F]/40 rounded-full text-[10px] font-black uppercase tracking-wider text-red-400 shadow-sm">
-                        <ShieldCheck size={13} className="text-[#E3000F]" />
-                        <span>ACESSO AO SISTEMA SEGURO E AUTENTICADO</span>
+                    <div className="inline-flex items-center gap-2 mt-3 px-3.5 py-1.5 bg-emerald-500/15 border border-emerald-500/60 rounded-full text-[11px] uppercase tracking-wider text-emerald-300 shadow-md shadow-emerald-500/20 backdrop-blur-sm">
+                        <ShieldCheck size={15} className="text-emerald-400 shrink-0" strokeWidth={2.5} />
+                        <span className="font-black tracking-wide text-emerald-300">ACESSO AO SISTEMA SEGURO E AUTENTICADO</span>
                     </div>
                 </div>
 
