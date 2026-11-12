@@ -1487,9 +1487,9 @@ export default function App() {
           <div className="bg-white/10 p-6 rounded-full mb-6 backdrop-blur-sm animate-pulse">
             <WifiOff size={80} className="text-white" />
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black mb-4 tracking-tight drop-shadow-lg uppercase">SISTEMA OFFLINE</h1>
-          <p className="text-xl sm:text-2xl mb-8 max-w-2xl font-medium drop-shadow-md">
-            O painel perdeu a conexão com o servidor da Oracle ou você está sem internet.
+          <h1 className="text-4xl sm:text-6xl font-black mb-4 tracking-tight drop-shadow-lg uppercase">WORKFLOW OFFLINE</h1>
+          <p className="text-xl sm:text-2xl mb-8 max-w-2xl font-black drop-shadow-md uppercase tracking-wide">
+            SISTEMA TENTANDO CONEXÃO COM REDE...
           </p>
           <div className="flex items-center gap-3 bg-white/10 px-6 py-3 rounded-full backdrop-blur-sm">
             <Loader2 size={20} className="animate-spin" />
