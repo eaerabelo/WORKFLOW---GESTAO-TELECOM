@@ -291,3 +291,16 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
     - Redefinição de senha com validação de código OTP e atualização no banco Oracle: **100% Validado**.
     - Novo acesso imediato utilizando a nova senha redefinida: **100% Validado**.
   - Limpeza automática de usuários de teste criados temporariamente para não poluir o banco de produção.
+
+### [Sessão de 12/11/2026 - Lançamento da v2.5.0: Tela de Entrada Blindada e Atualizações Globais]
+- **Atualização do Modal de Novidades do Sistema (`v2.5.0`) (`updatesController.js` & `Atualizacoes.jsx`)**:
+  - Atualizada a versão global de novidades para `v2.5.0` com modal automático de 5 segundos ao ingressar no sistema.
+  - Novidades divulgadas:
+    1. **Segurança Reforçada na Tela de Entrada & 2FA**: Envio garantido de código OTP de 4 dígitos via e-mail corporativo (EmailJS em *Strict Mode* com chave privada e fallback em produção), validação rigorosa de prefixo corporativo (`9`, `F`, `T`, `Z`), checagem de maioridade (18+ anos), senhas criptografadas em Bcrypt no Oracle DB e recuperação de senha com checagem de titularidade.
+    2. **Dashboard Loja Executivo & Gap de Meta**: Visão analítica completa na aba `[RESULTADO]` com termômetro do mês, Run Rate, análise exclusiva de Gap de Meta deixada do dia anterior e comparativo dia a dia no que a loja melhorou.
+    3. **Portabilidade Segregada (Port-In Pós vs Controle)**: Separação minuciosa das métricas de Port-In Pós-Pago e Port-In Controle, além dos indicadores de M-Play Pós e M-Play Controle.
+    4. **Anexação & Rentabilidade (Receita Bruta e Normal)**: Apuração da taxa de anexação por aparelho vendido (1:1 Película, 3:1 Acessórios, 1:1 Seguro, 1:1 Trocafy e Claro UP/Upgrades), com acompanhamento de Receita Bruta e Normal de aparelhos e acessórios.
+    5. **Módulos Individuais de Perfil & Ajuda**: Acesso ao Perfil (busca de endereço por CEP, uniformes e Selo de Destaque automático) e Central de Ajuda com 22 manuais passo a passo e scripts de argumentação comercial.
+- **Sincronização e Deploy em Produção**:
+  - Backend atualizado e reiniciado no servidor da Oracle Cloud (`137.131.172.16`) sob gerenciamento do PM2.
+  - Frontend compilado e publicado no Firebase Hosting (`https://workflow-sistema.web.app`).
