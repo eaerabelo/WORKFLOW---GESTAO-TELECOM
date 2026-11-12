@@ -293,9 +293,35 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
     const handleBatchSubmit = (e) => {
         e.preventDefault();
-        const linhasFisico = batchData.fisicos.split('\n').map(l => l.trim().replace(/\D/g, '').slice(0, 20)).filter(l => l);
-        const linhasEsim = batchData.esims.split('\n').map(l => l.trim().replace(/\D/g, '').slice(0, 20)).filter(l => l);
-        const linhasCaid = (batchData.caids || '').split('\n').map(l => l.trim().toUpperCase()).filter(l => l);
+        const linhasCaid = (batchData.caids || '').split('\n').map(l => l.trim().toUpperCase()).filter(Boolean);
+
+        if (currentTab === 'ESTOQUE TVBOX') {
+            if (linhasCaid.length === 0) {
+                toast.error('Insira ao menos um código CAID para TV BOX.');
+                return;
+            }
+        } else {
+            const rawFisicos = (batchData.fisicos || '').split('\n').map(l => l.trim()).filter(Boolean);
+            const rawEsims = (batchData.esims || '').split('\n').map(l => l.trim()).filter(Boolean);
+
+            if (rawFisicos.length === 0 && rawEsims.length === 0) {
+                toast.error('Insira ao menos um código ICCID (Físico ou E-SIM).');
+                return;
+            }
+
+            // Validação estrita: cada ICCID deve ter obrigatoriamente mínimo e máximo de 20 dígitos numéricos
+            const invalidFisicos = rawFisicos.filter(l => l.replace(/\D/g, '').length !== 20);
+            const invalidEsims = rawEsims.filter(l => l.replace(/\D/g, '').length !== 20);
+
+            if (invalidFisicos.length > 0 || invalidEsims.length > 0) {
+                const totalInvalido = invalidFisicos.length + invalidEsims.length;
+                toast.error(`Erro no lote: ${totalInvalido} linha(s) de ICCID não contêm exatamente 20 dígitos numéricos! O ICCID deve ter mínimo e máximo de 20 dígitos.`);
+                return;
+            }
+        }
+
+        const linhasFisico = (batchData.fisicos || '').split('\n').map(l => l.trim().replace(/\D/g, '')).filter(l => l.length === 20);
+        const linhasEsim = (batchData.esims || '').split('\n').map(l => l.trim().replace(/\D/g, '')).filter(l => l.length === 20);
 
         if (currentTab === 'ESTOQUE TVBOX') {
             if (linhasCaid.length === 0) return;
@@ -560,17 +586,22 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     isSelected ? 'ring-2 ring-[#E3000F] shadow-red-500/10' : ''
                 }`}
             >
-                {/* Linha Principal Horizontal */}
+                {/* Linha Principal Horizontal / Vertical no Mobile */}
                 <div className="flex flex-col xl:flex-row xl:items-center gap-2.5 w-full">
                     {/* Bloco 1: Índice + ICCID + Botão Copiar */}
-                    <div className="flex items-center gap-2 shrink-0 xl:w-[310px]">
-                        <span className="w-6 h-6 rounded-lg bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] flex items-center justify-center font-black text-[11px] shrink-0">
-                            #{idx + 1}
-                        </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0 xl:w-[320px] w-full">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <span className="w-6 h-6 rounded-lg bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] flex items-center justify-center font-black text-[11px] shrink-0">
+                                #{idx + 1}
+                            </span>
+                            <span className="sm:hidden text-[10px] font-black uppercase tracking-wider text-neutral-500">
+                                {tipoLabel}
+                            </span>
+                        </div>
 
-                        <div className="flex-1 flex items-center justify-between gap-1.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg px-2.5 py-1.5 min-w-0">
+                        <div className="flex-1 flex items-center justify-between gap-1.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg px-2.5 py-1.5 min-w-0 w-full">
                             <div className="flex flex-col min-w-0 flex-1">
-                                <span className="text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5 flex items-center gap-1">
+                                <span className="hidden sm:flex text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5 items-center gap-1">
                                     {tipoLabel}
                                     {!canModifySimcard && (
                                         <Lock
@@ -610,8 +641,8 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                         </div>
                     </div>
 
-                    {/* Bloco 2: Campos Horizontais (DATA [TRAVADA], CPF/CNPJ, PLANO, CLIENTE, VALOR, OBS) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:flex xl:items-center gap-2 flex-1 min-w-0">
+                    {/* Bloco 2: Campos (Mobile vertical 1 coluna / sm: 2 colunas / lg: 6 colunas / xl: horizontal) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:flex xl:items-center gap-2 flex-1 min-w-0 w-full">
                         <div
                             className="xl:w-24 shrink-0 bg-neutral-100/80 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 cursor-not-allowed select-none"
                             title="Data travada de acordo com a data local (não editável)"
@@ -644,16 +675,21 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
                         <div className="xl:w-44 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
                             <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                PLANO
+                                PLANO (SELEÇÃO)
                             </label>
-                            <input
-                                list="datalist-siglas-planos"
+                            <select
                                 value={item.plano || ''}
                                 onChange={(e) => handleInlineChange(item.id, 'plano', e.target.value)}
                                 disabled={!canModifySimcard}
-                                placeholder="Selecione o plano..."
-                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none truncate"
-                            />
+                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none truncate cursor-pointer"
+                            >
+                                <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione o plano...</option>
+                                {SIGLAS_PLANOS.map((p, pIdx) => (
+                                    <option key={pIdx} value={p.desc} className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">
+                                        {p.desc}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="xl:flex-1 min-w-[130px] bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
@@ -695,28 +731,8 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                         </div>
                     </div>
 
-                    {/* Bloco 3: Status e Excluir */}
-                    <div className="flex items-center justify-end gap-1.5 shrink-0">
-                        {canModifySimcard && (
-                            <div className="flex items-center gap-1 border-r border-neutral-200 dark:border-neutral-700 pr-2 mr-0.5">
-                                <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); handleChangeColor(item.id, 'green'); }}
-                                    className="w-3.5 h-3.5 rounded-full bg-green-500 hover:scale-110 shadow-sm transition-transform"
-                                    title="Corrigido/Processado"
-                                />
-                                {item.statusColor && (
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleChangeColor(item.id, null); }}
-                                        className="w-3.5 h-3.5 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 text-[8px] flex items-center justify-center font-bold"
-                                        title="Limpar Status"
-                                    >
-                                        ×
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                    {/* Bloco 3: Excluir */}
+                    <div className="flex items-center justify-end gap-1.5 shrink-0 self-end xl:self-center">
                         <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleDeleteRequest(item.id); }}
@@ -854,15 +870,9 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     ))}
                 </div>
 
-                {/* Legenda de Status e Etiqueta Digital */}
+                {/* Legenda do Selo Digital */}
                 <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 px-4 py-2.5 shrink-0 overflow-x-auto scrollbar-hide no-print">
                     <div className="flex items-center justify-between gap-4 min-w-max">
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase text-neutral-400 dark:text-neutral-500 mr-1">Status:</span>
-                            <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/50 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700">
-                                <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm"></div> Corrigido / Processado</span>
-                            </div>
-                        </div>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-[#E3000F] bg-red-50 dark:bg-[#E3000F]/10 px-3 py-1.5 rounded-lg border border-red-100 dark:border-[#E3000F]/20">
                             <ShieldCheck size={14} />
                             <span>Selo Digital "EM USO" automático ao copiar • Remoção exclusiva mediante Login e Senha (exceto Vendedor)</span>
@@ -1051,7 +1061,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                 <div>
                                     <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">Cadastro em Lote</h2>
                                     <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                                        Insira os códigos para criar as caixinhas na seção <strong className="text-[#E3000F]">{currentTab}</strong>. Códigos repetidos são bloqueados automaticamente.
+                                        Insira os códigos para criar as caixinhas na seção <strong className="text-[#E3000F]">{currentTab}</strong>. Cada ICCID deve conter <strong>obrigatoriamente 20 caracteres numéricos</strong> (mínimo e máximo).
                                     </p>
                                 </div>
                                 <button

@@ -1342,7 +1342,7 @@ export default function App() {
           ) : activeTab === 'SCRIPTS' ? (
             <Scripts globalUser={globalUser} usersDB={usersDB} />
           ) : activeTab === 'CAMPANHAS' ? (
-            <Campanha globalUser={globalUser} campanhasData={campanhasData} setCampanhasData={handleSetCampanhasData} updateUserProfile={updateUserProfile} />
+            <Campanha globalUser={globalUser} campanhasData={campanhasData} setCampanhasData={handleSetCampanhasData} updateUserProfile={updateUserProfile} salesData={salesData} usersDB={usersDB} />
           ) : activeTab === 'FATOR RV' ? (
             <FatorRvv globalUser={globalUser} salesData={salesData} goalsDB={goalsDB} usersDB={usersDB} globalMonth={globalMonth} />
           ) : (

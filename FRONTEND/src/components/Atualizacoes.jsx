@@ -4,8 +4,8 @@ import { getLatestUpdateAPI } from '../services/api.js';
 import '../styles/Atualizacoes/Atualizacoes.css';
 
 const ICON_MAP = {
-    Phone, BookOpen, Zap, Lock, Users, Rocket, Sparkles, Check, Calculator, Edit3, 
-    CalendarDays, Megaphone, Globe, ClipboardList, Presentation, LineChart, FileText, 
+    Phone, BookOpen, Zap, Lock, Users, Rocket, Sparkles, Check, Calculator, Edit3,
+    CalendarDays, Megaphone, Globe, ClipboardList, Presentation, LineChart, FileText,
     Home, Printer, Target, MonitorPlay
 };
 
@@ -71,7 +71,7 @@ export function Atualizacoes({ globalUser, updateUserProfile, usersDB = {} }) {
                 <div className="atualizacoes-body">
                     {systemUpdates.features.map((feature, idx) => {
                         if (!feature.roles.includes('ALL') && !feature.roles.includes(globalUser?.role)) return null;
-                        
+
                         const IconComponent = ICON_MAP[feature.icon] || Sparkles;
 
                         return (

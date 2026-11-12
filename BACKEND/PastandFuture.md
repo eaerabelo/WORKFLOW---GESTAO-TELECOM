@@ -155,7 +155,6 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 3. **Segurança Avançada:** Implementação de expiração de token JWT mais rigorosa, auditoria de acessos e ocultação de chaves sensíveis.
 4. **Descomissionamento de arquivos antigos:** Limpeza de arquivos residuais e códigos órfãos que restaram da arquitetura legada baseada no Firebase.
 
-
 - **Dashboard Loja & Curva Diária com Análise Dia a Dia e Monitor de GAP (Resultado Consolidado):**
   - **Formatação Brasileira de Datas:** Atualizado o cabeçalho do Termômetro do Mês para padrão pt-BR (`Termômetro do Mês (11/2026 • Novembro)`).
   - **Dashboard Loja Ultra Recheado:** Incluídas todas as métricas detalhadas da tabela analítica nos 3 painéis principais:
@@ -183,6 +182,7 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - **Deploy:** Build e deploy finalizados no Firebase Hosting (`https://workflow-sistema.web.app`).
 
 ### [Sessão de 10/11/2026 - Padronização LP & Travas de Segurança no Controle Simcard]
+
 - **Padronização de Nomenclatura de Lojas (`SHOPPING` -> `LP`)**:
   - Atualizados os arquivos `FRONTEND/src/utils/stores.js`, `BACKEND/src/config/stores.js`, `BACKEND/src/controllers/authController.js` e `FRONTEND/src/components/ParcialFechamento.jsx` para substituir `"SHOPPING"` por `"LP"` em todas as lojas (`LP RAPOSO`, `LP UNIÃO OSASCO`, `LP BOURBON`, `LP BUTANTÃ`, `LP CALÇADÃO OSASCO`, `LP HIGIENÓPOLIS`, `LP LAPA`, `LP VILLA LOBOS`, `LP WEST PLAZA`), garantindo exibição padronizada no cabeçalho inicial, Parcial & Fechamento e demais módulos.
 - **Travas de Segurança na Seção `[CONTROLE SIMCARD]` (`FRONTEND/src/components/ControleSimcard.jsx`)**:
@@ -190,8 +190,8 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - **Trava de Data Local**: O campo `DATA` nas caixinhas e a `Data do Lote` passaram a ser travados de acordo com a data local de São Paulo (`getTodaySP()`) e não editáveis (`readOnly`/`disabled`).
   - **Trava de Remoção do Selo Digital (`EM USO`)**: A remoção do selo digital exige autenticação pontual de **Login e Senha** no exato momento da remoção, restrita exclusivamente a cargos diferentes de `VENDEDOR` (Gerência, Liderança, ADM, etc.), e a permissão concedida pela senha aplica-se unicamente à remoção daquele selo sem manter a sessão ou edição geral desbloqueada.
 
-
 ### [Sessão de 10/11/2026 - Otimização de Armazenamento Oracle, Remoção de CPF em Venda, Placeholders e Responsividade Mobile S25]
+
 - **Desfragmentação e Varredura do Banco de Dados Oracle (`user_segments`)**:
   - Realizada varredura completa nas tabelas e segmentos LOB do Oracle Autonomous Database, reduzindo o espaço alocado de **7,75 MB para 2,19 MB** (>71% de redução) através da reorganização e compactação dos segmentos (`ALTER TABLE ... MOVE`, `MOVE LOB` e `REBUILD INDEX`) sem perda de nenhum dado ativo.
 - **Indicador Discreto de Armazenamento (`FRONTEND/src/App.jsx`)**:
@@ -202,8 +202,8 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - Configurada opacidade global reduzida para todos os `::placeholder` em todas as seções (quase imperceptíveis no modo claro e escuro).
   - Calibrada a escala tipográfica, espaçamentos, tabelas, cabeçalho, barra lateral e redução proporcional dos ícones SVG (`.lucide`) para telas mobile equivalentes à linha **Samsung Galaxy S25 (`360px`), S25 Plus (`384px–412px`) e S25 Ultra (`412px–440px`)**, eliminando poluição visual e ícones gigantes.
 
-
 ### [Sessão de 10/11/2026 - Telas Individuais de Perfil e Ajuda + Menu de Pré-visualização de Login]
+
 - **Menu Superior Direito com Pré-visualização (`FRONTEND/src/App.jsx`)**:
   - Ao passar o mouse ou clicar no perfil no canto superior direito, abre-se uma pré-visualização elegante com o cabeçalho de sessão no formato `"LOGIN - NOME COMPLETO"` (ex.: `"95802904 - MATHEUS RABELO"`), seguido pelos botões **Perfil**, **Ajuda** e **Sair**.
 - **Telas Individuais (`standaloneView`) na Mesma URL**:
@@ -266,6 +266,7 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
     - **Gráfico Temporal Diário Power BI**: Curva de vendas em barras dia a dia mostrando a evolução do Gross Realizado comparado à Meta Dia, com destaque visual do dia atual e tooltips interativos.
 
 ### [Sessão de 11/11/2026 - Bateria de Testes de Autenticação, Correção no E-mail de Validação e Recuperação de Senha]
+
 - **Diagnóstico e Correção da Falha de Validação de E-mail (`BACKEND/src/controllers/authController.js`)**:
   - **Causa Raiz Identificada**: O endpoint `/api/auth/cadastro/solicitar` disparava `ReferenceError: cleanExpiredOTPs is not defined` e `ReferenceError: isManagerSetup is not defined`, caindo no bloco `catch` e retornando o erro genérico `"Erro ao enviar e-mail de validação."`.
   - **Remoção da Função Obsoleta**: Removida a chamada fantasma a `cleanExpiredOTPs()`, pois a validação foi totalmente modernizada com token JWT e expiração de 15 minutos.
@@ -293,6 +294,7 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - Limpeza automática de usuários de teste criados temporariamente para não poluir o banco de produção.
 
 ### [Sessão de 12/11/2026 - Lançamento da v2.5.0: Tela de Entrada Blindada e Atualizações Globais]
+
 - **Atualização do Modal de Novidades do Sistema (`v2.5.0`) (`updatesController.js` & `Atualizacoes.jsx`)**:
   - Atualizada a versão global de novidades para `v2.5.0` com modal automático de 5 segundos ao ingressar no sistema.
   - Novidades divulgadas:
@@ -306,6 +308,7 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - Frontend compilado e publicado no Firebase Hosting (`https://workflow-sistema.web.app`).
 
 ### [Sessão de 12/11/2026 - Pacote de Melhorias de Entrada, Controle de Simcard, Dashboard, Scripts e Campanhas]
+
 - **Tela de Login e Cadastro (`Login.jsx`)**:
   - Adicionado selo executivo de segurança: `"ACESSO AO SISTEMA SEGURO E AUTENTICADO"` com ícone de escudo.
   - Adicionada identificação de versão do sistema (`WorkFlow v2.5.0`) no rodapé da caixa de autenticação.

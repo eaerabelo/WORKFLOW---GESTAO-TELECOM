@@ -153,14 +153,14 @@ export const unlockCofre = async (req, res) => {
     try {
         const storeId = req.storeId || 'uniao_osasco';
         const { masterPass } = req.body;
-        
+
         const rawExpected = process.env.COFRE_MASTER_PASS || 'DEV2026';
         const expectedPass = String(rawExpected).trim().replace(/^["']|["']$/g, '');
         const cleanInput = String(masterPass || '').trim();
 
-        const isMatch = cleanInput === expectedPass || 
-                        cleanInput.toUpperCase() === expectedPass.toUpperCase() || 
-                        cleanInput.toUpperCase() === 'DEV2026';
+        const isMatch = cleanInput === expectedPass ||
+            cleanInput.toUpperCase() === expectedPass.toUpperCase() ||
+            cleanInput.toUpperCase() === 'DEV2026';
 
         if (!cleanInput || !isMatch) {
             return res.status(401).json({ error: "Senha de desenvolvedor incorreta!" });
