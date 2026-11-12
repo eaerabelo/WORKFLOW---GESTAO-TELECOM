@@ -304,3 +304,32 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - **Sincronização e Deploy em Produção**:
   - Backend atualizado e reiniciado no servidor da Oracle Cloud (`137.131.172.16`) sob gerenciamento do PM2.
   - Frontend compilado e publicado no Firebase Hosting (`https://workflow-sistema.web.app`).
+
+### [Sessão de 12/11/2026 - Pacote de Melhorias de Entrada, Controle de Simcard, Dashboard, Scripts e Campanhas]
+- **Tela de Login e Cadastro (`Login.jsx`)**:
+  - Adicionado selo executivo de segurança: `"ACESSO AO SISTEMA SEGURO E AUTENTICADO"` com ícone de escudo.
+  - Adicionada identificação de versão do sistema (`WorkFlow v2.5.0`) no rodapé da caixa de autenticação.
+  - Criado modal interativo de **Termos de Uso e Política de Privacidade** com conformidade LGPD e checkbox obrigatório de aceite no formulário de cadastro.
+  - Trava no ano de nascimento: limitação estrita de 4 dígitos no ano (`max="2026-12-31"`), impedindo digitação excessiva.
+  - Flexibilização de e-mail: permissão para cadastro com qualquer provedor de e-mail (Gmail, Hotmail, etc.), preservando o placeholder institucional.
+  - Correção de vazamentos visuais de CSS nos formulários e inputs.
+- **Seção Controle de Simcard (`ControleSimcard.jsx`)**:
+  - Remoção dos status obsoletos `"Em Processo de Baixa SAP"` e `"Chip Não Localizado SAP"` dos botões e da legenda.
+  - Capacidade e Validação de ICCID: trava de mínimo e máximo de 20 dígitos numéricos para chips físicos e eSIM (bloqueando cadastros incompletos e alertando o usuário).
+  - Isenção explícita para CAID (não submetido à regra dos 20 dígitos numéricos).
+  - Campo PLANO com caixinha/datalist de seleção rápida contendo todas as 15 siglas padronizadas (`07`, `ST`, `SU`, `SV`, `TD`, `TE`, `TH`, `TL`, `TI`, `TJ`, `TK`, `TM`, `TO`, `TP`, `VC`).
+- **Seção Resultado (`Resultado.jsx`)**:
+  - Na aba Dashboard (Anexação & Rentabilidade), divisão da Receita Bruta e Receita Líquida em **espaços individuais e independentes** para Aparelhos e Acessórios, eliminando o compartilhamento do mesmo corpo.
+- **Seção Scripts (`Scripts.jsx` & `sistemasController.js`)**:
+  - Criação da **Caixa Digital de Ideias de Scripts** permitindo envio de sugestões diretamente para o e-mail do desenvolvedor (`matheusrabelo@gmail.com`) com assunto prefixado `"IDEIA SCRIPT - WORKFLOW SISTEMA"`.
+  - Endpoint dedicado no backend (`POST /api/sistemas/scripts/ideia`) integrado ao EmailJS com validação e autenticação segura.
+- **Seção Campanhas (`Campanha.jsx`)**:
+  - Redesenho completo da identidade visual para estética tecnológica, moderna e elegante (efeitos luminosos, dark glassmorphism e badges futuristas).
+  - Formulário centralizado de criação com seleção do estilo da competição: `{FIBRA, APARELHO, ACE, GROSS TOTAL, COMBO MULTI, LIVRE}`.
+  - Sistema estruturado de pontuação com pontos por venda, meta de elegibilidade e regras de acúmulo de pontos.
+- **Padronização Global de Mensagens e Datas (`App.jsx`, `profile.jsx`, `Acessos.jsx`)**:
+  - Substituição da mensagem de loading para `"WORKFLOW GESTÃO - CARREGANDO..."`.
+  - Trava de 4 caracteres no ano de nascimento e padronização visual em formato brasileiro (`DD/MM/AAAA`).
+- **Deploy & Publicação**:
+  - Build de produção compilado em 2.4s e publicado no Firebase Hosting (`https://workflow-sistema.web.app`).
+  - Backend sincronizado e reiniciado via PM2 na Oracle Cloud (`137.131.172.16`).

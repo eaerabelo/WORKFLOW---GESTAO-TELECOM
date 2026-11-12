@@ -14,6 +14,25 @@ const getTodayShortSP = () => {
     return today;
 };
 
+// Lista de Siglas de Planos Padronizadas
+export const SIGLAS_PLANOS = [
+    { sigla: '07', desc: '07 – dependente' },
+    { sigla: 'ST', desc: 'ST – Ctrl ON 15 GB' },
+    { sigla: 'SU', desc: 'SU – Ctrl ON 20 GB App' },
+    { sigla: 'SV', desc: 'SV – Ctrl ON 25 GB' },
+    { sigla: 'TD', desc: 'TD – Controle 15 GB' },
+    { sigla: 'TE', desc: 'TE– Controle 20 GB' },
+    { sigla: 'TH', desc: 'TH – Pós 60 GB' },
+    { sigla: 'TL', desc: 'TL – Pós 60 GB GeForce Now' },
+    { sigla: 'TI', desc: 'TI – Pós 100 GB' },
+    { sigla: 'TJ', desc: 'TJ – Pós 150 GB' },
+    { sigla: 'TK', desc: 'TK– Pós 200 GB' },
+    { sigla: 'TM', desc: 'TM – Pós 500 GB' },
+    { sigla: 'TO', desc: 'TO – Pós 150 GB + Claro up' },
+    { sigla: 'TP', desc: 'TP – Pós 200 GB + Claro up' },
+    { sigla: 'VC', desc: 'VC – Pós 500 GB + Claro up' },
+];
+
 const CardFieldInput = ({ value, onCommit, placeholder, className = '', maskType, disabled = false, onCopy }) => {
     const [localValue, setLocalValue] = useState(value || '');
     const latestValue = useRef(value || '');
@@ -41,6 +60,12 @@ const CardFieldInput = ({ value, onCommit, placeholder, className = '', maskType
     const handleBlur = () => {
         setIsFocused(false);
         if (disabled) return;
+        if (maskType === 'iccid' && latestValue.current && latestValue.current.length > 0 && latestValue.current.length !== 20) {
+            toast.error('O ICCID deve conter exatamente 20 dígitos numéricos!');
+            setLocalValue(value || '');
+            latestValue.current = value || '';
+            return;
+        }
         if (latestValue.current !== (value || '')) {
             const accepted = onCommit(latestValue.current);
             if (accepted === false) {
@@ -311,16 +336,22 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                 });
             });
         } else {
+            let invalidLengthCount = 0;
             linhasFisico.forEach((linha, i) => {
-                if (existingIccids.has(linha)) {
+                const cleanIccid = linha.replace(/\D/g, '');
+                if (cleanIccid.length !== 20) {
+                    invalidLengthCount++;
+                    return;
+                }
+                if (existingIccids.has(cleanIccid)) {
                     duplicatesBlocked++;
                     return;
                 }
-                existingIccids.add(linha);
+                existingIccids.add(cleanIccid);
                 novosRegistros.push({
                     id: baseId - i,
                     owner: currentTab,
-                    simcardFisico: linha,
+                    simcardFisico: cleanIccid,
                     simcardEsim: '',
                     data: shortDate, ov: '', codAutorizacao: '', cpf: '', plano: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
                     dataPortin: '', numPortado: '', numProvisorio: ''
@@ -328,20 +359,29 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
             });
 
             linhasEsim.forEach((linha, i) => {
-                if (existingIccids.has(linha)) {
+                const cleanIccid = linha.replace(/\D/g, '');
+                if (cleanIccid.length !== 20) {
+                    invalidLengthCount++;
+                    return;
+                }
+                if (existingIccids.has(cleanIccid)) {
                     duplicatesBlocked++;
                     return;
                 }
-                existingIccids.add(linha);
+                existingIccids.add(cleanIccid);
                 novosRegistros.push({
                     id: baseId - linhasFisico.length - i,
                     owner: currentTab,
                     simcardFisico: '',
-                    simcardEsim: linha,
+                    simcardEsim: cleanIccid,
                     data: shortDate, ov: '', codAutorizacao: '', cpf: '', plano: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
                     dataPortin: '', numPortado: '', numProvisorio: ''
                 });
             });
+
+            if (invalidLengthCount > 0) {
+                toast.error(`${invalidLengthCount} ICCID(s) ignorado(s): cada ICCID deve conter exatamente 20 dígitos numéricos!`);
+            }
         }
 
         if (duplicatesBlocked > 0) {
@@ -375,9 +415,13 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
         if (field === 'simcardFisico' || field === 'simcardEsim') normalizedVal = String(value || '').replace(/\D/g, '').slice(0, 20);
         if (field === 'caid' || field === 'ov' || field === 'plano' || field === 'cliente') normalizedVal = String(value || '').toUpperCase();
 
-        // Trava contra ICCID e CAID repetidos na edição inline
+        // Trava contra ICCID e CAID repetidos e validação de 20 dígitos na edição inline
         if ((field === 'simcardFisico' || field === 'simcardEsim') && normalizedVal.trim() !== '') {
             const cleanTarget = normalizedVal.trim();
+            if (cleanTarget.length !== 20) {
+                toast.error(`O ICCID deve conter exatamente 20 dígitos numéricos! (Digitados: ${cleanTarget.length})`);
+                return false;
+            }
             const isDuplicateIccid = (simcardsData || []).some(
                 sc => sc.id !== id && (String(sc.simcardFisico || '').trim() === cleanTarget || String(sc.simcardEsim || '').trim() === cleanTarget)
             );
@@ -598,16 +642,17 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             />
                         </div>
 
-                        <div className="xl:w-36 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
+                        <div className="xl:w-44 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
                             <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
                                 PLANO
                             </label>
-                            <CardFieldInput
-                                value={item.plano}
-                                onCommit={(val) => handleInlineChange(item.id, 'plano', val)}
-                                maskType="upper"
-                                placeholder="PLANO"
-                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none"
+                            <input
+                                list="datalist-siglas-planos"
+                                value={item.plano || ''}
+                                onChange={(e) => handleInlineChange(item.id, 'plano', e.target.value)}
+                                disabled={!canModifySimcard}
+                                placeholder="Selecione o plano..."
+                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none truncate"
                             />
                         </div>
 
@@ -650,7 +695,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                         </div>
                     </div>
 
-                    {/* Bloco 3: Status SAP e Excluir */}
+                    {/* Bloco 3: Status e Excluir */}
                     <div className="flex items-center justify-end gap-1.5 shrink-0">
                         {canModifySimcard && (
                             <div className="flex items-center gap-1 border-r border-neutral-200 dark:border-neutral-700 pr-2 mr-0.5">
@@ -659,18 +704,6 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                     onClick={(e) => { e.stopPropagation(); handleChangeColor(item.id, 'green'); }}
                                     className="w-3.5 h-3.5 rounded-full bg-green-500 hover:scale-110 shadow-sm transition-transform"
                                     title="Corrigido/Processado"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); handleChangeColor(item.id, 'yellow'); }}
-                                    className="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:scale-110 shadow-sm transition-transform"
-                                    title="Em Processo de Baixa SAP"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); handleChangeColor(item.id, 'red'); }}
-                                    className="w-3.5 h-3.5 rounded-full bg-red-500 hover:scale-110 shadow-sm transition-transform"
-                                    title="Chip Não Localizado SAP"
                                 />
                                 {item.statusColor && (
                                     <button
@@ -827,8 +860,6 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black uppercase text-neutral-400 dark:text-neutral-500 mr-1">Status:</span>
                             <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/50 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700">
-                                <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"></div> Em Processo de Baixa SAP</span>
-                                <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"></div> Chip Não Localizado SAP</span>
                                 <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm"></div> Corrigido / Processado</span>
                             </div>
                         </div>
@@ -1115,6 +1146,13 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     </div>
                 </div>
             )}
+
+            {/* Datalist das Siglas dos Planos */}
+            <datalist id="datalist-siglas-planos">
+                {SIGLAS_PLANOS.map((p, idx) => (
+                    <option key={idx} value={p.desc} label={p.sigla} />
+                ))}
+            </datalist>
         </>
     );
 };

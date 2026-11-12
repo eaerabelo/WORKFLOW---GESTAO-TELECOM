@@ -266,6 +266,15 @@ export const fetchProfileAPI = async (username) => {
     return handleResponse(res);
 };
 
+export const enviarIdeiaScriptAPI = async (titulo, ideia, autor, loja) => {
+    const res = await authFetch(`${API_URL}/api/sistemas/scripts/ideia`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo, ideia, autor, loja })
+    });
+    return handleResponse(res);
+};
+
 export const saveProfileAPI = async (username, profile) => {
     const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
     const res = await authFetch(`${API_URL}/api/profile/save`, {

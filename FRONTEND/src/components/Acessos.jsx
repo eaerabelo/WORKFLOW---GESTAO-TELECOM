@@ -508,9 +508,19 @@ export function Acessos({
                 <input
                   type="date"
                   value={formData.birthDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, birthDate: e.target.value })
-                  }
+                  min="1920-01-01"
+                  max="2026-12-31"
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val) {
+                      const p = val.split('-');
+                      if (p[0] && p[0].length > 4) {
+                        p[0] = p[0].slice(0, 4);
+                        val = p.join('-');
+                      }
+                    }
+                    setFormData({ ...formData, birthDate: val });
+                  }}
                   className="acessos-input-field"
                 />
               </div>

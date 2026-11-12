@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
-import { Copy } from 'lucide-react';
+import { Copy, Lightbulb, Send, CheckCircle2, Sparkles } from 'lucide-react';
 import { getCurrentStoreName } from '../utils/stores.js';
+import { enviarIdeiaScriptAPI } from '../services/api.js';
 import toast from 'react-hot-toast';
 
 export const Scripts = ({ globalUser, usersDB = {} }) => {
@@ -25,6 +26,36 @@ export const Scripts = ({ globalUser, usersDB = {} }) => {
 
     // Assinatura padrão configurada de forma dinâmica
     const signature = `${userName} / GERENTE - ${gerenteName} / ${storeName}`;
+
+    // Estado da Caixinha Digital de Ideias
+    const [ideiaTitulo, setIdeiaTitulo] = useState('');
+    const [ideiaTexto, setIdeiaTexto] = useState('');
+    const [isEnviando, setIsEnviando] = useState(false);
+    const [isIdeiaAberta, setIsIdeiaAberta] = useState(false);
+
+    const handleEnviarIdeia = async (e) => {
+        e.preventDefault();
+        if (!ideiaTexto.trim()) {
+            toast.error('Descreva a ideia de script antes de enviar.');
+            return;
+        }
+
+        setIsEnviando(true);
+        const toastId = toast.loading('Enviando ideia de script para o desenvolvedor...');
+
+        try {
+            await enviarIdeiaScriptAPI(ideiaTitulo.trim() || 'Ideia de Script', ideiaTexto.trim(), userName, storeName);
+            toast.success('Ideia de Script enviada com sucesso para matheusrabelo@gmail.com!', { id: toastId, duration: 5000 });
+            setIdeiaTitulo('');
+            setIdeiaTexto('');
+            setIsIdeiaAberta(false);
+        } catch (error) {
+            console.error('Erro ao enviar ideia:', error);
+            toast.error('Erro ao enviar ideia: ' + (error.message || 'Falha na rede.'), { id: toastId });
+        } finally {
+            setIsEnviando(false);
+        }
+    };
 
     const scriptsList = [
         {
@@ -76,10 +107,73 @@ export const Scripts = ({ globalUser, usersDB = {} }) => {
 
     return (
         <div className="h-full flex flex-col animate-fade-in transition-colors">
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100">Scripts e Textos Padrões</h2>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">Copie rapidamente os textos pré-montados de observação para colar nos sistemas da Claro.</p>
+            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                        <span>Scripts e Textos Padrões</span>
+                    </h2>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">Copie rapidamente os textos pré-montados de observação para colar nos sistemas da operadora.</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => setIsIdeiaAberta(!isIdeiaAberta)}
+                    className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shadow-orange-500/20 transition-all cursor-pointer self-start md:self-auto shrink-0"
+                >
+                    <Lightbulb size={16} />
+                    <span>{isIdeiaAberta ? 'Fechar Caixa de Ideias' : '💡 Sugerir Nova Ideia de Script'}</span>
+                </button>
             </div>
+
+            {/* CAIXINHA DIGITAL: IDEIA DE SCRIPT */}
+            {isIdeiaAberta && (
+                <div className="mb-6 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/30 dark:border-amber-500/20 rounded-2xl p-5 shadow-lg animate-fade-in">
+                    <div className="flex items-center gap-2.5 mb-2 text-amber-600 dark:text-amber-400">
+                        <Sparkles size={18} />
+                        <h3 className="font-extrabold text-sm uppercase tracking-wide">Caixa Digital de Ideias • Envio Direto</h3>
+                    </div>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-300 mb-3.5 leading-relaxed">
+                        Envie sua sugestão de script. A mensagem será encaminhada diretamente para o e-mail <strong>matheusrabelo@gmail.com</strong> com o assunto prefixado <strong>"IDEIA SCRIPT - WORKFLOW SISTEMA"</strong>.
+                    </p>
+                    <form onSubmit={handleEnviarIdeia} className="space-y-3">
+                        <div>
+                            <input
+                                type="text"
+                                value={ideiaTitulo}
+                                onChange={e => setIdeiaTitulo(e.target.value)}
+                                placeholder="Título do script sugerido (ex: Cancelamento com Estorno em 7 Dias...)"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-100 outline-none focus:border-amber-500"
+                            />
+                        </div>
+                        <div>
+                            <textarea
+                                value={ideiaTexto}
+                                onChange={e => setIdeiaTexto(e.target.value)}
+                                rows={4}
+                                required
+                                placeholder="Escreva aqui detalhadamente a mensagem do script, o cenário de atendimento e as regras..."
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs font-mono text-neutral-800 dark:text-neutral-100 outline-none focus:border-amber-500 resize-none"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                            <button
+                                type="button"
+                                onClick={() => setIsIdeiaAberta(false)}
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isEnviando}
+                                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-orange-500/20 transition-all disabled:opacity-50"
+                            >
+                                <Send size={14} />
+                                <span>{isEnviando ? 'Enviando...' : 'Enviar Ideia de Script'}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto pb-4 pr-2">
                 {scriptsList.map((script, idx) => (

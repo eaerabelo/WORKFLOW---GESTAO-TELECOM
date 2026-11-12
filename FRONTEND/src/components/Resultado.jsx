@@ -1163,25 +1163,54 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                                 <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(calcStoreMetric(totals.upgradeUp, 0).projecao)} un</span>
                                             </div>
                                         </div>
-                                        <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800 col-span-2">
+                                        {/* ESPAÇOS INDIVIDUAIS PARA RECEITA BRUTA E LÍQUIDA */}
+                                        <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
                                             <div className="flex justify-between items-center text-[10px] font-bold text-neutral-400 uppercase">
-                                                <span>Receita Bruta vs Líquida Devices & Acessórios</span>
-                                                <span className="text-[#E3000F] font-black">{totals.seguro} c/ Seguro • {Math.max(0, totals.aparelho - totals.seguro)} s/ Seguro</span>
+                                                <span>Aparelhos • Bruta</span>
+                                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-black">BRUTA</span>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-2 mt-1.5 pt-1 border-t border-neutral-200/50 dark:border-neutral-700/50 text-[11px]">
-                                                <div>
-                                                    <span className="text-[9px] text-neutral-400 block">Aparelhos (Bruto / Líq.)</span>
-                                                    <span className="font-extrabold text-neutral-800 dark:text-neutral-100">
-                                                        {applyCurrencyMask(totals.receitaAparelhoBruto)} <span className="text-[9px] font-normal text-neutral-400">/ {applyCurrencyMask(totals.receitaAparelho)}</span>
-                                                    </span>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-[9px] text-neutral-400 block">Acessórios (Bruto / Líq.)</span>
-                                                    <span className="font-extrabold text-neutral-800 dark:text-neutral-100">
-                                                        {applyCurrencyMask(totals.receitaAcessorioBruto)} <span className="text-[9px] font-normal text-neutral-400">/ {applyCurrencyMask(totals.receitaAcessorio)}</span>
-                                                    </span>
-                                                </div>
+                                            <span className="text-base font-black text-neutral-900 dark:text-white block mt-0.5">
+                                                {applyCurrencyMask(totals.receitaAparelhoBruto)}
+                                            </span>
+                                            <span className="text-[9px] text-neutral-400 block mt-1">Valor de nota fiscal</span>
+                                        </div>
+
+                                        <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                                            <div className="flex justify-between items-center text-[10px] font-bold text-neutral-400 uppercase">
+                                                <span>Aparelhos • Líquida</span>
+                                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-black">LÍQUIDA</span>
                                             </div>
+                                            <span className="text-base font-black text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                                                {applyCurrencyMask(totals.receitaAparelho)}
+                                            </span>
+                                            <span className="text-[9px] text-neutral-400 block mt-1">Receita comissionável</span>
+                                        </div>
+
+                                        <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                                            <div className="flex justify-between items-center text-[10px] font-bold text-neutral-400 uppercase">
+                                                <span>Acessórios • Bruta</span>
+                                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-black">BRUTA</span>
+                                            </div>
+                                            <span className="text-base font-black text-neutral-900 dark:text-white block mt-0.5">
+                                                {applyCurrencyMask(totals.receitaAcessorioBruto)}
+                                            </span>
+                                            <span className="text-[9px] text-neutral-400 block mt-1">Total bruto faturado</span>
+                                        </div>
+
+                                        <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                                            <div className="flex justify-between items-center text-[10px] font-bold text-neutral-400 uppercase">
+                                                <span>Acessórios • Líquida</span>
+                                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400 font-black">LÍQUIDA</span>
+                                            </div>
+                                            <span className="text-base font-black text-pink-600 dark:text-pink-400 block mt-0.5">
+                                                {applyCurrencyMask(totals.receitaAcessorio)}
+                                            </span>
+                                            <span className="text-[9px] text-neutral-400 block mt-1">Margem líquida loja</span>
+                                        </div>
+
+                                        <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800 col-span-2 flex items-center justify-between text-[10px] text-neutral-500 font-bold">
+                                            <span>Proteção & Seguro:</span>
+                                            <span className="text-[#E3000F] font-black">{totals.seguro} c/ Seguro • {Math.max(0, totals.aparelho - totals.seguro)} s/ Seguro</span>
                                         </div>
                                     </div>
                                 </div>

@@ -130,7 +130,7 @@ export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        let { name, value } = e.target;
         if (name === 'cep') {
             const digits = String(value || '').replace(/\D/g, '').slice(0, 8);
             const formatted = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
@@ -139,6 +139,13 @@ export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
                 lookupCep(digits);
             }
             return;
+        }
+        if (name === 'birthDate' && value) {
+            const parts = value.split('-');
+            if (parts[0] && parts[0].length > 4) {
+                parts[0] = parts[0].slice(0, 4);
+                value = parts.join('-');
+            }
         }
         setProfile(prev => ({ ...prev, [name]: value }));
     };
@@ -447,6 +454,8 @@ export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
                                     type="date"
                                     name="birthDate"
                                     value={profile.birthDate}
+                                    min="1920-01-01"
+                                    max="2026-12-31"
                                     onChange={handleChange}
                                     className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
                                 />

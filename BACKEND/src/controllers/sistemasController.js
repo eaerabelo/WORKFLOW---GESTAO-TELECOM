@@ -301,3 +301,49 @@ export const calcularProposta = async (req, res) => {
         res.status(500).json({ error: 'Erro interno' });
     }
 };
+
+export const enviarIdeiaScript = async (req, res) => {
+    try {
+        const { titulo, ideia, autor, loja } = req.body;
+        if (!ideia || !ideia.trim()) {
+            return res.status(400).json({ error: "O texto da ideia de script é obrigatório." });
+        }
+
+        const destinatario = 'matheusrabelo@gmail.com';
+        const assunto = "IDEIA SCRIPT - WORKFLOW SISTEMA";
+        const corpoMensagem = `Nova Ideia de Script recebida pelo WorkFlow:\n\nTítulo: ${titulo || 'Sem Título'}\nColaborador: ${autor || 'Vendedor'}\nLoja: ${loja || 'Loja'}\n\nIdeia:\n${ideia}\n\nEnviado em: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`;
+
+        const privateKey = (process.env.EMAILJS_PRIVATE_KEY && process.env.EMAILJS_PRIVATE_KEY.trim()) 
+            ? process.env.EMAILJS_PRIVATE_KEY.trim() 
+            : 'H5l_daPUXm0mgqmcdg_cf';
+
+        const payload = {
+            service_id: process.env.EMAILJS_SERVICE_ID || 'service_kpr1ksb',
+            template_id: 'template_6wuyizw',
+            user_id: process.env.EMAILJS_PUBLIC_KEY || 'tRgcNBg8P036AeS_l',
+            accessToken: privateKey,
+            template_params: {
+                to_name: 'Matheus Rabelo',
+                to_email: destinatario,
+                codigo: assunto,
+                message: corpoMensagem
+            }
+        };
+
+        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errTxt = await response.text();
+            console.error('Falha EmailJS ao enviar ideia de script:', errTxt);
+        }
+
+        res.status(200).json({ success: true, message: "Ideia de script enviada com sucesso para o e-mail do desenvolvedor!" });
+    } catch (error) {
+        console.error('Erro ao processar ideia de script:', error);
+        res.status(500).json({ error: 'Erro ao enviar ideia de script: ' + (error.message || 'Falha interna.') });
+    }
+};

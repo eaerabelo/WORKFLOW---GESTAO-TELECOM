@@ -990,7 +990,7 @@ export default function App() {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-neutral-100 dark:bg-neutral-900 font-sans flex-col gap-4">
         <div className="w-12 h-12 border-4 border-[#E3000F] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm animate-pulse">Conectando ao Servidor Principal (Oracle) e Sincronizando Banco de Dados...</p>
+        <p className="text-neutral-500 dark:text-neutral-400 font-black text-sm uppercase tracking-wider animate-pulse">WORKFLOW GESTÃO - CARREGANDO...</p>
       </div>
     );
   }
