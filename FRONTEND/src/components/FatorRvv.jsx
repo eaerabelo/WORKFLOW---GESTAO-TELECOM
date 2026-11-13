@@ -4,6 +4,7 @@ import { Calculator, User, DollarSign, Target, TrendingUp, AlertCircle, Award, L
 import { applyCurrencyMask } from '../utils/masks';
 import { METAS_PADRAO } from '../utils/constants';
 import { authFetch, API_URL } from '../services/api.js';
+import { WFLogoLoader } from './WFLogoLoader.jsx';
 
 export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {}, globalMonth }) => {
     const isVendedor = globalUser?.role === 'VENDEDOR';
@@ -293,9 +294,12 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                         <p>Selecione um vendedor para visualizar o Dashboard.</p>
                     </div>
                 ) : isLoading || !metrics ? (
-                    <div className="flex flex-col items-center justify-center h-full text-neutral-400 dark:text-neutral-600">
-                        <div className="w-12 h-12 border-4 border-[#E3000F] border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p>Calculando regras de comissão na API...</p>
+                    <div className="flex flex-col items-center justify-center h-full min-h-[350px] text-neutral-400 dark:text-neutral-600">
+                        <WFLogoLoader
+                            size="md"
+                            text="Calculando regras de comissão na API..."
+                            subtext="Processando metas e comissões da filial..."
+                        />
                     </div>
                 ) : metrics.selectedUserRole === 'JOVEM APRENDIZ' ? (
                     <div className="flex flex-col items-center justify-center h-full text-neutral-400 dark:text-neutral-600">

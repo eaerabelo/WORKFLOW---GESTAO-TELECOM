@@ -1377,7 +1377,7 @@ export default function App() {
           ) : activeTab === 'SISTEMAS' ? (
             <Sistemas />
           ) : activeTab === 'ACESSOS' ? (
-            <Acessos setScheduleData={setScheduleData} setMonthlyOverrides={setMonthlyOverrides} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} />
+            <Acessos setScheduleData={setScheduleData} setMonthlyOverrides={setMonthlyOverrides} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} usersDB={usersDB} isGerente={isGerente} />
           ) : activeTab === 'UR-RESIDENCIAL' ? (
             <UrResidencial salesData={salesData} setSalesData={handleSetSalesData} globalUser={globalUser} isGerente={isGerente} usersDB={usersDB} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
           ) : activeTab === 'PROPOSTA' ? (
@@ -1408,8 +1408,8 @@ export default function App() {
 
         <footer className="w-full bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 py-3 shrink-0 no-print flex items-center justify-center transition-colors duration-500">
           <p className="text-[10px] sm:text-xs text-neutral-400 font-semibold tracking-widest uppercase text-center px-4 whitespace-nowrap">
-            <span className="hidden sm:inline">&copy; 2026 Todos os direitos reservados <span className="text-[#E3000F] mx-1">-</span> Desenvolvido por Matheus Rabelo <span className="text-[#E3000F] mx-1">-</span> PROJETO I9 IDEIAS QUE TRANSFORMAM</span>
-            <span className="sm:hidden">&copy; {new Date().getFullYear()} Dev: Matheus Rabelo</span>
+            <span className="hidden sm:inline">&copy; 2026 Todos os direitos reservados <span className="text-[#E3000F] mx-1">-</span> v2.5.0 <span className="text-[#E3000F] mx-1">-</span> Plataforma Integrada de Gestão Telecom</span>
+            <span className="sm:hidden">&copy; 2026 - v2.5.0 - Gestão Telecom</span>
           </p>
         </footer>
       </main>

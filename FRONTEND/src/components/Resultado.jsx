@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { 
-    BarChart3, Calendar, TrendingUp, TrendingDown, Smartphone, Home, ShieldCheck, 
-    Watch, Zap, Target, Activity, FileSpreadsheet, LayoutDashboard, 
-    CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, Sparkles, Percent, 
+import {
+    BarChart3, Calendar, TrendingUp, TrendingDown, Smartphone, Home, ShieldCheck,
+    Watch, Zap, Target, Activity, FileSpreadsheet, LayoutDashboard,
+    CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, Sparkles, Percent,
     Radio, Tv, Wifi, ShoppingBag, Boxes, Award, Check, Layers, ArrowRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -44,9 +44,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
         const month = parseInt(monthStr, 10);
         const daysInMonth = new Date(year, month, 0).getDate();
         // Pós Total já representa o Gross da loja, não devemos somar com Controle senão a meta dobra.
-        const metaGross = Number(activeMetas.posTotal) || 0; 
+        const metaGross = Number(activeMetas.posTotal) || 0;
         const diasUteisMovel = Number(activeMetas.diasUteisMovel) || daysInMonth;
-        
+
         let remainingMeta = metaGross;
         let remainingDays = diasUteisMovel;
 
@@ -71,7 +71,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
         const generatedRows = [];
         let accumulatedGross = 0;
-        
+
         const sumTotals = {
             grossDia: 0, metaDia: 0, total: 0, posTt: 0, controle: 0, controleTotal: 0, posPagoTotal: 0, depPg: 0, depBl: 0, depGratis: 0, migracaoPos: 0, migracaoControle: 0, grossPme: 0,
             portabilidade: 0, portabilidadePos: 0, portabilidadeControle: 0, bl: 0, flex: 0, receita: 0, fibra: 0, tv: 0, tvBox: 0, fixo: 0, mplay: 0, mplayPos: 0, mplayControle: 0, mesh: 0, urPme: 0,
@@ -124,8 +124,8 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
                 const isPort = port === 'SIM' || port.includes('PORT') || op.includes('PORT');
 
-                if (pBase.includes('PÓS PME') || pBase === 'PME' || pBase.includes('POS PME')) { 
-                    grossPme += q; 
+                if (pBase.includes('PÓS PME') || pBase === 'PME' || pBase.includes('POS PME')) {
+                    grossPme += q;
                     if (isPort) { portabilidade += q; portabilidadePos += q; }
                 }
                 else if (pBase.includes('PÓS') || pBase.includes('POS')) {
@@ -135,7 +135,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                 }
                 else if (pBase.includes('CONTROLE')) {
                     if (op.includes('MIGRA') || pBase.includes('MIGRA') || sub.includes('MIGRA')) migracaoControle += q;
-                    else controle += q; 
+                    else controle += q;
                     if (isPort) { portabilidade += q; portabilidadeControle += q; }
                 }
                 else if (pBase.includes('FLEX')) {
@@ -193,15 +193,15 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                 }
 
                 if (addsStr.includes('TROCAFY') || pBase.includes('TROCAFY')) trocafy += 1;
-                
+
                 // Segregação entre CLARO UP (Programa de Troca Anual de Aparelho) e UPGRADES DE SERVIÇOS (Migrações/Planos)
                 const isClaroUp = addsStr.includes('CLARO UP') || addsStr.includes('CLAROUP') || pBase.includes('CLARO UP');
                 if (isClaroUp) claroUp += 1;
-                
-                const isUpgradeServico = (addsStr.includes('UPGRADE') && !isClaroUp) || 
-                    op.includes('UPGRADE') || 
-                    sub.includes('UPGRADE') || 
-                    pBase.includes('UPGRADE') || 
+
+                const isUpgradeServico = (addsStr.includes('UPGRADE') && !isClaroUp) ||
+                    op.includes('UPGRADE') ||
+                    sub.includes('UPGRADE') ||
+                    pBase.includes('UPGRADE') ||
                     String(sale.tipoOperacao || '').toUpperCase().includes('UPGRADE');
                 if (isUpgradeServico) upgrade += 1;
 
@@ -217,7 +217,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
             // GROSS DIA consolida Pós, Controle (Ativ+Mig), BL, Flex, PME, Dependentes
             const grossDia = posTt + controle + depPg + depBl + depGratis + migracaoPos + migracaoControle + grossPme + bl + flex;
-            
+
             let isFuture = false;
             if (year > currentY || (year === currentY && month > currentM) || (year === currentY && month === currentM && d > currentD)) {
                 isFuture = true;
@@ -391,13 +391,13 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
     // Comparativo Dia contra Dia (DOD Geral)
     const dodGrossDiff = hasPrevDay ? ((currentDayRow.grossDia || 0) - (prevDayRow.grossDia || 0)) : 0;
-    const dodGrossPct = hasPrevDay && (prevDayRow.grossDia || 0) > 0 
-        ? Math.round((dodGrossDiff / prevDayRow.grossDia) * 100) 
+    const dodGrossPct = hasPrevDay && (prevDayRow.grossDia || 0) > 0
+        ? Math.round((dodGrossDiff / prevDayRow.grossDia) * 100)
         : 0;
 
     const dodRecDiff = hasPrevDay ? ((currentDayRow.receita || 0) - (prevDayRow.receita || 0)) : 0;
-    const dodRecPct = hasPrevDay && (prevDayRow.receita || 0) > 0 
-        ? Math.round((dodRecDiff / prevDayRow.receita) * 100) 
+    const dodRecPct = hasPrevDay && (prevDayRow.receita || 0) > 0
+        ? Math.round((dodRecDiff / prevDayRow.receita) * 100)
         : 0;
 
     // ANÁLISE DE TODOS OS INDICADORES: GAP DE META DO DIA ANTERIOR E OSCILAÇÃO DIA A DIA
@@ -405,91 +405,147 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
     const allIndicatorsGapList = useMemo(() => {
         const rawList = [
-            { key: 'receita', label: 'Receita Total Loja', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: TrendingUp,
-              prevReal: prevDayRow.receita || 0, todayReal: currentDayRow.receita || 0, metaMonthly: metaLoja.receita || 0 },
-            { key: 'grossDia', label: 'Gross Total Móvel', group: 'Móvel', unit: 'un', icon: Smartphone,
-              prevReal: prevDayRow.grossDia || 0, todayReal: currentDayRow.grossDia || 0, metaMonthly: metaLoja.grossDia || 0,
-              prevMetaCustom: prevDayRow.metaDia, todayMetaCustom: currentDayRow.metaDia },
-            { key: 'posPagoTotal', label: 'Pós-Pago Total', group: 'Móvel', unit: 'un', icon: Radio,
-              prevReal: prevDayRow.posPagoTotal || 0, todayReal: currentDayRow.posPagoTotal || 0, metaMonthly: metaLoja.posPagoTotal || 0 },
-            { key: 'posTt', label: 'Ativação Pós Pura (POS TT)', group: 'Móvel', unit: 'un', icon: Radio,
-              prevReal: prevDayRow.posTt || 0, todayReal: currentDayRow.posTt || 0, metaMonthly: 0 },
-            { key: 'controleTotal', label: 'Controle Total', group: 'Móvel', unit: 'un', icon: Smartphone,
-              prevReal: prevDayRow.controleTotal || 0, todayReal: currentDayRow.controleTotal || 0, metaMonthly: metaLoja.controleTotal || 0 },
-            { key: 'controle', label: 'Ativação Controle Pura', group: 'Móvel', unit: 'un', icon: Smartphone,
-              prevReal: prevDayRow.controle || 0, todayReal: currentDayRow.controle || 0, metaMonthly: 0 },
-            { key: 'flex', label: 'Claro Flex', group: 'Móvel', unit: 'un', icon: Smartphone,
-              prevReal: prevDayRow.flex || 0, todayReal: currentDayRow.flex || 0, metaMonthly: 0 },
-            { key: 'portabilidade', label: 'Portabilidade Total', group: 'Móvel', unit: 'un', icon: ArrowUpRight,
-              prevReal: prevDayRow.portabilidade || 0, todayReal: currentDayRow.portabilidade || 0, metaMonthly: metaLoja.portabilidade || 0 },
-            { key: 'portabilidadePos', label: 'Port-in Pós-Pago', group: 'Móvel', unit: 'un', icon: Radio,
-              prevReal: prevDayRow.portabilidadePos || 0, todayReal: currentDayRow.portabilidadePos || 0, metaMonthly: metaLoja.portabilidadePos || 0 },
-            { key: 'portabilidadeControle', label: 'Port-in Controle', group: 'Móvel', unit: 'un', icon: Smartphone,
-              prevReal: prevDayRow.portabilidadeControle || 0, todayReal: currentDayRow.portabilidadeControle || 0, metaMonthly: metaLoja.portabilidadeControle || 0 },
-            { key: 'migracoes', label: 'Migrações Móvel Total', group: 'Móvel', unit: 'un', icon: ArrowUpRight,
-              prevReal: (prevDayRow.migracaoPos || 0) + (prevDayRow.migracaoControle || 0), todayReal: (currentDayRow.migracaoPos || 0) + (currentDayRow.migracaoControle || 0), metaMonthly: 0 },
-            { key: 'dependentes', label: 'Dependentes Total', group: 'Móvel', unit: 'un', icon: Radio,
-              prevReal: (prevDayRow.depPg || 0) + (prevDayRow.depBl || 0) + (prevDayRow.depGratis || 0), todayReal: (currentDayRow.depPg || 0) + (currentDayRow.depBl || 0) + (currentDayRow.depGratis || 0), metaMonthly: 0 },
-            { key: 'totalRes', label: 'UR Residencial Total', group: 'Residencial', unit: 'URs', icon: Home,
-              prevReal: prevDayRow.totalRes || 0, todayReal: currentDayRow.totalRes || 0, metaMonthly: metaLoja.totalRes || 0 },
-            { key: 'fibra', label: 'Banda Larga Fibra', group: 'Residencial', unit: 'un', icon: Wifi,
-              prevReal: prevDayRow.fibra || 0, todayReal: currentDayRow.fibra || 0, metaMonthly: metaLoja.fibra || 0 },
-            { key: 'tv', label: 'TV+ & TV Box', group: 'Residencial', unit: 'un', icon: Tv,
-              prevReal: (prevDayRow.tv || 0) + (prevDayRow.tvBox || 0), todayReal: (currentDayRow.tv || 0) + (currentDayRow.tvBox || 0), metaMonthly: metaLoja.tv || 0 },
-            { key: 'fixo', label: 'Telefonia Fixa', group: 'Residencial', unit: 'un', icon: Activity,
-              prevReal: prevDayRow.fixo || 0, todayReal: currentDayRow.fixo || 0, metaMonthly: metaLoja.fixo || 0 },
-            { key: 'mesh', label: 'Mesh Wi-Fi', group: 'Residencial', unit: 'un', icon: Wifi,
-              prevReal: prevDayRow.mesh || 0, todayReal: currentDayRow.mesh || 0, metaMonthly: metaLoja.mesh || 0 },
-            { key: 'aparelho', label: 'Aparelhos Vendidos', group: 'Aparelhos', unit: 'un', icon: ShoppingBag,
-              prevReal: prevDayRow.aparelho || 0, todayReal: currentDayRow.aparelho || 0, metaMonthly: metaLoja.aparelho || 0 },
-            { key: 'receitaAparelho', label: 'Rec. Aparelhos (Normal/Líq)', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: ShoppingBag,
-              prevReal: prevDayRow.receitaAparelho || 0, todayReal: currentDayRow.receitaAparelho || 0, metaMonthly: 0 },
-            { key: 'receitaAparelhoBruto', label: 'Rec. Aparelhos (Bruta)', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: ShoppingBag,
-              prevReal: prevDayRow.receitaAparelhoBruto || 0, todayReal: currentDayRow.receitaAparelhoBruto || 0, metaMonthly: 0 },
-            { key: 'seguro', label: 'Proteção Móvel (Seguro)', group: 'Anexação', unit: 'un', icon: ShieldCheck,
-              prevReal: prevDayRow.seguro || 0, todayReal: currentDayRow.seguro || 0, metaMonthly: metaLoja.seguro || 0 },
-            { key: 'acessorios', label: 'Acessórios + Películas', group: 'Anexação', unit: 'un', icon: Boxes,
-              prevReal: (prevDayRow.acessorio || 0) + (prevDayRow.pelicula || 0), todayReal: (currentDayRow.acessorio || 0) + (currentDayRow.pelicula || 0), metaMonthly: (metaLoja.acessorio || 0) + (metaLoja.pelicula || 0) },
-            { key: 'receitaAcessorio', label: 'Rec. Acessórios (Normal/Líq)', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: Boxes,
-              prevReal: prevDayRow.receitaAcessorio || 0, todayReal: currentDayRow.receitaAcessorio || 0, metaMonthly: metaLoja.acessorio || 0 },
-            { key: 'receitaAcessorioBruto', label: 'Rec. Acessórios (Bruta)', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: Boxes,
-              prevReal: prevDayRow.receitaAcessorioBruto || 0, todayReal: currentDayRow.receitaAcessorioBruto || 0, metaMonthly: 0 },
-            { key: 'trocafy', label: 'Trocafy Trade-in', group: 'Anexação', unit: 'un', icon: Award,
-              prevReal: prevDayRow.trocafy || 0, todayReal: currentDayRow.trocafy || 0, metaMonthly: metaLoja.trocafy || 0 },
-            { key: 'claroUp', label: 'Claro UP (Troca de Aparelho)', group: 'Anexação', unit: 'un', icon: Award,
-              prevReal: prevDayRow.claroUp || 0, todayReal: currentDayRow.claroUp || 0, metaMonthly: metaLoja.claroUp || 0 },
-            { key: 'upgrade', label: 'Upgrades de Serviços Móveis', group: 'Móvel', unit: 'un', icon: ArrowUpRight,
-              prevReal: prevDayRow.upgrade || 0, todayReal: currentDayRow.upgrade || 0, metaMonthly: metaLoja.upgrade || 0 },
-            { key: 'mplay', label: 'M-Play Streaming', group: 'Serviços', unit: 'un', icon: Zap,
-              prevReal: prevDayRow.mplay || 0, todayReal: currentDayRow.mplay || 0, metaMonthly: metaLoja.mplay || 0 }
+            {
+                key: 'receita', label: 'Receita Total Loja', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: TrendingUp,
+                prevReal: prevDayRow.receita || 0, todayReal: currentDayRow.receita || 0, metaMonthly: metaLoja.receita || 0
+            },
+            {
+                key: 'grossDia', label: 'Gross Total Móvel', group: 'Móvel', unit: 'un', icon: Smartphone,
+                prevReal: prevDayRow.grossDia || 0, todayReal: currentDayRow.grossDia || 0, metaMonthly: metaLoja.grossDia || 0,
+                prevMetaCustom: prevDayRow.metaDia, todayMetaCustom: currentDayRow.metaDia
+            },
+            {
+                key: 'posPagoTotal', label: 'Pós-Pago Total', group: 'Móvel', unit: 'un', icon: Radio,
+                prevReal: prevDayRow.posPagoTotal || 0, todayReal: currentDayRow.posPagoTotal || 0, metaMonthly: metaLoja.posPagoTotal || 0
+            },
+            {
+                key: 'posTt', label: 'Ativação Pós Pura (POS TT)', group: 'Móvel', unit: 'un', icon: Radio,
+                prevReal: prevDayRow.posTt || 0, todayReal: currentDayRow.posTt || 0, metaMonthly: 0
+            },
+            {
+                key: 'controleTotal', label: 'Controle Total', group: 'Móvel', unit: 'un', icon: Smartphone,
+                prevReal: prevDayRow.controleTotal || 0, todayReal: currentDayRow.controleTotal || 0, metaMonthly: metaLoja.controleTotal || 0
+            },
+            {
+                key: 'controle', label: 'Ativação Controle Pura', group: 'Móvel', unit: 'un', icon: Smartphone,
+                prevReal: prevDayRow.controle || 0, todayReal: currentDayRow.controle || 0, metaMonthly: 0
+            },
+            {
+                key: 'flex', label: 'Claro Flex', group: 'Móvel', unit: 'un', icon: Smartphone,
+                prevReal: prevDayRow.flex || 0, todayReal: currentDayRow.flex || 0, metaMonthly: 0
+            },
+            {
+                key: 'portabilidade', label: 'Portabilidade Total', group: 'Móvel', unit: 'un', icon: ArrowUpRight,
+                prevReal: prevDayRow.portabilidade || 0, todayReal: currentDayRow.portabilidade || 0, metaMonthly: metaLoja.portabilidade || 0
+            },
+            {
+                key: 'portabilidadePos', label: 'Port-in Pós-Pago', group: 'Móvel', unit: 'un', icon: Radio,
+                prevReal: prevDayRow.portabilidadePos || 0, todayReal: currentDayRow.portabilidadePos || 0, metaMonthly: metaLoja.portabilidadePos || 0
+            },
+            {
+                key: 'portabilidadeControle', label: 'Port-in Controle', group: 'Móvel', unit: 'un', icon: Smartphone,
+                prevReal: prevDayRow.portabilidadeControle || 0, todayReal: currentDayRow.portabilidadeControle || 0, metaMonthly: metaLoja.portabilidadeControle || 0
+            },
+            {
+                key: 'migracoes', label: 'Migrações Móvel Total', group: 'Móvel', unit: 'un', icon: ArrowUpRight,
+                prevReal: (prevDayRow.migracaoPos || 0) + (prevDayRow.migracaoControle || 0), todayReal: (currentDayRow.migracaoPos || 0) + (currentDayRow.migracaoControle || 0), metaMonthly: 0
+            },
+            {
+                key: 'dependentes', label: 'Dependentes Total', group: 'Móvel', unit: 'un', icon: Radio,
+                prevReal: (prevDayRow.depPg || 0) + (prevDayRow.depBl || 0) + (prevDayRow.depGratis || 0), todayReal: (currentDayRow.depPg || 0) + (currentDayRow.depBl || 0) + (currentDayRow.depGratis || 0), metaMonthly: 0
+            },
+            {
+                key: 'totalRes', label: 'UR Residencial Total', group: 'Residencial', unit: 'URs', icon: Home,
+                prevReal: prevDayRow.totalRes || 0, todayReal: currentDayRow.totalRes || 0, metaMonthly: metaLoja.totalRes || 0
+            },
+            {
+                key: 'fibra', label: 'Banda Larga Fibra', group: 'Residencial', unit: 'un', icon: Wifi,
+                prevReal: prevDayRow.fibra || 0, todayReal: currentDayRow.fibra || 0, metaMonthly: metaLoja.fibra || 0
+            },
+            {
+                key: 'tv', label: 'TV+ & TV Box', group: 'Residencial', unit: 'un', icon: Tv,
+                prevReal: (prevDayRow.tv || 0) + (prevDayRow.tvBox || 0), todayReal: (currentDayRow.tv || 0) + (currentDayRow.tvBox || 0), metaMonthly: metaLoja.tv || 0
+            },
+            {
+                key: 'fixo', label: 'Telefonia Fixa', group: 'Residencial', unit: 'un', icon: Activity,
+                prevReal: prevDayRow.fixo || 0, todayReal: currentDayRow.fixo || 0, metaMonthly: metaLoja.fixo || 0
+            },
+            {
+                key: 'mesh', label: 'Mesh Wi-Fi', group: 'Residencial', unit: 'un', icon: Wifi,
+                prevReal: prevDayRow.mesh || 0, todayReal: currentDayRow.mesh || 0, metaMonthly: metaLoja.mesh || 0
+            },
+            {
+                key: 'aparelho', label: 'Aparelhos Vendidos', group: 'Aparelhos', unit: 'un', icon: ShoppingBag,
+                prevReal: prevDayRow.aparelho || 0, todayReal: currentDayRow.aparelho || 0, metaMonthly: metaLoja.aparelho || 0
+            },
+            {
+                key: 'receitaAparelho', label: 'Rec. Aparelhos (Normal/Líq)', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: ShoppingBag,
+                prevReal: prevDayRow.receitaAparelho || 0, todayReal: currentDayRow.receitaAparelho || 0, metaMonthly: 0
+            },
+            {
+                key: 'receitaAparelhoBruto', label: 'Rec. Aparelhos (Bruta)', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: ShoppingBag,
+                prevReal: prevDayRow.receitaAparelhoBruto || 0, todayReal: currentDayRow.receitaAparelhoBruto || 0, metaMonthly: 0
+            },
+            {
+                key: 'seguro', label: 'Proteção Móvel (Seguro)', group: 'Anexação', unit: 'un', icon: ShieldCheck,
+                prevReal: prevDayRow.seguro || 0, todayReal: currentDayRow.seguro || 0, metaMonthly: metaLoja.seguro || 0
+            },
+            {
+                key: 'acessorios', label: 'Acessórios + Películas', group: 'Anexação', unit: 'un', icon: Boxes,
+                prevReal: (prevDayRow.acessorio || 0) + (prevDayRow.pelicula || 0), todayReal: (currentDayRow.acessorio || 0) + (currentDayRow.pelicula || 0), metaMonthly: (metaLoja.acessorio || 0) + (metaLoja.pelicula || 0)
+            },
+            {
+                key: 'receitaAcessorio', label: 'Rec. Acessórios (Normal/Líq)', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: Boxes,
+                prevReal: prevDayRow.receitaAcessorio || 0, todayReal: currentDayRow.receitaAcessorio || 0, metaMonthly: metaLoja.acessorio || 0
+            },
+            {
+                key: 'receitaAcessorioBruto', label: 'Rec. Acessórios (Bruta)', group: 'Financeiro', isCurrency: true, unit: 'R$', icon: Boxes,
+                prevReal: prevDayRow.receitaAcessorioBruto || 0, todayReal: currentDayRow.receitaAcessorioBruto || 0, metaMonthly: 0
+            },
+            {
+                key: 'trocafy', label: 'Trocafy Trade-in', group: 'Anexação', unit: 'un', icon: Award,
+                prevReal: prevDayRow.trocafy || 0, todayReal: currentDayRow.trocafy || 0, metaMonthly: metaLoja.trocafy || 0
+            },
+            {
+                key: 'claroUp', label: 'Claro UP (Troca de Aparelho)', group: 'Anexação', unit: 'un', icon: Award,
+                prevReal: prevDayRow.claroUp || 0, todayReal: currentDayRow.claroUp || 0, metaMonthly: metaLoja.claroUp || 0
+            },
+            {
+                key: 'upgrade', label: 'Upgrades de Serviços Móveis', group: 'Móvel', unit: 'un', icon: ArrowUpRight,
+                prevReal: prevDayRow.upgrade || 0, todayReal: currentDayRow.upgrade || 0, metaMonthly: metaLoja.upgrade || 0
+            },
+            {
+                key: 'mplay', label: 'M-Play Streaming', group: 'Serviços', unit: 'un', icon: Zap,
+                prevReal: prevDayRow.mplay || 0, todayReal: currentDayRow.mplay || 0, metaMonthly: metaLoja.mplay || 0
+            }
         ];
 
         return rawList.map(item => {
             const hasMonthlyMeta = item.metaMonthly > 0;
-            const prevMeta = item.prevMetaCustom !== undefined 
-                ? (item.prevMetaCustom || 0) 
-                : (hasMonthlyMeta && diasUteisTotais > 0 
-                    ? (item.isCurrency ? Math.round(item.metaMonthly / diasUteisTotais) : Math.round((item.metaMonthly / diasUteisTotais) * 10) / 10) 
+            const prevMeta = item.prevMetaCustom !== undefined
+                ? (item.prevMetaCustom || 0)
+                : (hasMonthlyMeta && diasUteisTotais > 0
+                    ? (item.isCurrency ? Math.round(item.metaMonthly / diasUteisTotais) : Math.round((item.metaMonthly / diasUteisTotais) * 10) / 10)
                     : 0);
 
-            const todayMeta = item.todayMetaCustom !== undefined 
-                ? (item.todayMetaCustom || 0) 
-                : (hasMonthlyMeta && diasUteisTotais > 0 
-                    ? (item.isCurrency ? Math.round(item.metaMonthly / diasUteisTotais) : Math.round((item.metaMonthly / diasUteisTotais) * 10) / 10) 
+            const todayMeta = item.todayMetaCustom !== undefined
+                ? (item.todayMetaCustom || 0)
+                : (hasMonthlyMeta && diasUteisTotais > 0
+                    ? (item.isCurrency ? Math.round(item.metaMonthly / diasUteisTotais) : Math.round((item.metaMonthly / diasUteisTotais) * 10) / 10)
                     : 0);
 
             // Gap Ontem = Meta Ontem - Realizado Ontem
             const gapOntem = prevMeta > 0 ? (prevMeta - item.prevReal) : 0;
             // Meta Hoje com Gap = Meta Base de Hoje + Gap Deixado Ontem
             const metaHojeAjustada = todayMeta > 0 ? Math.max(0, todayMeta + Math.max(0, gapOntem)) : 0;
-            const pctRecuperacaoHoje = metaHojeAjustada > 0 
-                ? Math.round((item.todayReal / metaHojeAjustada) * 100) 
+            const pctRecuperacaoHoje = metaHojeAjustada > 0
+                ? Math.round((item.todayReal / metaHojeAjustada) * 100)
                 : (todayMeta === 0 && item.todayReal > 0 ? 100 : 0);
 
             // Oscilação Dia a Dia (DOD)
             const diffDOD = item.todayReal - item.prevReal;
-            const pctDOD = item.prevReal > 0 
-                ? Math.round((diffDOD / item.prevReal) * 100) 
+            const pctDOD = item.prevReal > 0
+                ? Math.round((diffDOD / item.prevReal) * 100)
                 : (item.todayReal > 0 ? 100 : 0);
 
             return {
@@ -540,8 +596,8 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
         const projRow = { 'DATA': 'PROJEÇÃO MÊS' };
         COLUMNS.forEach(col => {
             const mData = calcStoreMetric(totals[col.key], metaLoja[col.key]);
-            projRow[col.label] = col.isCurrency 
-                ? Number(mData.projecao.toFixed(2)) 
+            projRow[col.label] = col.isCurrency
+                ? Number(mData.projecao.toFixed(2))
                 : Math.round(mData.projecao);
         });
         dataToExport.push(projRow);
@@ -559,9 +615,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
         dataToExport.push(tendRow);
 
         const metaRow = { 'DATA': 'META LOJA' };
-        COLUMNS.forEach(col => { 
+        COLUMNS.forEach(col => {
             const hasMeta = metaLoja[col.key] !== undefined && metaLoja[col.key] > 0;
-            metaRow[col.label] = hasMeta ? metaLoja[col.key] : '-'; 
+            metaRow[col.label] = hasMeta ? metaLoja[col.key] : '-';
         });
         dataToExport.push(metaRow);
 
@@ -596,22 +652,20 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                     <div className="flex items-center bg-neutral-200/80 dark:bg-neutral-800 p-1 rounded-xl self-start sm:self-auto sm:ml-4 border border-neutral-200 dark:border-neutral-700">
                         <button
                             onClick={() => setActiveSubView('DASHBOARD')}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                activeSubView === 'DASHBOARD'
-                                    ? 'bg-white dark:bg-neutral-900 text-[#E3000F] shadow-sm'
-                                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-                            }`}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeSubView === 'DASHBOARD'
+                                ? 'bg-white dark:bg-neutral-900 text-[#E3000F] shadow-sm'
+                                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                                }`}
                         >
                             <LayoutDashboard size={14} />
                             <span>Dashboard Loja</span>
                         </button>
                         <button
                             onClick={() => setActiveSubView('TABELA')}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                activeSubView === 'TABELA'
-                                    ? 'bg-white dark:bg-neutral-900 text-[#E3000F] shadow-sm'
-                                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-                            }`}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeSubView === 'TABELA'
+                                ? 'bg-white dark:bg-neutral-900 text-[#E3000F] shadow-sm'
+                                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                                }`}
                         >
                             <FileSpreadsheet size={14} />
                             <span>Tabela Analítica</span>
@@ -623,15 +677,15 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                     <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 items-stretch sm:items-center">
                         <div className="flex items-center gap-2 bg-white dark:bg-neutral-800 p-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm justify-between sm:justify-start">
                             <Calendar size={16} className="text-neutral-400 ml-2 shrink-0" />
-                            <input 
-                                type="month" 
-                                value={monthFilter} 
+                            <input
+                                type="month"
+                                value={monthFilter}
                                 onChange={(e) => setMonthFilter(e.target.value)}
                                 className="bg-transparent text-sm font-bold text-neutral-700 dark:text-neutral-100 outline-none pr-2 cursor-pointer focus:text-[#E3000F] w-full sm:w-auto text-right sm:text-left"
                             />
                         </div>
-                        <button 
-                            onClick={handleExportExcel} 
+                        <button
+                            onClick={handleExportExcel}
                             className="px-4 py-2 bg-[#107c41] text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-[#0c5e31] transition-colors shadow-sm shadow-green-700/30 flex items-center justify-center gap-2 shrink-0"
                         >
                             <FileSpreadsheet size={16} />
@@ -644,7 +698,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
             {/* CONTEÚDO PRINCIPAL: DASHBOARD LOJA (ESTILO POWER BI / VISÃO 360) */}
             {activeSubView === 'DASHBOARD' ? (
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 scrollbar-thin bg-neutral-50/40 dark:bg-neutral-950/40">
-                    
+
                     {/* BARRA SUPERIOR DE STATUS DE CALENDÁRIO & RUN RATE */}
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -667,7 +721,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                     )}
                                 </div>
                                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                                    {isCurrentMonth 
+                                    {isCurrentMonth
                                         ? `Dia ${elapsedDays} de ${daysInMonth} dias (${Math.round((elapsedDays / daysInMonth) * 100)}% decorrido) • Restam ${remainingDays} dias para o fechamento.`
                                         : `Mês com ${daysInMonth} dias concluído. Todos os números representam o resultado final.`}
                                 </p>
@@ -694,7 +748,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
                     {/* CARDS KPIS PRINCIPAIS (POWER BI EXECUTIVE CARDS) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        
+
                         {/* KPI 1: RECEITA TOTAL */}
                         <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-[#E3000F]/40 transition-all">
                             <div className="flex items-center justify-between mb-3">
@@ -714,9 +768,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                     </span>
                                 </div>
                                 <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden mt-2">
-                                    <div 
-                                        className={`h-full rounded-full transition-all duration-1000 ${metricReceita.ating >= 100 ? 'bg-green-500' : 'bg-gradient-to-r from-[#E3000F] to-rose-500'}`} 
-                                        style={{ width: `${Math.min(100, metricReceita.ating)}%` }} 
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-1000 ${metricReceita.ating >= 100 ? 'bg-green-500' : 'bg-gradient-to-r from-[#E3000F] to-rose-500'}`}
+                                        style={{ width: `${Math.min(100, metricReceita.ating)}%` }}
                                     />
                                 </div>
                             </div>
@@ -749,9 +803,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                     </span>
                                 </div>
                                 <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden mt-2">
-                                    <div 
-                                        className={`h-full rounded-full transition-all duration-1000 ${metricGross.ating >= 100 ? 'bg-green-500' : 'bg-blue-600'}`} 
-                                        style={{ width: `${Math.min(100, metricGross.ating)}%` }} 
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-1000 ${metricGross.ating >= 100 ? 'bg-green-500' : 'bg-blue-600'}`}
+                                        style={{ width: `${Math.min(100, metricGross.ating)}%` }}
                                     />
                                 </div>
                             </div>
@@ -784,9 +838,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                     </span>
                                 </div>
                                 <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden mt-2">
-                                    <div 
-                                        className={`h-full rounded-full transition-all duration-1000 ${metricRes.ating >= 100 ? 'bg-green-500' : 'bg-emerald-500'}`} 
-                                        style={{ width: `${Math.min(100, metricRes.ating)}%` }} 
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-1000 ${metricRes.ating >= 100 ? 'bg-green-500' : 'bg-emerald-500'}`}
+                                        style={{ width: `${Math.min(100, metricRes.ating)}%` }}
                                     />
                                 </div>
                             </div>
@@ -819,9 +873,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                     </span>
                                 </div>
                                 <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden mt-2">
-                                    <div 
-                                        className={`h-full rounded-full transition-all duration-1000 ${metricAparelho.ating >= 100 ? 'bg-green-500' : 'bg-purple-600'}`} 
-                                        style={{ width: `${Math.min(100, metricAparelho.ating)}%` }} 
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-1000 ${metricAparelho.ating >= 100 ? 'bg-green-500' : 'bg-purple-600'}`}
+                                        style={{ width: `${Math.min(100, metricAparelho.ating)}%` }}
                                     />
                                 </div>
                             </div>
@@ -927,7 +981,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800 col-span-2">
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-[10px] font-black text-neutral-500 uppercase tracking-wide">
-                                                    Portabilidade (Port-in)
+                                                    Portabilidade:
                                                 </span>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">
@@ -962,14 +1016,14 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                             </div>
                                             {totals.portabilidade > 0 && (
                                                 <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-1.5 overflow-hidden flex mt-2">
-                                                    <div 
-                                                        className="bg-blue-600 h-full" 
-                                                        style={{ width: `${(totals.portabilidadePos / totals.portabilidade) * 100}%` }} 
+                                                    <div
+                                                        className="bg-blue-600 h-full"
+                                                        style={{ width: `${(totals.portabilidadePos / totals.portabilidade) * 100}%` }}
                                                         title={`Port-in Pós: ${totals.portabilidadePos} un`}
                                                     />
-                                                    <div 
-                                                        className="bg-purple-600 h-full" 
-                                                        style={{ width: `${(totals.portabilidadeControle / totals.portabilidade) * 100}%` }} 
+                                                    <div
+                                                        className="bg-purple-600 h-full"
+                                                        style={{ width: `${(totals.portabilidadeControle / totals.portabilidade) * 100}%` }}
                                                         title={`Port-in Controle: ${totals.portabilidadeControle} un`}
                                                     />
                                                 </div>
@@ -1388,9 +1442,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                                     {hasMeta ? (
                                                         <div className="flex items-center gap-2 justify-center">
                                                             <div className="w-16 bg-neutral-100 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
-                                                                <div 
-                                                                    className={`h-full rounded-full ${m.ating >= 100 ? 'bg-green-500' : 'bg-[#E3000F]'}`} 
-                                                                    style={{ width: `${Math.min(100, m.ating)}%` }} 
+                                                                <div
+                                                                    className={`h-full rounded-full ${m.ating >= 100 ? 'bg-green-500' : 'bg-[#E3000F]'}`}
+                                                                    style={{ width: `${Math.min(100, m.ating)}%` }}
                                                                 />
                                                             </div>
                                                             <span className={`text-[11px] font-black ${m.ating >= 100 ? 'text-green-600' : 'text-neutral-700 dark:text-neutral-300'}`}>
@@ -1405,7 +1459,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                                     {isCurrentMonth ? (item.isCurrency ? applyCurrencyMask(m.ritmoDiario) : `${m.ritmoDiario.toFixed(1)}/dia`) : '-'}
                                                 </td>
                                                 <td className="py-2.5 px-3 text-right font-black text-[#E3000F] bg-red-50/30 dark:bg-[#E3000F]/5">
-                                                    {isCurrentMonth 
+                                                    {isCurrentMonth
                                                         ? (item.isCurrency ? applyCurrencyMask(m.projecao) : `${Math.round(m.projecao)} ${item.unit || ''}`)
                                                         : (item.isCurrency ? applyCurrencyMask(m.real) : `${m.real} ${item.unit || ''}`)}
                                                 </td>
@@ -1448,7 +1502,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
                     {/* GRÁFICO DIÁRIO & ANÁLISE DIA A DIA / GAP DE META DO DIA ANTERIOR */}
                     <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm space-y-6">
-                        
+
                         {/* CABEÇALHO DO BLOCO */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-neutral-100 dark:border-neutral-800">
                             <div>
@@ -1483,13 +1537,12 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                     const hasPassed = !isCurrentMonth || parseInt(r.data, 10) <= elapsedDays;
 
                                     return (
-                                        <button 
-                                            key={idx} 
+                                        <button
+                                            key={idx}
                                             type="button"
                                             onClick={() => setSelectedDayIndex(idx)}
-                                            className={`flex-1 min-w-[22px] sm:min-w-[26px] flex flex-col items-center h-full justify-end group relative transition-all outline-none rounded-t-lg p-0.5 ${
-                                                isSelected ? 'bg-red-50/80 dark:bg-[#E3000F]/15 ring-2 ring-[#E3000F]' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40'
-                                            }`}
+                                            className={`flex-1 min-w-[22px] sm:min-w-[26px] flex flex-col items-center h-full justify-end group relative transition-all outline-none rounded-t-lg p-0.5 ${isSelected ? 'bg-red-50/80 dark:bg-[#E3000F]/15 ring-2 ring-[#E3000F]' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40'
+                                                }`}
                                         >
                                             {/* Tooltip ao passar o mouse */}
                                             <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-neutral-900 text-white text-[9.5px] py-1 px-2 rounded-lg pointer-events-none whitespace-nowrap z-20 shadow-lg">
@@ -1498,26 +1551,24 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
                                             <div className="w-full flex items-end justify-center gap-0.5 h-full">
                                                 {/* Barra Meta Dia */}
-                                                <div 
+                                                <div
                                                     className="w-1.5 sm:w-2 bg-neutral-200 dark:bg-neutral-800 rounded-t-sm"
                                                     style={{ height: `${Math.min(100, (r.metaDia / maxGrossDia) * 100)}%` }}
                                                 />
                                                 {/* Barra Gross Realizado */}
-                                                <div 
-                                                    className={`w-2.5 sm:w-3.5 rounded-t-sm transition-all duration-500 ${
-                                                        r.grossDia >= r.metaDia && r.grossDia > 0
-                                                            ? 'bg-emerald-500' 
-                                                            : r.grossDia > 0 
-                                                                ? 'bg-[#E3000F]' 
-                                                                : 'bg-neutral-200 dark:bg-neutral-800'
-                                                    } ${isToday ? 'ring-1 ring-yellow-400' : ''}`}
+                                                <div
+                                                    className={`w-2.5 sm:w-3.5 rounded-t-sm transition-all duration-500 ${r.grossDia >= r.metaDia && r.grossDia > 0
+                                                        ? 'bg-emerald-500'
+                                                        : r.grossDia > 0
+                                                            ? 'bg-[#E3000F]'
+                                                            : 'bg-neutral-200 dark:bg-neutral-800'
+                                                        } ${isToday ? 'ring-1 ring-yellow-400' : ''}`}
                                                     style={{ height: `${Math.max(4, heightPct)}%` }}
                                                 />
                                             </div>
 
-                                            <span className={`text-[8.5px] sm:text-[9.5px] font-bold mt-2 ${
-                                                isSelected ? 'text-[#E3000F] font-black' : isToday ? 'text-neutral-900 dark:text-white font-black' : hasPassed ? 'text-neutral-600 dark:text-neutral-400' : 'text-neutral-300 dark:text-neutral-700'
-                                            }`}>
+                                            <span className={`text-[8.5px] sm:text-[9.5px] font-bold mt-2 ${isSelected ? 'text-[#E3000F] font-black' : isToday ? 'text-neutral-900 dark:text-white font-black' : hasPassed ? 'text-neutral-600 dark:text-neutral-400' : 'text-neutral-300 dark:text-neutral-700'
+                                                }`}>
                                                 {r.data}
                                             </span>
                                         </button>
@@ -1528,7 +1579,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
                         {/* DUAS ÁREAS ESTRATÉGICAS: GAP DE META DO DIA ANTERIOR & ANÁLISE DIA A DIA */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                            
+
                             {/* PARTE EXCLUSIVA: MONITOR DE GAP DE META DEIXADA DO DIA ANTERIOR */}
                             <div className="bg-gradient-to-br from-neutral-50 to-neutral-100/60 dark:from-neutral-850 dark:to-neutral-900/80 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                                 <div>
@@ -1567,11 +1618,10 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                                     <span className="text-[9.5px] uppercase font-bold text-neutral-400 block">Realizado Ontem</span>
                                                     <span className="text-base font-black text-neutral-800 dark:text-neutral-100">{realOntem} un</span>
                                                 </div>
-                                                <div className={`p-2.5 rounded-xl border ${
-                                                    gapOntem > 0 
-                                                        ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/60' 
-                                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/60'
-                                                }`}>
+                                                <div className={`p-2.5 rounded-xl border ${gapOntem > 0
+                                                    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/60'
+                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/60'
+                                                    }`}>
                                                     <span className="text-[9.5px] uppercase font-bold block opacity-75">
                                                         {gapOntem > 0 ? 'Déficit Deixado' : 'Superávit'}
                                                     </span>
@@ -1608,14 +1658,14 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                                     <span className="text-neutral-900 dark:text-white">{realHoje} / {metaHojeAjustada} ({pctHojeMetaAjustada}%)</span>
                                                 </div>
                                                 <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2 overflow-hidden">
-                                                    <div 
-                                                        className={`h-full rounded-full transition-all duration-700 ${pctHojeMetaAjustada >= 100 ? 'bg-emerald-500' : 'bg-[#E3000F]'}`} 
-                                                        style={{ width: `${Math.min(100, pctHojeMetaAjustada)}%` }} 
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-700 ${pctHojeMetaAjustada >= 100 ? 'bg-emerald-500' : 'bg-[#E3000F]'}`}
+                                                        style={{ width: `${Math.min(100, pctHojeMetaAjustada)}%` }}
                                                     />
                                                 </div>
                                                 <span className="text-[10px] text-neutral-400 mt-1 block">
-                                                    {gapAcumuladoAteOntem > 0 
-                                                        ? `⚠️ Saldo Acumulado até ontem: -${gapAcumuladoAteOntem} un no acumulado do mês.` 
+                                                    {gapAcumuladoAteOntem > 0
+                                                        ? `⚠️ Saldo Acumulado até ontem: -${gapAcumuladoAteOntem} un no acumulado do mês.`
                                                         : `✅ Saldo Acumulado até ontem: +${Math.abs(gapAcumuladoAteOntem)} un acima da meta.`}
                                                 </span>
                                             </div>
@@ -1658,7 +1708,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
 
                                     {hasPrevDay ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            
+
                                             {/* COLUNA 1: NO QUE MELHORAMOS */}
                                             <div className="bg-emerald-50/40 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40">
                                                 <div className="flex items-center gap-1.5 text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
@@ -1768,7 +1818,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                 <td className="border-b border-neutral-300 dark:border-neutral-700 px-3 py-2.5 sticky left-0 bg-neutral-100 dark:bg-neutral-800 shadow-[2px_0_5px_rgba(0,0,0,0.05)] z-30 text-purple-600 dark:text-purple-400">PROJEÇÃO MÊS</td>
                                 {COLUMNS.map(col => {
                                     const mData = calcStoreMetric(totals[col.key], metaLoja[col.key]);
-                                    const val = isCurrentMonth 
+                                    const val = isCurrentMonth
                                         ? (col.isCurrency ? mData.projecao : Math.round(mData.projecao))
                                         : totals[col.key];
                                     return (

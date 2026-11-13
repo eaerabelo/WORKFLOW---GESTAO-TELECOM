@@ -34,38 +34,11 @@ textarea::placeholder {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Reduz todos os ícones Lucide no celular para eliminar poluição visual */
+  /* Alinhamento perfeito dos ícones Lucide no celular, preservando a proporção e baseline */
   svg.lucide {
-    transform: scale(0.8);
-    transform-origin: center;
+    display: inline-block;
+    vertical-align: middle;
     flex-shrink: 0;
-  }
-
-  /* Oculta ou reduz marcas d'água e ícones decorativos gigantes no mobile */
-  svg.lucide[width="150"],
-  svg.lucide[width="120"],
-  svg.lucide[width="100"],
-  svg.lucide[width="80"] {
-    width: 44px !important;
-    height: 44px !important;
-    opacity: 0.05 !important;
-  }
-
-  svg.lucide[width="64"],
-  svg.lucide[width="48"],
-  svg.lucide[width="40"],
-  svg.lucide[width="36"],
-  svg.lucide[width="32"] {
-    width: 22px !important;
-    height: 22px !important;
-  }
-
-  svg.lucide[width="28"],
-  svg.lucide[width="24"],
-  svg.lucide[width="22"],
-  svg.lucide[width="20"] {
-    width: 16px !important;
-    height: 16px !important;
   }
 
   /* Tabelas mais enxutas e legíveis em telas verticais sem quebrar paddings customizados */

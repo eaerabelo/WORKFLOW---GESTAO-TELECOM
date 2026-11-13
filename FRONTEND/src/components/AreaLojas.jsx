@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { applyCurrencyMask } from "../utils/masks";
 import { fetchAreaLojas } from "../services/api.js";
+import { WFLogoLoader } from "./WFLogoLoader.jsx";
 import "../styles/AreaLojas/AreaLojasStyle.css";
 
 const INDICATORS = [
@@ -185,14 +186,12 @@ export const AreaLojas = ({ globalMonth }) => {
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {loading ? (
-          <div className="area-lojas-loading-container">
-            <Loader2 size={40} className="area-lojas-loading-spinner" />
-            <p className="area-lojas-loading-title">
-              Cruzando banco de dados de todas as filiais...
-            </p>
-            <p className="area-lojas-loading-subtitle">
-              Isso pode levar alguns segundos.
-            </p>
+          <div className="flex flex-col items-center justify-center min-h-[380px] p-8">
+            <WFLogoLoader
+              size="md"
+              text="Cruzando banco de dados de todas as filiais..."
+              subtext="Isso pode levar alguns segundos."
+            />
           </div>
         ) : (
           <div className="area-lojas-content-wrapper">
