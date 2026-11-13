@@ -50,6 +50,7 @@ import { Atualizacoes } from './components/Atualizacoes.jsx';
 import { AreaLojas } from './components/AreaLojas.jsx';
 import { Profile } from './components/profile.jsx';
 import { Help } from './components/help.jsx';
+import { WFLogoLoader } from './components/WFLogoLoader.jsx';
 import wfLogo from './assets/logo_WF.png';
 import qrWifiImg from "./assets/QR_CODEWIFI.png";
 
@@ -517,7 +518,32 @@ export default function App() {
     
     if (lastAction) {
       if (lastAction.type === 'salesData') setSalesData(lastAction.state);
-      if (lastAction.type === 'simcardsData') setSimcardsData(lastAction.state);
+      if (lastAction.type === 'simcardsData') {
+        setSimcardsData(currentSimcards => {
+          // REGRA DE SEGURANÇA: Ctrl+Z ou Desfazer NUNCA retira o Selo Digital dos ICCIDs
+          const currentSealsMap = new Map();
+          (currentSimcards || []).forEach(sc => {
+            if (sc?.emUsoPor) {
+              currentSealsMap.set(sc.id, {
+                emUsoPor: sc.emUsoPor,
+                emUsoAt: sc.emUsoAt
+              });
+            }
+          });
+
+          return (lastAction.state || []).map(item => {
+            if (currentSealsMap.has(item.id)) {
+              const seal = currentSealsMap.get(item.id);
+              return {
+                ...item,
+                emUsoPor: seal.emUsoPor,
+                emUsoAt: seal.emUsoAt
+              };
+            }
+            return item;
+          });
+        });
+      }
       if (lastAction.type === 'reprovadosData') setReprovadosData(lastAction.state);
       if (lastAction.type === 'geekDocs') setGeekDocs(lastAction.state);
       if (lastAction.type === 'campanhasData') setCampanhasData(lastAction.state);
@@ -988,9 +1014,12 @@ export default function App() {
   // Renderiza tela de Loading enquanto as Collections não estão preparadas
   if (!isBackendReady) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-neutral-100 dark:bg-neutral-900 font-sans flex-col gap-4">
-        <div className="w-12 h-12 border-4 border-[#E3000F] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-neutral-500 dark:text-neutral-400 font-black text-sm uppercase tracking-wider animate-pulse">WORKFLOW GESTÃO - CARREGANDO...</p>
+      <div className="flex h-screen w-screen items-center justify-center bg-neutral-100 dark:bg-neutral-900 font-sans p-6">
+        <WFLogoLoader
+          size="lg"
+          text="WORKFLOW GESTÃO - CARREGANDO..."
+          subtext="Conectando banco de dados e sincronizando coleções..."
+        />
       </div>
     );
   }
@@ -1488,18 +1517,13 @@ export default function App() {
 
       {/* ALERTA GLOBAL DE FALHA DE CONEXÃO COM O SERVIDOR ORACLE */}
       {isOffline && (
-        <div className="fixed inset-0 z-[9999] bg-[#E3000F] flex flex-col items-center justify-center text-white animate-fade-in p-6 text-center">
-          <div className="bg-white/10 p-6 rounded-full mb-6 backdrop-blur-sm animate-pulse">
-            <WifiOff size={80} className="text-white" />
-          </div>
-          <h1 className="text-4xl sm:text-6xl font-black mb-4 tracking-tight drop-shadow-lg uppercase">WORKFLOW OFFLINE</h1>
-          <p className="text-xl sm:text-2xl mb-8 max-w-2xl font-black drop-shadow-md uppercase tracking-wide">
-            SISTEMA TENTANDO CONEXÃO COM REDE...
-          </p>
-          <div className="flex items-center gap-3 bg-white/10 px-6 py-3 rounded-full backdrop-blur-sm">
-            <Loader2 size={20} className="animate-spin" />
-            <span className="font-semibold tracking-wider uppercase text-sm">Tentando reconectar automaticamente...</span>
-          </div>
+        <div className="fixed inset-0 z-[9999] bg-neutral-950/95 flex flex-col items-center justify-center text-white animate-fade-in p-6 text-center backdrop-blur-xl">
+          <WFLogoLoader
+            size="xl"
+            status="offline"
+            text="WORKFLOW OFFLINE"
+            subtext="SISTEMA TENTANDO CONEXÃO COM REDE..."
+          />
         </div>
       )}
     </div>

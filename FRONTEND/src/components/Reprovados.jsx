@@ -296,50 +296,50 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
                         </div>
                     </div>
                     {!isOptionsCollapsed && (
-                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center w-full lg:w-auto">
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center w-full lg:w-auto">
                             {/* TOGGLE: TABELA vs MAPA DE CALOR */}
-                            <div className="flex items-center p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                            <div className="flex items-center justify-center w-full sm:w-auto p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('TABELA')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                                    className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all inline-flex items-center justify-center gap-1.5 ${
                                         viewMode === 'TABELA'
                                             ? 'bg-white dark:bg-neutral-900 text-[#E3000F] shadow-sm'
                                             : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'
                                     }`}
                                 >
-                                    <Table size={14} />
+                                    <Table size={14} className="shrink-0" />
                                     <span>Tabela</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('MAPA_CALOR')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                                    className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all inline-flex items-center justify-center gap-1.5 ${
                                         viewMode === 'MAPA_CALOR'
                                             ? 'bg-gradient-to-r from-[#E3000F] to-orange-600 text-white shadow-sm'
                                             : 'text-neutral-500 dark:text-neutral-400 hover:text-[#E3000F]'
                                     }`}
                                 >
-                                    <Flame size={14} />
+                                    <Flame size={14} className="shrink-0" />
                                     <span>Mapa de Calor</span>
                                 </button>
                             </div>
 
-                            <div className="relative w-full sm:w-auto">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" size={16} />
+                            <div className="relative w-full sm:w-auto flex-1 sm:flex-none">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 shrink-0" size={16} />
                                 <input type="text" placeholder="Buscar Cliente, CPF, CEP..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-52 pl-9 pr-4 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 rounded-xl text-sm outline-none focus:bg-white dark:focus:bg-neutral-900 focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] transition-all" />
                             </div>
-                            <div className="flex w-full sm:w-auto gap-2">
-                                <div className="relative flex flex-1 items-center gap-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-3 py-1.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer">
-                                    <Calendar size={16} className="text-neutral-500" />
+                            <div className="flex flex-wrap sm:flex-nowrap w-full sm:w-auto gap-2">
+                                <div className="relative flex flex-1 items-center gap-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-3 py-1.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer min-w-[130px]">
+                                    <Calendar size={16} className="text-neutral-500 shrink-0" />
                                     <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="text-sm text-neutral-700 dark:text-neutral-300 outline-none bg-transparent font-medium cursor-pointer w-full" title="Filtrar por data" />
                                 </div>
                                 {isGerente && (
-                                    <button type="button" onClick={handleExportExcel} className="flex-1 sm:flex-none px-4 py-2 bg-[#107c41] text-white text-sm font-medium rounded-xl hover:bg-[#0c5e31] transition-colors shadow-sm shadow-green-700/30 flex items-center justify-center gap-2 whitespace-nowrap" title="Exporta planilha completa com notificação de áreas de calor">
+                                    <button type="button" onClick={handleExportExcel} className="flex-1 sm:flex-none px-4 py-2 bg-[#107c41] text-white text-sm font-medium rounded-xl hover:bg-[#0c5e31] transition-colors shadow-sm shadow-green-700/30 inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-98" title="Exporta planilha completa com notificação de áreas de calor">
                                         Exportar Planilha (Calor)
                                     </button>
                                 )}
-                                <button onClick={openModal} className="flex-1 sm:flex-none px-4 py-2 bg-[#E3000F] text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors shadow-sm shadow-red-500/30 flex items-center justify-center gap-2 whitespace-nowrap"><Plus size={16} /> Novo Registro</button>
+                                <button onClick={openModal} className="flex-1 sm:flex-none px-4 py-2 bg-[#E3000F] text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors shadow-sm shadow-red-500/30 inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-98"><Plus size={16} className="shrink-0" /> Novo Registro</button>
                             </div>
                         </div>
                     )}
@@ -583,11 +583,11 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
                                 <div className="space-y-1.5 md:col-span-3">
                                     <div className="flex items-center justify-between">
                                         <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-                                            <MapPin size={13} className="text-[#E3000F]" />
+                                            <MapPin size={13} className="text-[#E3000F] shrink-0" />
                                             <span>Pré-visualização da Localidade (Google Maps)</span>
                                         </label>
                                         {formData.cep && (
-                                            <span className="text-[10px] text-emerald-500 font-bold uppercase">
+                                            <span className="text-[10px] text-[#E3000F] font-bold uppercase">
                                                 CEP Vinculado: {formData.cep}
                                             </span>
                                         )}

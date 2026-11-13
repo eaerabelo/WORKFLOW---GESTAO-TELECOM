@@ -838,21 +838,21 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                     </div>
 
                     {/* BLOCO CENTRAL: 3 PAINÉIS ANALÍTICOS (MÓVEL, RESIDENCIAL & ANEXAÇÃO) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
                         {/* PAINEL 1: GROSS - ONE PAGE */}
-                        <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+                        <div className="bg-white dark:bg-neutral-900 rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
-                                            <Radio size={18} />
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
+                                            <Radio size={18} className="shrink-0" />
                                         </div>
-                                        <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide">
+                                        <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide truncate">
                                             GROSS - ONE PAGE
                                         </h3>
                                     </div>
-                                    <span className="text-xs font-black text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
+                                    <span className="text-xs font-black text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded shrink-0">
                                         {totals.grossDia} Gross
                                     </span>
                                 </div>
@@ -868,9 +868,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                             <div className="bg-blue-600 h-full rounded-full" style={{ width: `${Math.min(100, metricPos.ating)}%` }} />
                                         </div>
                                         {/* CAIXA DE RECEITA PÓS-PAGO */}
-                                        <div className="mt-1.5 flex items-center justify-between text-xs bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800/60">
-                                            <span className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-300">Receita Pós-Pago:</span>
-                                            <span className="font-black text-blue-700 dark:text-blue-300 text-sm">{applyCurrencyMask(totals.receitaPos)}</span>
+                                        <div className="mt-1.5 flex items-center justify-between gap-1 text-[11px] sm:text-xs bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800/60">
+                                            <span className="text-[10px] sm:text-xs font-black uppercase text-blue-700 dark:text-blue-300 truncate">Receita Pós-Pago:</span>
+                                            <span className="font-black text-blue-700 dark:text-blue-300 text-xs sm:text-sm shrink-0">{applyCurrencyMask(totals.receitaPos)}</span>
                                         </div>
                                         {isCurrentMonth && (
                                             <div className="flex justify-between items-center text-[10.5px] mt-1 text-neutral-400">
@@ -1021,18 +1021,18 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                         </div>
 
                         {/* PAINEL 2: UR - RESIDENCIAL */}
-                        <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+                        <div className="bg-white dark:bg-neutral-900 rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                                            <Home size={18} />
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
+                                            <Home size={18} className="shrink-0" />
                                         </div>
-                                        <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide">
+                                        <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide truncate">
                                             UR - RESIDENCIAL
                                         </h3>
                                     </div>
-                                    <span className="text-xs font-black text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
+                                    <span className="text-xs font-black text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded shrink-0">
                                         {totals.totalRes} URs
                                     </span>
                                 </div>
@@ -1149,18 +1149,18 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                         </div>
 
                         {/* PAINEL 3: DEVICES & SEGURO */}
-                        <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+                        <div className="bg-white dark:bg-neutral-900 rounded-3xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl">
-                                            <ShieldCheck size={18} />
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl shrink-0">
+                                            <ShieldCheck size={18} className="shrink-0" />
                                         </div>
-                                        <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide">
+                                        <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide truncate">
                                             DEVICES & SEGURO
                                         </h3>
                                     </div>
-                                    <span className="text-xs font-black text-purple-700 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded">
+                                    <span className="text-xs font-black text-purple-700 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded shrink-0">
                                         {totals.aparelho > 0 ? Math.round((totals.seguro / totals.aparelho) * 100) : 0}% Seguro/Ap.
                                     </span>
                                 </div>
@@ -1176,9 +1176,9 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                             <div className="bg-purple-600 h-full rounded-full" style={{ width: `${Math.min(100, totals.aparelho > 0 ? (totals.seguro / totals.aparelho) * 100 : 0)}%` }} />
                                         </div>
                                         {/* VALOR DE RECEITA INDIVIDUAL DE SEGURO */}
-                                        <div className="mt-1.5 flex items-center justify-between text-xs bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/60">
-                                            <span className="text-[10px] font-black uppercase text-purple-700 dark:text-purple-300">Receita Individual Seguro:</span>
-                                            <span className="font-black text-purple-700 dark:text-purple-300 text-sm">{applyCurrencyMask(totals.receitaSeguro)}</span>
+                                        <div className="mt-1.5 flex items-center justify-between gap-1 text-[11px] sm:text-xs bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/60">
+                                            <span className="text-[10px] sm:text-xs font-black uppercase text-purple-700 dark:text-purple-300 truncate">Receita Individual Seguro:</span>
+                                            <span className="font-black text-purple-700 dark:text-purple-300 text-xs sm:text-sm shrink-0">{applyCurrencyMask(totals.receitaSeguro)}</span>
                                         </div>
                                         {isCurrentMonth && (
                                             <div className="flex justify-between items-center text-[10.5px] mt-1 text-neutral-400">

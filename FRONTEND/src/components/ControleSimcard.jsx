@@ -272,6 +272,18 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     return;
                 }
             }
+            // SEGURANÇA: Ctrl+Z ou Desfazer NUNCA retira o Selo Digital dos ICCIDs
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                const targetCard = selectedCardId ? (simcardsData || []).find(i => i.id === selectedCardId) : null;
+                if (targetCard && targetCard.emUsoPor) {
+                    e.preventDefault();
+                    toast.error('O Selo Digital não pode ser retirado por atalho de desfazer (Ctrl+Z). Apenas liderança autorizada pode remover o selo.', {
+                        id: 'block-seal-undo-toast'
+                    });
+                    return;
+                }
+            }
+
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
                 const selectionText = window.getSelection ? window.getSelection().toString().trim() : '';
                 const activeEl = document.activeElement;

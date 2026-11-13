@@ -59,7 +59,7 @@ export const ESTILOS_CAMPANHA = [
     indicadores: [
       { key: "pontosAparelho", metric: "aparelho", label: "Aparelho / Smartphone", default: 8, cor: "text-purple-500" },
       { key: "pontosSeguro", metric: "seguro", label: "Seguro do Aparelho", default: 5, cor: "text-indigo-400" },
-      { key: "pontosAcessorio", metric: "acessorio", label: "Acessórios", default: 3, cor: "text-emerald-500" },
+      { key: "pontosAcessorio", metric: "acessorio", label: "Acessórios", default: 3, cor: "text-red-500" },
       { key: "pontosTrocafy", metric: "trocafy", label: "Trocafy", default: 4, cor: "text-amber-500" },
       { key: "pontosClaroUp", metric: "claroUp", label: "Claro Up", default: 6, cor: "text-rose-500" },
     ],
@@ -83,13 +83,13 @@ export const ESTILOS_CAMPANHA = [
     id: "ACE",
     label: "Melhor Venda Acessórios",
     icon: Sparkles,
-    cor: "from-emerald-500 to-teal-600",
-    textCor: "text-emerald-500",
-    borderCor: "border-emerald-500/30",
-    bgBadge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    cor: "from-[#E3000F] to-red-800",
+    textCor: "text-[#E3000F]",
+    borderCor: "border-red-500/30",
+    bgBadge: "bg-red-500/10 text-red-500 border-red-500/30",
     desc: "Acessórios, Áudio, Cabos e Películas",
     indicadores: [
-      { key: "pontosAcessorio", metric: "acessorio", label: "Acessórios em Geral", default: 3, cor: "text-emerald-500" },
+      { key: "pontosAcessorio", metric: "acessorio", label: "Acessórios em Geral", default: 3, cor: "text-red-500" },
     ],
   },
   {
@@ -108,7 +108,7 @@ export const ESTILOS_CAMPANHA = [
       { key: "pontosControle", metric: "controle", label: "Controle", default: 4, cor: "text-purple-500" },
       { key: "pontosAparelho", metric: "aparelho", label: "Aparelho", default: 8, cor: "text-purple-400" },
       { key: "pontosSeguro", metric: "seguro", label: "Seguro", default: 5, cor: "text-indigo-400" },
-      { key: "pontosAcessorio", metric: "acessorio", label: "Acessórios", default: 3, cor: "text-emerald-500" },
+      { key: "pontosAcessorio", metric: "acessorio", label: "Acessórios", default: 3, cor: "text-red-500" },
       { key: "pontosTrocafy", metric: "trocafy", label: "Trocafy", default: 4, cor: "text-amber-500" },
       { key: "pontosClaroUp", metric: "claroUp", label: "Claro Up", default: 6, cor: "text-rose-500" },
       { key: "pontosGross", metric: "gross", label: "Gross / Portab.", default: 2, cor: "text-rose-400" },
@@ -640,7 +640,7 @@ export function Campanha({
                       <div className="flex items-center gap-1.5">
                         <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg border ${
                           isAtiva
-                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            ? "bg-red-500/10 text-[#E3000F] dark:text-red-400 border-red-500/30"
                             : "bg-neutral-500/10 text-neutral-400 border-neutral-500/20"
                         }`}>
                           {camp.status}
@@ -720,9 +720,9 @@ export function Campanha({
                     <div onClick={e => e.stopPropagation()}>
                       {isVendedor ? (
                         userHasAceite ? (
-                          <div className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider">
-                            <FileCheck2 size={15} />
-                            <span>Aceite Digital Ativo</span>
+                          <div className="w-full py-2 px-3 rounded-xl bg-red-500/10 border border-red-500/30 text-[#E3000F] dark:text-red-400 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider">
+                            <FileCheck2 size={15} className="shrink-0" />
+                            <span>1 VENDEDOR ELEGIVEL</span>
                           </div>
                         ) : (
                           <button
@@ -730,14 +730,14 @@ export function Campanha({
                             onClick={() => handleDarAceiteDigital(camp)}
                             className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider shadow-md shadow-red-500/20 transition-all active:scale-98 cursor-pointer"
                           >
-                            <CheckCircle2 size={15} />
-                            <span>Dar Aceite Digital</span>
+                            <CheckCircle2 size={15} className="shrink-0" />
+                            <span>CIENTE</span>
                           </button>
                         )
                       ) : (
                         <div className="w-full py-2 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 flex items-center justify-between text-xs font-bold">
                           <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-neutral-500">
-                            <UserCheck size={14} className="text-[#E3000F]" />
+                            <UserCheck size={14} className="text-[#E3000F] shrink-0" />
                             Aceites Registrados:
                           </span>
                           <span className="px-2 py-0.5 rounded-md bg-[#E3000F]/10 text-[#E3000F] font-black text-xs">
@@ -768,8 +768,8 @@ export function Campanha({
                   <h3 className="text-lg sm:text-xl font-black text-neutral-900 dark:text-white uppercase tracking-wide">
                     Status da Campanha: {activeCampanhaForStatus.titulo}
                   </h3>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="px-2 py-0.5 rounded-md bg-red-500/15 border border-red-500/40 text-[#E3000F] dark:text-red-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E3000F] animate-pulse"></span>
                     Tempo Real
                   </span>
                 </div>
@@ -874,8 +874,8 @@ export function Campanha({
                       <td className="px-4 py-3 font-extrabold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
                         <span>{getFirstName(seller.nome)}</span>
                         {seller.temAceite ? (
-                          <span className="text-[10px] text-emerald-500 font-bold" title="Aceite Confirmado">
-                            <CheckCircle2 size={13} className="inline" />
+                          <span className="text-[10px] text-[#E3000F] font-bold" title="Aceite Confirmado">
+                            <CheckCircle2 size={13} className="inline shrink-0" />
                           </span>
                         ) : (
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold uppercase">
@@ -901,7 +901,7 @@ export function Campanha({
                       </td>
                       <td className="px-4 py-3 text-center">
                         {seller.temAceite ? (
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-[10px] font-black uppercase">
+                          <span className="px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-[#E3000F] dark:text-red-400 text-[10px] font-black uppercase">
                             Elegível
                           </span>
                         ) : (
@@ -929,9 +929,9 @@ export function Campanha({
               </div>
               <div>
                 <h3 className="font-extrabold text-base text-neutral-900 dark:text-white uppercase">
-                  Aceite Digital de Participação
+                  Confirmação de Ciência da Campanha
                 </h3>
-                <p className="text-xs text-neutral-400">Termos e Métricas da Campanha</p>
+                <p className="text-xs text-neutral-400">Termos, Métricas e Elegibilidade</p>
               </div>
             </div>
 
@@ -954,10 +954,10 @@ export function Campanha({
 
             <div className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed space-y-2">
               <p>
-                Ao confirmar o seu <strong>Aceite Digital</strong>, você declara estar ciente e de acordo com todas as regras, pesos de indicadores e metas estabelecidas para esta campanha.
+                Ao confirmar como <strong>CIENTE</strong>, você declara estar ciente e de acordo com todas as regras, pesos de indicadores e metas estabelecidas para esta campanha.
               </p>
               <p className="text-[11px] text-neutral-400">
-                * Somente vendas devidamente registradas no sistema dentro da vigência serão computadas.
+                * Somente vendas devidamente registradas no sistema dentro da vigência serão computadas para pontuação.
               </p>
             </div>
 
@@ -972,10 +972,10 @@ export function Campanha({
               <button
                 type="button"
                 onClick={handleConfirmarAceite}
-                className="px-6 py-2.5 bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 flex items-center gap-1.5"
+                className="px-6 py-2.5 bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 flex items-center gap-1.5 cursor-pointer active:scale-98"
               >
-                <Check size={16} />
-                <span>Confirmar e Participar</span>
+                <Check size={16} className="shrink-0" />
+                <span>CIENTE E PARTICIPAR</span>
               </button>
             </div>
           </div>
@@ -1073,7 +1073,7 @@ export function Campanha({
                       <Sparkles size={16} />
                       <span>3. Pontos Focados: {selectedEstiloObj.label}</span>
                     </div>
-                    <span className="text-[10px] text-emerald-500 font-bold uppercase bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                    <span className="text-[10px] text-[#E3000F] font-bold uppercase bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
                       {selectedEstiloObj.indicadores.length} Indicador(es) Ativo(s)
                     </span>
                   </div>
