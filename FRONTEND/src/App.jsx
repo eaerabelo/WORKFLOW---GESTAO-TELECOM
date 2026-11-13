@@ -595,6 +595,25 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isNotificationsOpen]);
 
+  // Interceptor global para substituir "Failed to fetch" por mensagem amigável em português
+  useEffect(() => {
+    const handleRejection = (event) => {
+      const msg = String(event?.reason?.message || event?.reason || '');
+      if (
+        msg.toLowerCase().includes('failed to fetch') ||
+        msg.toLowerCase().includes('networkerror') ||
+        msg.toLowerCase().includes('load failed')
+      ) {
+        toast.error('SERVIDOR FORA MOMENTANEAMENTE, TENTE NOVAMENTE MAIS TARDE...', {
+          id: 'server-offline-global-toast',
+          duration: 6000
+        });
+      }
+    };
+    window.addEventListener('unhandledrejection', handleRejection);
+    return () => window.removeEventListener('unhandledrejection', handleRejection);
+  }, []);
+
   // Interceptadores (Wrappers) para detectar alterações na nuvem e criar o backup automático na Stack (para o Undo)
   const handleSetSalesData = (action) => {
     setSalesData(prev => {

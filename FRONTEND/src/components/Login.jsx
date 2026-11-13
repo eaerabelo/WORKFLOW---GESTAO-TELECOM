@@ -273,6 +273,19 @@ export const AnimatedBackground = ({ children }) => {
   );
 };
 
+const formatErrorMsg = (err, fallback) => {
+    const msg = String(err?.message || err || '');
+    if (
+        msg.toLowerCase().includes('failed to fetch') ||
+        msg.toLowerCase().includes('networkerror') ||
+        msg.toLowerCase().includes('load failed') ||
+        msg.toLowerCase().includes('servidor fora')
+    ) {
+        return 'SERVIDOR FORA MOMENTANEAMENTE, TENTE NOVAMENTE MAIS TARDE...';
+    }
+    return msg || fallback;
+};
+
 export function Login({ usersDB, setUsersDB, onLogin }) {
     const [view, setView] = useState('LOGIN'); // 'LOGIN', 'REGISTER', 'FORGOT'
 
@@ -369,7 +382,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
         } catch (error) {
             toast.dismiss();
-            toast.error(error.message || 'Erro ao realizar login.');
+            toast.error(formatErrorMsg(error, 'Erro ao realizar login.'));
         }
     };
 
@@ -403,7 +416,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             setResendTimer(60);
         } catch (error) {
             console.error("ERRO COMPLETO CATCH:", error);
-            toast.error(error.message || 'Falha ao solicitar cadastro.', { id: 'regEmailToast', duration: 8000 });
+            toast.error(formatErrorMsg(error, 'Falha ao solicitar cadastro.'), { id: 'regEmailToast', duration: 8000 });
         }
     };
 
@@ -415,7 +428,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             await efetivarCadastroAPI(email, regCurrentCode, registrationToken);
             toast.success(setupKey === 'lideranca2026' ? 'CONTA DE GERENTE CRIADA COM SUCESSO!' : 'CADASTRO REALIZADO COM SUCESSO. Faça seu login!');
         } catch (error) {
-            toast.error(error.message || 'Código inválido ou incorreto. Verifique seu e-mail novamente.');
+            toast.error(formatErrorMsg(error, 'Código inválido ou incorreto. Verifique seu e-mail novamente.'));
             return;
         }
 
@@ -452,7 +465,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             setForgotStep(2);
             setResendTimer(60);
         } catch (error) {
-            toast.error(error.message || 'Falha ao solicitar recuperação.', { id: 'emailToast' });
+            toast.error(formatErrorMsg(error, 'Falha ao solicitar recuperação.'), { id: 'emailToast' });
         }
     };
 
@@ -482,7 +495,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
             setConfirmNewPass('');
             setRecoveryToken(null);
         } catch (error) {
-            toast.error(error.message || 'Código inválido ou expirado.');
+            toast.error(formatErrorMsg(error, 'Código inválido ou expirado.'));
         }
     };
 

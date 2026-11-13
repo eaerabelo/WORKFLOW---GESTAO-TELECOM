@@ -8,20 +8,49 @@ export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'h
 
 export const getAuthToken = () => localStorage.getItem('jwt_token');
 
+export const MSG_SERVIDOR_OFFLINE = "SERVIDOR FORA MOMENTANEAMENTE, TENTE NOVAMENTE MAIS TARDE...";
+
+// Wrapper seguro de fetch que intercepta 'Failed to fetch' e quedas de rede
+export const safeFetch = async (url, options = {}) => {
+    try {
+        const res = await fetch(url, options);
+        return res;
+    } catch (err) {
+        const msg = String(err?.message || '');
+        if (
+            msg.toLowerCase().includes('failed to fetch') ||
+            msg.toLowerCase().includes('networkerror') ||
+            msg.toLowerCase().includes('load failed') ||
+            msg.toLowerCase().includes('fetch failed') ||
+            msg.toLowerCase().includes('network error')
+        ) {
+            throw new Error(MSG_SERVIDOR_OFFLINE);
+        }
+        throw err;
+    }
+};
+
 export const authFetch = async (url, options = {}) => {
     const token = getAuthToken();
     const headers = { ...(options.headers || {}) };
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    return fetch(url, { ...options, headers, credentials: 'include' });
+    return safeFetch(url, { ...options, headers, credentials: 'include' });
 };
 
 // Helper para padronizar erros
 export const handleResponse = async (res) => {
     if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Erro HTTP: ${res.status}`);
+        if (res.status >= 502 && res.status <= 504) {
+            throw new Error(MSG_SERVIDOR_OFFLINE);
+        }
+        const rawErr = errorData.error || `Erro HTTP: ${res.status}`;
+        if (String(rawErr).toLowerCase().includes('failed to fetch')) {
+            throw new Error(MSG_SERVIDOR_OFFLINE);
+        }
+        throw new Error(rawErr);
     }
     return res.json();
 };
@@ -40,7 +69,7 @@ export const getSistemasAPI = async () => {
 // AUTENTICAÇÃO E STATUS
 // ============================================================================
 export const loginAPI = async (username, password) => {
-    const res = await fetch(`${API_URL}/api/auth/login`, {
+    const res = await safeFetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -50,7 +79,7 @@ export const loginAPI = async (username, password) => {
 };
 
 export const solicitarRecuperacaoAPI = async (username, email) => {
-    const res = await fetch(`${API_URL}/api/auth/esqueci-senha/solicitar`, {
+    const res = await safeFetch(`${API_URL}/api/auth/esqueci-senha/solicitar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -60,7 +89,7 @@ export const solicitarRecuperacaoAPI = async (username, email) => {
 };
 
 export const resetarSenhaAPI = async (username, email, codigo, newPass, recoveryToken) => {
-    const res = await fetch(`${API_URL}/api/auth/esqueci-senha/resetar`, {
+    const res = await safeFetch(`${API_URL}/api/auth/esqueci-senha/resetar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -72,7 +101,7 @@ export const resetarSenhaAPI = async (username, email, codigo, newPass, recovery
 export const solicitarCadastroAPI = async (username, email, nome, storeCode, setupKey, pass, birthDate, phone) => {
     console.log(`FETCHING TO: ${API_URL}/api/auth/cadastro/solicitar`);
     try {
-        const res = await fetch(`${API_URL}/api/auth/cadastro/solicitar`, {
+        const res = await safeFetch(`${API_URL}/api/auth/cadastro/solicitar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -86,7 +115,7 @@ export const solicitarCadastroAPI = async (username, email, nome, storeCode, set
 };
 
 export const efetivarCadastroAPI = async (email, codigo, registrationToken) => {
-    const res = await fetch(`${API_URL}/api/auth/cadastro/efetivar`, {
+    const res = await safeFetch(`${API_URL}/api/auth/cadastro/efetivar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -96,7 +125,7 @@ export const efetivarCadastroAPI = async (email, codigo, registrationToken) => {
 };
 
 export const logoutAPI = async () => {
-    const res = await fetch(`${API_URL}/api/auth/logout`, {
+    const res = await safeFetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include'
     });
@@ -107,7 +136,7 @@ export const logoutAPI = async () => {
 // SISTEMA (STATUS)
 // ============================================================================
 export const fetchStatus = async () => {
-    const res = await fetch(`${API_URL}/api/status`); // Status não precisa de token
+    const res = await safeFetch(`${API_URL}/api/status`); // Status não precisa de token
     return handleResponse(res);
 };
 
