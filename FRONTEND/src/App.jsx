@@ -1096,9 +1096,14 @@ export default function App() {
                           </span>
                         )}
                         {section.name === 'CAMPANHAS' && hasNewCampanha && (
-                          <span className="flex h-2 w-2 relative">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E3000F]"></span>
+                          <span className="flex items-center gap-1.5 ml-auto">
+                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#E3000F] text-white animate-pulse shadow-sm shadow-red-500/50">
+                              NOVO
+                            </span>
+                            <span className="flex h-2 w-2 relative">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E3000F]"></span>
+                            </span>
                           </span>
                         )}
                       </div>

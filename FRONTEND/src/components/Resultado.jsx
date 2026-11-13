@@ -75,7 +75,8 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
         const sumTotals = {
             grossDia: 0, metaDia: 0, total: 0, posTt: 0, controle: 0, controleTotal: 0, posPagoTotal: 0, depPg: 0, depBl: 0, depGratis: 0, migracaoPos: 0, migracaoControle: 0, grossPme: 0,
             portabilidade: 0, portabilidadePos: 0, portabilidadeControle: 0, bl: 0, flex: 0, receita: 0, fibra: 0, tv: 0, tvBox: 0, fixo: 0, mplay: 0, mplayPos: 0, mplayControle: 0, mesh: 0, urPme: 0,
-            totalRes: 0, aparelho: 0, receitaAparelho: 0, receitaAparelhoBruto: 0, seguro: 0, acessorio: 0, trocafy: 0, pelicula: 0, claroUp: 0, upgrade: 0, upgradeUp: 0, receitaAcessorio: 0, receitaAcessorioBruto: 0
+            totalRes: 0, aparelho: 0, receitaAparelho: 0, receitaAparelhoBruto: 0, seguro: 0, acessorio: 0, trocafy: 0, pelicula: 0, claroUp: 0, upgrade: 0, upgradeUp: 0, receitaAcessorio: 0, receitaAcessorioBruto: 0,
+            receitaPos: 0, receitaControle: 0, receitaFibra: 0, receitaFibraPme: 0, receitaFixo: 0, receitaTvBox: 0, receitaMesh: 0, receitaSeguro: 0
         };
 
         const today = new Date();
@@ -106,6 +107,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
             let portabilidade = 0, portabilidadePos = 0, portabilidadeControle = 0;
             let bl = 0, flex = 0, receita = 0, fibra = 0, tv = 0, tvBox = 0, fixo = 0, mplay = 0, mplayPos = 0, mplayControle = 0, mesh = 0, urPme = 0, aparelho = 0;
             let receitaAparelho = 0, receitaAparelhoBruto = 0, seguro = 0, acessorio = 0, trocafy = 0, pelicula = 0, claroUp = 0, upgrade = 0, upgradeUp = 0, receitaAcessorio = 0, receitaAcessorioBruto = 0;
+            let receitaPos = 0, receitaControle = 0, receitaFibra = 0, receitaFibraPme = 0, receitaFixo = 0, receitaTvBox = 0, receitaMesh = 0, receitaSeguro = 0;
 
             dailySales.forEach(sale => {
                 const pBase = String(sale.produtoBase || sale.produto || '').toUpperCase();
@@ -116,6 +118,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                 const recBruto = Number(sale.valorBruto || sale.receita) || 0;
                 const q = sale.qtda === 0 || sale.qtda === '0' ? 0 : (Number(sale.qtda) || 1);
                 const adds = sale.adicionais || [];
+                const addsStr = Array.isArray(adds) ? adds.join(' ').toUpperCase() : String(adds || '').toUpperCase();
 
                 receita += rec;
 
@@ -158,13 +161,44 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                 else if (pBase.includes('ACESSÓRIO') || pBase.includes('ACESSORIO')) { acessorio += q; receitaAcessorio += rec; receitaAcessorioBruto += recBruto; }
                 else if (pBase.includes('PELÍCULA') || pBase.includes('PELICULA')) { pelicula += q; }
 
-                if (adds.includes('TROCAFY')) trocafy += 1;
+                // RASTREAMENTO ESPECÍFICO DE RECEITAS DE MÓVEL
+                if ((pBase.includes('PÓS') || pBase.includes('POS') || pBase.includes('DEPENDENTE') || pBase.includes('DEP') || pBase.includes('PME') || pBase === 'PME') && !pBase.includes('APARELHO') && !pBase.includes('FIBRA')) {
+                    receitaPos += rec;
+                } else if (pBase.includes('CONTROLE') || pBase.includes('FLEX')) {
+                    receitaControle += rec;
+                }
+
+                // RASTREAMENTO ESPECÍFICO DE RECEITAS RESIDENCIAIS
+                if (pBase.includes('FIBRA PME') || pBase.includes('UR PME') || ((pBase.includes('FIBRA') || pBase.includes('BANDA LARGA')) && (pBase.includes('PME') || op.includes('PME')))) {
+                    receitaFibraPme += rec;
+                } else if (pBase.includes('FIBRA') || pBase.includes('BANDA LARGA RESIDENCIAL')) {
+                    receitaFibra += rec;
+                }
+
+                if (pBase.includes('FIXO') || pBase.includes('NET FONE')) {
+                    receitaFixo += rec;
+                }
+
+                if (pBase.includes('TV-BOX') || pBase.includes('TV+') || pBase.includes('TV')) {
+                    receitaTvBox += rec;
+                }
+
+                if (pBase.includes('MESH')) {
+                    receitaMesh += rec;
+                }
+
+                // RASTREAMENTO ESPECÍFICO DE RECEITA DE SEGURO
+                if (pBase.includes('SEGURO') || sale.seguroOption || addsStr.includes('SEGURO')) {
+                    receitaSeguro += rec;
+                }
+
+                if (addsStr.includes('TROCAFY') || pBase.includes('TROCAFY')) trocafy += 1;
                 
                 // Segregação entre CLARO UP (Programa de Troca Anual de Aparelho) e UPGRADES DE SERVIÇOS (Migrações/Planos)
-                const isClaroUp = adds.includes('CLARO UP') || adds.includes('CLAROUP');
+                const isClaroUp = addsStr.includes('CLARO UP') || addsStr.includes('CLAROUP') || pBase.includes('CLARO UP');
                 if (isClaroUp) claroUp += 1;
                 
-                const isUpgradeServico = (adds.includes('UPGRADE') && !isClaroUp) || 
+                const isUpgradeServico = (addsStr.includes('UPGRADE') && !isClaroUp) || 
                     op.includes('UPGRADE') || 
                     sub.includes('UPGRADE') || 
                     pBase.includes('UPGRADE') || 
@@ -198,7 +232,8 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
             generatedRows.push({
                 data: dayStr, grossDia, metaDia, total: isFuture ? null : accumulatedGross, posTt, controle, controleTotal, posPagoTotal, depPg, depBl, depGratis, migracaoPos,
                 migracaoControle, grossPme, portabilidade, portabilidadePos, portabilidadeControle, bl, flex, receita, fibra, tv, tvBox, fixo, mplay, mplayPos, mplayControle, mesh,
-                urPme, totalRes, aparelho, receitaAparelho, receitaAparelhoBruto, seguro, acessorio, trocafy, pelicula, claroUp, upgrade, upgradeUp, receitaAcessorio, receitaAcessorioBruto
+                urPme, totalRes, aparelho, receitaAparelho, receitaAparelhoBruto, seguro, acessorio, trocafy, pelicula, claroUp, upgrade, upgradeUp, receitaAcessorio, receitaAcessorioBruto,
+                receitaPos, receitaControle, receitaFibra, receitaFibraPme, receitaFixo, receitaTvBox, receitaMesh, receitaSeguro
             });
 
             sumTotals.grossDia += grossDia; sumTotals.metaDia += metaDia; sumTotals.posTt += posTt; sumTotals.controle += controle; sumTotals.controleTotal += controleTotal; sumTotals.posPagoTotal += posPagoTotal;
@@ -209,6 +244,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
             sumTotals.fibra += fibra; sumTotals.tv += tv; sumTotals.tvBox += tvBox; sumTotals.fixo += fixo; sumTotals.mplay += mplay; sumTotals.mplayPos += mplayPos; sumTotals.mplayControle += mplayControle; sumTotals.mesh += mesh;
             sumTotals.urPme += urPme; sumTotals.totalRes += totalRes; sumTotals.receitaAparelho += receitaAparelho; sumTotals.receitaAparelhoBruto += receitaAparelhoBruto; sumTotals.aparelho += aparelho;
             sumTotals.seguro += seguro; sumTotals.acessorio += acessorio; sumTotals.pelicula += pelicula; sumTotals.trocafy += trocafy; sumTotals.claroUp += claroUp; sumTotals.upgrade += upgrade; sumTotals.upgradeUp += upgradeUp; sumTotals.receitaAcessorio += receitaAcessorio; sumTotals.receitaAcessorioBruto += receitaAcessorioBruto;
+            sumTotals.receitaPos += receitaPos; sumTotals.receitaControle += receitaControle; sumTotals.receitaFibra += receitaFibra; sumTotals.receitaFibraPme += receitaFibraPme; sumTotals.receitaFixo += receitaFixo; sumTotals.receitaTvBox += receitaTvBox; sumTotals.receitaMesh += receitaMesh; sumTotals.receitaSeguro += receitaSeguro;
         }
 
         sumTotals.total = accumulatedGross;
@@ -804,7 +840,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                     {/* BLOCO CENTRAL: 3 PAINÉIS ANALÍTICOS (MÓVEL, RESIDENCIAL & ANEXAÇÃO) */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                        {/* PAINEL 1: DETALHAMENTO MÓVEL & SERVIÇOS */}
+                        {/* PAINEL 1: GROSS - ONE PAGE */}
                         <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
@@ -813,7 +849,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                             <Radio size={18} />
                                         </div>
                                         <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide">
-                                            Mix Móvel & Portabilidade
+                                            GROSS - ONE PAGE
                                         </h3>
                                     </div>
                                     <span className="text-xs font-black text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
@@ -822,14 +858,19 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                 </div>
 
                                 <div className="space-y-3.5">
-                                    {/* PÓS PAGO */}
+                                    {/* PÓS PAGO (QUALQUER PÓS) */}
                                     <div>
                                         <div className="flex justify-between text-xs font-bold mb-1">
-                                            <span className="text-neutral-600 dark:text-neutral-300">Pós-Pago Total</span>
+                                            <span className="text-neutral-600 dark:text-neutral-300">Pós-Pago Total (Qualquer Pós)</span>
                                             <span className="text-neutral-900 dark:text-white">{totals.posPagoTotal} / {metaLoja.posPagoTotal} ({metricPos.ating.toFixed(0)}%)</span>
                                         </div>
                                         <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
                                             <div className="bg-blue-600 h-full rounded-full" style={{ width: `${Math.min(100, metricPos.ating)}%` }} />
+                                        </div>
+                                        {/* CAIXA DE RECEITA PÓS-PAGO */}
+                                        <div className="mt-1.5 flex items-center justify-between text-xs bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800/60">
+                                            <span className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-300">Receita Pós-Pago:</span>
+                                            <span className="font-black text-blue-700 dark:text-blue-300 text-sm">{applyCurrencyMask(totals.receitaPos)}</span>
                                         </div>
                                         {isCurrentMonth && (
                                             <div className="flex justify-between items-center text-[10.5px] mt-1 text-neutral-400">
@@ -848,14 +889,19 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                         </div>
                                     </div>
 
-                                    {/* CONTROLE */}
+                                    {/* CONTROLE (FLEX E QUALQUER CONTROLE) */}
                                     <div>
                                         <div className="flex justify-between text-xs font-bold mb-1">
-                                            <span className="text-neutral-600 dark:text-neutral-300">Controle Total</span>
+                                            <span className="text-neutral-600 dark:text-neutral-300">Controle Total (Flex e Controle)</span>
                                             <span className="text-neutral-900 dark:text-white">{totals.controleTotal} / {metaLoja.controleTotal} ({metricControle.ating.toFixed(0)}%)</span>
                                         </div>
                                         <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
                                             <div className="bg-purple-600 h-full rounded-full" style={{ width: `${Math.min(100, metricControle.ating)}%` }} />
+                                        </div>
+                                        {/* CAIXA DE RECEITA CONTROLE */}
+                                        <div className="mt-1.5 flex items-center justify-between text-xs bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/60">
+                                            <span className="text-[10px] font-black uppercase text-purple-700 dark:text-purple-300">Receita Controle:</span>
+                                            <span className="font-black text-purple-700 dark:text-purple-300 text-sm">{applyCurrencyMask(totals.receitaControle)}</span>
                                         </div>
                                         {isCurrentMonth && (
                                             <div className="flex justify-between items-center text-[10.5px] mt-1 text-neutral-400">
@@ -974,7 +1020,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                             </div>
                         </div>
 
-                        {/* PAINEL 2: MIX RESIDENCIAL & FIXA */}
+                        {/* PAINEL 2: UR - RESIDENCIAL */}
                         <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
@@ -983,7 +1029,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                             <Home size={18} />
                                         </div>
                                         <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide">
-                                            Mix Residencial & Fixa
+                                            UR - RESIDENCIAL
                                         </h3>
                                     </div>
                                     <span className="text-xs font-black text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
@@ -995,11 +1041,16 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                     {/* FIBRA */}
                                     <div>
                                         <div className="flex justify-between text-xs font-bold mb-1">
-                                            <span className="text-neutral-600 dark:text-neutral-300">Banda Larga Fibra</span>
+                                            <span className="text-neutral-600 dark:text-neutral-300">Banda Larga Fibra (PF)</span>
                                             <span className="text-neutral-900 dark:text-white">{totals.fibra} / {metaLoja.fibra} ({metricFibra.ating.toFixed(0)}%)</span>
                                         </div>
                                         <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
                                             <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${Math.min(100, metricFibra.ating)}%` }} />
+                                        </div>
+                                        {/* CAIXA DE RECEITA FIBRA */}
+                                        <div className="mt-1.5 flex items-center justify-between text-xs bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
+                                            <span className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400">Receita Fibra PF:</span>
+                                            <span className="font-black text-emerald-700 dark:text-emerald-400 text-sm">{applyCurrencyMask(totals.receitaFibra)}</span>
                                         </div>
                                         {isCurrentMonth && (
                                             <div className="flex justify-between items-center text-[10.5px] mt-1 text-neutral-400">
@@ -1011,7 +1062,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                         )}
                                     </div>
 
-                                    {/* TV */}
+                                    {/* TV+ & TV BOX */}
                                     <div>
                                         <div className="flex justify-between text-xs font-bold mb-1">
                                             <span className="text-neutral-600 dark:text-neutral-300">TV+ & TV Box</span>
@@ -1019,6 +1070,11 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                         </div>
                                         <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
                                             <div className="bg-teal-500 h-full rounded-full" style={{ width: `${Math.min(100, metricTv.ating)}%` }} />
+                                        </div>
+                                        {/* CAIXA DE RECEITA TV BOX & TV */}
+                                        <div className="mt-1.5 flex items-center justify-between text-xs bg-teal-50 dark:bg-teal-950/40 px-2.5 py-1.5 rounded-xl border border-teal-200 dark:border-teal-800/60">
+                                            <span className="text-[10px] font-black uppercase text-teal-700 dark:text-teal-400">Receita TV Box / TV+:</span>
+                                            <span className="font-black text-teal-700 dark:text-teal-400 text-sm">{applyCurrencyMask(totals.receitaTvBox)}</span>
                                         </div>
                                         {isCurrentMonth && (
                                             <div className="flex justify-between items-center text-[10.5px] mt-1 text-neutral-400">
@@ -1030,35 +1086,58 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                         )}
                                     </div>
 
-                                    {/* CARDS MENORES RESIDENCIAL */}
+                                    {/* CARDS MENORES RESIDENCIAL RECHEADOS COM RECEITA */}
                                     <div className="grid grid-cols-2 gap-2 pt-2">
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
-                                            <span className="text-[10px] font-bold text-neutral-400 block uppercase">Telefonia Fixa</span>
-                                            <span className="text-base font-black text-neutral-800 dark:text-neutral-100">{totals.fixo} un</span>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-bold text-neutral-400 block uppercase">Telefonia Fixa</span>
+                                                <span className="text-[9px] font-bold text-neutral-500">{totals.fixo} un</span>
+                                            </div>
+                                            <span className="text-base font-black text-neutral-800 dark:text-neutral-100 block mt-0.5">
+                                                {applyCurrencyMask(totals.receitaFixo)}
+                                            </span>
                                             <div className="flex items-center justify-between mt-1 text-[9px] text-neutral-400">
-                                                <span>Meta: {metaLoja.fixo}</span>
+                                                <span>Meta: {metaLoja.fixo} un</span>
                                                 <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(metricFixo.projecao)} un</span>
                                             </div>
                                         </div>
+
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
-                                            <span className="text-[10px] font-bold text-neutral-400 block uppercase">Mesh Wi-Fi</span>
-                                            <span className="text-base font-black text-neutral-800 dark:text-neutral-100">{totals.mesh} un</span>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-bold text-neutral-400 block uppercase">Mesh Wi-Fi</span>
+                                                <span className="text-[9px] font-bold text-neutral-500">{totals.mesh} un</span>
+                                            </div>
+                                            <span className="text-base font-black text-neutral-800 dark:text-neutral-100 block mt-0.5">
+                                                {applyCurrencyMask(totals.receitaMesh)}
+                                            </span>
                                             <div className="flex items-center justify-between mt-1 text-[9px] text-neutral-400">
-                                                <span>Meta: {metaLoja.mesh}</span>
+                                                <span>Meta: {metaLoja.mesh} un</span>
                                                 <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(metricMesh.projecao)} un</span>
                                             </div>
                                         </div>
+
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
-                                            <span className="text-[10px] font-bold text-neutral-400 block uppercase">UR PME</span>
-                                            <span className="text-base font-black text-indigo-600 dark:text-indigo-400">{totals.urPme} un</span>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-bold text-neutral-400 block uppercase">Fibra PME (UR PME)</span>
+                                                <span className="text-[9px] font-bold text-indigo-500">{totals.urPme} un</span>
+                                            </div>
+                                            <span className="text-base font-black text-indigo-600 dark:text-indigo-400 block mt-0.5">
+                                                {applyCurrencyMask(totals.receitaFibraPme)}
+                                            </span>
                                             <div className="flex items-center justify-between mt-1 text-[9px] text-neutral-400">
                                                 <span>Corporativo</span>
                                                 <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(calcStoreMetric(totals.urPme, 0).projecao)} un</span>
                                             </div>
                                         </div>
+
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
-                                            <span className="text-[10px] font-bold text-neutral-400 block uppercase">TV Box Cabo/Stream</span>
-                                            <span className="text-base font-black text-teal-600 dark:text-teal-400">{totals.tvBox} un</span>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-bold text-neutral-400 block uppercase">TV Box Cabo/Stream</span>
+                                                <span className="text-[9px] font-bold text-teal-500">{totals.tvBox} un</span>
+                                            </div>
+                                            <span className="text-base font-black text-teal-600 dark:text-teal-400 block mt-0.5">
+                                                {applyCurrencyMask(totals.receitaTvBox)}
+                                            </span>
                                             <div className="flex items-center justify-between mt-1 text-[9px] text-neutral-400">
                                                 <span>TV+: {totals.tv} un</span>
                                                 <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(calcStoreMetric(totals.tvBox, 0).projecao)} un</span>
@@ -1069,7 +1148,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                             </div>
                         </div>
 
-                        {/* PAINEL 3: ANEXAÇÃO & RENTABILIDADE */}
+                        {/* PAINEL 3: DEVICES & SEGURO */}
                         <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
@@ -1078,7 +1157,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                             <ShieldCheck size={18} />
                                         </div>
                                         <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide">
-                                            Anexação & Rentabilidade
+                                            DEVICES & SEGURO
                                         </h3>
                                     </div>
                                     <span className="text-xs font-black text-purple-700 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded">
@@ -1087,7 +1166,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                 </div>
 
                                 <div className="space-y-3.5">
-                                    {/* SEGURO APARELHO */}
+                                    {/* SEGURO APARELHO COM RECEITA INDIVIDUAL */}
                                     <div>
                                         <div className="flex justify-between text-xs font-bold mb-1">
                                             <span className="text-neutral-600 dark:text-neutral-300">Proteção Móvel (Seguro)</span>
@@ -1095,6 +1174,11 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                         </div>
                                         <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
                                             <div className="bg-purple-600 h-full rounded-full" style={{ width: `${Math.min(100, totals.aparelho > 0 ? (totals.seguro / totals.aparelho) * 100 : 0)}%` }} />
+                                        </div>
+                                        {/* VALOR DE RECEITA INDIVIDUAL DE SEGURO */}
+                                        <div className="mt-1.5 flex items-center justify-between text-xs bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/60">
+                                            <span className="text-[10px] font-black uppercase text-purple-700 dark:text-purple-300">Receita Individual Seguro:</span>
+                                            <span className="font-black text-purple-700 dark:text-purple-300 text-sm">{applyCurrencyMask(totals.receitaSeguro)}</span>
                                         </div>
                                         {isCurrentMonth && (
                                             <div className="flex justify-between items-center text-[10.5px] mt-1 text-neutral-400">
@@ -1125,7 +1209,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                         )}
                                     </div>
 
-                                    {/* CARDS MENORES ANEXAÇÃO RECHEADOS */}
+                                    {/* CARDS MENORES ANEXAÇÃO COM CLARO UP E UPGRADE SEGREGADOS */}
                                     <div className="grid grid-cols-2 gap-2 pt-2">
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
                                             <span className="text-[10px] font-bold text-neutral-400 block uppercase">Ticket Médio Aparelho</span>
@@ -1137,6 +1221,7 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                                 <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(metricAparelho.projecao)} un</span>
                                             </div>
                                         </div>
+
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
                                             <span className="text-[10px] font-bold text-neutral-400 block uppercase">Ticket Médio Acessório</span>
                                             <span className="text-base font-black text-pink-600 dark:text-pink-400">
@@ -1147,6 +1232,33 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                                 <span className="font-bold text-neutral-600 dark:text-neutral-300">Películas: {totals.pelicula} un</span>
                                             </div>
                                         </div>
+
+                                        {/* CLARO UP QUANTIDADE FEITA */}
+                                        <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-bold text-neutral-400 block uppercase">Claro UP Feita</span>
+                                                <span className="text-[9px] font-black text-[#E3000F] bg-red-50 dark:bg-red-950/40 px-1.5 py-0.2 rounded">PROGRAMA</span>
+                                            </div>
+                                            <span className="text-base font-black text-[#E3000F] block mt-0.5">{totals.claroUp} un</span>
+                                            <div className="flex items-center justify-between mt-1 text-[9px] text-neutral-400">
+                                                <span>Troca Anual Aparelho</span>
+                                                <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(calcStoreMetric(totals.claroUp, 0).projecao)} un</span>
+                                            </div>
+                                        </div>
+
+                                        {/* QUANTIDADE DE UPGRADE FEITA */}
+                                        <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-bold text-neutral-400 block uppercase">Upgrade de Serviços</span>
+                                                <span className="text-[9px] font-black text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.2 rounded">MIGRAÇÕES</span>
+                                            </div>
+                                            <span className="text-base font-black text-blue-600 dark:text-blue-400 block mt-0.5">{totals.upgrade} un</span>
+                                            <div className="flex items-center justify-between mt-1 text-[9px] text-neutral-400">
+                                                <span>Migrações / Planos</span>
+                                                <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(calcStoreMetric(totals.upgrade, 0).projecao)} un</span>
+                                            </div>
+                                        </div>
+
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
                                             <span className="text-[10px] font-bold text-neutral-400 block uppercase">Trocafy (Trade-In)</span>
                                             <span className="text-base font-black text-neutral-800 dark:text-neutral-100">{totals.trocafy} un</span>
@@ -1155,14 +1267,19 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                                 <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(metricTrocafy.projecao)} un</span>
                                             </div>
                                         </div>
+
+                                        {/* RECEITA INDIVIDUAL SEGURO EM CARD */}
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
-                                            <span className="text-[10px] font-bold text-neutral-400 block uppercase">Claro UP (Upgrades)</span>
-                                            <span className="text-base font-black text-[#E3000F]">{totals.upgradeUp} un</span>
+                                            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 block uppercase">Receita Seguro</span>
+                                            <span className="text-base font-black text-purple-700 dark:text-purple-300">
+                                                {applyCurrencyMask(totals.receitaSeguro)}
+                                            </span>
                                             <div className="flex items-center justify-between mt-1 text-[9px] text-neutral-400">
-                                                <span>Upgrades Anuais</span>
-                                                <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(calcStoreMetric(totals.upgradeUp, 0).projecao)} un</span>
+                                                <span>{totals.seguro} apólices</span>
+                                                <span className="font-bold text-neutral-600 dark:text-neutral-300">Proj: {Math.round(metricSeguro.projecao)} un</span>
                                             </div>
                                         </div>
+
                                         {/* ESPAÇOS INDIVIDUAIS PARA RECEITA BRUTA E LÍQUIDA */}
                                         <div className="bg-neutral-50 dark:bg-neutral-800/40 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800">
                                             <div className="flex justify-between items-center text-[10px] font-bold text-neutral-400 uppercase">

@@ -172,6 +172,8 @@ export function Campanha({
     globalUser?.role,
   );
 
+  const isVendedor = !globalUser?.role || globalUser?.role === "VENDEDOR";
+
   const safeVendedores = useMemo(() => {
     return Object.values(usersDB || {})
       .filter((u) => !u?.role || u?.role === "VENDEDOR")
@@ -297,11 +299,16 @@ export function Campanha({
       );
       toast.success("Campanha atualizada com sucesso!");
     } else {
+      const newCamp = { ...formData, id: Date.now(), updatedAt: Date.now(), aceites: {} };
       setCampanhasData((prev) => [
-        { ...formData, id: Date.now(), updatedAt: Date.now(), aceites: {} },
+        newCamp,
         ...prev,
       ]);
-      toast.success("Nova campanha lançada!");
+      // Limpa cache para forçar a notificação global e bolha de novidade na lateral
+      try {
+        localStorage.removeItem("last_seen_campanhas");
+      } catch {}
+      toast.success("Nova campanha lançada com sucesso! Alerta e bolha de novidade ativados na lateral.", { duration: 5000, icon: "📣" });
     }
     setIsModalOpen(false);
   };
@@ -709,22 +716,34 @@ export function Campanha({
                       </div>
                     )}
 
-                    {/* BOTÃO DE ACEITE DIGITAL OU STATUS CONFIRMADO */}
+                    {/* BOTÃO DE ACEITE DIGITAL OU STATUS CONFIRMADO (SOMENTE PARA USUÁRIO VENDEDOR) */}
                     <div onClick={e => e.stopPropagation()}>
-                      {userHasAceite ? (
-                        <div className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider">
-                          <FileCheck2 size={15} />
-                          <span>Aceite Digital Ativo</span>
-                        </div>
+                      {isVendedor ? (
+                        userHasAceite ? (
+                          <div className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider">
+                            <FileCheck2 size={15} />
+                            <span>Aceite Digital Ativo</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleDarAceiteDigital(camp)}
+                            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider shadow-md shadow-red-500/20 transition-all active:scale-98 cursor-pointer"
+                          >
+                            <CheckCircle2 size={15} />
+                            <span>Dar Aceite Digital</span>
+                          </button>
+                        )
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleDarAceiteDigital(camp)}
-                          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider shadow-md shadow-red-500/20 transition-all active:scale-98"
-                        >
-                          <CheckCircle2 size={15} />
-                          <span>Dar Aceite Digital</span>
-                        </button>
+                        <div className="w-full py-2 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 flex items-center justify-between text-xs font-bold">
+                          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-neutral-500">
+                            <UserCheck size={14} className="text-[#E3000F]" />
+                            Aceites Registrados:
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-[#E3000F]/10 text-[#E3000F] font-black text-xs">
+                            {Object.keys(camp.aceites || {}).length} Vendedor(es)
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
