@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock, ArrowLeft, Key, Mail, Calendar, Smartphone, Store, Activity, ShieldCheck, FileText, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { findStore } from '../utils/stores.js';
 import { loginAPI, solicitarRecuperacaoAPI, resetarSenhaAPI, solicitarCadastroAPI, efetivarCadastroAPI, fetchStatus } from '../services/api.js';
 import wfLogo from '../assets/logo_WF.png';
 import desktopBg from '../assets/DESKTOP_PAGE.jpeg';
@@ -304,6 +305,18 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                 setHolidayMessage(data.holidayMessage);
             }
         }).catch(err => console.error("Erro ao carregar mensagem de feriado:", err));
+
+        // Inicialização de Loja por URL (?store=... ou ?loja=...) aceitando ID, SAP ou Alias
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeParam = urlParams.get('store') || urlParams.get('loja');
+        if (storeParam) {
+            const found = findStore(storeParam);
+            if (found) {
+                localStorage.setItem('storeId', found.id);
+                setSelectedStore(found.id);
+                setRegStoreCode(found.code);
+            }
+        }
 
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -635,11 +648,22 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Código da Loja <span className="text-[#E3000F]">*</span></label>
+                                            <div className="flex items-center justify-between ml-1">
+                                                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300">Código da Loja (ID ou SAP) <span className="text-[#E3000F]">*</span></label>
+                                                {regStoreCode && findStore(regStoreCode) && (
+                                                    <span className="text-[10px] text-emerald-400 font-black uppercase">Loja Encontrada</span>
+                                                )}
+                                            </div>
                                             <div className="relative mt-0.5">
                                                 <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="text" value={regStoreCode} onChange={e => setRegStoreCode(e.target.value.toUpperCase())} placeholder="Solicite ao Gerente (Ex: AT1M)" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm font-mono uppercase transition-all" />
+                                                <input type="text" value={regStoreCode} onChange={e => setRegStoreCode(e.target.value.toUpperCase())} placeholder="Digite ID (ex: LB31) ou SAP (ex: 1119)" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm font-mono uppercase transition-all" />
                                             </div>
+                                            {regStoreCode && findStore(regStoreCode) && (
+                                                <div className="mt-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-[11px] text-emerald-400 font-bold flex items-center justify-between animate-fade-in">
+                                                    <span>🏬 {findStore(regStoreCode).name}</span>
+                                                    <span className="font-mono text-[10px] text-emerald-300">ID: {findStore(regStoreCode).code} | SAP: {findStore(regStoreCode).sap}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Senha <span className="text-[#E3000F]">*</span></label>

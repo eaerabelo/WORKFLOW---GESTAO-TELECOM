@@ -2,9 +2,11 @@ import { getOracleConnection } from '../config/oracle.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import fs from 'fs';
+import { STORES, findStore } from '../config/stores.js';
 
 
-const STORES = [
+// Lojas carregadas dinamicamente via stores.js
+const _OLD_STORES = [
     { id: 'DEFAULT', name: 'Administração Geral', code: 'DEV' },
     { id: 'uniao_osasco', name: 'LP UNIÃO OSASCO', code: 'AT1M' },
     { id: 'shopping_bourbon', name: 'LP BOURBON', code: 'LB46' },
@@ -343,8 +345,8 @@ export const solicitarCadastro = async (req, res) => {
         // Papel baseado na SetupKey
         const role = isManagerSetup ? 'GERENTE' : 'VENDEDOR';
 
-        // Mapeamento da Loja
-        const matchedStore = STORES.find(s => s.code.toUpperCase() === storeCode.toUpperCase());
+        // Mapeamento da Loja (Aceita ID, SAP ou Alias alternativo)
+        const matchedStore = findStore(storeCode);
         if (role !== 'GERENTE' && !matchedStore) {
             return res.status(400).json({ error: "Código da loja inválido. Verifique com a liderança." });
         }
