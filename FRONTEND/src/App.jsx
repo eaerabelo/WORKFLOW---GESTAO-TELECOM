@@ -1113,6 +1113,7 @@ export default function App() {
           <div className="px-4 mb-2 text-xs font-semibold text-neutral-400 dark:text-neutral-500 tracking-wider whitespace-nowrap">MÓDULOS (A-Z)</div>
           <ul className="space-y-1 px-2.5 sm:px-3">
             {sidebarSections.map((section) => {
+              if (section.name === 'ACESSOS' && !isGerente) return null;
               if (section.name === 'GESTÃO' && !hasMetaAccess) return null;
               if (section.name === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return null;
               if (section.name === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return null;
@@ -1377,7 +1378,11 @@ export default function App() {
           ) : activeTab === 'SISTEMAS' ? (
             <Sistemas />
           ) : activeTab === 'ACESSOS' ? (
-            <Acessos setScheduleData={setScheduleData} setMonthlyOverrides={setMonthlyOverrides} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} usersDB={usersDB} isGerente={isGerente} />
+            isGerente ? (
+              <Acessos setScheduleData={setScheduleData} setMonthlyOverrides={setMonthlyOverrides} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} usersDB={usersDB} isGerente={isGerente} />
+            ) : (
+              <Venda salesData={salesData} setSalesData={handleSetSalesData} isVendedor={isVendedor} globalUser={globalUser} usersDB={usersDB} globalMonth={globalMonth} />
+            )
           ) : activeTab === 'UR-RESIDENCIAL' ? (
             <UrResidencial salesData={salesData} setSalesData={handleSetSalesData} globalUser={globalUser} isGerente={isGerente} usersDB={usersDB} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
           ) : activeTab === 'PROPOSTA' ? (
