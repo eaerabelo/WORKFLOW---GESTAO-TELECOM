@@ -1033,7 +1033,7 @@ export default function App() {
   // Renderiza tela de Loading enquanto as Collections não estão preparadas
   if (!isBackendReady) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-neutral-100 dark:bg-neutral-900 font-sans p-6">
+      <div className="flex h-screen w-screen items-center justify-center bg-gradient-to-br from-[#1a1d24] via-[#14161d] to-[#0e1015] font-sans p-6">
         <WFLogoLoader
           size="lg"
           text="WORKFLOW GESTÃO - CARREGANDO..."

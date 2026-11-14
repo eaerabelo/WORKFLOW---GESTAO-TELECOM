@@ -1,10 +1,10 @@
 import React from 'react';
 import wfLogo from '../assets/logo_WF.png';
-import { Loader2, WifiOff } from 'lucide-react';
+import { WifiOff, RefreshCw } from 'lucide-react';
 
 /**
- * Componente Oficial de Carregamento e Estado Offline
- * Exibe a logo oficial do WorkFlow em escala de cinza com animações suaves e modernas.
+ * Componente Oficial de Carregamento Linear e Estado Offline
+ * Padrão Linear Moderno: Sem discrepância geométrica, com barra de progresso linear suave.
  */
 export const WFLogoLoader = ({
   size = 'md', // 'sm' | 'md' | 'lg' | 'xl'
@@ -14,75 +14,102 @@ export const WFLogoLoader = ({
   fullScreen = false,
   className = ''
 }) => {
-  // Configurações de proporções por tamanho
+  // Proporções por tamanho da logo e da barra linear
   const sizeMap = {
-    sm: { img: 'w-14 sm:w-16', ring: 'w-24 h-24', textSize: 'text-xs', subtextSize: 'text-[11px]' },
-    md: { img: 'w-24 sm:w-28', ring: 'w-36 h-36', textSize: 'text-xs sm:text-sm', subtextSize: 'text-xs' },
-    lg: { img: 'w-32 sm:w-40', ring: 'w-48 h-48', textSize: 'text-sm sm:text-base', subtextSize: 'text-xs sm:text-sm' },
-    xl: { img: 'w-40 sm:w-56', ring: 'w-60 sm:w-72 h-60 sm:h-72', textSize: 'text-lg sm:text-2xl', subtextSize: 'text-sm sm:text-base' }
+    sm: { img: 'w-16 sm:w-20', bar: 'w-48 sm:w-56 h-1.5', textSize: 'text-xs', subtextSize: 'text-[11px]' },
+    md: { img: 'w-28 sm:w-32', bar: 'w-56 sm:w-64 h-1.5', textSize: 'text-xs sm:text-sm', subtextSize: 'text-xs' },
+    lg: { img: 'w-36 sm:w-44', bar: 'w-64 sm:w-72 h-2', textSize: 'text-sm sm:text-base', subtextSize: 'text-xs sm:text-sm' },
+    xl: { img: 'w-48 sm:w-56', bar: 'w-72 sm:w-80 h-2', textSize: 'text-base sm:text-lg', subtextSize: 'text-xs sm:text-sm' }
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
 
   const content = (
     <div className={`flex flex-col items-center justify-center text-center select-none ${className}`}>
-      {/* Contêiner da Logo com Anéis em Escala de Cinza */}
-      <div className="relative flex items-center justify-center mb-5">
-        {/* Efeito de Ping/Onda em Cinza Suave */}
-        <div
-          className={`absolute ${currentSize.ring} rounded-full bg-neutral-300/40 dark:bg-neutral-700/30 animate-ping opacity-30`}
-        />
+      {/* Injeção de Estilo dos Keyframes da Animação Linear */}
+      <style>{`
+        @keyframes wfLinearSlide {
+          0% {
+            left: -40%;
+            width: 35%;
+          }
+          50% {
+            left: 30%;
+            width: 50%;
+          }
+          100% {
+            left: 100%;
+            width: 35%;
+          }
+        }
+        @keyframes wfGlowPulse {
+          0%, 100% {
+            opacity: 0.9;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.015);
+          }
+        }
+      `}</style>
 
-        {/* Anel Giratório em Cinza para Loading */}
-        {status === 'loading' && (
-          <div
-            className={`absolute ${currentSize.ring} rounded-full border-2 border-neutral-300/60 dark:border-neutral-700/60 border-t-neutral-600 dark:border-t-neutral-300 animate-spin`}
-            style={{ animationDuration: '2s' }}
-          />
-        )}
-
-        {/* Cartão de Base com Efeito Vidro Fosco */}
-        <div className="relative z-10 p-5 sm:p-6 rounded-3xl bg-white/80 dark:bg-neutral-900/80 border border-neutral-200/80 dark:border-neutral-800/80 backdrop-blur-md shadow-2xl flex items-center justify-center">
+      {/* Cartão Linear da Logo (Sem anéis circulares discrepantes) */}
+      <div className="relative mb-5" style={{ animation: 'wfGlowPulse 2.4s ease-in-out infinite' }}>
+        <div className="relative z-10 px-6 py-5 rounded-2xl bg-white/90 dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800 backdrop-blur-md shadow-xl flex items-center justify-center">
           <img
             src={wfLogo}
             alt="WorkFlow Logo"
-            className={`${currentSize.img} h-auto object-contain transition-all duration-300 filter grayscale contrast-125 brightness-95 dark:brightness-110 drop-shadow-[0_4px_14px_rgba(0,0,0,0.12)] animate-pulse`}
+            className={`${currentSize.img} h-auto object-contain transition-all duration-300 drop-shadow-md`}
           />
 
           {/* Ícone de Desconexão caso Status seja Offline */}
           {status === 'offline' && (
-            <div className="absolute -bottom-2 -right-2 bg-neutral-800 text-neutral-300 p-2 sm:p-2.5 rounded-full border border-neutral-700 shadow-lg">
-              <WifiOff size={size === 'xl' ? 24 : 18} className="animate-pulse" />
+            <div className="absolute -bottom-2 -right-2 bg-amber-500 text-neutral-950 p-2 rounded-full border-2 border-white dark:border-neutral-900 shadow-lg">
+              <WifiOff size={16} />
             </div>
           )}
         </div>
       </div>
 
+      {/* BARRA DE CARREGAMENTO LINEAR (Padrão Oficial Telecom) */}
+      <div className={`relative ${currentSize.bar} rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden shadow-inner mb-4`}>
+        {status === 'loading' ? (
+          <div
+            className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-[#E3000F] via-red-500 to-[#E3000F] shadow-sm shadow-red-500/50"
+            style={{
+              animation: 'wfLinearSlide 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite'
+            }}
+          />
+        ) : (
+          <div
+            className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500"
+            style={{
+              animation: 'wfLinearSlide 2s cubic-bezier(0.4, 0, 0.2, 1) infinite'
+            }}
+          />
+        )}
+      </div>
+
       {/* Título Principal */}
       {text && (
-        <h2 className={`font-black uppercase tracking-wider text-neutral-700 dark:text-neutral-200 ${currentSize.textSize} drop-shadow-sm`}>
+        <h2 className={`font-black uppercase tracking-wider text-neutral-800 dark:text-neutral-100 ${currentSize.textSize} drop-shadow-sm`}>
           {text}
         </h2>
       )}
 
-      {/* Subtítulo ou Mensagem Secundária */}
+      {/* Subtítulo ou Mensagem de Conexão */}
       {subtext && (
-        <p className={`mt-1.5 font-bold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 max-w-xl ${currentSize.subtextSize}`}>
+        <p className={`mt-1 font-bold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 max-w-md ${currentSize.subtextSize}`}>
           {subtext}
         </p>
       )}
 
-      {/* Barra de Status Adicional para Offline ou Loading Longo */}
-      {status === 'offline' ? (
-        <div className="mt-5 flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-neutral-200/80 dark:bg-neutral-800/80 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 text-xs sm:text-sm font-semibold shadow-inner">
-          <Loader2 size={16} className="animate-spin text-neutral-500 dark:text-neutral-400" />
-          <span className="tracking-wide uppercase text-[11px] sm:text-xs">Tentando reconectar automaticamente...</span>
-        </div>
-      ) : (
-        <div className="mt-3 flex items-center gap-1.5 opacity-60">
-          <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce" style={{ animationDelay: '0ms' }}></span>
-          <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce" style={{ animationDelay: '150ms' }}></span>
-          <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+      {/* Status Offline ou Indicador Linear Complementar */}
+      {status === 'offline' && (
+        <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold shadow-sm">
+          <RefreshCw size={14} className="animate-spin" />
+          <span className="uppercase text-[11px] tracking-wider">Tentando restabelecer conexão com o servidor...</span>
         </div>
       )}
     </div>
@@ -90,7 +117,7 @@ export const WFLogoLoader = ({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-neutral-100/95 dark:bg-neutral-950/95 backdrop-blur-md p-6 animate-fade-in">
+      <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1d24] via-[#14161d] to-[#0e1015] p-6 animate-fade-in">
         {content}
       </div>
     );
@@ -100,4 +127,3 @@ export const WFLogoLoader = ({
 };
 
 export default WFLogoLoader;
-
