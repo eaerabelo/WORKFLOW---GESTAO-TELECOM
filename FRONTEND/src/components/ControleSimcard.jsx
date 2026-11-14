@@ -626,14 +626,21 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
 
         const statusBorder =
             isEcli
-                ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/50'
+                ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/40 shadow-emerald-500/10'
                 : isNaoPago
-                ? 'border-red-500 bg-red-50/50 dark:bg-red-950/30 text-red-950 dark:text-red-100 ring-2 ring-red-500/50'
+                ? 'border-red-500 bg-red-50/70 dark:bg-red-950/40 text-red-950 dark:text-red-100 ring-2 ring-red-500/40 shadow-red-500/10'
                 : isRestantes
-                ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 text-amber-950 dark:text-amber-100 ring-2 ring-amber-500/50'
+                ? 'border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 ring-2 ring-amber-500/40 shadow-amber-500/10'
                 : item.emUsoPor
                 ? 'border-[#E3000F]/50 bg-white dark:bg-neutral-900'
                 : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900';
+
+        // Tratamento inteligente do plano selecionado para garantir interação imediata
+        const currentPlano = item.plano || '';
+        const matchedPlano = SIGLAS_PLANOS.find(
+            p => p.desc.toUpperCase() === currentPlano.toUpperCase() || p.sigla.toUpperCase() === currentPlano.toUpperCase()
+        );
+        const selectedPlanoValue = matchedPlano ? matchedPlano.desc : currentPlano;
 
         return (
             <div
@@ -737,7 +744,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                 PLANO
                             </label>
                             <select
-                                value={item.plano || ''}
+                                value={selectedPlanoValue}
                                 onChange={(e) => handleInlineChange(item.id, 'plano', e.target.value)}
                                 className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none truncate cursor-pointer"
                             >
@@ -747,6 +754,11 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                         {p.desc}
                                     </option>
                                 ))}
+                                {currentPlano && !matchedPlano && (
+                                    <option value={currentPlano} className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">
+                                        {currentPlano}
+                                    </option>
+                                )}
                             </select>
                         </div>
 
