@@ -918,7 +918,7 @@ export default function App() {
     { name: 'VISÃO 360', icon: <Users size={18} /> },
     { name: 'CONTROLE-SIMCARD', icon: <Phone size={18} /> },
     { name: 'ESCALA DE TRABALHO', icon: <CalendarDays size={18} /> },
-    // { name: 'FATOR RV', icon: <Calculator size={18} /> }, // Oculto temporariamente a pedido
+    { name: 'FATOR RV', icon: <Calculator size={18} /> },
     { name: 'GESTÃO', icon: <Target size={18} /> },
     // { name: 'PROPOSTA', icon: <FileText size={18} /> }, // Oculto temporariamente a pedido
     { name: 'REPROVADOS', icon: <AlertOctagon size={18} /> },
