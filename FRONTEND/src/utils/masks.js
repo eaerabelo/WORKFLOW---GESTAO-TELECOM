@@ -1,4 +1,15 @@
-// Aplicar máscara de CPF/CNPJ
+// Aplicar máscara de telefone celular (XX) XXXXX-XXXX
+export const applyPhoneMask = (val) => {
+    if (!val) return '';
+    let v = String(val).replace(/\D/g, '').slice(0, 11);
+    if (!v) return '';
+    if (v.length > 10) return `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+    if (v.length > 6) return `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
+    if (v.length > 2) return `(${v.slice(0, 2)}) ${v.slice(2)}`;
+    return `(${v}`;
+};
+
+// Aplicar máscara de CPF/CNPJ (Legado)
 export const applyCpfCnpjMask = (value) => {
     if (!value) return '';
     let v = value.replace(/\D/g, '').slice(0, 14);

@@ -3,7 +3,7 @@ import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { AlertOctagon, Plus, Search, Calendar, Edit3, Trash2, X, Lock, MapPin, Flame, Map, Table, Navigation, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
-import { applyCpfCnpjMask, getTodaySP } from '../utils/masks';
+import { applyPhoneMask, getTodaySP } from '../utils/masks';
 
 export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGerente, isVendedor, usersDB = {}, globalMonth }) {
     const activeVendedores = Object.values(usersDB || {})
@@ -38,7 +38,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
         produto: '',
         motivo: '',
         cliente: '',
-        cpf: '',
+        celular: '',
         cep: '',
         logradouro: '',
         numero: '',
@@ -65,7 +65,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
             const term = String(searchTerm).toLowerCase();
             return (
                 String(item.cliente || '').toLowerCase().includes(term) ||
-                String(item.cpf || '').toLowerCase().includes(term) ||
+                String(item.celular || item.cpf || '').toLowerCase().includes(term) ||
                 String(item.cep || '').toLowerCase().includes(term) ||
                 String(item.logradouro || '').toLowerCase().includes(term)
             );
@@ -152,7 +152,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
             produto: '',
             motivo: '',
             cliente: '',
-            cpf: '',
+            celular: '',
             cep: '',
             logradouro: '',
             numero: '',
@@ -164,7 +164,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
     const handleEdit = (item) => {
         setFormError('');
         setEditingId(item.id);
-        setFormData({ ...item });
+        setFormData({ ...item, celular: item.celular || item.cpf || '' });
         setIsModalOpen(true);
     };
 
@@ -177,7 +177,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
 
     const handleFormChange = (e) => {
         let { name, value } = e.target;
-        if (name === 'cpf') value = applyCpfCnpjMask(value);
+        if (name === 'celular' || name === 'cpf') value = applyPhoneMask(value);
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -249,7 +249,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
                 'Produto': item.produto,
                 'Motivo': item.motivo,
                 'Cliente': item.cliente,
-                'CPF/CNPJ': item.cpf || '-',
+                'Celular': item.celular || item.cpf || '-',
                 'CEP': item.cep,
                 'Logradouro': item.logradouro,
                 'Nº': item.numero || 'S/N',
@@ -327,7 +327,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
 
                             <div className="relative w-full sm:w-auto flex-1 sm:flex-none">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 shrink-0" size={16} />
-                                <input type="text" placeholder="Buscar Cliente, CPF, CEP..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-52 pl-9 pr-4 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 rounded-xl text-sm outline-none focus:bg-white dark:focus:bg-neutral-900 focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] transition-all" />
+                                <input type="text" placeholder="Buscar Cliente, Celular, CEP..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-52 pl-9 pr-4 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 rounded-xl text-sm outline-none focus:bg-white dark:focus:bg-neutral-900 focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] transition-all" />
                             </div>
                             <div className="flex flex-wrap sm:flex-nowrap w-full sm:w-auto gap-2">
                                 <div className="relative flex flex-1 items-center gap-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-3 py-1.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer min-w-[130px]">
@@ -357,7 +357,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
                                             <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Produto</th>
                                             <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Motivo</th>
                                             <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Cliente</th>
-                                            <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">CPF/CNPJ</th>
+                                            <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Celular</th>
                                             <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">CEP</th>
                                             <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Logradouro</th>
                                             <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Nº</th>
@@ -376,7 +376,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
                                                     <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{item.produto}</td>
                                                     <td className="px-4 py-3"><span className="bg-red-50 dark:bg-red-900/20 text-[#E3000F] border border-red-100 dark:border-red-900/30 px-2 py-1 rounded text-[10px] font-bold tracking-wider uppercase">{item.motivo}</span></td>
                                                     <td className="px-4 py-3 text-neutral-800 dark:text-neutral-200">{item.cliente}</td>
-                                                    <td className="px-4 py-3 font-mono text-neutral-500 dark:text-neutral-400">{item.cpf || '-'}</td>
+                                                    <td className="px-4 py-3 font-mono text-neutral-500 dark:text-neutral-400">{item.celular || item.cpf || '-'}</td>
                                                     <td className="px-4 py-3 font-mono text-neutral-600 dark:text-neutral-400 font-bold">{item.cep}</td>
                                                     <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400 max-w-[200px] truncate" title={item.logradouro}>{item.logradouro}</td>
                                                     <td className="px-4 py-3 font-bold text-neutral-800 dark:text-neutral-200">{item.numero || 'S/N'}</td>
@@ -573,7 +573,7 @@ export function Reprovados({ reprovadosData, setReprovadosData, globalUser, isGe
                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Produto <span className="text-[#E3000F]">*</span></label><select name="produto" value={formData.produto} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option>{RESIDENTIAL_PRODUCTS.map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select></div>
                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Motivo de Recusa <span className="text-[#E3000F]">*</span></label><select name="motivo" value={formData.motivo} onChange={handleFormChange} className="w-full bg-red-50/50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-neutral-800 dark:text-neutral-100 font-semibold px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option>{MOTIVOS_OPTIONS.map(m => <option className="bg-white dark:bg-neutral-900" key={m} value={m}>{m}</option>)}</select></div>
                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Nome do Cliente <span className="text-[#E3000F]">*</span></label><input type="text" name="cliente" value={formData.cliente} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" placeholder="Nome completo" /></div>
-                                <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">CPF / CNPJ</label><input type="text" name="cpf" value={formData.cpf} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono" placeholder="Opcional" /></div>
+                                <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Celular (Contato)</label><input type="text" name="celular" value={formData.celular || formData.cpf || ''} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono" placeholder="(00) 00000-0000" /></div>
                                 <div className="space-y-1.5 md:col-span-1 relative"><label className="text-xs font-bold text-[#E3000F] uppercase tracking-wider flex items-center gap-1"><MapPin size={12} /> CEP (Busca Automática) <span className="text-[#E3000F]">*</span></label><input type="text" name="cep" value={formData.cep} onChange={handleCepChange} maxLength="9" className={`w-full bg-white dark:bg-neutral-900 border border-[#E3000F]/30 dark:border-[#E3000F]/50 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono shadow-sm ${isFetchingCep ? 'opacity-50' : ''}`} placeholder="00000-000" /></div>
                                 <div className="space-y-1.5 md:col-span-2"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Logradouro <span className="text-[#E3000F]">*</span></label><input type="text" name="logradouro" value={formData.logradouro} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium" placeholder="Preenchido via CEP..." /></div>
                                 <div className="space-y-1.5 md:col-span-1"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Número <span className="text-[#E3000F]">*</span></label><input type="text" name="numero" value={formData.numero} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" placeholder="Nº ou S/N" /></div>

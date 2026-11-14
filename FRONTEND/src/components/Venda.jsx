@@ -446,8 +446,8 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                 (sale.mplay === 'SIM' && ('mplay'.includes(term) || 'm-play'.includes(term))) ||
                 String(sale.combo || '').toLowerCase().includes(term) ||
                 String(sale.tipoOperacao || '').toLowerCase().includes(term) ||
-                String(sale.cpf || '').toLowerCase().includes(term) ||
-                (cleanTerm && String(sale.cpf || '').replace(/\D/g, '').includes(cleanTerm)) ||
+                String(sale.celular || sale.cpf || '').toLowerCase().includes(term) ||
+                (cleanTerm && String(sale.celular || sale.cpf || '').replace(/\D/g, '').includes(cleanTerm)) ||
                 String(sale.contrato || '').toLowerCase().includes(term) ||
                 (cleanTerm && String(sale.contrato || '').replace(/\D/g, '').includes(cleanTerm)) ||
                 (Array.isArray(sale.adicionais) && sale.adicionais.filter(ad => !(String(sale.produto || '').includes('APARELHO') && ad === 'SEGURO')).join(' ').toLowerCase().includes(term));

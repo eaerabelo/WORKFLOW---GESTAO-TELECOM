@@ -541,9 +541,9 @@ export function Campanha({
   }, [activeCampanhaForStatus, salesData, safeVendedores]);
 
   return (
-    <div className="campanha-container p-4 sm:p-6 space-y-6">
+    <div className="campanha-container p-4 sm:p-6 lg:p-8 space-y-6 w-full max-w-7xl mx-auto">
       {/* CABEÇALHO ELEGANTE E TECNOLÓGICO */}
-      <div className="bg-gradient-to-r from-neutral-900 via-neutral-900 to-black rounded-3xl p-6 sm:p-8 border border-neutral-800 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+      <div className="w-full bg-gradient-to-r from-neutral-900 via-neutral-900 to-black rounded-3xl p-6 sm:p-8 border border-neutral-800 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-6 justify-between items-start md:items-center shrink-0">
         <div className="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-orange-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -756,7 +756,7 @@ export function Campanha({
 
       {/* PAINEL "STATUS DA CAMPANHA": APURAÇÃO EM TEMPO REAL POR INDICADOR */}
       {activeCampanhaForStatus && (
-        <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 p-4 sm:p-6 lg:p-8 shadow-xl space-y-5 sm:space-y-6 animate-fade-in">
+        <div className="w-full bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 p-4 sm:p-6 lg:p-8 shadow-xl space-y-5 sm:space-y-6 animate-fade-in">
           {/* HEADER DO PAINEL DE STATUS */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 sm:pb-6 border-b border-neutral-100 dark:border-neutral-800">
             <div className="flex items-center gap-3">

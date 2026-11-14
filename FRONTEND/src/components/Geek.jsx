@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
-import { Cpu, Plus, FileText, Trash2, ExternalLink, X, BookOpen, Layers, Tag, Archive, FolderPlus, Edit3 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    Cpu, Plus, FileText, Trash2, ExternalLink, X, BookOpen, Layers,
+    Tag, Archive, FolderPlus, Edit3, ChevronLeft, ChevronRight,
+    Image as ImageIcon, Sparkles, Maximize2, Upload, Megaphone
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const checkHasNewGeek = (docs, globalUser) => {
@@ -16,12 +20,76 @@ export const checkHasNewGeek = (docs, globalUser) => {
     }
 };
 
+const DEFAULT_FLYERS = [
+    {
+        id: 1,
+        titulo: 'CLARO FIBRA 500 MEGA',
+        subtitulo: 'Ultravelocidade com Wi-Fi Plus e Globoplay Incluso na Oferta',
+        tag: 'CAMPANHA OFICIAL',
+        imagemUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop',
+        link: 'https://produtos.claro.com.br/simular-precos',
+        data: 'Maio/2026'
+    },
+    {
+        id: 2,
+        titulo: 'CLARO PÓS PLAY 5G',
+        subtitulo: 'Até 500GB com Dobro de Internet e Passaporte Américas sem custo',
+        tag: 'DESTAQUE MENSAL',
+        imagemUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop',
+        link: 'https://vendasapp.claro.com.br/SVCv2/posicionamento/resultado-pesquisa',
+        tagColor: 'bg-[#E3000F]',
+        data: 'Maio/2026'
+    },
+    {
+        id: 3,
+        titulo: 'MIGRAÇÃO PRÉ -> CONTROLE',
+        subtitulo: 'Desconto Exclusivo na Fatura e R$ 10 de Bônus Recarga Claro Pay',
+        tag: 'FOCO OPERAÇÃO',
+        imagemUrl: 'https://images.unsplash.com/photo-1556742049-0a67e5572293?q=80&w=800&auto=format&fit=crop',
+        link: 'https://produtos.claro.com.br/simular-precos',
+        tagColor: 'bg-emerald-600',
+        data: 'Maio/2026'
+    }
+];
+
 export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, updateUserProfile }) {
+    // --- ESTADOS DE DOCUMENTOS ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ titulo: '', categoria: 'BOOK DE OFERTAS', link: '' });
     const [isNovaCategoria, setIsNovaCategoria] = useState(false);
     const [novaCategoriaNome, setNovaCategoriaNome] = useState('');
+
+    // --- ESTADOS DO CARROSSEL DE FLYERS (3:4) ---
+    const [flyers, setFlyers] = useState(() => {
+        try {
+            const saved = localStorage.getItem('CLARO_GEEK_FLYERS_34');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
+        } catch {}
+        return DEFAULT_FLYERS;
+    });
+
+    const [isFlyerModalOpen, setIsFlyerModalOpen] = useState(false);
+    const [editingFlyerId, setEditingFlyerId] = useState(null);
+    const [flyerFormData, setFlyerFormData] = useState({
+        titulo: '',
+        subtitulo: '',
+        tag: 'CAMPANHA OFICIAL',
+        imagemUrl: '',
+        link: ''
+    });
+    const [previewFlyer, setPreviewFlyer] = useState(null);
+    const carouselRef = useRef(null);
+
+    // Salvar flyers no localStorage
+    useEffect(() => {
+        try {
+            localStorage.setItem('CLARO_GEEK_FLYERS_34', JSON.stringify(flyers));
+        } catch {}
+    }, [flyers]);
 
     const viewedDocs = globalUser?.viewedGeekDocs || {};
 
@@ -45,6 +113,118 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
 
     const canEdit = ['GEEK', 'ADMINISTRAÇÃO', 'GERENTE'].includes(globalUser?.role);
 
+    // --- FUNÇÕES DE NAVEGAÇÃO DO CARROSSEL ---
+    const scrollCarousel = (direction) => {
+        if (!carouselRef.current) return;
+        const scrollAmount = 300;
+        carouselRef.current.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth'
+        });
+    };
+
+    const handleOpenFlyerModal = () => {
+        setEditingFlyerId(null);
+        setFlyerFormData({
+            titulo: '',
+            subtitulo: '',
+            tag: 'CAMPANHA OFICIAL',
+            imagemUrl: '',
+            link: ''
+        });
+        setIsFlyerModalOpen(true);
+    };
+
+    const handleEditFlyer = (flyer) => {
+        setEditingFlyerId(flyer.id);
+        setFlyerFormData({
+            titulo: flyer.titulo || '',
+            subtitulo: flyer.subtitulo || '',
+            tag: flyer.tag || 'CAMPANHA OFICIAL',
+            imagemUrl: flyer.imagemUrl || '',
+            link: flyer.link || ''
+        });
+        setIsFlyerModalOpen(true);
+    };
+
+    const handleDeleteFlyer = (id) => {
+        if (!canEdit) {
+            toast.error('Acesso negado. Apenas perfis autorizados podem excluir flyers.');
+            return;
+        }
+        if (window.confirm('Deseja excluir este flyer de campanha?')) {
+            setFlyers(prev => prev.filter(f => f.id !== id));
+            toast.success('Flyer excluído com sucesso!');
+        }
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 4 * 1024 * 1024) {
+            toast.error('A imagem deve ter no máximo 4MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (uploadEvent) => {
+            const base64 = uploadEvent.target?.result;
+            if (base64) {
+                setFlyerFormData(prev => ({ ...prev, imagemUrl: String(base64) }));
+                toast.success('Imagem carregada com sucesso!');
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleFlyerSubmit = (e) => {
+        e.preventDefault();
+        if (!flyerFormData.titulo.trim()) {
+            toast.error('Informe o título do flyer.');
+            return;
+        }
+        if (!flyerFormData.imagemUrl.trim()) {
+            toast.error('Informe a URL da imagem ou faça o upload de um arquivo.');
+            return;
+        }
+
+        let finalLink = flyerFormData.link.trim();
+        if (finalLink && !finalLink.startsWith('http://') && !finalLink.startsWith('https://')) {
+            finalLink = 'https://' + finalLink;
+        }
+
+        if (editingFlyerId) {
+            setFlyers(prev => prev.map(f => f.id === editingFlyerId ? {
+                ...f,
+                titulo: flyerFormData.titulo.trim(),
+                subtitulo: flyerFormData.subtitulo.trim(),
+                tag: flyerFormData.tag.trim().toUpperCase(),
+                imagemUrl: flyerFormData.imagemUrl.trim(),
+                link: finalLink,
+                updatedAt: Date.now()
+            } : f));
+            toast.success('Flyer atualizado com sucesso!');
+        } else {
+            const novoFlyer = {
+                id: Date.now(),
+                titulo: flyerFormData.titulo.trim(),
+                subtitulo: flyerFormData.subtitulo.trim(),
+                tag: flyerFormData.tag.trim().toUpperCase(),
+                imagemUrl: flyerFormData.imagemUrl.trim(),
+                link: finalLink,
+                data: new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+                updatedAt: Date.now()
+            };
+            setFlyers(prev => [novoFlyer, ...prev]);
+            toast.success('Novo flyer publicado no carrossel!');
+        }
+
+        setIsFlyerModalOpen(false);
+        setEditingFlyerId(null);
+    };
+
+    // --- FUNÇÕES DE DOCUMENTOS ---
     const handleOpenModal = () => {
         setEditingId(null);
         setFormData({ titulo: '', categoria: 'BOOK DE OFERTAS', link: '' });
@@ -131,12 +311,15 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
 
     return (
         <div className="h-full flex flex-col bg-neutral-50/50 dark:bg-neutral-950/50 rounded-2xl overflow-y-auto animate-fade-in transition-colors">
+            {/* Cabeçalho Principal */}
             <div className="p-6 pb-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400"><Cpu size={22} /></div>
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <Cpu size={22} />
+                    </div>
                     <div>
                         <div className="flex items-center gap-3">
-                            <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">Espaço GEEK</h2>
+                            <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">Espaço GEEK & Mural Telecom</h2>
                             {hasNews ? (
                                 <span className="bg-red-100 text-[#E3000F] dark:bg-red-900/30 dark:text-red-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider animate-pulse flex items-center">
                                     <span className="w-1.5 h-1.5 rounded-full bg-[#E3000F] mr-1.5"></span>
@@ -148,17 +331,193 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                 </span>
                             )}
                         </div>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-1">Central de Documentos, Books de Ofertas e Manuais.</p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-1">
+                            Campanhas em formato flyer 3:4, central de documentos oficiais, books de ofertas e comunicados.
+                        </p>
                     </div>
                 </div>
-                {canEdit && (
-                    <button onClick={handleOpenModal} className="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 hover:-translate-y-0.5">
-                        <Plus size={18} /> Novo Documento
-                    </button>
-                )}
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                    {canEdit && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleOpenFlyerModal}
+                                className="px-4 py-2.5 bg-gradient-to-r from-[#E3000F] to-red-700 text-white text-xs sm:text-sm font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-md shadow-red-500/20 flex items-center justify-center gap-2 hover:-translate-y-0.5"
+                                title="Cadastrar novo flyer de campanha na proporção 3:4"
+                            >
+                                <Sparkles size={16} /> + Novo Flyer (3:4)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleOpenModal}
+                                className="px-4 py-2.5 bg-indigo-600 text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 hover:-translate-y-0.5"
+                            >
+                                <Plus size={16} /> Novo Documento
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
             <div className="px-6 pb-8 space-y-8 max-w-7xl mx-auto w-full">
+                {/* SEÇÃO CARROSSEL DE FLYERS 3:4 */}
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 rounded-xl bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F]">
+                                <Megaphone size={18} />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-neutral-800 dark:text-neutral-100 uppercase tracking-wider flex items-center gap-2">
+                                    Campanhas & Divulgações da Empresa (Flyers 3:4)
+                                    <span className="bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                        {flyers.length} {flyers.length === 1 ? 'flyer' : 'flyers'}
+                                    </span>
+                                </h3>
+                                <p className="text-[11px] text-neutral-400 font-medium">
+                                    Visualização em formato vertical de cartaz/flyer telecom (proporção 3:4). Clique para ampliar.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Botões de Navegação do Carrossel */}
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                type="button"
+                                onClick={() => scrollCarousel('left')}
+                                className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 flex items-center justify-center transition-all shadow-sm"
+                                title="Voltar Flyer"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => scrollCarousel('right')}
+                                className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 flex items-center justify-center transition-all shadow-sm"
+                                title="Próximo Flyer"
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Trilho de Flyers com Proporção Exata 3:4 */}
+                    <div
+                        ref={carouselRef}
+                        className="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-hide snap-x snap-mandatory"
+                        style={{ scrollSnapType: 'x mandatory' }}
+                    >
+                        {flyers.map((flyer) => (
+                            <div
+                                key={flyer.id}
+                                className="group relative shrink-0 w-[240px] sm:w-[270px] aspect-[3/4] rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-900 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 snap-start flex flex-col justify-end cursor-pointer"
+                                onClick={() => setPreviewFlyer(flyer)}
+                            >
+                                {/* Imagem de Fundo com proporção 3:4 */}
+                                <img
+                                    src={flyer.imagemUrl}
+                                    alt={flyer.titulo}
+                                    className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                                    onError={(e) => {
+                                        e.target.src = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800&auto=format&fit=crop';
+                                    }}
+                                />
+
+                                {/* Gradiente Escuro de Sobreposição para Leitura Perfeita */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 group-hover:opacity-95 transition-opacity" />
+
+                                {/* Badge Superior de Tag */}
+                                <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
+                                    <span className="px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider bg-[#E3000F] text-white shadow-md">
+                                        {flyer.tag || 'CAMPANHA'}
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold text-white/90 bg-black/50 backdrop-blur-sm">
+                                        {flyer.data}
+                                    </span>
+                                </div>
+
+                                {/* Ações do Flyer (Editar / Excluir para perfis autorizados) */}
+                                {canEdit && (
+                                    <div
+                                        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 flex items-center gap-1 z-20 transition-all bg-black/70 backdrop-blur-sm p-1 rounded-lg"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEditFlyer(flyer)}
+                                            className="p-1 text-white hover:text-blue-400 rounded transition-colors"
+                                            title="Editar Flyer"
+                                        >
+                                            <Edit3 size={14} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteFlyer(flyer.id)}
+                                            className="p-1 text-white hover:text-red-400 rounded transition-colors"
+                                            title="Excluir Flyer"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Informações Inferiores do Flyer */}
+                                <div className="relative z-10 p-4 flex flex-col gap-1 text-white">
+                                    <h4 className="font-black text-sm uppercase tracking-wide leading-snug line-clamp-2 drop-shadow">
+                                        {flyer.titulo}
+                                    </h4>
+                                    {flyer.subtitulo && (
+                                        <p className="text-[11px] text-neutral-300 font-medium line-clamp-2 leading-relaxed">
+                                            {flyer.subtitulo}
+                                        </p>
+                                    )}
+
+                                    <div className="pt-2 flex items-center justify-between gap-2 mt-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-1">
+                                            <Maximize2 size={11} /> Clique p/ ver
+                                        </span>
+                                        {flyer.link && (
+                                            <a
+                                                href={flyer.link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="px-2 py-1 rounded bg-white/20 hover:bg-white text-white hover:text-neutral-900 text-[10px] font-bold flex items-center gap-1 transition-all"
+                                                title="Acessar link externo da campanha"
+                                            >
+                                                Link <ExternalLink size={10} />
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Botão Card para Adicionar Novo Flyer (Proporção 3:4) */}
+                        {canEdit && (
+                            <button
+                                type="button"
+                                onClick={handleOpenFlyerModal}
+                                className="shrink-0 w-[240px] sm:w-[270px] aspect-[3/4] rounded-2xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 hover:border-[#E3000F] dark:hover:border-[#E3000F] bg-neutral-50/50 dark:bg-neutral-800/20 hover:bg-red-50/20 dark:hover:bg-red-950/10 flex flex-col items-center justify-center gap-3 p-6 text-neutral-400 hover:text-[#E3000F] transition-all group snap-start"
+                            >
+                                <div className="w-12 h-12 rounded-2xl bg-neutral-200/60 dark:bg-neutral-800 group-hover:bg-red-100 dark:group-hover:bg-[#E3000F]/20 flex items-center justify-center text-neutral-500 group-hover:text-[#E3000F] transition-all">
+                                    <Plus size={24} />
+                                </div>
+                                <div className="text-center">
+                                    <span className="block text-xs font-black uppercase tracking-wider text-neutral-700 dark:text-neutral-200 group-hover:text-[#E3000F]">
+                                        + Novo Flyer (3:4)
+                                    </span>
+                                    <span className="block text-[10px] text-neutral-400 mt-1">
+                                        Adicionar cartaz ou comunicado oficial
+                                    </span>
+                                </div>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* SEÇÃO DE DOCUMENTOS GEEK PADRÃO */}
                 {allCategorias.map(cat => {
                     const docs = (geekDocs || []).filter(d => d.categoria === cat.id);
                     if (docs.length === 0) return null;
@@ -205,35 +564,311 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                 )}
             </div>
 
+            {/* MODAL DE CRIAÇÃO / EDIÇÃO DE FLYER 3:4 */}
+            {isFlyerModalOpen && (
+                <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center no-print">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-lg animate-fade-in flex flex-col transition-colors border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                        <div className="p-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
+                            <h2 className="text-base font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                                <Sparkles size={18} className="text-[#E3000F]" />
+                                {editingFlyerId ? 'Editar Flyer (Proporção 3:4)' : 'Novo Flyer de Campanha (Proporção 3:4)'}
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => { setIsFlyerModalOpen(false); setEditingFlyerId(null); }}
+                                className="w-8 h-8 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 rounded-full transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleFlyerSubmit} className="p-6 space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                    Título da Campanha / Flyer <span className="text-[#E3000F]">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={flyerFormData.titulo}
+                                    onChange={e => setFlyerFormData({ ...flyerFormData, titulo: e.target.value })}
+                                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3.5 py-2.5 rounded-xl focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold uppercase"
+                                    placeholder="Ex: CLARO FIBRA 500 MEGA - BLACK FRIDAY"
+                                    required
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                        Etiqueta / Tag
+                                    </label>
+                                    <select
+                                        value={flyerFormData.tag}
+                                        onChange={e => setFlyerFormData({ ...flyerFormData, tag: e.target.value })}
+                                        className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3.5 py-2.5 rounded-xl focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold uppercase cursor-pointer"
+                                    >
+                                        <option value="CAMPANHA OFICIAL">CAMPANHA OFICIAL</option>
+                                        <option value="DESTAQUE MENSAL">DESTAQUE MENSAL</option>
+                                        <option value="FOCO OPERAÇÃO">FOCO OPERAÇÃO</option>
+                                        <option value="COMUNICADO">COMUNICADO</option>
+                                        <option value="DIVULGAÇÃO">DIVULGAÇÃO</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                        Link de Regulamento / Acesso
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={flyerFormData.link}
+                                        onChange={e => setFlyerFormData({ ...flyerFormData, link: e.target.value })}
+                                        className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3.5 py-2.5 rounded-xl focus:ring-1 focus:ring-[#E3000F] outline-none text-sm"
+                                        placeholder="https://..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                    Subtítulo / Descrição da Campanha
+                                </label>
+                                <textarea
+                                    value={flyerFormData.subtitulo}
+                                    onChange={e => setFlyerFormData({ ...flyerFormData, subtitulo: e.target.value })}
+                                    rows={2}
+                                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3.5 py-2 rounded-xl focus:ring-1 focus:ring-[#E3000F] outline-none text-xs"
+                                    placeholder="Ex: Dobro de gigas no Combo Multi com desconto de R$ 30 por 12 meses..."
+                                />
+                            </div>
+
+                            {/* UPLOAD OU URL DA IMAGEM 3:4 */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex items-center justify-between">
+                                    <span>Imagem do Flyer (Proporção 3:4) <span className="text-[#E3000F]">*</span></span>
+                                    <span className="text-[10px] text-neutral-400 font-normal">Recomendado: 600x800 ou 900x1200</span>
+                                </label>
+
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={flyerFormData.imagemUrl}
+                                        onChange={e => setFlyerFormData({ ...flyerFormData, imagemUrl: e.target.value })}
+                                        className="flex-1 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3.5 py-2.5 rounded-xl focus:ring-1 focus:ring-[#E3000F] outline-none text-xs"
+                                        placeholder="Cole a URL da imagem ou envie abaixo..."
+                                        required
+                                    />
+                                    <label className="px-3.5 py-2.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors">
+                                        <Upload size={14} /> Upload
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+
+                                {/* Mini Preview no Modal com proporção 3:4 */}
+                                {flyerFormData.imagemUrl && (
+                                    <div className="pt-2 flex items-center gap-3">
+                                        <div className="w-16 aspect-[3/4] rounded-lg overflow-hidden border border-neutral-300 dark:border-neutral-700 shrink-0 bg-neutral-900">
+                                            <img
+                                                src={flyerFormData.imagemUrl}
+                                                alt="Prévia Flyer"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                            ✓ Imagem pronta no formato flyer 3:4!
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100 dark:border-neutral-800">
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsFlyerModalOpen(false); setEditingFlyerId(null); }}
+                                    className="px-5 py-2.5 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors text-xs"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-6 py-2.5 bg-[#E3000F] text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-md shadow-red-500/20 text-xs"
+                                >
+                                    {editingFlyerId ? 'Salvar Edição' : 'Publicar Flyer'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL DE VISUALIZAÇÃO AMPLIADA DO FLYER 3:4 */}
+            {previewFlyer && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md p-4 flex items-center justify-center no-print"
+                    onClick={() => setPreviewFlyer(null)}
+                >
+                    <div
+                        className="relative max-w-sm sm:max-w-md w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border border-white/20 flex flex-col justify-end bg-neutral-900 animate-fade-in"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img
+                            src={previewFlyer.imagemUrl}
+                            alt={previewFlyer.titulo}
+                            className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+
+                        {/* Botão Fechar */}
+                        <button
+                            type="button"
+                            onClick={() => setPreviewFlyer(null)}
+                            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all z-20"
+                            title="Fechar Visualização"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="relative z-10 p-6 flex flex-col gap-2 text-white">
+                            <span className="self-start px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#E3000F] shadow-lg">
+                                {previewFlyer.tag || 'CAMPANHA'}
+                            </span>
+                            <h3 className="text-xl font-black uppercase tracking-wide leading-tight drop-shadow-md">
+                                {previewFlyer.titulo}
+                            </h3>
+                            {previewFlyer.subtitulo && (
+                                <p className="text-xs text-neutral-200 font-medium leading-relaxed drop-shadow">
+                                    {previewFlyer.subtitulo}
+                                </p>
+                            )}
+
+                            {previewFlyer.link && (
+                                <div className="pt-2">
+                                    <a
+                                        href={previewFlyer.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full py-2.5 px-4 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg"
+                                    >
+                                        Acessar Regulamento / Link Oficial <ExternalLink size={14} />
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL DE CRIAÇÃO / EDIÇÃO DE DOCUMENTOS GEEK */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center no-print">
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in flex flex-col transition-colors">
-                        <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center"><h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2"><Cpu size={18} className="text-indigo-500" /> {editingId ? 'Editar Material' : 'Adicionar Material'}</h2><button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="w-8 h-8 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 rounded-full transition-colors"><X size={18} /></button></div>
+                        <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                                <Cpu size={18} className="text-indigo-500" />
+                                {editingId ? 'Editar Material' : 'Adicionar Material'}
+                            </h2>
+                            <button
+                                onClick={() => { setIsModalOpen(false); setEditingId(null); }}
+                                className="w-8 h-8 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 rounded-full transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Título do Documento <span className="text-[#E3000F]">*</span></label><input type="text" value={formData.titulo} onChange={e => setFormData({ ...formData, titulo: e.target.value })} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm" placeholder="Ex: Book de Aparelhos - Maio" required /></div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Categoria <span className="text-[#E3000F]">*</span></label>
-                                <select value={isNovaCategoria ? 'NOVA_CATEGORIA' : formData.categoria} onChange={e => {
-                                    if (e.target.value === 'NOVA_CATEGORIA') {
-                                        setIsNovaCategoria(true);
-                                    } else {
-                                        setIsNovaCategoria(false);
-                                        setFormData({ ...formData, categoria: e.target.value });
-                                    }
-                                }} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm font-bold">
-                                    {allCategorias.map(c => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={c.id} value={c.id}>{c.id}</option>)}
-                                    <option className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 font-black" value="NOVA_CATEGORIA">+ CRIAR NOVA CATEGORIA</option>
+                                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                    Título do Documento <span className="text-[#E3000F]">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.titulo}
+                                    onChange={e => setFormData({ ...formData, titulo: e.target.value })}
+                                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
+                                    placeholder="Ex: Book de Aparelhos - Maio"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                    Categoria <span className="text-[#E3000F]">*</span>
+                                </label>
+                                <select
+                                    value={isNovaCategoria ? 'NOVA_CATEGORIA' : formData.categoria}
+                                    onChange={e => {
+                                        if (e.target.value === 'NOVA_CATEGORIA') {
+                                            setIsNovaCategoria(true);
+                                        } else {
+                                            setIsNovaCategoria(false);
+                                            setFormData({ ...formData, categoria: e.target.value });
+                                        }
+                                    }}
+                                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm font-bold"
+                                >
+                                    {allCategorias.map(c => (
+                                        <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={c.id} value={c.id}>
+                                            {c.id}
+                                        </option>
+                                    ))}
+                                    <option className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 font-black" value="NOVA_CATEGORIA">
+                                        + CRIAR NOVA CATEGORIA
+                                    </option>
                                 </select>
                             </div>
                             {isNovaCategoria && (
-                                <div className="space-y-1.5 animate-fade-in"><label className="text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">Nome da Nova Categoria <span className="text-[#E3000F]">*</span></label><input type="text" value={novaCategoriaNome} onChange={e => setNovaCategoriaNome(e.target.value)} className="w-full bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/50 text-indigo-800 dark:text-indigo-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm uppercase font-bold" placeholder="Ex: MANUAIS DE PROCEDIMENTO" required={isNovaCategoria} /></div>
+                                <div className="space-y-1.5 animate-fade-in">
+                                    <label className="text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">
+                                        Nome da Nova Categoria <span className="text-[#E3000F]">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={novaCategoriaNome}
+                                        onChange={e => setNovaCategoriaNome(e.target.value)}
+                                        className="w-full bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/50 text-indigo-800 dark:text-indigo-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm uppercase font-bold"
+                                        placeholder="Ex: MANUAIS DE PROCEDIMENTO"
+                                        required={isNovaCategoria}
+                                    />
+                                </div>
                             )}
-                            <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Link do PDF (Drive / Web) <span className="text-[#E3000F]">*</span></label><input type="text" value={formData.link} onChange={e => setFormData({ ...formData, link: e.target.value })} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm" placeholder="https://..." required /><p className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 mt-1">Dica: Faça o upload do PDF no Google Drive da loja, clique em "Compartilhar", copie o link e cole aqui!</p></div>
-                            <div className="pt-4 flex justify-end gap-3"><button type="button" onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="px-6 py-2.5 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors text-sm">Cancelar</button><button type="submit" className="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/30 text-sm">{editingId ? 'Salvar Edição' : 'Salvar Documento'}</button></div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                    Link do PDF (Drive / Web) <span className="text-[#E3000F]">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.link}
+                                    onChange={e => setFormData({ ...formData, link: e.target.value })}
+                                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
+                                    placeholder="https://..."
+                                    required
+                                />
+                                <p className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 mt-1">
+                                    Dica: Faça o upload do PDF no Google Drive da loja, clique em "Compartilhar", copie o link e cole aqui!
+                                </p>
+                            </div>
+                            <div className="pt-4 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsModalOpen(false); setEditingId(null); }}
+                                    className="px-6 py-2.5 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors text-sm"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/30 text-sm"
+                                >
+                                    {editingId ? 'Salvar Edição' : 'Salvar Documento'}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
             )}
         </div>
     );
-} 
+}

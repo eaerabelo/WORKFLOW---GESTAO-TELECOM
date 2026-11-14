@@ -249,7 +249,7 @@ export const AnimatedBackground = ({ children }) => {
   ];
 
   return (
-    <div className="relative min-h-screen w-full bg-[#000000] text-slate-100 flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div className="relative min-h-screen w-full bg-gradient-to-br from-[#1a1d24] via-[#14161d] to-[#0e1015] text-slate-100 flex flex-col items-center justify-center p-4 overflow-hidden">
       {/* Camada do Canvas (Ondas e Partículas) */}
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-0" />
 

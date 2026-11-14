@@ -14,6 +14,15 @@ const getTodayShortSP = () => {
     return today;
 };
 
+export const applyPhoneMask = (val) => {
+    let v = String(val || '').replace(/\D/g, '').slice(0, 11);
+    if (!v) return '';
+    if (v.length > 10) return `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+    if (v.length > 6) return `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
+    if (v.length > 2) return `(${v.slice(0, 2)}) ${v.slice(2)}`;
+    return `(${v}`;
+};
+
 // Lista de Siglas de Planos Padronizadas
 export const SIGLAS_PLANOS = [
     { sigla: '07', desc: '07 – dependente' },
@@ -49,7 +58,7 @@ const CardFieldInput = ({ value, onCommit, placeholder, className = '', maskType
         if (disabled) return;
         let val = e.target.value;
         if (maskType === 'iccid') val = val.replace(/\D/g, '').slice(0, 20);
-        else if (maskType === 'cpf') val = applyCpfCnpjMask(val);
+        else if (maskType === 'celular' || maskType === 'phone' || maskType === 'cpf') val = applyPhoneMask(val);
         else if (maskType === 'valor') val = applyCurrencyMask(val);
         else if (maskType === 'data') val = applyDateShortMask(val);
         else if (maskType === 'upper') val = val.toUpperCase();
@@ -370,7 +379,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     owner: currentTab,
                     caid: linha,
                     data: shortDate,
-                    vendedor: '', cliente: '', cpf: '', plano: '', valor: '', observacao: ''
+                    vendedor: '', cliente: '', celular: '', plano: '', especificacao: '', motivo: '', valor: '', observacao: ''
                 });
             });
         } else {
@@ -391,7 +400,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     owner: currentTab,
                     simcardFisico: cleanIccid,
                     simcardEsim: '',
-                    data: shortDate, ov: '', codAutorizacao: '', cpf: '', plano: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
+                    data: shortDate, ov: '', codAutorizacao: '', celular: '', plano: '', especificacao: '', motivo: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
                     dataPortin: '', numPortado: '', numProvisorio: ''
                 });
             });
@@ -412,7 +421,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                     owner: currentTab,
                     simcardFisico: '',
                     simcardEsim: cleanIccid,
-                    data: shortDate, ov: '', codAutorizacao: '', cpf: '', plano: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
+                    data: shortDate, ov: '', codAutorizacao: '', celular: '', plano: '', especificacao: '', motivo: '', cliente: '', pagamento: '', valor: 'R$ 15,00', observacao: '',
                     dataPortin: '', numPortado: '', numProvisorio: ''
                 });
             });
@@ -448,10 +457,35 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
         }
 
         let normalizedVal = value;
-        if (field === 'cpf') normalizedVal = applyCpfCnpjMask(value);
+        if (field === 'celular' || field === 'cpf') normalizedVal = applyPhoneMask(value);
         if (field === 'valor') normalizedVal = applyCurrencyMask(value);
         if (field === 'simcardFisico' || field === 'simcardEsim') normalizedVal = String(value || '').replace(/\D/g, '').slice(0, 20);
-        if (field === 'caid' || field === 'ov' || field === 'plano' || field === 'cliente') normalizedVal = String(value || '').toUpperCase();
+        if (field === 'caid' || field === 'ov' || field === 'plano' || field === 'cliente' || field === 'especificacao' || field === 'motivo') normalizedVal = String(value || '').toUpperCase();
+
+        if (field === 'observacao') {
+            const obsUpper = String(value || '').trim().toUpperCase();
+            let newColor = null;
+            if (obsUpper === 'ECLI') newColor = 'green';
+            else if (obsUpper === 'NÃO PAGO' || obsUpper === 'NAO PAGO') newColor = 'red';
+            else if (obsUpper) newColor = 'yellow';
+
+            setSimcardsData(prev => prev.map(item => {
+                if (item.id === id) {
+                    const shouldMove = obsUpper && obsUpper !== 'ECLI' && item.owner !== 'ACOMPANHAR' && item.owner !== 'SOBREPOSIÇÃO' && item.owner !== 'ESTOQUE TVBOX';
+                    if (shouldMove) {
+                        toast.success('Linha movida automaticamente para a aba ACOMPANHAR!', { icon: '📋' });
+                    }
+                    return {
+                        ...item,
+                        observacao: normalizedVal,
+                        statusColor: newColor || item.statusColor,
+                        owner: shouldMove ? 'ACOMPANHAR' : item.owner
+                    };
+                }
+                return item;
+            }));
+            return true;
+        }
 
         // Trava contra ICCID e CAID repetidos e validação de 20 dígitos na edição inline
         if ((field === 'simcardFisico' || field === 'simcardEsim') && normalizedVal.trim() !== '') {
@@ -531,8 +565,10 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                 return {
                     'CAID': item.caid,
                     'Data': item.data || getTodayShortSP(),
-                    'CPF | CNPJ': item.cpf || '-',
+                    'Celular': item.celular || item.cpf || '-',
                     'Plano': item.plano || '-',
+                    'Especificação': item.especificacao || '-',
+                    'Motivo': item.motivo || '-',
                     'Cliente': item.cliente || '-',
                     'Valor': item.valor || '-',
                     'Observação': item.observacao || '-',
@@ -542,8 +578,10 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
             return {
                 'SIMCARD/E-SIM': isFisico ? item.simcardFisico : item.simcardEsim,
                 'Data': item.data || getTodayShortSP(),
-                'CPF | CNPJ': item.cpf || '-',
+                'Celular': item.celular || item.cpf || '-',
                 'Plano': item.plano || '-',
+                'Especificação': item.especificacao || '-',
+                'Motivo': item.motivo || '-',
                 'Cliente': item.cliente || '-',
                 'Valor': item.valor || '-',
                 'Observação': item.observacao || '-',
@@ -565,9 +603,11 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
             String(item.simcardFisico || '').toLowerCase().includes(q) ||
             String(item.simcardEsim || '').toLowerCase().includes(q) ||
             String(item.caid || '').toLowerCase().includes(q) ||
-            String(item.cpf || '').toLowerCase().includes(q) ||
+            String(item.celular || item.cpf || '').toLowerCase().includes(q) ||
             String(item.cliente || '').toLowerCase().includes(q) ||
             String(item.plano || '').toLowerCase().includes(q) ||
+            String(item.especificacao || '').toLowerCase().includes(q) ||
+            String(item.motivo || '').toLowerCase().includes(q) ||
             String(item.observacao || '').toLowerCase().includes(q) ||
             String(item.emUsoPor || '').toLowerCase().includes(q)
         );
@@ -579,13 +619,18 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
         const isCopied = copiedId === item.id;
         const displayDate = item.data || getTodayShortSP();
 
+        const obsUpper = String(item.observacao || '').trim().toUpperCase();
+        const isEcli = obsUpper === 'ECLI' || item.statusColor === 'green';
+        const isNaoPago = obsUpper === 'NÃO PAGO' || obsUpper === 'NAO PAGO' || item.statusColor === 'red';
+        const isRestantes = (obsUpper && !isEcli && !isNaoPago) || item.statusColor === 'yellow';
+
         const statusBorder =
-            item.statusColor === 'green'
-                ? 'border-green-500/70 bg-green-50/30 dark:bg-green-950/20'
-                : item.statusColor === 'yellow'
-                ? 'border-yellow-500/70 bg-yellow-50/30 dark:bg-yellow-950/20'
-                : item.statusColor === 'red'
-                ? 'border-red-500/70 bg-red-50/30 dark:bg-red-950/20'
+            isEcli
+                ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/50'
+                : isNaoPago
+                ? 'border-red-500 bg-red-50/50 dark:bg-red-950/30 text-red-950 dark:text-red-100 ring-2 ring-red-500/50'
+                : isRestantes
+                ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 text-amber-950 dark:text-amber-100 ring-2 ring-amber-500/50'
                 : item.emUsoPor
                 ? 'border-[#E3000F]/50 bg-white dark:bg-neutral-900'
                 : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900';
@@ -653,8 +698,8 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                         </div>
                     </div>
 
-                    {/* Bloco 2: Campos (Mobile vertical 1 coluna / sm: 2 colunas / lg: 6 colunas / xl: horizontal) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:flex xl:items-center gap-2 flex-1 min-w-0 w-full">
+                    {/* Bloco 2: Campos (Mobile vertical / Desktop horizontal flexível) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 xl:flex xl:items-center gap-2 flex-1 min-w-0 w-full">
                         <div
                             className="xl:w-24 shrink-0 bg-neutral-100/80 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 cursor-not-allowed select-none"
                             title="Data travada de acordo com a data local (não editável)"
@@ -672,27 +717,28 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             />
                         </div>
 
+                        {/* CELULAR */}
                         <div className="xl:w-36 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
                             <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                CPF OU CNPJ
+                                CELULAR
                             </label>
                             <CardFieldInput
-                                value={item.cpf}
-                                onCommit={(val) => handleInlineChange(item.id, 'cpf', val)}
-                                maskType="cpf"
-                                placeholder="000.000.000-00"
+                                value={item.celular || item.cpf}
+                                onCommit={(val) => handleInlineChange(item.id, 'celular', val)}
+                                maskType="celular"
+                                placeholder="(00) 00000-0000"
                                 className="w-full bg-transparent font-mono text-xs font-bold text-neutral-800 dark:text-neutral-100 outline-none"
                             />
                         </div>
 
-                        <div className="xl:w-44 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
+                        {/* PLANO */}
+                        <div className="xl:w-48 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
                             <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                PLANO (SELEÇÃO)
+                                PLANO
                             </label>
                             <select
                                 value={item.plano || ''}
                                 onChange={(e) => handleInlineChange(item.id, 'plano', e.target.value)}
-                                disabled={!canModifySimcard}
                                 className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none truncate cursor-pointer"
                             >
                                 <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione o plano...</option>
@@ -704,6 +750,41 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             </select>
                         </div>
 
+                        {/* ESPECIFICAÇÃO (MIGRAÇÃO, PORTIN, ATIVAÇÃO) */}
+                        <div className="xl:w-36 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
+                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                                ESPECIFICAÇÃO
+                            </label>
+                            <select
+                                value={item.especificacao || ''}
+                                onChange={(e) => handleInlineChange(item.id, 'especificacao', e.target.value)}
+                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer"
+                            >
+                                <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione...</option>
+                                <option value="MIGRAÇÃO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">MIGRAÇÃO</option>
+                                <option value="PORTIN" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">PORTIN</option>
+                                <option value="ATIVAÇÃO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">ATIVAÇÃO</option>
+                            </select>
+                        </div>
+
+                        {/* MOTIVO (TR, DOAR, PAGO) */}
+                        <div className="xl:w-28 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
+                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                                MOTIVO
+                            </label>
+                            <select
+                                value={item.motivo || ''}
+                                onChange={(e) => handleInlineChange(item.id, 'motivo', e.target.value)}
+                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer"
+                            >
+                                <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione...</option>
+                                <option value="TR" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">TR</option>
+                                <option value="DOAR" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">DOAR</option>
+                                <option value="PAGO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">PAGO</option>
+                            </select>
+                        </div>
+
+                        {/* CLIENTE */}
                         <div className="xl:flex-1 min-w-[130px] bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
                             <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
                                 CLIENTE
@@ -717,6 +798,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             />
                         </div>
 
+                        {/* VALOR */}
                         <div className="xl:w-24 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
                             <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
                                 VALOR
@@ -730,16 +812,31 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             />
                         </div>
 
-                        <div className="xl:flex-1 min-w-[130px] bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
+                        {/* OBS (STATUS COM CONDIÇÕES DE COR E ESTEIRA) */}
+                        <div className="xl:w-44 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
                             <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                OBS
+                                OBS (STATUS)
                             </label>
-                            <CardFieldInput
-                                value={item.observacao}
-                                onCommit={(val) => handleInlineChange(item.id, 'observacao', val)}
-                                placeholder="Observação..."
-                                className="w-full bg-transparent text-xs text-neutral-700 dark:text-neutral-300 outline-none"
-                            />
+                            <select
+                                value={item.observacao || ''}
+                                onChange={(e) => handleInlineChange(item.id, 'observacao', e.target.value)}
+                                className={`w-full bg-transparent text-xs font-bold uppercase outline-none cursor-pointer ${
+                                    obsUpper === 'ECLI'
+                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                        : obsUpper === 'NÃO PAGO' || obsUpper === 'NAO PAGO'
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : obsUpper
+                                        ? 'text-amber-600 dark:text-amber-400'
+                                        : 'text-neutral-800 dark:text-neutral-100'
+                                }`}
+                            >
+                                <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione status...</option>
+                                <option value="ECLI" className="text-emerald-600 font-bold bg-white dark:bg-neutral-900">ECLI (Verde)</option>
+                                <option value="DPS" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">DPS (Amarelo)</option>
+                                <option value="EFETUAR DOAÇÃO" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">EFETUAR DOAÇÃO (Amarelo)</option>
+                                <option value="ABRIR CHAMADO" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">ABRIR CHAMADO (Amarelo)</option>
+                                <option value="NÃO PAGO" className="text-red-600 font-bold bg-white dark:bg-neutral-900">NÃO PAGO (Vermelho)</option>
+                            </select>
                         </div>
                     </div>
 
@@ -829,7 +926,7 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Buscar ICCID, CPF, cliente..."
+                                    placeholder="Buscar ICCID, celular, cliente..."
                                     className="w-full pl-9 pr-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-xs font-medium text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
                                 />
                             </div>

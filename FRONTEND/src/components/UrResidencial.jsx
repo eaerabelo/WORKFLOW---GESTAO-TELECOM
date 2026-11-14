@@ -3,7 +3,7 @@ import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
 import { Edit2, Save, X, Search, Calendar, Filter, Trash2, Home, User, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
-import { applyCpfCnpjMask } from '../utils/masks';
+import { applyPhoneMask } from '../utils/masks';
 
 export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, usersDB = {}, globalMonth, setGlobalMonth }) {
     const isLideranca = isGerente || ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'GEEK'].includes(globalUser?.role);
@@ -70,7 +70,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
             
             return (
                 String(item.contrato || '').toLowerCase().includes(term) ||
-                String(item.cpf || '').toLowerCase().includes(term) ||
+                String(item.celular || item.cpf || '').toLowerCase().includes(term) ||
                 String(item.nomeCliente || '').toLowerCase().includes(term) ||
                 String(item.cidade || '').toLowerCase().includes(term) ||
                 String(item.vendedor || '').toLowerCase().includes(term) ||
@@ -119,7 +119,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
 
     const handleChange = (e, field) => {
         let value = e.target.value;
-        if (field === 'cpf') value = applyCpfCnpjMask(value);
+        if (field === 'celular' || field === 'cpf') value = applyPhoneMask(value);
         
         setEditForm(prev => {
             const nextForm = { ...prev, [field]: value };
@@ -169,7 +169,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
             'Status': item.statusUr || 'PEND.DE INSTALAÇÃO',
             'Agendamento': item.agendamento || '-',
             'Nome Cliente': item.nomeCliente || '-',
-            'CPF/CNPJ': item.cpf || '-',
+            'Celular': item.celular || item.cpf || '-',
             'Obs': item.obsUr || '-',
             'Ação': item.acaoUr || '-'
         }));
@@ -251,7 +251,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30 text-center">Status</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Agendamento</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Nome Cliente</th>
-                                    <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">CPF/CNPJ</th>
+                                    <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Celular</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Obs</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Ação</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider text-center sticky right-0 bg-[#E3000F] shadow-[-4px_0_10px_rgba(0,0,0,0.1)]">Editar</th>
@@ -301,7 +301,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                                     {isEditing ? <input type="text" value={editForm.nomeCliente || ''} onChange={(e) => handleChange(e, 'nomeCliente')} className="w-32 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none" /> : <span className="text-neutral-800 dark:text-neutral-200">{item.nomeCliente || '-'}</span>}
                                                 </td>
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800">
-                                                    {isEditing ? <input type="text" value={editForm.cpf || ''} onChange={(e) => handleChange(e, 'cpf')} disabled={!isLideranca} className={`w-32 px-2 py-1 border rounded ${!isLideranca ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-neutral-500 dark:text-neutral-400 border-transparent' : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 border-neutral-200 dark:border-neutral-700 outline-none'}`} /> : <span className="font-mono text-neutral-600 dark:text-neutral-400">{item.cpf || '-'}</span>}
+                                                    {isEditing ? <input type="text" value={editForm.celular || editForm.cpf || ''} onChange={(e) => handleChange(e, 'celular')} placeholder="(00) 00000-0000" disabled={!isLideranca} className={`w-36 px-2 py-1 border rounded ${!isLideranca ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-neutral-500 dark:text-neutral-400 border-transparent' : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 border-neutral-200 dark:border-neutral-700 outline-none'}`} /> : <span className="font-mono text-neutral-600 dark:text-neutral-400">{item.celular || item.cpf || '-'}</span>}
                                                 </td>
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800">
                                                     {isEditing ? <input type="text" value={editForm.obsUr || ''} onChange={(e) => handleChange(e, 'obsUr')} className="w-36 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none" /> : <span className="text-neutral-500 dark:text-neutral-400 truncate max-w-[150px] inline-block" title={item.obsUr}>{item.obsUr || '-'}</span>}
