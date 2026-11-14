@@ -23,23 +23,23 @@ export const applyPhoneMask = (val) => {
     return `(${v}`;
 };
 
-// Lista de Siglas de Planos Padronizadas
+// Lista de Siglas de Planos Padronizadas Claro Telecom
 export const SIGLAS_PLANOS = [
-    { sigla: '07', desc: '07 – dependente' },
-    { sigla: 'ST', desc: 'ST – Ctrl ON 15 GB' },
-    { sigla: 'SU', desc: 'SU – Ctrl ON 20 GB App' },
-    { sigla: 'SV', desc: 'SV – Ctrl ON 25 GB' },
-    { sigla: 'TD', desc: 'TD – Controle 15 GB' },
-    { sigla: 'TE', desc: 'TE– Controle 20 GB' },
-    { sigla: 'TH', desc: 'TH – Pós 60 GB' },
-    { sigla: 'TL', desc: 'TL – Pós 60 GB GeForce Now' },
-    { sigla: 'TI', desc: 'TI – Pós 100 GB' },
-    { sigla: 'TJ', desc: 'TJ – Pós 150 GB' },
-    { sigla: 'TK', desc: 'TK– Pós 200 GB' },
-    { sigla: 'TM', desc: 'TM – Pós 500 GB' },
-    { sigla: 'TO', desc: 'TO – Pós 150 GB + Claro up' },
-    { sigla: 'TP', desc: 'TP – Pós 200 GB + Claro up' },
-    { sigla: 'VC', desc: 'VC – Pós 500 GB + Claro up' },
+    { sigla: '07', desc: '07 - Dependente' },
+    { sigla: 'ST', desc: 'ST - Ctrl ON 15 GB' },
+    { sigla: 'SU', desc: 'SU - Ctrl ON 20 GB App' },
+    { sigla: 'SV', desc: 'SV - Ctrl ON 25 GB' },
+    { sigla: 'TD', desc: 'TD - Controle 15 GB' },
+    { sigla: 'TE', desc: 'TE - Controle 20 GB' },
+    { sigla: 'TH', desc: 'TH - Pós 60 GB' },
+    { sigla: 'TL', desc: 'TL - Pós 60 GB GeForce Now' },
+    { sigla: 'TI', desc: 'TI - Pós 100 GB' },
+    { sigla: 'TJ', desc: 'TJ - Pós 150 GB' },
+    { sigla: 'TK', desc: 'TK - Pós 200 GB' },
+    { sigla: 'TM', desc: 'TM - Pós 500 GB' },
+    { sigla: 'TO', desc: 'TO - Pós 150 GB + Claro up' },
+    { sigla: 'TP', desc: 'TP - Pós 200 GB + Claro up' },
+    { sigla: 'VC', desc: 'VC - Pós 500 GB + Claro up' },
 ];
 
 const CardFieldInput = ({ value, onCommit, placeholder, className = '', maskType, disabled = false, onCopy }) => {
@@ -646,214 +646,92 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
             <div
                 key={item.id}
                 onClick={() => setSelectedCardId(item.id)}
-                className={`rounded-xl px-3.5 py-2.5 border transition-all duration-200 shadow-sm hover:shadow-md flex flex-col gap-2 relative group ${statusBorder} ${
-                    isSelected ? 'ring-2 ring-[#E3000F] shadow-red-500/10' : ''
+                className={`rounded-2xl p-3 border transition-all duration-200 shadow-sm hover:shadow-md flex flex-col gap-2.5 relative group ${statusBorder} ${
+                    isSelected ? 'ring-2 ring-[#E3000F] shadow-red-500/15' : ''
                 }`}
             >
-                {/* Linha Principal Horizontal / Vertical no Mobile */}
-                <div className="flex flex-col xl:flex-row xl:items-center gap-2.5 w-full">
-                    {/* Bloco 1: Índice + ICCID + Botão Copiar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0 xl:w-[320px] w-full">
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <span className="w-6 h-6 rounded-lg bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] flex items-center justify-center font-black text-[11px] shrink-0">
-                                #{idx + 1}
-                            </span>
-                            <span className="sm:hidden text-[10px] font-black uppercase tracking-wider text-neutral-500">
-                                {tipoLabel}
-                            </span>
-                        </div>
+                {/* Linha Superior: Índice + Serial/ICCID + Botão Copiar + Selo Digital + Excluir */}
+                <div className="flex flex-wrap items-center justify-between gap-2 w-full pb-2 border-b border-neutral-200/60 dark:border-neutral-800/60">
+                    <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
+                        {/* Índice */}
+                        <span className="w-6 h-6 rounded-lg bg-red-50 dark:bg-[#E3000F]/15 text-[#E3000F] flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+                            #{idx + 1}
+                        </span>
 
-                        <div className="flex-1 flex items-center justify-between gap-1.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg px-2.5 py-1.5 min-w-0 w-full">
-                            <div className="flex flex-col min-w-0 flex-1">
-                                <span className="hidden sm:flex text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5 items-center gap-1">
-                                    {tipoLabel}
-                                    {!canModifySimcard && (
-                                        <Lock
-                                            size={9}
-                                            onClick={(e) => { e.stopPropagation(); handleProtectedClick(); }}
-                                            className="text-neutral-400 hover:text-[#E3000F] cursor-pointer inline"
-                                            title="Desbloquear Edição de ICCID"
-                                        />
-                                    )}
-                                </span>
-                                <CardFieldInput
-                                    value={serialVal}
-                                    onCommit={(val) => handleInlineChange(item.id, serialField, val)}
-                                    onCopy={() => sealAndCopySimcard(item, false)}
-                                    maskType={serialField === 'caid' ? 'upper' : 'iccid'}
-                                    disabled={!canModifySimcard}
-                                    placeholder="00000000000000000000"
-                                    className="w-full bg-transparent font-mono text-xs font-black tracking-wider text-neutral-800 dark:text-neutral-100 outline-none select-all"
+                        {/* Badge Tipo */}
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-neutral-200/70 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 shrink-0">
+                            {tipoLabel}
+                        </span>
+
+                        {/* Campo Serial / ICCID (com visual moderno e cópia rápida) */}
+                        <div className="flex items-center gap-2 bg-white/90 dark:bg-neutral-950/90 border border-neutral-200 dark:border-neutral-800 rounded-lg px-2.5 py-1 min-w-[200px] sm:min-w-[240px] max-w-[280px]">
+                            <CardFieldInput
+                                value={serialVal}
+                                onCommit={(val) => handleInlineChange(item.id, serialField, val)}
+                                onCopy={() => sealAndCopySimcard(item, false)}
+                                maskType={serialField === 'caid' ? 'upper' : 'iccid'}
+                                disabled={!canModifySimcard}
+                                placeholder="00000000000000000000"
+                                className="w-full bg-transparent font-mono text-xs font-black tracking-wider text-neutral-900 dark:text-neutral-100 outline-none select-all"
+                            />
+                            {!canModifySimcard && (
+                                <Lock
+                                    size={11}
+                                    onClick={(e) => { e.stopPropagation(); handleProtectedClick(); }}
+                                    className="text-neutral-400 hover:text-[#E3000F] cursor-pointer shrink-0"
+                                    title="Desbloquear Edição de ICCID"
                                 />
-                            </div>
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    sealAndCopySimcard(item, true);
-                                }}
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shrink-0 transition-all shadow-sm ${
-                                    isCopied
-                                        ? 'bg-emerald-600 text-white shadow-emerald-500/20'
-                                        : 'bg-[#E3000F] hover:bg-red-700 text-white shadow-red-500/20'
-                                }`}
-                                title="Copiar ICCID e selar caixinha como EM USO"
-                            >
-                                {isCopied ? <Check size={12} /> : <Copy size={12} />}
-                                <span>{isCopied ? 'Copiado' : 'Copiar'}</span>
-                            </button>
+                            )}
                         </div>
-                    </div>
 
-                    {/* Bloco 2: Campos (Mobile vertical / Desktop horizontal flexível) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 xl:flex xl:items-center gap-2 flex-1 min-w-0 w-full">
-                        <div
-                            className="xl:w-24 shrink-0 bg-neutral-100/80 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 cursor-not-allowed select-none"
-                            title="Data travada de acordo com a data local (não editável)"
+                        {/* Botão Copiar */}
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                sealAndCopySimcard(item, true);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-all shadow-sm ${
+                                isCopied
+                                    ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                                    : 'bg-[#E3000F] hover:bg-red-700 text-white shadow-red-500/20'
+                            }`}
+                            title="Copiar ICCID e selar caixinha como EM USO"
                         >
-                            <label className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                <span>DATA</span>
-                                <Lock size={8} className="text-neutral-400" />
-                            </label>
-                            <input
-                                type="text"
-                                value={displayDate}
-                                readOnly
-                                disabled
-                                className="w-full bg-transparent text-xs font-bold text-neutral-600 dark:text-neutral-300 outline-none cursor-not-allowed"
-                            />
-                        </div>
+                            {isCopied ? <Check size={13} /> : <Copy size={13} />}
+                            <span>{isCopied ? 'Copiado' : 'Copiar'}</span>
+                        </button>
 
-                        {/* CELULAR */}
-                        <div className="xl:w-36 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
-                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                CELULAR
-                            </label>
-                            <CardFieldInput
-                                value={item.celular || item.cpf}
-                                onCommit={(val) => handleInlineChange(item.id, 'celular', val)}
-                                maskType="celular"
-                                placeholder="(00) 00000-0000"
-                                className="w-full bg-transparent font-mono text-xs font-bold text-neutral-800 dark:text-neutral-100 outline-none"
-                            />
-                        </div>
-
-                        {/* PLANO */}
-                        <div className="xl:w-48 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
-                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                PLANO
-                            </label>
-                            <select
-                                value={selectedPlanoValue}
-                                onChange={(e) => handleInlineChange(item.id, 'plano', e.target.value)}
-                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none truncate cursor-pointer"
-                            >
-                                <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione o plano...</option>
-                                {SIGLAS_PLANOS.map((p, pIdx) => (
-                                    <option key={pIdx} value={p.desc} className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">
-                                        {p.desc}
-                                    </option>
-                                ))}
-                                {currentPlano && !matchedPlano && (
-                                    <option value={currentPlano} className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">
-                                        {currentPlano}
-                                    </option>
-                                )}
-                            </select>
-                        </div>
-
-                        {/* ESPECIFICAÇÃO (MIGRAÇÃO, PORTIN, ATIVAÇÃO) */}
-                        <div className="xl:w-36 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
-                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                ESPECIFICAÇÃO
-                            </label>
-                            <select
-                                value={item.especificacao || ''}
-                                onChange={(e) => handleInlineChange(item.id, 'especificacao', e.target.value)}
-                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer"
-                            >
-                                <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione...</option>
-                                <option value="MIGRAÇÃO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">MIGRAÇÃO</option>
-                                <option value="PORTIN" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">PORTIN</option>
-                                <option value="ATIVAÇÃO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">ATIVAÇÃO</option>
-                            </select>
-                        </div>
-
-                        {/* MOTIVO (TR, DOAR, PAGO) */}
-                        <div className="xl:w-28 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
-                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                MOTIVO
-                            </label>
-                            <select
-                                value={item.motivo || ''}
-                                onChange={(e) => handleInlineChange(item.id, 'motivo', e.target.value)}
-                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer"
-                            >
-                                <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione...</option>
-                                <option value="TR" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">TR</option>
-                                <option value="DOAR" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">DOAR</option>
-                                <option value="PAGO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">PAGO</option>
-                            </select>
-                        </div>
-
-                        {/* CLIENTE */}
-                        <div className="xl:flex-1 min-w-[130px] bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
-                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                CLIENTE
-                            </label>
-                            <CardFieldInput
-                                value={item.cliente}
-                                onCommit={(val) => handleInlineChange(item.id, 'cliente', val)}
-                                maskType="upper"
-                                placeholder="NOME DO CLIENTE"
-                                className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none"
-                            />
-                        </div>
-
-                        {/* VALOR */}
-                        <div className="xl:w-24 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
-                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                VALOR
-                            </label>
-                            <CardFieldInput
-                                value={item.valor}
-                                onCommit={(val) => handleInlineChange(item.id, 'valor', val)}
-                                maskType="valor"
-                                placeholder="R$ 0,00"
-                                className="w-full bg-transparent text-xs font-black text-[#E3000F] dark:text-red-400 outline-none"
-                            />
-                        </div>
-
-                        {/* OBS (STATUS COM CONDIÇÕES DE COR E ESTEIRA) */}
-                        <div className="xl:w-44 shrink-0 bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all">
-                            <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
-                                OBS (STATUS)
-                            </label>
-                            <select
-                                value={item.observacao || ''}
-                                onChange={(e) => handleInlineChange(item.id, 'observacao', e.target.value)}
-                                className={`w-full bg-transparent text-xs font-bold uppercase outline-none cursor-pointer ${
-                                    obsUpper === 'ECLI'
-                                        ? 'text-emerald-600 dark:text-emerald-400'
-                                        : obsUpper === 'NÃO PAGO' || obsUpper === 'NAO PAGO'
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : obsUpper
-                                        ? 'text-amber-600 dark:text-amber-400'
-                                        : 'text-neutral-800 dark:text-neutral-100'
-                                }`}
-                            >
-                                <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione status...</option>
-                                <option value="ECLI" className="text-emerald-600 font-bold bg-white dark:bg-neutral-900">ECLI (Verde)</option>
-                                <option value="DPS" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">DPS (Amarelo)</option>
-                                <option value="EFETUAR DOAÇÃO" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">EFETUAR DOAÇÃO (Amarelo)</option>
-                                <option value="ABRIR CHAMADO" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">ABRIR CHAMADO (Amarelo)</option>
-                                <option value="NÃO PAGO" className="text-red-600 font-bold bg-white dark:bg-neutral-900">NÃO PAGO (Vermelho)</option>
-                            </select>
-                        </div>
+                        {/* Selo Digital EM USO Compacto no Topo */}
+                        {item.emUsoPor && (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100/90 dark:bg-red-950/60 border border-[#E3000F]/30 text-xs shrink-0 max-w-full">
+                                <span className="relative flex h-2 w-2 shrink-0">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E3000F] opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E3000F]"></span>
+                                </span>
+                                <span className="font-black text-[10px] text-[#E3000F] uppercase tracking-wider shrink-0">
+                                    EM USO:
+                                </span>
+                                <span className="font-bold text-[11px] text-neutral-800 dark:text-neutral-200 truncate max-w-[220px]" title={item.emUsoPor}>
+                                    {item.emUsoPor}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenSealRemovalModal(item, serialVal);
+                                    }}
+                                    className="ml-1 text-[9px] font-bold uppercase text-neutral-500 hover:text-[#E3000F] px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 shrink-0"
+                                    title="Remover Selo Digital (Apenas Gestão)"
+                                >
+                                    Remover
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Bloco 3: Excluir */}
-                    <div className="flex items-center justify-end gap-1.5 shrink-0 self-end xl:self-center">
+                    {/* Botão de Excluir */}
+                    <div className="flex items-center justify-end shrink-0">
                         <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleDeleteRequest(item.id); }}
@@ -864,42 +742,158 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                             }`}
                             title={canModifySimcard ? 'Excluir Caixinha' : 'Autenticação Necessária'}
                         >
-                            {canModifySimcard ? <Trash2 size={14} /> : <Lock size={12} />}
+                            {canModifySimcard ? <Trash2 size={15} /> : <Lock size={13} />}
                         </button>
                     </div>
                 </div>
 
-                {/* SELO / ETIQUETA DIGITAL AUTOMÁTICA DE EM USO (Com trava de remoção mediante Login e Senha de cargo != VENDEDOR) */}
-                {item.emUsoPor && (
-                    <div className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#E3000F]/15 via-red-500/10 to-transparent dark:from-[#E3000F]/25 dark:via-red-900/20 border border-[#E3000F]/40 flex items-center justify-between gap-2 shadow-sm animate-fade-in">
-                        <div className="flex items-center gap-2 min-w-0">
-                            <span className="relative flex h-2 w-2 shrink-0">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E3000F] opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E3000F]"></span>
-                            </span>
-                            <div className="flex flex-wrap items-center gap-1.5 text-[11px] leading-tight min-w-0">
-                                <span className="font-black uppercase tracking-widest text-[#E3000F] dark:text-red-400">
-                                    EM USO:
-                                </span>
-                                <span className="font-black text-neutral-900 dark:text-white tracking-wide truncate" title={item.emUsoPor}>
-                                    {item.emUsoPor}
-                                </span>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenSealRemovalModal(item, serialVal);
-                            }}
-                            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-300 hover:text-[#E3000F] dark:hover:text-red-400 px-2 py-0.5 rounded-md bg-white/70 dark:bg-neutral-900/70 border border-neutral-200/80 dark:border-neutral-700 hover:border-[#E3000F]/50 transition-all shrink-0"
-                            title="Remover Selo Digital (Requer Login e Senha de Gerência/Liderança/ADM)"
-                        >
-                            <Lock size={10} />
-                            <span>Remover Selo</span>
-                        </button>
+                {/* Linha dos 8 Campos (Grid Responsivo Perfeito: 100% da Linha, Zero Vazamento!) */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 w-full">
+                    {/* 1. DATA */}
+                    <div
+                        className="bg-neutral-100/80 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 cursor-not-allowed select-none min-w-0"
+                        title="Data travada de acordo com a data local (não editável)"
+                    >
+                        <label className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                            <span>DATA</span>
+                            <Lock size={8} className="text-neutral-400" />
+                        </label>
+                        <input
+                            type="text"
+                            value={displayDate}
+                            readOnly
+                            disabled
+                            className="w-full bg-transparent text-xs font-bold text-neutral-600 dark:text-neutral-300 outline-none cursor-not-allowed"
+                        />
                     </div>
-                )}
+
+                    {/* 2. CELULAR */}
+                    <div className="bg-white/80 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
+                        <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                            CELULAR
+                        </label>
+                        <CardFieldInput
+                            value={item.celular || item.cpf}
+                            onCommit={(val) => handleInlineChange(item.id, 'celular', val)}
+                            maskType="celular"
+                            placeholder="(00) 00000-0000"
+                            className="w-full bg-transparent font-mono text-xs font-bold text-neutral-800 dark:text-neutral-100 outline-none"
+                        />
+                    </div>
+
+                    {/* 3. PLANO */}
+                    <div className="bg-white/80 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
+                        <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                            PLANO
+                        </label>
+                        <select
+                            value={selectedPlanoValue}
+                            onChange={(e) => handleInlineChange(item.id, 'plano', e.target.value)}
+                            className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none truncate cursor-pointer"
+                        >
+                            <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione...</option>
+                            {SIGLAS_PLANOS.map((p, pIdx) => (
+                                <option key={pIdx} value={p.desc} className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">
+                                    {p.desc}
+                                </option>
+                            ))}
+                            {currentPlano && !matchedPlano && (
+                                <option value={currentPlano} className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">
+                                    {currentPlano}
+                                </option>
+                            )}
+                        </select>
+                    </div>
+
+                    {/* 4. ESPECIFICAÇÃO */}
+                    <div className="bg-white/80 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
+                        <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                            ESPECIFICAÇÃO
+                        </label>
+                        <select
+                            value={item.especificacao || ''}
+                            onChange={(e) => handleInlineChange(item.id, 'especificacao', e.target.value)}
+                            className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer"
+                        >
+                            <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione...</option>
+                            <option value="MIGRAÇÃO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">MIGRAÇÃO</option>
+                            <option value="PORTIN" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">PORTIN</option>
+                            <option value="ATIVAÇÃO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">ATIVAÇÃO</option>
+                        </select>
+                    </div>
+
+                    {/* 5. MOTIVO */}
+                    <div className="bg-white/80 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
+                        <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                            MOTIVO
+                        </label>
+                        <select
+                            value={item.motivo || ''}
+                            onChange={(e) => handleInlineChange(item.id, 'motivo', e.target.value)}
+                            className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer"
+                        >
+                            <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione...</option>
+                            <option value="TR" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">TR</option>
+                            <option value="DOAR" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">DOAR</option>
+                            <option value="PAGO" className="text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-900">PAGO</option>
+                        </select>
+                    </div>
+
+                    {/* 6. CLIENTE */}
+                    <div className="bg-white/80 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
+                        <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                            CLIENTE
+                        </label>
+                        <CardFieldInput
+                            value={item.cliente}
+                            onCommit={(val) => handleInlineChange(item.id, 'cliente', val)}
+                            maskType="upper"
+                            placeholder="NOME DO CLIENTE"
+                            className="w-full bg-transparent text-xs font-bold uppercase text-neutral-800 dark:text-neutral-100 outline-none truncate"
+                        />
+                    </div>
+
+                    {/* 7. VALOR */}
+                    <div className="bg-white/80 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
+                        <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                            VALOR
+                        </label>
+                        <CardFieldInput
+                            value={item.valor}
+                            onCommit={(val) => handleInlineChange(item.id, 'valor', val)}
+                            maskType="valor"
+                            placeholder="R$ 0,00"
+                            className="w-full bg-transparent text-xs font-black text-[#E3000F] dark:text-red-400 outline-none"
+                        />
+                    </div>
+
+                    {/* 8. OBS */}
+                    <div className="bg-white/80 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800 rounded-lg px-2.5 py-1 focus-within:border-[#E3000F] transition-all min-w-0">
+                        <label className="block text-[8px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">
+                            OBS
+                        </label>
+                        <select
+                            value={item.observacao || ''}
+                            onChange={(e) => handleInlineChange(item.id, 'observacao', e.target.value)}
+                            className={`w-full bg-transparent text-xs font-bold uppercase outline-none cursor-pointer truncate ${
+                                obsUpper === 'ECLI'
+                                    ? 'text-emerald-700 dark:text-emerald-400'
+                                    : obsUpper === 'NÃO PAGO' || obsUpper === 'NAO PAGO'
+                                    ? 'text-red-700 dark:text-red-400'
+                                    : obsUpper
+                                    ? 'text-amber-700 dark:text-amber-400'
+                                    : 'text-neutral-800 dark:text-neutral-100'
+                            }`}
+                        >
+                            <option value="" className="text-neutral-500 bg-white dark:bg-neutral-900">Selecione...</option>
+                            <option value="ECLI" className="text-emerald-600 font-bold bg-white dark:bg-neutral-900">ECLI</option>
+                            <option value="DPS" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">DPS</option>
+                            <option value="EFETUAR DOAÇÃO" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">EFETUAR DOAÇÃO</option>
+                            <option value="ABRIR CHAMADO" className="text-amber-600 font-bold bg-white dark:bg-neutral-900">ABRIR CHAMADO</option>
+                            <option value="NÃO PAGO" className="text-red-600 font-bold bg-white dark:bg-neutral-900">NÃO PAGO</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         );
     };
