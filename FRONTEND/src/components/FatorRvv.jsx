@@ -465,12 +465,12 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                             <h2 className="text-lg sm:text-xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">
                                 Painel Fator RV
                             </h2>
-                            <span className="text-[11px] font-semibold bg-[#E3000F]/10 text-[#E3000F] dark:bg-[#E3000F]/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-[#E3000F]/20">
-                                Simulador IW
+                            <span className="text-[11px] font-bold bg-[#E3000F]/10 text-[#E3000F] dark:bg-[#E3000F]/20 px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-[#E3000F]/20">
+                                PRÉVIA
                             </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-0.5 font-normal">
-                            Apuração de metas, aceleradores M-Play e prévia de comissionamento individual.
+                        <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 font-semibold uppercase tracking-wide">
+                            SIMULADOR DE COMISSIONAMENTO , NÃO VALIDO PARA RECEBIMENTO , SOMENTE PARA ESTIMATIVA
                         </p>
                     </div>
                 </div>
@@ -561,11 +561,11 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                             <span className="text-neutral-500">•</span>
                                             <span className="text-neutral-300 capitalize">{metrics.targetSeller}</span>
                                         </div>
-                                        <div className="text-4xl sm:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 mb-2 font-mono">
+                                        <div className="text-4xl sm:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 mb-2 font-sans">
                                             {applyCurrencyMask(metrics.previaPagamento)}
                                         </div>
                                         <p className="text-xs sm:text-sm text-neutral-400 font-normal max-w-xl">
-                                            Atingimento de <strong className="text-neutral-100 font-semibold">{metrics.pctAtingimento.toFixed(1)}%</strong> da meta {metrics.isStoreLevelRole ? 'geral da LOJA' : 'individual'} • Fator Simulado: <strong className="text-amber-400 font-mono">{(metrics.fatorSimulado * 100).toFixed(2)}%</strong>.
+                                            Atingimento de <strong className="text-neutral-100 font-semibold">{metrics.pctAtingimento.toFixed(1)}%</strong> da meta {metrics.isStoreLevelRole ? 'geral da LOJA' : 'individual'} • Fator Simulado: <strong className="text-amber-400 font-sans font-black">{(metrics.fatorSimulado * 100).toFixed(2)}%</strong>.
                                         </p>
                                     </div>
 
@@ -610,7 +610,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                 <span className="font-semibold text-neutral-700 dark:text-neutral-300">
                                                     Receita ({applyCurrencyMask(metrics.totalComissao)})
                                                 </span>
-                                                <span className={`font-mono font-bold ${metrics.pctAtingimento >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                <span className={`font-sans font-extrabold ${metrics.pctAtingimento >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
                                                     {metrics.pctAtingimento.toFixed(1)}%
                                                 </span>
                                             </div>
@@ -630,7 +630,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                 <span className="font-semibold text-neutral-700 dark:text-neutral-300">
                                                     Gross Móvel ({metrics.totalPos} un)
                                                 </span>
-                                                <span className={`font-mono font-bold ${metrics.pctAtingimentoPos >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                <span className={`font-sans font-extrabold ${metrics.pctAtingimentoPos >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
                                                     {metrics.pctAtingimentoPos.toFixed(1)}%
                                                 </span>
                                             </div>
@@ -650,7 +650,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                 <span className="font-semibold text-neutral-700 dark:text-neutral-300">
                                                     Residencial ({metrics.totalUr} un)
                                                 </span>
-                                                <span className={`font-mono font-bold ${metrics.pctAtingimentoUr >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                <span className={`font-sans font-extrabold ${metrics.pctAtingimentoUr >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
                                                     {metrics.pctAtingimentoUr.toFixed(1)}%
                                                 </span>
                                             </div>
@@ -695,7 +695,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                 <span className="font-semibold text-neutral-700 dark:text-neutral-300">
                                                     Meta M-Play ({metrics.volMplay}/{metrics.metaMplay})
                                                 </span>
-                                                <span className={`font-mono font-bold ${metrics.pctAtingimentoMplay >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                                <span className={`font-sans font-extrabold ${metrics.pctAtingimentoMplay >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                                     {metrics.pctAtingimentoMplay.toFixed(1)}%
                                                 </span>
                                             </div>
@@ -708,7 +708,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                 />
                                             </div>
                                             <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug">
-                                                Fator aplicado: <strong className="text-neutral-900 dark:text-neutral-100 font-mono">{metrics.fatorMultiplicador}x</strong> nas vendas combo com Claro tv+ / M-Play.
+                                                Fator aplicado: <strong className="text-neutral-900 dark:text-neutral-100 font-sans font-bold">{metrics.fatorMultiplicador}x</strong> nas vendas combo com Claro tv+ / M-Play.
                                             </p>
                                         </div>
 
@@ -716,7 +716,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                             <span className="text-[10px] font-bold uppercase text-neutral-400 dark:text-neutral-400 block mb-0.5">
                                                 Aporte no Run Rate
                                             </span>
-                                            <div className="text-sm font-bold text-neutral-900 dark:text-neutral-100 font-mono">
+                                            <div className="text-sm font-bold text-neutral-900 dark:text-neutral-100 font-sans">
                                                 +{applyCurrencyMask(metrics.receitaExtraMplay || 0)}
                                             </div>
                                             <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
@@ -728,7 +728,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
 
                                 <div className="mt-5 pt-3.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs">
                                     <span className="text-neutral-500 dark:text-neutral-400">Bônus Excedente:</span>
-                                    <span className={`font-mono font-bold ${metrics.bonusUnitario > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-neutral-400'}`}>
+                                    <span className={`font-sans font-extrabold ${metrics.bonusUnitario > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-neutral-400'}`}>
                                         {metrics.bonusUnitario > 0 ? `+${applyCurrencyMask(metrics.bonusUnitario)}` : 'R$ 0,00'}
                                     </span>
                                 </div>
@@ -795,7 +795,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                     <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60">
                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Portabilidades (+30%)</span>
-                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-mono">
+                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-sans">
                                             {metrics.volPortabilidade} <span className="text-xs font-normal text-neutral-400">linhas</span>
                                         </div>
                                         <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
@@ -805,7 +805,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
 
                                     <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60">
                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Aparelhos & Seguros</span>
-                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-mono">
+                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-sans">
                                             {metrics.volAparelho + metrics.volSeguro} <span className="text-xs font-normal text-neutral-400">itens</span>
                                         </div>
                                         <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
@@ -815,7 +815,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
 
                                     <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60">
                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Planos PME / PJ</span>
-                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-mono">
+                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-sans">
                                             {metrics.volPme} <span className="text-xs font-normal text-neutral-400">planos</span>
                                         </div>
                                         <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
@@ -825,7 +825,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
 
                                     <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60">
                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Ajustes de Operação</span>
-                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 flex items-center gap-1.5 font-mono">
+                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 flex items-center gap-1.5 font-sans">
                                             Ativo <CheckCircle2 size={18} className="text-emerald-500" />
                                         </div>
                                         <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
@@ -863,7 +863,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
                                             Faixas Base (Vendedor)
                                         </span>
-                                        <div className="text-xs space-y-0.5 text-neutral-700 dark:text-neutral-300 font-mono">
+                                        <div className="text-xs space-y-0.5 text-neutral-700 dark:text-neutral-300 font-sans font-semibold">
                                             <div>80% - 99.9%: <strong className="text-neutral-900 dark:text-neutral-100">4.5%</strong></div>
                                             <div>100% - 119.9%: <strong className="text-neutral-900 dark:text-neutral-100">7.0%</strong></div>
                                             <div>≥ 120%: <strong className="text-emerald-600 dark:text-emerald-400">9.0% a 11.0%</strong></div>
