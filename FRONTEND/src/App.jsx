@@ -945,8 +945,16 @@ export default function App() {
   const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(globalUser?.role);
   const hasAreaLojasAccess = ['GERENTE', 'SENIOR', 'GEEK'].includes(globalUser?.role);
   const isVendedor = globalUser?.role === 'VENDEDOR';
+  const hasResultadoAccess = !isVendedor;
   const [standaloneView, setStandaloneView] = useState(null); // null | 'PROFILE' | 'HELP'
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  // Redireciona vendedor caso tente acessar a aba RESULTADO
+  useEffect(() => {
+    if (isVendedor && activeTab === 'RESULTADO') {
+      setActiveTab('VENDA');
+    }
+  }, [isVendedor, activeTab]);
 
   const handleProfileUpdated = (updatedProfile) => {
     if (!updatedProfile) return;
@@ -1023,7 +1031,7 @@ export default function App() {
     setSelectedSeller(null);
     localStorage.removeItem('sessionUser');
     localStorage.removeItem('jwt_token');
-    if (activeTab === 'GESTÃO' || activeTab === 'ESCALA DE TRABALHO' || activeTab === 'ACESSOS' || activeTab === 'PARCIAL & FECHAMENTO' || activeTab === 'ÁREA - LOJAS') setActiveTab('VENDA');
+    if (activeTab === 'GESTÃO' || activeTab === 'ESCALA DE TRABALHO' || activeTab === 'ACESSOS' || activeTab === 'PARCIAL & FECHAMENTO' || activeTab === 'ÁREA - LOJAS' || activeTab === 'RESULTADO') setActiveTab('VENDA');
   };
 
 
@@ -1117,6 +1125,7 @@ export default function App() {
               if (section.name === 'GESTÃO' && !hasMetaAccess) return null;
               if (section.name === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return null;
               if (section.name === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return null;
+              if (section.name === 'RESULTADO' && isVendedor) return null;
               // if (section.name === 'ÁREA - LOJAS' && !hasAreaLojasAccess) return null; // Já oculto no array
 
 
@@ -1390,7 +1399,19 @@ export default function App() {
           ) : activeTab === 'REPROVADOS' ? (
             <Reprovados reprovadosData={reprovadosData} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} isGerente={isGerente} isVendedor={isVendedor} usersDB={usersDB} globalMonth={globalMonth} />
           ) : activeTab === 'RESULTADO' ? (
-            <Resultado salesData={salesData} goalsDB={goalsDB} usersDB={usersDB} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
+            isVendedor ? (
+              <div className="h-full flex flex-col items-center justify-center p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm animate-fade-in text-center">
+                <div className="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-2xl flex items-center justify-center text-neutral-400 mb-4 border border-neutral-200 dark:border-neutral-700">
+                  <Lock size={28} className="text-[#E3000F]" />
+                </div>
+                <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-1">Acesso Restrito</h2>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md">
+                  A seção de Resultado Executivo da Loja é restrita a cargos de gestão e liderança.
+                </p>
+              </div>
+            ) : (
+              <Resultado salesData={salesData} goalsDB={goalsDB} usersDB={usersDB} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
+            )
           ) : activeTab === 'ÁREA - LOJAS' ? (
             <AreaLojas globalMonth={globalMonth} />
           ) : activeTab === 'PARCIAL & FECHAMENTO' ? (
