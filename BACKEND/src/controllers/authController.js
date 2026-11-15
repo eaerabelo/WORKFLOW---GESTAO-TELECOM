@@ -345,12 +345,16 @@ export const solicitarCadastro = async (req, res) => {
         // Papel baseado na SetupKey
         const role = isManagerSetup ? 'GERENTE' : 'VENDEDOR';
 
-        // Mapeamento da Loja (Aceita ID, SAP ou Alias alternativo)
-        const matchedStore = findStore(storeCode);
+        // Mapeamento da Loja (Aceita ID, SAP, Nome ou Alias)
+        const matchedStore = findStore(storeCode) || findStore(req.body.storeId) || findStore(req.body.storeSap);
         if (role !== 'GERENTE' && !matchedStore) {
-            return res.status(400).json({ error: "Código da loja inválido. Verifique com a liderança." });
+            return res.status(400).json({ error: "Código da loja não identificado. Informe o ID (ex: K7W8) ou SAP (ex: 1146) válido da sua loja." });
         }
         
+        if (matchedStore) {
+            console.log(`Loja identificada no cadastro: ${matchedStore.name} (ID: ${matchedStore.code} | SAP: ${matchedStore.sap}) -> storeId: ${matchedStore.id}`);
+        }
+
         // Se for managerSetup e ele informou um código de loja válido, joga ele na loja. Senão, vai pro DEFAULT.
         const storeId = matchedStore ? matchedStore.id : 'DEFAULT';
 

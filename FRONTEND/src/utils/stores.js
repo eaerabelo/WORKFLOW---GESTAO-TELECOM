@@ -53,21 +53,75 @@ export const STORES = [
   { id: 'uniao_osasco', name: 'LP UNIÃO OSASCO', code: 'AT1M', sap: '1150', aliases: ['UNIAO_OSASCO', 'UNIAOOSASCO', 'UNIAO'] }
 ];
 
+const normalizeText = (text) => {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
+};
+
 export const findStore = (input) => {
   if (!input) return null;
-  const clean = String(input).trim().toUpperCase();
-  const cleanNoLP = clean.replace(/^LP\s*[-_]?/i, '').trim();
+  const raw = String(input).trim();
+  if (!raw) return null;
 
-  return STORES.find(store => {
-    if (store.id.toUpperCase() === clean || store.id.toUpperCase() === cleanNoLP) return true;
-    if (store.code.toUpperCase() === clean || store.code.toUpperCase() === cleanNoLP) return true;
-    if (store.sap && (store.sap.toUpperCase() === clean || store.sap.toUpperCase() === cleanNoLP)) return true;
-    if (store.name.toUpperCase() === clean || store.name.toUpperCase() === `LP ${cleanNoLP}`) return true;
+  const clean = normalizeText(raw);
+  const cleanNoLP = clean.replace(/^LP\s*[-_]?\s*/i, '').trim();
+  const tokens = clean.split(/[\s\-_/\\,;:|]+/).filter(Boolean);
+
+  // 1. Correspondência exata direta (ID, CODE, SAP, NOME OU ALIAS)
+  let found = STORES.find(store => {
+    const sId = normalizeText(store.id);
+    const sCode = normalizeText(store.code);
+    const sSap = normalizeText(store.sap);
+    const sName = normalizeText(store.name);
+    const sNameNoLP = sName.replace(/^LP\s*[-_]?\s*/i, '').trim();
+
+    if (sId === clean || sId === cleanNoLP) return true;
+    if (sCode === clean || sCode === cleanNoLP) return true;
+    if (sSap && (sSap === clean || sSap === cleanNoLP)) return true;
+    if (sName === clean || sNameNoLP === cleanNoLP) return true;
+
     if (Array.isArray(store.aliases)) {
-      return store.aliases.some(a => a.toUpperCase() === clean || a.toUpperCase() === cleanNoLP);
+      return store.aliases.some(alias => {
+        const aNorm = normalizeText(alias);
+        return aNorm === clean || aNorm === cleanNoLP;
+      });
     }
     return false;
-  }) || null;
+  });
+
+  if (found) return found;
+
+  // 2. Busca por tokens/palavras (ex: "K7W8 RAPOSO", "1146 RAPOSO", "RAPOSO 1146", "K7W8 1146")
+  found = STORES.find(store => {
+    const sCode = normalizeText(store.code);
+    const sSap = normalizeText(store.sap);
+    return tokens.some(token => token === sCode || (sSap && token === sSap));
+  });
+
+  if (found) return found;
+
+  // 3. Busca por substring ou palavras-chave contidas (ex: "RAPOSO", "SHOPPING RAPOSO", "BUTANTA")
+  found = STORES.find(store => {
+    const sName = normalizeText(store.name);
+    const sNameNoLP = sName.replace(/^LP\s*[-_]?\s*/i, '').trim();
+    const sId = normalizeText(store.id);
+
+    if (clean.length >= 3 && (sName.includes(clean) || clean.includes(sNameNoLP))) return true;
+    if (clean.length >= 3 && sId.includes(clean)) return true;
+
+    if (Array.isArray(store.aliases)) {
+      return store.aliases.some(alias => {
+        const aNorm = normalizeText(alias);
+        return aNorm.length >= 3 && (clean.includes(aNorm) || aNorm.includes(clean));
+      });
+    }
+    return false;
+  });
+
+  return found || null;
 };
 
 export const getCurrentStore = () => {

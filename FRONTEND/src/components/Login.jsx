@@ -508,10 +508,18 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
         const emailClean = regEmail.trim().replace(/\.$/, '');
         const nameUpper = regName.toUpperCase();
 
+        const matchedStore = findStore(regStoreCode);
+        if (!matchedStore && setupKey !== 'lideranca2026') {
+            toast.error('Loja não encontrada. Digite o código ID (ex: K7W8) ou SAP (ex: 1146) da sua loja.');
+            return;
+        }
+
+        const resolvedStoreCode = matchedStore ? matchedStore.code : regStoreCode;
+
         toast.loading('Validando no banco de dados e enviando e-mail...', { id: 'regEmailToast' });
 
         try {
-            const res = await solicitarCadastroAPI(userUpper, emailClean, nameUpper, regStoreCode, setupKey, regPass, regBirthDate, regPhone);
+            const res = await solicitarCadastroAPI(userUpper, emailClean, nameUpper, resolvedStoreCode, setupKey, regPass, regBirthDate, regPhone);
             setTempRegData({ registrationToken: res.registrationToken, email: emailClean, setupKey, userUpper });
             toast.success('Código de confirmação enviado para seu e-mail!', { id: 'regEmailToast' });
             setRegStep(2);
@@ -761,19 +769,25 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
                                             <div className="flex items-center justify-between ml-1">
                                                 <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Código da Loja (ID ou SAP) <span className="text-[#E3000F]">*</span></label>
                                                 {regStoreCode && findStore(regStoreCode) && (
-                                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-black uppercase">Loja Encontrada</span>
+                                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-black uppercase flex items-center gap-1">
+                                                        <CheckCircle size={12} /> Loja Identificada
+                                                    </span>
                                                 )}
                                             </div>
                                             <div className="relative mt-0.5 group">
                                                 <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
-                                                <input type="text" value={regStoreCode} onChange={e => setRegStoreCode(e.target.value.toUpperCase())} placeholder="Digite ID (ex: LB31) ou SAP (ex: 1119)" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm font-mono uppercase transition-all shadow-sm" />
+                                                <input type="text" value={regStoreCode} onChange={e => setRegStoreCode(e.target.value.toUpperCase())} placeholder="Digite ID (ex: K7W8) ou SAP (ex: 1146)" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm font-mono uppercase transition-all shadow-sm" />
                                             </div>
-                                            {regStoreCode && findStore(regStoreCode) && (
-                                                <div className="mt-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 rounded-lg text-[11px] text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-between animate-fade-in">
+                                            {regStoreCode && findStore(regStoreCode) ? (
+                                                <div className="mt-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 rounded-lg text-[11px] text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-between animate-fade-in shadow-sm">
                                                     <span>🏬 {findStore(regStoreCode).name}</span>
-                                                    <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-300">ID: {findStore(regStoreCode).code} | SAP: {findStore(regStoreCode).sap}</span>
+                                                    <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-300 font-extrabold">ID: {findStore(regStoreCode).code} | SAP: {findStore(regStoreCode).sap}</span>
                                                 </div>
-                                            )}
+                                            ) : regStoreCode && regStoreCode.trim().length >= 2 ? (
+                                                <div className="mt-1 px-1 text-[10.5px] text-amber-600 dark:text-amber-400 font-medium animate-fade-in">
+                                                    Digite o código ID (ex: K7W8), SAP (ex: 1146) ou nome da loja para vincular
+                                                </div>
+                                            ) : null}
                                         </div>
                                         <div>
                                             <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">Senha <span className="text-[#E3000F]">*</span></label>
