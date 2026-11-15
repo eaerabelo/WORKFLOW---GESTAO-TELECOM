@@ -924,7 +924,7 @@ export default function App() {
     { name: 'REPROVADOS', icon: <AlertOctagon size={18} /> },
     { name: 'RESULTADO', icon: <BarChart3 size={18} /> },
     { name: 'SCRIPTS', icon: <Copy size={18} /> },
-    { name: 'SISTEMAS', icon: <Database size={18} /> },
+    // { name: 'SISTEMAS', icon: <Database size={18} /> }, // Oculto temporariamente a pedido
     { name: 'UR-RESIDENCIAL', icon: <Briefcase size={18} /> },
     { name: 'VENDA', icon: <CreditCard size={18} /> },
     { name: 'PARCIAL & FECHAMENTO', icon: <ClipboardCheck size={18} /> },
@@ -949,8 +949,11 @@ export default function App() {
   const [standaloneView, setStandaloneView] = useState(null); // null | 'PROFILE' | 'HELP'
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  // Redireciona vendedor caso tente acessar a aba RESULTADO
+  // Redireciona caso tente acessar abas desativadas ou restritas
   useEffect(() => {
+    if (activeTab === 'SISTEMAS') {
+      setActiveTab('VENDA');
+    }
     if (isVendedor && activeTab === 'RESULTADO') {
       setActiveTab('VENDA');
     }
