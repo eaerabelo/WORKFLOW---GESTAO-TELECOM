@@ -1088,6 +1088,8 @@ export default function App() {
         <Login 
           usersDB={{ ...{}, ...(usersDB || {}) }} 
           setUsersDB={setUsersDB} 
+          theme={theme}
+          toggleTheme={toggleTheme}
           onLogin={(userData, username) => {
             const userWithTime = { ...userData, username, loginTime: Date.now() };
 

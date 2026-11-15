@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Lock, ArrowLeft, Key, Mail, Calendar, Smartphone, Store, Activity, ShieldCheck, FileText, CheckCircle } from 'lucide-react';
+import { User, Lock, ArrowLeft, Key, Mail, Calendar, Smartphone, Store, Activity, ShieldCheck, FileText, CheckCircle, Sun, Moon, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { findStore } from '../utils/stores.js';
 import { loginAPI, solicitarRecuperacaoAPI, resetarSenhaAPI, solicitarCadastroAPI, efetivarCadastroAPI, fetchStatus } from '../services/api.js';
@@ -139,10 +139,15 @@ export const AnimatedWFLogo = ({ className = "w-36 h-24", duration = 6.2, delay 
 };
 
 /**
- * 2. COMPONENTE DE BACKGROUND (Fundo Preto Puro + Canvas de Partículas e Ondas Reativas)
+ * 2. COMPONENTE DE BACKGROUND (Canvas de Partículas e Ondas Reativas com suporte Dark / Light)
  */
-export const AnimatedBackground = ({ children }) => {
+export const AnimatedBackground = ({ children, isDark = true }) => {
   const canvasRef = useRef(null);
+  const isDarkRef = useRef(isDark);
+
+  useEffect(() => {
+    isDarkRef.current = isDark;
+  }, [isDark]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -183,15 +188,29 @@ export const AnimatedBackground = ({ children }) => {
       mouse.x += (mouse.targetX - mouse.x) * 0.06;
       mouse.y += (mouse.targetY - mouse.y) * 0.06;
 
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, width, height);
+      const dark = isDarkRef.current;
 
-      const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 480);
-      spotGrad.addColorStop(0, 'rgba(255, 110, 0, 0.13)');
-      spotGrad.addColorStop(0.5, 'rgba(229, 21, 32, 0.06)');
-      spotGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = spotGrad;
-      ctx.fillRect(0, 0, width, height);
+      if (dark) {
+        ctx.fillStyle = '#08090c';
+        ctx.fillRect(0, 0, width, height);
+
+        const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 480);
+        spotGrad.addColorStop(0, 'rgba(255, 110, 0, 0.13)');
+        spotGrad.addColorStop(0.5, 'rgba(229, 21, 32, 0.06)');
+        spotGrad.addColorStop(1, 'rgba(8, 9, 12, 0)');
+        ctx.fillStyle = spotGrad;
+        ctx.fillRect(0, 0, width, height);
+      } else {
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, width, height);
+
+        const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 460);
+        spotGrad.addColorStop(0, 'rgba(227, 0, 15, 0.08)');
+        spotGrad.addColorStop(0.5, 'rgba(255, 122, 0, 0.04)');
+        spotGrad.addColorStop(1, 'rgba(248, 250, 252, 0)');
+        ctx.fillStyle = spotGrad;
+        ctx.fillRect(0, 0, width, height);
+      }
 
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
@@ -204,7 +223,11 @@ export const AnimatedBackground = ({ children }) => {
             Math.cos(x * 0.0012 - time * 0.7) * 30;
           ctx.lineTo(x, y);
         }
-        ctx.strokeStyle = i === 1 ? 'rgba(229, 21, 32, 0.14)' : 'rgba(255, 136, 0, 0.12)';
+        if (dark) {
+          ctx.strokeStyle = i === 1 ? 'rgba(229, 21, 32, 0.15)' : 'rgba(255, 136, 0, 0.12)';
+        } else {
+          ctx.strokeStyle = i === 1 ? 'rgba(227, 0, 15, 0.12)' : 'rgba(249, 115, 22, 0.09)';
+        }
         ctx.lineWidth = 1.8;
         ctx.stroke();
       }
@@ -219,9 +242,11 @@ export const AnimatedBackground = ({ children }) => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fillStyle = p.hue;
-        ctx.globalAlpha = p.alpha * (0.6 + Math.sin(time * 2 + p.x) * 0.4);
+        ctx.globalAlpha = dark
+          ? p.alpha * (0.6 + Math.sin(time * 2 + p.x) * 0.4)
+          : p.alpha * 0.55 * (0.6 + Math.sin(time * 2 + p.x) * 0.4);
         ctx.shadowColor = p.hue;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = dark ? 10 : 4;
         ctx.fill();
         ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
@@ -240,16 +265,20 @@ export const AnimatedBackground = ({ children }) => {
 
   // Lista de posições dos logotipos WF espalhados no fundo com tempos assíncronos
   const bgLogos = [
-    { top: '8%', left: '6%', scale: 'scale-95', rot: '-rotate-6', dur: 7.4, delay: 0.2, opacity: 'opacity-[0.16]' },
-    { top: '65%', left: '5%', scale: 'scale-110', rot: 'rotate-3', dur: 8.2, delay: 1.5, opacity: 'opacity-[0.14]' },
-    { top: '12%', right: '7%', scale: 'scale-100', rot: 'rotate-6', dur: 7.8, delay: 0.8, opacity: 'opacity-[0.16]' },
-    { top: '70%', right: '6%', scale: 'scale-90', rot: '-rotate-3', dur: 8.6, delay: 2.1, opacity: 'opacity-[0.14]' },
-    { top: '38%', left: '15%', scale: 'scale-75', rot: 'rotate-2', dur: 9.0, delay: 1.1, opacity: 'opacity-[0.09]' },
-    { top: '42%', right: '16%', scale: 'scale-75', rot: '-rotate-3', dur: 8.4, delay: 2.7, opacity: 'opacity-[0.09]' },
+    { top: '8%', left: '6%', scale: 'scale-95', rot: '-rotate-6', dur: 7.4, delay: 0.2, opDark: 'opacity-[0.16]', opLight: 'opacity-[0.06]' },
+    { top: '65%', left: '5%', scale: 'scale-110', rot: 'rotate-3', dur: 8.2, delay: 1.5, opDark: 'opacity-[0.14]', opLight: 'opacity-[0.05]' },
+    { top: '12%', right: '7%', scale: 'scale-100', rot: 'rotate-6', dur: 7.8, delay: 0.8, opDark: 'opacity-[0.16]', opLight: 'opacity-[0.06]' },
+    { top: '70%', right: '6%', scale: 'scale-90', rot: '-rotate-3', dur: 8.6, delay: 2.1, opDark: 'opacity-[0.14]', opLight: 'opacity-[0.05]' },
+    { top: '38%', left: '15%', scale: 'scale-75', rot: 'rotate-2', dur: 9.0, delay: 1.1, opDark: 'opacity-[0.09]', opLight: 'opacity-[0.04]' },
+    { top: '42%', right: '16%', scale: 'scale-75', rot: '-rotate-3', dur: 8.4, delay: 2.7, opDark: 'opacity-[0.09]', opLight: 'opacity-[0.04]' },
   ];
 
   return (
-    <div className="relative min-h-screen w-full bg-gradient-to-br from-[#1a1d24] via-[#14161d] to-[#0e1015] text-slate-100 flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div className={`relative min-h-screen w-full transition-colors duration-500 ${
+      isDark
+        ? 'bg-gradient-to-br from-[#12141a] via-[#0d0f14] to-[#08090c] text-slate-100'
+        : 'bg-gradient-to-br from-slate-100 via-rose-50/30 to-neutral-200 text-neutral-800'
+    } flex flex-col items-center justify-center p-4 overflow-hidden`}>
       {/* Camada do Canvas (Ondas e Partículas) */}
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-0" />
 
@@ -259,7 +288,7 @@ export const AnimatedBackground = ({ children }) => {
           <div
             key={idx}
             style={{ top: item.top, left: item.left, right: item.right }}
-            className={`absolute ${item.scale} ${item.rot} ${item.opacity}`}
+            className={`absolute ${item.scale} ${item.rot} ${isDark ? item.opDark : item.opLight} transition-opacity duration-500`}
           >
             <AnimatedWFLogo className="w-64 h-44" duration={item.dur} delay={item.delay} />
           </div>
@@ -287,8 +316,68 @@ const formatErrorMsg = (err, fallback) => {
     return msg || fallback;
 };
 
-export function Login({ usersDB, setUsersDB, onLogin }) {
+export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTheme: propToggleTheme }) {
     const [view, setView] = useState('LOGIN'); // 'LOGIN', 'REGISTER', 'FORGOT'
+
+    // Tema (Modo Claro / Modo Escuro)
+    const [localTheme, setLocalTheme] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const savedTheme = localStorage.getItem('theme-preference');
+            if (savedTheme) return savedTheme;
+            // Se não houver preferência salva, corresponde automaticamente ao uso do celular/SO
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        return 'light';
+    });
+
+    const activeTheme = propTheme || localTheme;
+    const isDark = activeTheme === 'dark';
+
+    const handleToggleTheme = () => {
+        const nextTheme = isDark ? 'light' : 'dark';
+        if (propToggleTheme) {
+            propToggleTheme();
+        } else {
+            setLocalTheme(nextTheme);
+        }
+        localStorage.setItem('theme-preference', nextTheme);
+        const root = document.documentElement;
+        if (nextTheme === 'dark') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+    };
+
+    // Sincroniza o root HTML e responde dinamicamente à mudança de modo no celular/sistema
+    useEffect(() => {
+        const root = document.documentElement;
+        if (isDark) {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleOSThemeChange = (e) => {
+            const hasSaved = localStorage.getItem('theme-preference');
+            if (!hasSaved) {
+                const newSysTheme = e.matches ? 'dark' : 'light';
+                if (propToggleTheme && propTheme !== newSysTheme) {
+                    propToggleTheme();
+                } else {
+                    setLocalTheme(newSysTheme);
+                }
+                if (newSysTheme === 'dark') root.classList.add('dark');
+                else root.classList.remove('dark');
+            }
+        };
+
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', handleOSThemeChange);
+            return () => mediaQuery.removeEventListener('change', handleOSThemeChange);
+        }
+    }, [isDark, propTheme, propToggleTheme]);
 
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [holidayMessage, setHolidayMessage] = useState(null);
@@ -513,7 +602,28 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
     };
 
     return (
-        <AnimatedBackground>
+        <AnimatedBackground isDark={isDark}>
+            {/* BOTÃO FLUTUANTE DE TEMA (MODO CLARO / ESCURO) */}
+            <div className="fixed top-4 right-4 z-50">
+                <button
+                    type="button"
+                    onClick={handleToggleTheme}
+                    aria-label={isDark ? "Mudar para Modo Claro" : "Mudar para Modo Escuro"}
+                    title={isDark ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
+                    className="group flex items-center gap-2 px-3.5 py-2 rounded-2xl backdrop-blur-xl border transition-all duration-300 shadow-xl active:scale-95 bg-white/90 dark:bg-neutral-900/90 border-neutral-200/90 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:border-[#E3000F] dark:hover:border-[#E3000F] hover:shadow-red-500/10 cursor-pointer"
+                >
+                    <div className="relative w-5 h-5 flex items-center justify-center transition-transform duration-500 group-hover:rotate-180">
+                        {isDark ? (
+                            <Sun size={18} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                        ) : (
+                            <Moon size={18} className="text-neutral-700" />
+                        )}
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-wider select-none text-neutral-800 dark:text-neutral-200">
+                        {isDark ? 'Modo Claro' : 'Modo Escuro'}
+                    </span>
+                </button>
+            </div>
 
             {holidayMessage && (
                 <div className="w-full max-w-md mb-6 bg-gradient-to-br from-[#E3000F] to-red-800 text-white p-6 rounded-2xl shadow-xl border border-red-500/50 animate-fade-in text-center relative overflow-hidden z-10">
@@ -530,88 +640,88 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                 </div>
             )}
 
-            <div className="w-full max-w-md rounded-3xl bg-[#090b10]/90 backdrop-blur-2xl border border-white/10 ring-1 ring-white/5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95),0_0_40px_rgba(227,0,15,0.12)] overflow-hidden transition-all duration-500 relative z-10">
+            <div className="w-full max-w-md rounded-3xl bg-white/95 dark:bg-[#090b10]/90 backdrop-blur-2xl border border-neutral-200/90 dark:border-white/10 ring-1 ring-black/5 dark:ring-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.08),0_0_30px_rgba(227,0,15,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95),0_0_40px_rgba(227,0,15,0.12)] overflow-hidden transition-all duration-500 relative z-10">
                 {/* Filete luminoso decorativo superior */}
                 <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#E3000F] to-transparent opacity-90" />
 
                 <div className="pt-6 pb-4 px-6 text-center relative overflow-hidden">
                     {/* Glow sutil por trás do logo */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-28 bg-[#E3000F]/15 blur-3xl pointer-events-none rounded-full" />
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-28 bg-[#E3000F]/15 dark:bg-[#E3000F]/20 blur-3xl pointer-events-none rounded-full" />
 
                     <div className="w-52 h-20 mx-auto mb-2 flex items-center justify-center relative">
                         <AnimatedWFLogo className="w-full h-full object-contain" />
                     </div>
-                    <h2 className="text-2xl font-black text-white tracking-wider">WorkFlow</h2>
-                    <p className="text-neutral-400 text-[11px] font-semibold uppercase tracking-widest mt-0.5">Plataforma Integrada de Gestão Telecom</p>
+                    <h2 className="text-2xl font-black text-neutral-900 dark:text-white tracking-wider">WorkFlow</h2>
+                    <p className="text-neutral-500 dark:text-neutral-400 text-[11px] font-semibold uppercase tracking-widest mt-0.5">Plataforma Integrada de Gestão Telecom</p>
 
                     {/* SELO DE SEGURANÇA */}
-                    <div className="inline-flex items-center gap-2 mt-3 px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/50 rounded-full text-[10.5px] uppercase tracking-wider text-emerald-300 shadow-md shadow-emerald-500/20 backdrop-blur-md">
-                        <ShieldCheck size={14} className="text-emerald-400 shrink-0" strokeWidth={2.5} />
-                        <span className="font-extrabold tracking-wide text-emerald-300">ACESSO AO SISTEMA SEGURO E AUTENTICADO</span>
+                    <div className="inline-flex items-center gap-2 mt-3 px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/40 dark:border-emerald-500/50 rounded-full text-[10.5px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 shadow-md shadow-emerald-500/10 backdrop-blur-md">
+                        <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" strokeWidth={2.5} />
+                        <span className="font-extrabold tracking-wide">ACESSO AO SISTEMA SEGURO E AUTENTICADO</span>
                     </div>
                 </div>
 
                 <div className="px-7 pb-7 pt-2">
                     {view === 'LOGIN' && (
-                        <div className="animate-fade-in">
+                        <div className="animate-fade-in transition-all duration-300">
                             <form onSubmit={handleLogin} className="space-y-4">
-                                <h3 className="font-bold text-sm text-neutral-300 mb-3 text-center uppercase tracking-wider">Acesso ao Painel</h3>
-                                <div className="relative">
-                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-                                    <input type="text" value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Usuário ( Login )" required className="w-full pl-10 pr-4 py-3 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none uppercase text-sm font-medium transition-all" />
+                                <h3 className="font-bold text-sm text-neutral-600 dark:text-neutral-300 mb-3 text-center uppercase tracking-wider">Acesso ao Painel</h3>
+                                <div className="relative group">
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={18} />
+                                    <input type="text" value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Usuário ( Login )" required className="w-full pl-10 pr-4 py-3 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none uppercase text-sm font-medium transition-all shadow-sm" />
                                 </div>
-                                <div className="relative">
-                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-                                    <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Senha de Acesso" required className="w-full pl-10 pr-4 py-3 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm transition-all" />
+                                <div className="relative group">
+                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={18} />
+                                    <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Senha de Acesso" required className="w-full pl-10 pr-4 py-3 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm transition-all shadow-sm" />
                                 </div>
-                                <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30 active:scale-[0.99] text-sm tracking-wide">Entrar no Sistema</button>
+                                <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30 hover:shadow-red-600/40 active:scale-[0.98] text-sm tracking-wide cursor-pointer">Entrar no Sistema</button>
 
                                 <div className="flex flex-col gap-2 mt-4 text-center">
-                                    <button type="button" onClick={() => setView('FORGOT')} className="text-xs font-semibold text-neutral-400 hover:text-white transition-colors">Esqueci minha senha</button>
-                                    <div className="border-t border-white/10 my-2"></div>
-                                    <span className="text-xs text-neutral-400">Ainda não tem acesso?</span>
-                                    <button type="button" onClick={() => setView('REGISTER')} className="text-xs font-bold text-[#E3000F] hover:text-red-400 transition-colors uppercase tracking-wider">Cadastre-se agora</button>
+                                    <button type="button" onClick={() => setView('FORGOT')} className="text-xs font-semibold text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer">Esqueci minha senha</button>
+                                    <div className="border-t border-neutral-200 dark:border-white/10 my-2"></div>
+                                    <span className="text-xs text-neutral-500 dark:text-neutral-400">Ainda não tem acesso?</span>
+                                    <button type="button" onClick={() => setView('REGISTER')} className="text-xs font-bold text-[#E3000F] hover:text-red-700 dark:hover:text-red-400 transition-colors uppercase tracking-wider cursor-pointer">Cadastre-se agora</button>
                                 </div>
                             </form>
                         </div>
                     )}
 
                     {view === 'REGISTER' && (
-                        <div className="animate-fade-in">
+                        <div className="animate-fade-in transition-all duration-300">
                             {regStep === 1 && (
                                 <form onSubmit={handleRegister} className="space-y-3.5">
                                     <div className="flex items-center gap-3 mb-3">
-                                        <button type="button" onClick={() => setView('LOGIN')} className="p-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 text-neutral-300 transition-colors">
+                                        <button type="button" onClick={() => setView('LOGIN')} className="p-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-white/5 dark:hover:bg-white/10 border border-neutral-200 dark:border-white/10 rounded-full text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer">
                                             <ArrowLeft size={18} />
                                         </button>
-                                        <h3 className="font-bold text-base text-white">Criar Nova Conta</h3>
+                                        <h3 className="font-bold text-base text-neutral-900 dark:text-white">Criar Nova Conta</h3>
                                     </div>
                                     <div className="space-y-2.5">
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Nome Completo <span className="text-[#E3000F]">*</span></label>
-                                            <div className="relative mt-0.5">
-                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="text" value={regName} onChange={e => setRegName(e.target.value)} placeholder="Ex: João da Silva" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none uppercase text-sm transition-all" />
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">Nome Completo <span className="text-[#E3000F]">*</span></label>
+                                            <div className="relative mt-0.5 group">
+                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
+                                                <input type="text" value={regName} onChange={e => setRegName(e.target.value)} placeholder="Ex: João da Silva" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none uppercase text-sm transition-all shadow-sm" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Usuário / Login <span className="text-[#E3000F]">*</span></label>
-                                            <div className="relative mt-0.5">
-                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="text" value={regUser} onChange={e => setRegUser(e.target.value)} placeholder="Inicia com 9, F, Z ou T" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none uppercase text-sm font-mono transition-all" />
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">Usuário / Login <span className="text-[#E3000F]">*</span></label>
+                                            <div className="relative mt-0.5 group">
+                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
+                                                <input type="text" value={regUser} onChange={e => setRegUser(e.target.value)} placeholder="Inicia com 9, F, Z ou T" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none uppercase text-sm font-mono transition-all shadow-sm" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">E-mail <span className="text-[#E3000F]">*</span></label>
-                                            <div className="relative mt-0.5">
-                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="Ex: seunome@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm transition-all" />
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">E-mail <span className="text-[#E3000F]">*</span></label>
+                                            <div className="relative mt-0.5 group">
+                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
+                                                <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="Ex: seunome@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm transition-all shadow-sm" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Celular <span className="text-[#E3000F]">*</span></label>
-                                            <div className="relative mt-0.5">
-                                                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">Celular <span className="text-[#E3000F]">*</span></label>
+                                            <div className="relative mt-0.5 group">
+                                                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
                                                 <input type="text" maxLength={15} value={regPhone} onChange={e => {
                                                     let v = e.target.value.replace(/\D/g, '');
                                                     if (v.length > 11) v = v.slice(0, 11);
@@ -619,13 +729,13 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                                     if (v.length > 7) masked = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
                                                     else if (v.length > 2) masked = `(${v.slice(0, 2)}) ${v.slice(2)}`;
                                                     setRegPhone(masked);
-                                                }} placeholder="Ex: (11) 90000-0000" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm font-mono transition-all" />
+                                                }} placeholder="Ex: (11) 90000-0000" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm font-mono transition-all shadow-sm" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Data de Nascimento (18+ Anos) <span className="text-[#E3000F]">*</span></label>
-                                            <div className="relative mt-0.5">
-                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">Data de Nascimento (18+ Anos) <span className="text-[#E3000F]">*</span></label>
+                                            <div className="relative mt-0.5 group">
+                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
                                                 <input
                                                     type="date"
                                                     value={regBirthDate}
@@ -643,45 +753,45 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                                         setRegBirthDate(val);
                                                     }}
                                                     required
-                                                    className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white rounded-xl outline-none text-sm transition-all"
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white rounded-xl outline-none text-sm transition-all shadow-sm"
                                                 />
                                             </div>
                                         </div>
                                         <div>
                                             <div className="flex items-center justify-between ml-1">
-                                                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300">Código da Loja (ID ou SAP) <span className="text-[#E3000F]">*</span></label>
+                                                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Código da Loja (ID ou SAP) <span className="text-[#E3000F]">*</span></label>
                                                 {regStoreCode && findStore(regStoreCode) && (
-                                                    <span className="text-[10px] text-emerald-400 font-black uppercase">Loja Encontrada</span>
+                                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-black uppercase">Loja Encontrada</span>
                                                 )}
                                             </div>
-                                            <div className="relative mt-0.5">
-                                                <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="text" value={regStoreCode} onChange={e => setRegStoreCode(e.target.value.toUpperCase())} placeholder="Digite ID (ex: LB31) ou SAP (ex: 1119)" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm font-mono uppercase transition-all" />
+                                            <div className="relative mt-0.5 group">
+                                                <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
+                                                <input type="text" value={regStoreCode} onChange={e => setRegStoreCode(e.target.value.toUpperCase())} placeholder="Digite ID (ex: LB31) ou SAP (ex: 1119)" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm font-mono uppercase transition-all shadow-sm" />
                                             </div>
                                             {regStoreCode && findStore(regStoreCode) && (
-                                                <div className="mt-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-[11px] text-emerald-400 font-bold flex items-center justify-between animate-fade-in">
+                                                <div className="mt-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 rounded-lg text-[11px] text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-between animate-fade-in">
                                                     <span>🏬 {findStore(regStoreCode).name}</span>
-                                                    <span className="font-mono text-[10px] text-emerald-300">ID: {findStore(regStoreCode).code} | SAP: {findStore(regStoreCode).sap}</span>
+                                                    <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-300">ID: {findStore(regStoreCode).code} | SAP: {findStore(regStoreCode).sap}</span>
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Senha <span className="text-[#E3000F]">*</span></label>
-                                            <div className="relative mt-0.5">
-                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="password" value={regPass} onChange={e => setRegPass(e.target.value)} placeholder="Mínimo 8 caracteres, letras, números e símbolos" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm transition-all" />
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">Senha <span className="text-[#E3000F]">*</span></label>
+                                            <div className="relative mt-0.5 group">
+                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
+                                                <input type="password" value={regPass} onChange={e => setRegPass(e.target.value)} placeholder="Mínimo 8 caracteres, letras, números e símbolos" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm transition-all shadow-sm" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-300 ml-1">Confirme a Senha <span className="text-[#E3000F]">*</span></label>
-                                            <div className="relative mt-0.5">
-                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={17} />
-                                                <input type="password" value={regConfirmPass} onChange={e => setRegConfirmPass(e.target.value)} placeholder="Confirme a mesma senha" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 focus:border-[#E3000F] text-white placeholder-neutral-500 rounded-xl outline-none text-sm transition-all" />
+                                            <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">Confirme a Senha <span className="text-[#E3000F]">*</span></label>
+                                            <div className="relative mt-0.5 group">
+                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
+                                                <input type="password" value={regConfirmPass} onChange={e => setRegConfirmPass(e.target.value)} placeholder="Confirme a mesma senha" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm transition-all shadow-sm" />
                                             </div>
                                         </div>
 
                                         {/* TERMOS DE USO E PRIVACIDADE */}
-                                        <div className="pt-2 pb-1 border-t border-white/10">
+                                        <div className="pt-2 pb-1 border-t border-neutral-200 dark:border-white/10">
                                             <label className="flex items-start gap-2.5 cursor-pointer select-none">
                                                 <input
                                                     type="checkbox"
@@ -690,12 +800,12 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                                     required
                                                     className="mt-0.5 w-4 h-4 rounded text-[#E3000F] focus:ring-[#E3000F] cursor-pointer"
                                                 />
-                                                <span className="text-xs text-neutral-300 leading-tight">
+                                                <span className="text-xs text-neutral-600 dark:text-neutral-300 leading-tight">
                                                     Li e declaro estar ciente dos{' '}
                                                     <button
                                                         type="button"
                                                         onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}
-                                                        className="font-bold text-[#E3000F] hover:underline inline"
+                                                        className="font-bold text-[#E3000F] hover:underline inline cursor-pointer"
                                                     >
                                                         Termos de Uso e Privacidade
                                                     </button>{' '}
@@ -704,30 +814,30 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                             </label>
                                         </div>
                                     </div>
-                                    <button type="submit" className="w-full py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl border border-white/10 transition-colors shadow-lg">Continuar Cadastro</button>
+                                    <button type="submit" className="w-full py-3 bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white/10 dark:hover:bg-white/15 dark:text-white font-bold rounded-xl border border-neutral-300 dark:border-white/10 transition-all shadow-lg active:scale-[0.98] cursor-pointer">Continuar Cadastro</button>
                                 </form>
                             )}
                             {regStep === 2 && (
                                 <form onSubmit={handleRegisterCodeVerify} className="space-y-4">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <button type="button" onClick={() => { setRegStep(1); setRegCurrentCode(''); setTempRegData(null); }} className="p-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 text-neutral-300 transition-colors">
+                                        <button type="button" onClick={() => { setRegStep(1); setRegCurrentCode(''); setTempRegData(null); }} className="p-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-white/5 dark:hover:bg-white/10 border border-neutral-200 dark:border-white/10 rounded-full text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer">
                                             <ArrowLeft size={18} />
                                         </button>
-                                        <h3 className="font-bold text-base text-white">Confirmar E-mail</h3>
+                                        <h3 className="font-bold text-base text-neutral-900 dark:text-white">Confirmar E-mail</h3>
                                     </div>
-                                    <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-xl text-xs text-red-300 flex items-start gap-2 mb-4">
-                                        <Mail size={18} className="shrink-0 mt-0.5 text-red-400" />
+                                    <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-3 rounded-xl text-xs text-red-800 dark:text-red-300 flex items-start gap-2 mb-4">
+                                        <Mail size={18} className="shrink-0 mt-0.5 text-[#E3000F] dark:text-red-400" />
                                         <p>Enviamos um código de verificação para <strong>{regEmail}</strong>. Insira-o abaixo para concluirmos a criação da sua conta.</p>
                                     </div>
                                     <div>
-                                        <label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Código de Confirmação</label>
-                                        <div className="relative mt-1">
-                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-                                            <input type="text" value={regCurrentCode} onChange={e => setRegCurrentCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-center tracking-widest text-lg font-mono" />
+                                        <label className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider ml-1">Código de Confirmação</label>
+                                        <div className="relative mt-1 group">
+                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={18} />
+                                            <input type="text" value={regCurrentCode} onChange={e => setRegCurrentCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] border border-neutral-300/80 dark:border-white/10 text-neutral-900 dark:text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-center tracking-widest text-lg font-mono" />
                                         </div>
                                     </div>
-                                    <button type="submit" className="w-full py-3 mt-4 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30">Confirmar e Cadastrar</button>
-                                    <button type="button" disabled={resendTimer > 0} onClick={handleRegister} className="w-full py-2 mt-2 bg-transparent text-neutral-400 font-bold rounded-xl hover:bg-white/5 transition-colors disabled:opacity-50 text-xs">
+                                    <button type="submit" className="w-full py-3 mt-4 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30 active:scale-[0.98] cursor-pointer">Confirmar e Cadastrar</button>
+                                    <button type="button" disabled={resendTimer > 0} onClick={handleRegister} className="w-full py-2 mt-2 bg-transparent text-neutral-500 dark:text-neutral-400 font-bold rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors disabled:opacity-50 text-xs cursor-pointer">
                                         {resendTimer > 0 ? `Aguarde ${resendTimer}s para reenviar` : 'Reenviar Código'}
                                     </button>
                                 </form>
@@ -736,29 +846,62 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                     )}
 
                     {view === 'FORGOT' && (
-                        <div className="animate-fade-in">
+                        <div className="animate-fade-in transition-all duration-300">
                             <div className="flex items-center gap-3 mb-4">
-                                <button type="button" onClick={() => { setView('LOGIN'); setForgotStep(1); }} className="p-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 text-neutral-300 transition-colors">
+                                <button type="button" onClick={() => { setView('LOGIN'); setForgotStep(1); }} className="p-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-white/5 dark:hover:bg-white/10 border border-neutral-200 dark:border-white/10 rounded-full text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer">
                                     <ArrowLeft size={18} />
                                 </button>
-                                <h3 className="font-bold text-base text-white">Recuperação de Senha</h3>
+                                <h3 className="font-bold text-base text-neutral-900 dark:text-white">Recuperação de Senha</h3>
                             </div>
                             {forgotStep === 1 && (
                                 <form onSubmit={handleForgotRequest} className="space-y-4">
-                                    <p className="text-xs text-neutral-400 mb-4">Informe seu Login e E-mail cadastrado para enviarmos um código de verificação.</p>
-                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Seu Login</label><div className="relative mt-1"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="text" value={forgotUser} onChange={e => setForgotUser(e.target.value)} placeholder="Ex: F123456 ou 98765432" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] uppercase text-sm font-mono" /></div></div>
-                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">E-mail Cadastrado <span className="text-[#E3000F]">*</span></label><div className="relative mt-1"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="Ex: email@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
-                                    <button type="submit" className="w-full py-3 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30">Enviar E-mail de Verificação</button>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">Informe seu Login e E-mail cadastrado para enviarmos um código de verificação.</p>
+                                    <div>
+                                        <label className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider ml-1">Seu Login</label>
+                                        <div className="relative mt-1 group">
+                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={18} />
+                                            <input type="text" value={forgotUser} onChange={e => setForgotUser(e.target.value)} placeholder="Ex: F123456 ou 98765432" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] border border-neutral-300/80 dark:border-white/10 text-neutral-900 dark:text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] uppercase text-sm font-mono shadow-sm" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider ml-1">E-mail Cadastrado <span className="text-[#E3000F]">*</span></label>
+                                        <div className="relative mt-1 group">
+                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={18} />
+                                            <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="Ex: email@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] border border-neutral-300/80 dark:border-white/10 text-neutral-900 dark:text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-sm shadow-sm" />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="w-full py-3 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-800 transition-all shadow-lg shadow-red-600/30 active:scale-[0.98] cursor-pointer">Enviar E-mail de Verificação</button>
                                 </form>
                             )}
                             {forgotStep === 2 && (
                                 <form onSubmit={handleForgotReset} className="space-y-4">
-                                    <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-xs text-emerald-300 flex items-start gap-2 mb-2"><Mail size={18} className="shrink-0 mt-0.5 text-emerald-400" /><p>Um código de 4 dígitos foi enviado para o seu e-mail. Insira-o abaixo para criar uma nova senha.</p></div>
-                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Código de Verificação</label><div className="relative mt-1"><Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-center tracking-widest text-lg font-mono" /></div></div>
-                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Digite sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
-                                    <div><label className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider ml-1">Confirme a Nova Senha</label><div className="relative mt-1"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} /><input type="password" value={confirmNewPass} onChange={e => setConfirmNewPass(e.target.value)} placeholder="Confirme sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] text-sm" /></div></div>
-                                    <button type="submit" className="w-full py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl border border-white/10 transition-colors shadow-lg">Redefinir Senha</button>
-                                    <button type="button" disabled={resendTimer > 0} onClick={handleForgotRequest} className="w-full py-2 mt-2 bg-transparent text-neutral-400 font-bold rounded-xl hover:bg-white/5 transition-colors disabled:opacity-50 text-xs">
+                                    <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-3 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2 mb-2">
+                                        <Mail size={18} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                                        <p>Um código de 4 dígitos foi enviado para o seu e-mail. Insira-o abaixo para criar uma nova senha.</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider ml-1">Código de Verificação</label>
+                                        <div className="relative mt-1 group">
+                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={18} />
+                                            <input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="0000" className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] border border-neutral-300/80 dark:border-white/10 text-neutral-900 dark:text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-center tracking-widest text-lg font-mono" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider ml-1">Nova Senha</label>
+                                        <div className="relative mt-1 group">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={18} />
+                                            <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Digite sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] border border-neutral-300/80 dark:border-white/10 text-neutral-900 dark:text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-sm shadow-sm" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider ml-1">Confirme a Nova Senha</label>
+                                        <div className="relative mt-1 group">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={18} />
+                                            <input type="password" value={confirmNewPass} onChange={e => setConfirmNewPass(e.target.value)} placeholder="Confirme sua nova senha" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] border border-neutral-300/80 dark:border-white/10 text-neutral-900 dark:text-white rounded-xl outline-none focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-sm shadow-sm" />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="w-full py-3 bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white/10 dark:hover:bg-white/15 dark:text-white font-bold rounded-xl border border-neutral-300 dark:border-white/10 transition-all shadow-lg active:scale-[0.98] cursor-pointer">Redefinir Senha</button>
+                                    <button type="button" disabled={resendTimer > 0} onClick={handleForgotRequest} className="w-full py-2 mt-2 bg-transparent text-neutral-500 dark:text-neutral-400 font-bold rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors disabled:opacity-50 text-xs cursor-pointer">
                                         {resendTimer > 0 ? `Aguarde ${resendTimer}s para reenviar` : 'Reenviar Código'}
                                     </button>
                                 </form>
@@ -767,12 +910,12 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                     )}
 
                     {/* RODAPÉ DO CARD COM VERSÃO E TERMOS */}
-                    <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-neutral-400">
-                        <span className="font-mono font-bold tracking-tight text-neutral-400">WorkFlow v2.5.0</span>
+                    <div className="mt-5 pt-3 border-t border-neutral-200 dark:border-white/10 flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400">
+                        <span className="font-mono font-bold tracking-tight">WorkFlow v2.5.0</span>
                         <button
                             type="button"
                             onClick={() => setShowTermsModal(true)}
-                            className="hover:text-white underline transition-colors cursor-pointer"
+                            className="hover:text-neutral-900 dark:hover:text-white underline transition-colors cursor-pointer"
                         >
                             Termos de Uso & Privacidade
                         </button>
@@ -782,41 +925,41 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
 
             {/* MODAL DE TERMOS DE USO E PRIVACIDADE */}
             {showTermsModal && (
-                <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-[#0b0d13] w-full max-w-lg rounded-3xl shadow-2xl border border-white/15 p-6 flex flex-col max-h-[85vh] animate-scale-up text-white">
-                        <div className="flex items-center gap-3 pb-3 border-b border-white/10">
-                            <div className="w-10 h-10 rounded-xl bg-red-500/10 text-[#E3000F] border border-red-500/30 flex items-center justify-center shrink-0">
+                <div className="fixed inset-0 bg-black/60 dark:bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white dark:bg-[#0b0d13] w-full max-w-lg rounded-3xl shadow-2xl border border-neutral-200 dark:border-white/15 p-6 flex flex-col max-h-[85vh] text-neutral-800 dark:text-white transition-all">
+                        <div className="flex items-center gap-3 pb-3 border-b border-neutral-200 dark:border-white/10">
+                            <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-500/10 text-[#E3000F] border border-red-200 dark:border-red-500/30 flex items-center justify-center shrink-0">
                                 <FileText size={20} />
                             </div>
                             <div>
-                                <h3 className="font-extrabold text-base text-white">Termos de Uso e Política de Privacidade</h3>
-                                <p className="text-xs text-neutral-400">WorkFlow Gestão Telecom • Versão 2.5.0</p>
+                                <h3 className="font-extrabold text-base text-neutral-900 dark:text-white">Termos de Uso e Política de Privacidade</h3>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">WorkFlow Gestão Telecom • Versão 2.5.0</p>
                             </div>
                         </div>
 
-                        <div className="overflow-y-auto scrollbar-thin py-4 space-y-3.5 text-xs text-neutral-300 leading-relaxed pr-1">
-                            <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/10">
-                                <h4 className="font-bold text-white uppercase text-[11px] mb-1">1. Finalidade do Sistema</h4>
+                        <div className="overflow-y-auto scrollbar-thin py-4 space-y-3.5 text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed pr-1">
+                            <div className="p-3.5 bg-neutral-50 dark:bg-white/[0.03] rounded-xl border border-neutral-200 dark:border-white/10">
+                                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-[11px] mb-1">1. Finalidade do Sistema</h4>
                                 <p>O WorkFlow é uma ferramenta operacional exclusiva para gestão comercial, acompanhamento de metas, controle de simcards, escala e suporte operacional das equipes autorizadas de telecomunicação.</p>
                             </div>
 
-                            <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/10">
-                                <h4 className="font-bold text-white uppercase text-[11px] mb-1">2. Confidencialidade e Dados Pessoais (LGPD)</h4>
+                            <div className="p-3.5 bg-neutral-50 dark:bg-white/[0.03] rounded-xl border border-neutral-200 dark:border-white/10">
+                                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-[11px] mb-1">2. Confidencialidade e Dados Pessoais (LGPD)</h4>
                                 <p>É estritamente vedado o uso das informações para fins alheios à operação. Dados cadastrais e de vendas são armazenados de forma criptografada em banco de dados seguro Oracle com hash Bcrypt e conformidade com a LGPD.</p>
                             </div>
 
-                            <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/10">
-                                <h4 className="font-bold text-white uppercase text-[11px] mb-1">3. Responsabilidade do Usuário</h4>
+                            <div className="p-3.5 bg-neutral-50 dark:bg-white/[0.03] rounded-xl border border-neutral-200 dark:border-white/10">
+                                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-[11px] mb-1">3. Responsabilidade do Usuário</h4>
                                 <p>A senha de acesso é individual e intransferível. O compartilhamento de credenciais ou simulação de dados acarretará suspensão imediata da conta e comunicação à liderança.</p>
                             </div>
 
-                            <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/10">
-                                <h4 className="font-bold text-white uppercase text-[11px] mb-1">4. Auditoria e Rastreabilidade</h4>
+                            <div className="p-3.5 bg-neutral-50 dark:bg-white/[0.03] rounded-xl border border-neutral-200 dark:border-white/10">
+                                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-[11px] mb-1">4. Auditoria e Rastreabilidade</h4>
                                 <p>Todas as ações (lançamentos de vendas, cópias de ICCID e edições de dados) são registradas com data, hora e matrícula do colaborador para integridade da operação.</p>
                             </div>
                         </div>
 
-                        <div className="pt-3 border-t border-white/10 flex justify-end gap-2">
+                        <div className="pt-3 border-t border-neutral-200 dark:border-white/10 flex justify-end gap-2">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -824,7 +967,7 @@ export function Login({ usersDB, setUsersDB, onLogin }) {
                                     setShowTermsModal(false);
                                     toast.success('Você deu o ciente nos Termos de Uso.');
                                 }}
-                                className="px-4 py-2.5 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl text-xs hover:from-red-600 hover:to-red-800 transition-all flex items-center gap-1.5 shadow-md shadow-red-600/30"
+                                className="px-4 py-2.5 bg-gradient-to-r from-[#E3000F] to-red-700 text-white font-bold rounded-xl text-xs hover:from-red-600 hover:to-red-800 transition-all flex items-center gap-1.5 shadow-md shadow-red-600/30 active:scale-[0.98] cursor-pointer"
                             >
                                 <CheckCircle size={15} />
                                 Estou Ciente e Concordo
