@@ -67,36 +67,53 @@ export function Proposta({ globalUser }) {
     const linhaAdicionalPlans = dependentePlans.filter(p => p.label === 'LINHA ADICIONAL PAGA' || p.label === 'LINHA BL ADICIONAL');
 
     const pontoAdicionalPlans = [
+        { label: 'BOX', prices: { UNICO: 69.90 } },
+        { label: 'CABO', prices: { UNICO: 69.90 } },
+        { label: 'SOUND', prices: { UNICO: 199.90 } },
         { label: 'PONTO TV BOX STREAMING', prices: { UNICO: 69.90 } },
         { label: 'PONTO TV BOX A CABO', prices: { UNICO: 69.90 } },
-        { label: 'PONTO TV SOUNDBOX', prices: { UNICO: 99.90 } },
+        { label: 'PONTO TV SOUNDBOX', prices: { UNICO: 199.90 } },
         { label: 'PONTO TV TOP (RENT)', prices: { UNICO: 10.00 } }
     ];
 
     const fibraPlansOverrides = {
-        '350 MEGA': { SINGLE: 99.90, MULTI: 79.90, 'MULTI 3P': 79.90 },
-        '600 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 99.90 },
-        '750 MEGA': { SINGLE: 149.90, MULTI: 129.90, 'MULTI 3P': 129.90 }
+        '350 MEGA': { SINGLE: 99.90, MULTI: 79.90, 'MULTI 3P': 59.90 },
+        '500 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 69.90 },
+        '600 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 79.90 },
+        '750 MEGA': { SINGLE: 149.90, MULTI: 129.90, 'MULTI 3P': 119.90 },
+        '1 GIGA': { SINGLE: 179.90, MULTI: 119.90, 'MULTI 3P': 119.90 },
+        '5 GIGA': { SINGLE: 499.90, MULTI: 449.90, 'MULTI 3P': 449.90 },
+        '10 GIGA': { SINGLE: 1999.90, MULTI: 1994.90, 'MULTI 3P': 1994.90 }
     };
 
     let extendedFibraPlans = [];
-    let found350 = false, found600 = false, found750 = false;
+    let found350 = false, found500 = false, found600 = false, found750 = false, found1G = false, found5G = false, found10G = false;
     (FIBRA_OPTIONS || []).forEach(p => {
         if (p.label === '350 MEGA') { extendedFibraPlans.push({ label: '350 MEGA', prices: fibraPlansOverrides['350 MEGA'] }); found350 = true; }
+        else if (p.label === '500 MEGA') { extendedFibraPlans.push({ label: '500 MEGA', prices: fibraPlansOverrides['500 MEGA'] }); found500 = true; }
         else if (p.label === '600 MEGA') { extendedFibraPlans.push({ label: '600 MEGA', prices: fibraPlansOverrides['600 MEGA'] }); found600 = true; }
         else if (p.label === '750 MEGA') { extendedFibraPlans.push({ label: '750 MEGA', prices: fibraPlansOverrides['750 MEGA'] }); found750 = true; }
+        else if (p.label === '1 GIGA') { extendedFibraPlans.push({ label: '1 GIGA', prices: fibraPlansOverrides['1 GIGA'] }); found1G = true; }
+        else if (p.label === '5 GIGA') { extendedFibraPlans.push({ label: '5 GIGA', prices: fibraPlansOverrides['5 GIGA'] }); found5G = true; }
+        else if (p.label === '10 GIGA') { extendedFibraPlans.push({ label: '10 GIGA', prices: fibraPlansOverrides['10 GIGA'] }); found10G = true; }
         else { extendedFibraPlans.push(p); }
     });
 
     if (!found350) extendedFibraPlans.push({ label: '350 MEGA', prices: fibraPlansOverrides['350 MEGA'] });
+    if (!found500) extendedFibraPlans.push({ label: '500 MEGA', prices: fibraPlansOverrides['500 MEGA'] });
     if (!found600) extendedFibraPlans.push({ label: '600 MEGA', prices: fibraPlansOverrides['600 MEGA'] });
     if (!found750) extendedFibraPlans.push({ label: '750 MEGA', prices: fibraPlansOverrides['750 MEGA'] });
+    if (!found1G) extendedFibraPlans.push({ label: '1 GIGA', prices: fibraPlansOverrides['1 GIGA'] });
+    if (!found5G) extendedFibraPlans.push({ label: '5 GIGA', prices: fibraPlansOverrides['5 GIGA'] });
+    if (!found10G) extendedFibraPlans.push({ label: '10 GIGA', prices: fibraPlansOverrides['10 GIGA'] });
     extendedFibraPlans.sort((a, b) => (parseInt(a.label) * (a.label.includes('GIGA') || a.label.includes('GB') ? 1000 : 1)) - (parseInt(b.label) * (b.label.includes('GIGA') || b.label.includes('GB') ? 1000 : 1)));
 
-    const extendedTvPlans = [...(TV_BOX_OPTIONS || [])];
-    const idxTvTop = extendedTvPlans.findIndex(p => p.label === 'TV TOP (RENT)');
-    if (idxTvTop >= 0) extendedTvPlans[idxTvTop] = { label: 'TV TOP (RENT)', prices: { SINGLE: 110.00, MULTI: 110.00, 'MULTI 3P': 110.00 } };
-    else extendedTvPlans.push({ label: 'TV TOP (RENT)', prices: { SINGLE: 110.00, MULTI: 110.00, 'MULTI 3P': 110.00 } });
+    const extendedTvPlans = [
+        { label: 'TVBOX', prices: { SINGLE: 159.90, MULTI: 139.90, 'MULTI 3P': 99.90 } },
+        { label: 'TV CABO', prices: { SINGLE: 179.90, MULTI: 159.90, 'MULTI 3P': 149.90 } },
+        { label: 'SOUNDBOX', prices: { SINGLE: 269.90, MULTI: 249.90, 'MULTI 3P': 229.90 } },
+        { label: 'TV TOP (RENT)', prices: { SINGLE: 110.00, MULTI: 110.00, 'MULTI 3P': 110.00 } }
+    ];
 
     const getGoogleMapsLink = () => {
         const storeName = String(getCurrentStoreName()).toUpperCase();

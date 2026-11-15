@@ -86,14 +86,32 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         if (PRICING_MOVEL[produto]) return PRICING_MOVEL[produto][combo] || PRICING_MOVEL[produto]['SINGLE'];
         if (produto === 'FIBRA' && subOption) {
             const fibraOverrides = {
-                '350 MEGA': { SINGLE: 99.90, MULTI: 79.90, 'MULTI 3P': 79.90 },
-                '600 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 99.90 },
-                '750 MEGA': { SINGLE: 149.90, MULTI: 129.90, 'MULTI 3P': 129.90 }
+                '350 MEGA': { SINGLE: 99.90, MULTI: 79.90, 'MULTI 3P': 59.90 },
+                '500 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 69.90 },
+                '600 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 79.90 },
+                '750 MEGA': { SINGLE: 149.90, MULTI: 129.90, 'MULTI 3P': 119.90 },
+                '1 GIGA': { SINGLE: 179.90, MULTI: 119.90, 'MULTI 3P': 119.90 },
+                '5 GIGA': { SINGLE: 499.90, MULTI: 449.90, 'MULTI 3P': 449.90 },
+                '10 GIGA': { SINGLE: 1999.90, MULTI: 1994.90, 'MULTI 3P': 1994.90 }
             };
             if (fibraOverrides[subOption]) return fibraOverrides[subOption][combo] || fibraOverrides[subOption]['SINGLE'];
             return FIBRA_OPTIONS.find(o => o.label === subOption)?.prices?.[combo] || FIBRA_OPTIONS.find(o => o.label === subOption)?.prices?.['SINGLE'] || FIBRA_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
         }
-        if (produto === 'TV-BOX' && subOption) return TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.[combo] || TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.['SINGLE'] || TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
+        if ((produto === 'TV-BOX' || produto === 'TVBOX' || produto === 'TV CABO' || produto === 'SOUNDBOX') && subOption) {
+            const tvOverrides = {
+                'TVBOX': { SINGLE: 159.90, MULTI: 139.90, 'MULTI 3P': 99.90 },
+                'TV CABO': { SINGLE: 179.90, MULTI: 159.90, 'MULTI 3P': 149.90 },
+                'SOUNDBOX': { SINGLE: 269.90, MULTI: 249.90, 'MULTI 3P': 229.90 },
+                'TV BOX': { SINGLE: 159.90, MULTI: 139.90, 'MULTI 3P': 99.90 },
+                'TV BOX CABO': { SINGLE: 179.90, MULTI: 159.90, 'MULTI 3P': 149.90 },
+                'TV SOUNDBOX': { SINGLE: 269.90, MULTI: 249.90, 'MULTI 3P': 229.90 }
+            };
+            if (tvOverrides[subOption]) return tvOverrides[subOption][combo] || tvOverrides[subOption]['SINGLE'];
+            return TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.[combo] || TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.['SINGLE'] || TV_BOX_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
+        }
+        if (produto === 'PONTO ADICIONAL BOX' || subOption === 'BOX') return 69.90;
+        if (produto === 'PONTO ADICIONAL CABO' || subOption === 'CABO') return 69.90;
+        if (produto === 'PONTO ADICIONAL SOUND' || subOption === 'SOUND') return 199.90;
         if (produto === 'FIXO' && subOption) return FIXO_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
         if (produto === 'MESH' && subOption) return MESH_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
         if (produto === 'SEGURO' && subOption) {

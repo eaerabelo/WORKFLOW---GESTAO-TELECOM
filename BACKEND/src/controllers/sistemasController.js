@@ -51,14 +51,14 @@ export const getPricing = async (req, res) => {
         const DEFAULT_PRICING = {
             lastUpdated: Date.now(),
             movel: [
-                { id: 'm1', nome: 'Controle 41GB', valor: 59.90, valorMulti: 49.90, valorMulti3p: 49.90 },
-                { id: 'm2', nome: 'Controle 46GB', valor: 69.90, valorMulti: 69.90, valorMulti3p: 69.90 },
-                { id: 'm3', nome: 'Controle 46GB Gaming', valor: 99.90, valorMulti: 99.90, valorMulti3p: 99.90 },
-                { id: 'm4', nome: 'Pós 60GB', valor: 124.90, valorMulti: 59.90, valorMulti3p: 59.90 },
-                { id: 'm5', nome: 'Pós 50GB Gaming', valor: 164.90, valorMulti: 120.00, valorMulti3p: 120.00 },
-                { id: 'm6', nome: 'Pós 100GB', valor: 179.90, valorMulti: 125.00, valorMulti3p: 125.00 },
-                { id: 'm7', nome: 'Pós 150GB', valor: 239.90, valorMulti: 180.00, valorMulti3p: 180.00 },
-                { id: 'm8', nome: 'Pós 200GB', valor: 339.90, valorMulti: 240.00, valorMulti3p: 240.00 },
+                { id: 'm1', nome: 'Controle 40GB', valor: 59.90, valorMulti: 49.90, valorMulti3p: 39.90 },
+                { id: 'm2', nome: 'Controle 45GB', valor: 69.90, valorMulti: 59.90, valorMulti3p: 49.90 },
+                { id: 'm3', nome: 'Controle 45GB Gamer', valor: 99.90, valorMulti: 99.90, valorMulti3p: 99.90 },
+                { id: 'm4', nome: 'Pós 50GB', valor: 124.90, valorMulti: 60.00, valorMulti3p: 60.00 },
+                { id: 'm5', nome: 'Pós 100GB', valor: 179.90, valorMulti: 125.00, valorMulti3p: 125.00 },
+                { id: 'm6', nome: 'Pós 150GB', valor: 239.90, valorMulti: 180.00, valorMulti3p: 180.00 },
+                { id: 'm7', nome: 'Pós 200GB', valor: 339.90, valorMulti: 240.00, valorMulti3p: 200.00 },
+                { id: 'm8', nome: 'Pós 300GB', valor: 359.90, valorMulti: 340.00, valorMulti3p: 280.00 },
                 { id: 'm9', nome: 'Pós 500GB', valor: 849.90, valorMulti: 800.00, valorMulti3p: 800.00 },
                 { id: 'm10', nome: 'Dependente Gratuito', valor: 0.00, valorMulti: 0.00, valorMulti3p: 0.00 },
                 { id: 'm11', nome: 'Dependente Pago', valor: 55.00, valorMulti: 55.00, valorMulti3p: 55.00 },
@@ -69,21 +69,24 @@ export const getPricing = async (req, res) => {
                 { id: 'm16', nome: 'Seguro R$ 24,00', valor: 24.00, valorMulti: 24.00, valorMulti3p: 24.00 }
             ],
             residencial: [
-                { id: 'r1', nome: 'Banda Larga 250 Mega', valor: 99.90, valorMulti: 99.90, valorMulti3p: 99.90 },
-                { id: 'r2', nome: 'Banda Larga 500 Mega', valor: 119.90, valorMulti: 99.90, valorMulti3p: 99.90 },
-                { id: 'r3', nome: 'Banda Larga 1 Giga', valor: 199.90, valorMulti: 149.90, valorMulti3p: 149.90 },
-                { id: 'r4', nome: 'Banda Larga 5 Giga', valor: 499.90, valorMulti: 449.90, valorMulti3p: 449.90 },
-                { id: 'r5', nome: 'Banda Larga 10 Giga', valor: 1999.90, valorMulti: 1949.90, valorMulti3p: 1949.90 },
-                { id: 'r6', nome: 'TV Box', valor: 134.90, valorMulti: 124.90, valorMulti3p: 99.90 },
-                { id: 'r7', nome: 'TV Box Cabo', valor: 164.90, valorMulti: 154.90, valorMulti3p: 154.90 },
-                { id: 'r8', nome: 'TV Soundbox', valor: 174.90, valorMulti: 174.90, valorMulti3p: 174.90 },
-                { id: 'r9', nome: 'Fixo Mundo', valor: 65.00, valorMulti: 65.00, valorMulti3p: 65.00 },
-                { id: 'r10', nome: 'Fixo Brasil', valor: 35.00, valorMulti: 35.00, valorMulti3p: 35.00 },
-                { id: 'r11', nome: 'Fixo Multi 3P', valor: 5.00, valorMulti: 5.00, valorMulti3p: 5.00 },
-                { id: 'r12', nome: 'Mesh 1UN', valor: 15.00, valorMulti: 15.00, valorMulti3p: 15.00 },
-                { id: 'r13', nome: 'Mesh 2UN', valor: 30.00, valorMulti: 30.00, valorMulti3p: 30.00 },
-                { id: 'r14', nome: 'Mesh 3UN', valor: 45.00, valorMulti: 45.00, valorMulti3p: 45.00 },
-                { id: 'r15', nome: 'Mesh 4UN', valor: 60.00, valorMulti: 60.00, valorMulti3p: 60.00 }
+                { id: 'r1', nome: 'Fibra 350 Mega', valor: 99.90, valorMulti: 79.90, valorMulti3p: 59.90 },
+                { id: 'r2', nome: 'Fibra 500 Mega', valor: 119.90, valorMulti: 99.90, valorMulti3p: 69.90 },
+                { id: 'r3', nome: 'Fibra 600 Mega', valor: 119.90, valorMulti: 99.90, valorMulti3p: 79.90 },
+                { id: 'r4', nome: 'Fibra 750 Mega', valor: 149.90, valorMulti: 129.90, valorMulti3p: 119.90 },
+                { id: 'r5', nome: 'Fibra 1 Giga', valor: 179.90, valorMulti: 119.90, valorMulti3p: 119.90 },
+                { id: 'r6', nome: 'Fibra 5 Giga', valor: 499.90, valorMulti: 449.90, valorMulti3p: 449.90 },
+                { id: 'r7', nome: 'Fibra 10 Giga', valor: 1999.90, valorMulti: 1994.90, valorMulti3p: 1994.90 },
+                { id: 'r8', nome: 'TVBox', valor: 159.90, valorMulti: 139.90, valorMulti3p: 99.90 },
+                { id: 'r9', nome: 'TV Cabo', valor: 179.90, valorMulti: 159.90, valorMulti3p: 149.90 },
+                { id: 'r10', nome: 'SoundBox', valor: 269.90, valorMulti: 249.90, valorMulti3p: 229.90 },
+                { id: 'r11', nome: 'Ponto Adicional Box', valor: 69.90, valorMulti: 69.90, valorMulti3p: 69.90 },
+                { id: 'r12', nome: 'Ponto Adicional Cabo', valor: 69.90, valorMulti: 69.90, valorMulti3p: 69.90 },
+                { id: 'r13', nome: 'Ponto Adicional Sound', valor: 199.90, valorMulti: 199.90, valorMulti3p: 199.90 },
+                { id: 'r14', nome: 'Fixo Mundo', valor: 65.00, valorMulti: 65.00, valorMulti3p: 65.00 },
+                { id: 'r15', nome: 'Fixo Brasil', valor: 35.00, valorMulti: 35.00, valorMulti3p: 35.00 },
+                { id: 'r16', nome: 'Fixo Multi 3P', valor: 5.00, valorMulti: 5.00, valorMulti3p: 5.00 },
+                { id: 'r17', nome: 'Mesh 1UN', valor: 15.00, valorMulti: 15.00, valorMulti3p: 15.00 },
+                { id: 'r18', nome: 'Mesh 2UN', valor: 30.00, valorMulti: 30.00, valorMulti3p: 30.00 }
             ]
         };
 
@@ -94,29 +97,49 @@ export const getPricing = async (req, res) => {
         };
 
         const PRICING_MOVEL = {
-            'POS 60GB': { SINGLE: 124.90, MULTI: 59.90 },
-            'POS 50GB GAMING': { SINGLE: 164.90, MULTI: 120.00 },
-            'POS 100GB': { SINGLE: 179.90, MULTI: 125.00 },
-            'POS 150GB': { SINGLE: 239.90, MULTI: 180.00 },
-            'POS 200GB': { SINGLE: 339.90, MULTI: 240.00 },
-            'POS 500GB': { SINGLE: 849.90, MULTI: 800.00 },
-            'CONTROLE 41GB': { SINGLE: 59.90, MULTI: 49.90 },
-            'CONTROLE 46GB': { SINGLE: 69.90, MULTI: 69.90 },
-            'CONTROLE 46GB GAMING': { SINGLE: 99.90, MULTI: 99.90 },
+            'POS 50GB': { SINGLE: 124.90, MULTI: 60.00, 'MULTI 3P': 60.00 },
+            'POS 100GB': { SINGLE: 179.90, MULTI: 125.00, 'MULTI 3P': 125.00 },
+            'POS 150GB': { SINGLE: 239.90, MULTI: 180.00, 'MULTI 3P': 180.00 },
+            'POS 200GB': { SINGLE: 339.90, MULTI: 240.00, 'MULTI 3P': 200.00 },
+            'POS 300GB': { SINGLE: 359.90, MULTI: 340.00, 'MULTI 3P': 280.00 },
+            'POS 500GB': { SINGLE: 849.90, MULTI: 800.00, 'MULTI 3P': 800.00 },
+            'CONTROLE 40GB': { SINGLE: 59.90, MULTI: 49.90, 'MULTI 3P': 39.90 },
+            'CONTROLE 45GB': { SINGLE: 69.90, MULTI: 59.90, 'MULTI 3P': 49.90 },
+            'CONTROLE 45GB GAMER': { SINGLE: 99.90, MULTI: 99.90, 'MULTI 3P': 99.90 },
+            // Legados para retrocompatibilidade
+            'POS 60GB': { SINGLE: 124.90, MULTI: 60.00, 'MULTI 3P': 60.00 },
+            'POS 50GB GAMING': { SINGLE: 164.90, MULTI: 120.00, 'MULTI 3P': 120.00 },
+            'CONTROLE 41GB': { SINGLE: 59.90, MULTI: 49.90, 'MULTI 3P': 39.90 },
+            'CONTROLE 46GB': { SINGLE: 69.90, MULTI: 59.90, 'MULTI 3P': 49.90 },
+            'CONTROLE 46GB GAMING': { SINGLE: 99.90, MULTI: 99.90, 'MULTI 3P': 99.90 }
         };
 
         const FIBRA_OPTIONS = [
-            { label: '250 MEGA', prices: { UNICO: 99.90 } },
-            { label: '500 MEGA', prices: { SINGLE: 119.90, MULTI: 99.90 } },
-            { label: '1 GIGA', prices: { SINGLE: 199.90, MULTI: 149.90 } },
-            { label: '5 GIGA', prices: { SINGLE: 499.90, MULTI: 449.90 } },
-            { label: '10 GIGA', prices: { SINGLE: 1999.90, MULTI: 1949.90 } },
+            { label: '350 MEGA', prices: { SINGLE: 99.90, MULTI: 79.90, 'MULTI 3P': 59.90 } },
+            { label: '500 MEGA', prices: { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 69.90 } },
+            { label: '600 MEGA', prices: { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 79.90 } },
+            { label: '750 MEGA', prices: { SINGLE: 149.90, MULTI: 129.90, 'MULTI 3P': 119.90 } },
+            { label: '1 GIGA', prices: { SINGLE: 179.90, MULTI: 119.90, 'MULTI 3P': 119.90 } },
+            { label: '5 GIGA', prices: { SINGLE: 499.90, MULTI: 449.90, 'MULTI 3P': 449.90 } },
+            { label: '10 GIGA', prices: { SINGLE: 1999.90, MULTI: 1994.90, 'MULTI 3P': 1994.90 } }
         ];
 
         const TV_BOX_OPTIONS = [
-            { label: 'TV BOX', prices: { SINGLE: 134.90, MULTI: 124.90, 'MULTI 3P': 99.90 } },
-            { label: 'TV BOX CABO', prices: { SINGLE: 164.90, MULTI: 154.90 } },
-            { label: 'TV SOUNDBOX', prices: { UNICO: 174.90 } },
+            { label: 'TVBOX', prices: { SINGLE: 159.90, MULTI: 139.90, 'MULTI 3P': 99.90 } },
+            { label: 'TV BOX', prices: { SINGLE: 159.90, MULTI: 139.90, 'MULTI 3P': 99.90 } },
+            { label: 'TV CABO', prices: { SINGLE: 179.90, MULTI: 159.90, 'MULTI 3P': 149.90 } },
+            { label: 'TV BOX CABO', prices: { SINGLE: 179.90, MULTI: 159.90, 'MULTI 3P': 149.90 } },
+            { label: 'SOUNDBOX', prices: { SINGLE: 269.90, MULTI: 249.90, 'MULTI 3P': 229.90 } },
+            { label: 'TV SOUNDBOX', prices: { SINGLE: 269.90, MULTI: 249.90, 'MULTI 3P': 229.90 } }
+        ];
+
+        const PONTO_ADICIONAL_OPTIONS = [
+            { label: 'BOX', prices: { UNICO: 69.90 } },
+            { label: 'CABO', prices: { UNICO: 69.90 } },
+            { label: 'SOUND', prices: { UNICO: 199.90 } },
+            { label: 'PONTO TV BOX STREAMING', prices: { UNICO: 69.90 } },
+            { label: 'PONTO TV BOX A CABO', prices: { UNICO: 69.90 } },
+            { label: 'PONTO TV SOUNDBOX', prices: { UNICO: 199.90 } }
         ];
 
         const FIXO_OPTIONS = [
@@ -182,9 +205,12 @@ export const calcularProposta = async (req, res) => {
         ];
 
         const pontoAdicionalPlans = [
+            { label: 'BOX', prices: { UNICO: 69.90 } },
+            { label: 'CABO', prices: { UNICO: 69.90 } },
+            { label: 'SOUND', prices: { UNICO: 199.90 } },
             { label: 'PONTO TV BOX STREAMING', prices: { UNICO: 69.90 } },
             { label: 'PONTO TV BOX A CABO', prices: { UNICO: 69.90 } },
-            { label: 'PONTO TV SOUNDBOX', prices: { UNICO: 99.90 } },
+            { label: 'PONTO TV SOUNDBOX', prices: { UNICO: 199.90 } },
             { label: 'PONTO TV TOP (RENT)', prices: { UNICO: 10.00 } }
         ];
 
@@ -196,27 +222,38 @@ export const calcularProposta = async (req, res) => {
         ];
 
         const PRICING_MOVEL = {
-            'POS 60GB': { SINGLE: 124.90, MULTI: 59.90 },
-            'POS 50GB GAMING': { SINGLE: 164.90, MULTI: 120.00 },
-            'POS 100GB': { SINGLE: 179.90, MULTI: 125.00 },
-            'POS 150GB': { SINGLE: 239.90, MULTI: 180.00 },
-            'POS 200GB': { SINGLE: 339.90, MULTI: 240.00 },
-            'POS 500GB': { SINGLE: 849.90, MULTI: 800.00 },
-            'CONTROLE 41GB': { SINGLE: 59.90, MULTI: 49.90 },
-            'CONTROLE 46GB': { SINGLE: 69.90, MULTI: 69.90 },
-            'CONTROLE 46GB GAMING': { SINGLE: 99.90, MULTI: 99.90 },
+            'POS 50GB': { SINGLE: 124.90, MULTI: 60.00, 'MULTI 3P': 60.00 },
+            'POS 100GB': { SINGLE: 179.90, MULTI: 125.00, 'MULTI 3P': 125.00 },
+            'POS 150GB': { SINGLE: 239.90, MULTI: 180.00, 'MULTI 3P': 180.00 },
+            'POS 200GB': { SINGLE: 339.90, MULTI: 240.00, 'MULTI 3P': 200.00 },
+            'POS 300GB': { SINGLE: 359.90, MULTI: 340.00, 'MULTI 3P': 280.00 },
+            'POS 500GB': { SINGLE: 849.90, MULTI: 800.00, 'MULTI 3P': 800.00 },
+            'CONTROLE 40GB': { SINGLE: 59.90, MULTI: 49.90, 'MULTI 3P': 39.90 },
+            'CONTROLE 45GB': { SINGLE: 69.90, MULTI: 59.90, 'MULTI 3P': 49.90 },
+            'CONTROLE 45GB GAMER': { SINGLE: 99.90, MULTI: 99.90, 'MULTI 3P': 99.90 },
+            // Legados
+            'POS 60GB': { SINGLE: 124.90, MULTI: 60.00, 'MULTI 3P': 60.00 },
+            'POS 50GB GAMING': { SINGLE: 164.90, MULTI: 120.00, 'MULTI 3P': 120.00 },
+            'CONTROLE 41GB': { SINGLE: 59.90, MULTI: 49.90, 'MULTI 3P': 39.90 },
+            'CONTROLE 46GB': { SINGLE: 69.90, MULTI: 59.90, 'MULTI 3P': 49.90 },
+            'CONTROLE 46GB GAMING': { SINGLE: 99.90, MULTI: 99.90, 'MULTI 3P': 99.90 }
         };
         const FIBRA_OPTIONS = [
-            { label: '250 MEGA', prices: { UNICO: 99.90 } },
-            { label: '500 MEGA', prices: { SINGLE: 119.90, MULTI: 99.90 } },
-            { label: '1 GIGA', prices: { SINGLE: 199.90, MULTI: 149.90 } },
-            { label: '5 GIGA', prices: { SINGLE: 499.90, MULTI: 449.90 } },
-            { label: '10 GIGA', prices: { SINGLE: 1999.90, MULTI: 1949.90 } },
+            { label: '350 MEGA', prices: { SINGLE: 99.90, MULTI: 79.90, 'MULTI 3P': 59.90 } },
+            { label: '500 MEGA', prices: { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 69.90 } },
+            { label: '600 MEGA', prices: { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 79.90 } },
+            { label: '750 MEGA', prices: { SINGLE: 149.90, MULTI: 129.90, 'MULTI 3P': 119.90 } },
+            { label: '1 GIGA', prices: { SINGLE: 179.90, MULTI: 119.90, 'MULTI 3P': 119.90 } },
+            { label: '5 GIGA', prices: { SINGLE: 499.90, MULTI: 449.90, 'MULTI 3P': 449.90 } },
+            { label: '10 GIGA', prices: { SINGLE: 1999.90, MULTI: 1994.90, 'MULTI 3P': 1994.90 } }
         ];
         const TV_BOX_OPTIONS = [
-            { label: 'TV BOX', prices: { SINGLE: 134.90, MULTI: 124.90, 'MULTI 3P': 99.90 } },
-            { label: 'TV BOX CABO', prices: { SINGLE: 164.90, MULTI: 154.90 } },
-            { label: 'TV SOUNDBOX', prices: { UNICO: 174.90 } },
+            { label: 'TVBOX', prices: { SINGLE: 159.90, MULTI: 139.90, 'MULTI 3P': 99.90 } },
+            { label: 'TV BOX', prices: { SINGLE: 159.90, MULTI: 139.90, 'MULTI 3P': 99.90 } },
+            { label: 'TV CABO', prices: { SINGLE: 179.90, MULTI: 159.90, 'MULTI 3P': 149.90 } },
+            { label: 'TV BOX CABO', prices: { SINGLE: 179.90, MULTI: 159.90, 'MULTI 3P': 149.90 } },
+            { label: 'SOUNDBOX', prices: { SINGLE: 269.90, MULTI: 249.90, 'MULTI 3P': 229.90 } },
+            { label: 'TV SOUNDBOX', prices: { SINGLE: 269.90, MULTI: 249.90, 'MULTI 3P': 229.90 } },
             { label: 'TV TOP (RENT)', prices: { SINGLE: 110.00, MULTI: 110.00, 'MULTI 3P': 110.00 } }
         ];
         const FIXO_OPTIONS = [
@@ -232,9 +269,13 @@ export const calcularProposta = async (req, res) => {
         ];
 
         const fibraPlansOverrides = {
-            '350 MEGA': { SINGLE: 99.90, MULTI: 79.90, 'MULTI 3P': 79.90 },
-            '600 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 99.90 },
-            '750 MEGA': { SINGLE: 149.90, MULTI: 129.90, 'MULTI 3P': 129.90 }
+            '350 MEGA': { SINGLE: 99.90, MULTI: 79.90, 'MULTI 3P': 59.90 },
+            '500 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 69.90 },
+            '600 MEGA': { SINGLE: 119.90, MULTI: 99.90, 'MULTI 3P': 79.90 },
+            '750 MEGA': { SINGLE: 149.90, MULTI: 129.90, 'MULTI 3P': 119.90 },
+            '1 GIGA': { SINGLE: 179.90, MULTI: 119.90, 'MULTI 3P': 119.90 },
+            '5 GIGA': { SINGLE: 499.90, MULTI: 449.90, 'MULTI 3P': 449.90 },
+            '10 GIGA': { SINGLE: 1999.90, MULTI: 1994.90, 'MULTI 3P': 1994.90 }
         };
         let extendedFibraPlans = [];
         let found350 = false, found600 = false, found750 = false;

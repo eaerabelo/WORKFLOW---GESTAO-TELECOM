@@ -21,7 +21,25 @@ const SectionHeader = ({ number, title }) => (
     </div>
 );
 
-const InputField = ({ label, value, onChange, type = "text", readOnly = false, isMono = false }) => (
+const PLANOS_SUGERIDOS_TERMOS = [
+    'POS 50GB', 'POS 100GB', 'POS 150GB', 'POS 200GB', 'POS 300GB', 'POS 500GB',
+    'CONTROLE 40GB', 'CONTROLE 45GB', 'CONTROLE 45GB GAMER'
+];
+
+const PLANOS_TV_TERMOS = [
+    'TVBOX', 'TV CABO', 'SOUNDBOX'
+];
+
+const PLANOS_FIBRA_TERMOS = [
+    'FIBRA 350 MEGA', 'FIBRA 500 MEGA', 'FIBRA 600 MEGA', 'FIBRA 750 MEGA',
+    'FIBRA 1 GIGA', 'FIBRA 5 GIGA', 'FIBRA 10 GIGA'
+];
+
+const PLANOS_PONTO_TERMOS = [
+    'BOX (R$ 69,90)', 'CABO (R$ 69,90)', 'SOUND (R$ 199,90)'
+];
+
+const InputField = ({ label, value, onChange, type = "text", readOnly = false, isMono = false, list = null }) => (
     <div className="space-y-1 print:space-y-0.5">
         <label className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 print:text-neutral-600 font-bold print:text-[8px]">{label}</label>
         <input 
@@ -29,6 +47,7 @@ const InputField = ({ label, value, onChange, type = "text", readOnly = false, i
             value={value} 
             onChange={onChange} 
             readOnly={readOnly}
+            list={list}
             className={`w-full bg-neutral-50 dark:bg-neutral-800/50 print:bg-white border ${readOnly ? 'border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900 cursor-not-allowed' : 'border-neutral-200 dark:border-neutral-700'} rounded-lg px-3 py-2 text-sm text-neutral-800 dark:text-neutral-100 print:text-black print:border-neutral-400 print:border-b print:border-t-0 print:border-x-0 print:rounded-none print:px-1 print:py-0.5 print:text-[10px] focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] outline-none transition-colors ${isMono ? 'font-mono' : 'font-medium'}`} 
         />
     </div>
@@ -424,7 +443,7 @@ export default function OperadoraContractForm({ sale, onClose }) {
                         <section className="print:break-inside-avoid print:mt-2">
                             <SectionHeader number="03" title="Serviços e produtos escolhidos / Prazo de permanência" />
                             <div className="grid grid-cols-1 sm:grid-cols-4 print:grid-cols-4 gap-3 print:gap-2 bg-neutral-50 dark:bg-neutral-800/20 print:bg-transparent p-4 print:p-0 rounded-xl">
-                                <div className="sm:col-span-2 print:col-span-2"><InputField label="Plano de Serviço" value={contractData.planoPrincipal.planoServico} onChange={(e) => handleInputChange('planoPrincipal', 'planoServico', e.target.value)} /></div>
+                                <div className="sm:col-span-2 print:col-span-2"><InputField label="Plano de Serviço" list="lista-planos-termos" value={contractData.planoPrincipal.planoServico} onChange={(e) => handleInputChange('planoPrincipal', 'planoServico', e.target.value)} /></div>
                                 <div className="sm:col-span-2 print:col-span-2"><InputField label="Promoção Aplicada" value={contractData.planoPrincipal.promocao} onChange={(e) => handleInputChange('planoPrincipal', 'promocao', e.target.value)} /></div>
                                 <div className="sm:col-span-4 print:col-span-4"><InputField label="Pacotes / Serviços (1 a 5)" value={contractData.planoPrincipal.pacotes} onChange={(e) => handleInputChange('planoPrincipal', 'pacotes', e.target.value)} /></div>
                                 
@@ -501,7 +520,7 @@ export default function OperadoraContractForm({ sale, onClose }) {
                                         <div>
                                             <h4 className="text-xs font-bold text-[#E3000F] uppercase mb-2">Plano de TV</h4>
                                             <div className="grid grid-cols-1 sm:grid-cols-4 print:grid-cols-4 gap-3 print:gap-1.5">
-                                                <div className="sm:col-span-2 print:col-span-2"><InputField label="Produto Plano de TV" value={contractData.residencial.tv.plano} onChange={(e) => handleResidencialChange('tv', 'plano', e.target.value)} /></div>
+                                                <div className="sm:col-span-2 print:col-span-2"><InputField label="Produto Plano de TV" list="lista-tv-termos" value={contractData.residencial.tv.plano} onChange={(e) => handleResidencialChange('tv', 'plano', e.target.value)} /></div>
                                                 <div className="sm:col-span-2 print:col-span-2"><InputField label="Tecnologia" value={contractData.residencial.tv.tecnologia} onChange={(e) => handleResidencialChange('tv', 'tecnologia', e.target.value)} /></div>
                                                 
                                                 <InputField label="Mensalidade (R$)" value={contractData.residencial.tv.mensalidade} onChange={(e) => handleResidencialChange('tv', 'mensalidade', e.target.value)} />
@@ -510,7 +529,7 @@ export default function OperadoraContractForm({ sale, onClose }) {
                                                 <InputField label="Taxa de Adesão (R$)" value={contractData.residencial.tv.adesao} onChange={(e) => handleResidencialChange('tv', 'adesao', e.target.value)} />
                                                 
                                                 <InputField label="Quant. Pontos Opcionais" value={contractData.residencial.tv.pontosOpcionais} onChange={(e) => handleResidencialChange('tv', 'pontosOpcionais', e.target.value)} type="number" />
-                                                <InputField label="Tecn. do PO (Dig/HD/4K)" value={contractData.residencial.tv.tecnologiaPO} onChange={(e) => handleResidencialChange('tv', 'tecnologiaPO', e.target.value)} />
+                                                <InputField label="Tecn. do PO (Dig/HD/4K)" list="lista-ponto-termos" value={contractData.residencial.tv.tecnologiaPO} onChange={(e) => handleResidencialChange('tv', 'tecnologiaPO', e.target.value)} />
                                                 <InputField label="Valor Total PO (R$)" value={contractData.residencial.tv.valorPO} onChange={(e) => handleResidencialChange('tv', 'valorPO', e.target.value)} />
                                                 <InputField label="Adesão PO (R$)" value={contractData.residencial.tv.adesaoPO} onChange={(e) => handleResidencialChange('tv', 'adesaoPO', e.target.value)} />
                                                 
@@ -525,7 +544,7 @@ export default function OperadoraContractForm({ sale, onClose }) {
                                         <div>
                                             <h4 className="text-xs font-bold text-[#E3000F] uppercase mb-2">Plano de Internet</h4>
                                             <div className="grid grid-cols-1 sm:grid-cols-4 print:grid-cols-4 gap-3 print:gap-1.5">
-                                                <div className="sm:col-span-2 print:col-span-2"><InputField label="Produto Plano de Internet" value={contractData.residencial.internet.plano} onChange={(e) => handleResidencialChange('internet', 'plano', e.target.value)} /></div>
+                                                <div className="sm:col-span-2 print:col-span-2"><InputField label="Produto Plano de Internet" list="lista-fibra-termos" value={contractData.residencial.internet.plano} onChange={(e) => handleResidencialChange('internet', 'plano', e.target.value)} /></div>
                                                 <SelectField label="IP Fixo" value={contractData.residencial.internet.ipFixo} onChange={(e) => handleResidencialChange('internet', 'ipFixo', e.target.value)} options={['SIM', 'NÃO']} />
                                                 <SelectField label="Adquiriu Modem" value={contractData.residencial.internet.modem} onChange={(e) => handleResidencialChange('internet', 'modem', e.target.value)} options={['SIM', 'NÃO']} />
                                                 
@@ -708,10 +727,11 @@ export default function OperadoraContractForm({ sale, onClose }) {
                                         (i) Na hipótese de cancelamento ou alteração das condições contratadas, o ASSINANTE não poderá se desobrigar do pagamento da multa contratual prevista acima;<br />
                                         (j) A OPERADORA poderá usar a biometria facial ou impressão digital para garantir a proteção do Assinante, a segurança e controle nos processos de identificação e autenticação de cadastros;<br />
                                         (l) Estou ciente sobre a funcionalidade do MINHA OPERADORA MÓVEL, onde terei acesso a consumo e detalhes do plano, detalhes de faturas, 2ª via de fatura com código de barras, suporte técnico para meu aparelho, meios de pagamento, renegociação e outros;<br />
-                                        (m) Na adesão a Oferta Combo Multi elegível, o ASSINANTE terá direito a dependentes sem custo adicional, conforme a seguir:<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;(i) Pós combo 50GB + 50GB Multi - 01 dependente sem custo adicional;<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;(ii) Pós combo 75GB + 75GB Multi - 02 dependentes sem custo adicional;<br />
-                                        &nbsp;&nbsp;&nbsp;&nbsp;(iii) Pós combo 150GB + 150GB Multi - 03 dependentes sem custo adicional.
+                                        (m) Na adesão a Oferta Combo Multi / Multi 3P elegível, o ASSINANTE declara ter ciência das tabelas e condições contratadas:<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(i) Portfólio Pós-Pago: Pós 50GB (R$ 124,90 Single / R$ 60,00 Multi / R$ 60,00 Multi 3P), Pós 100GB (R$ 179,90 Single / R$ 125,00 Multi / R$ 125,00 Multi 3P), Pós 150GB (R$ 239,90 Single / R$ 180,00 Multi / R$ 180,00 Multi 3P), Pós 200GB (R$ 339,90 Single / R$ 240,00 Multi / R$ 200,00 Multi 3P), Pós 300GB (R$ 359,90 Single / R$ 340,00 Multi / R$ 280,00 Multi 3P) e Pós 500GB (R$ 849,90 Single / R$ 800,00 Multi / R$ 800,00 Multi 3P);<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(ii) Portfólio Controle: Controle 40GB (R$ 59,90 Single / R$ 49,90 Multi / R$ 39,90 Multi 3P), Controle 45GB (R$ 69,90 Single / R$ 59,90 Multi / R$ 49,90 Multi 3P) e Controle 45GB Gamer (R$ 99,90 Single / R$ 99,90 Multi / R$ 99,90 Multi 3P);<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(iii) Portfólio Residencial TV: TVBOX (R$ 159,90 Single / R$ 139,90 Multi / R$ 99,90 Multi 3P), TV Cabo (R$ 179,90 Single / R$ 159,90 Multi / R$ 149,90 Multi 3P), SoundBox (R$ 269,90 Single / R$ 249,90 Multi / R$ 229,90 Multi 3P) e Pontos Adicionais (Box R$ 69,90, Cabo R$ 69,90, Sound R$ 199,90);<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(iv) Portfólio Banda Larga Fibra: 350 Mega (R$ 99,90 / R$ 79,90 / R$ 59,90), 500 Mega (R$ 119,90 / R$ 99,90 / R$ 69,90), 600 Mega (R$ 119,90 / R$ 99,90 / R$ 79,90), 750 Mega (R$ 149,90 / R$ 129,90 / R$ 119,90), 1 Giga (R$ 179,90 / R$ 119,90 / R$ 119,90), 5 Giga (R$ 499,90 / R$ 449,90 / R$ 449,90) e 10 Giga (R$ 1.999,90 / R$ 1.994,90 / R$ 1.994,90).
                                     </p>
                                     
                                     <p className="mt-1.5">O valor de cada dependente promocional da oferta acima será mensalmente abatido do valor desse contrato diretamente na fatura do ASSINANTE, enquanto mantida a oferta Combo Multi, conforme disposto no Regulamento da Oferta. Valores correspondentes a contratações de serviços e funcionalidades adicionais para dependentes ou uso de excedente gerados por estes serão cobrados normalmente e não estão inclusos na oferta de isenção de mensalidade acima especificada.</p>
@@ -799,6 +819,20 @@ export default function OperadoraContractForm({ sale, onClose }) {
                             </div>
                         </section>
                     </div>
+
+                    {/* Datalists de apoio aos Termos de Adesão */}
+                    <datalist id="lista-planos-termos">
+                        {PLANOS_SUGERIDOS_TERMOS.map(p => <option key={p} value={p} />)}
+                    </datalist>
+                    <datalist id="lista-tv-termos">
+                        {PLANOS_TV_TERMOS.map(p => <option key={p} value={p} />)}
+                    </datalist>
+                    <datalist id="lista-fibra-termos">
+                        {PLANOS_FIBRA_TERMOS.map(p => <option key={p} value={p} />)}
+                    </datalist>
+                    <datalist id="lista-ponto-termos">
+                        {PLANOS_PONTO_TERMOS.map(p => <option key={p} value={p} />)}
+                    </datalist>
                 </div>
             </div>
         </div>

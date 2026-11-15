@@ -1,10 +1,11 @@
 import React from 'react';
 import wfLogo from '../assets/logo_WF.png';
-import { WifiOff, RefreshCw } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 
 /**
- * Componente Oficial de Carregamento Linear e Estado Offline
- * Padrão Linear Moderno: Sem discrepância geométrica, com barra de progresso linear suave.
+ * Componente Oficial de Carregamento Linear do Sistema
+ * Padrão Linear Telecom: Caixa da logo e indicador de progresso 100% integrados e retilíneos,
+ * eliminando qualquer discrepância geométrica entre elementos redondos e retangulares.
  */
 export const WFLogoLoader = ({
   size = 'md', // 'sm' | 'md' | 'lg' | 'xl'
@@ -14,84 +15,87 @@ export const WFLogoLoader = ({
   fullScreen = false,
   className = ''
 }) => {
-  // Proporções por tamanho da logo e da barra linear
+  // Proporções por tamanho do container e da logo
   const sizeMap = {
-    sm: { img: 'w-16 sm:w-20', bar: 'w-48 sm:w-56 h-1.5', textSize: 'text-xs', subtextSize: 'text-[11px]' },
-    md: { img: 'w-28 sm:w-32', bar: 'w-56 sm:w-64 h-1.5', textSize: 'text-xs sm:text-sm', subtextSize: 'text-xs' },
-    lg: { img: 'w-36 sm:w-44', bar: 'w-64 sm:w-72 h-2', textSize: 'text-sm sm:text-base', subtextSize: 'text-xs sm:text-sm' },
-    xl: { img: 'w-48 sm:w-56', bar: 'w-72 sm:w-80 h-2', textSize: 'text-base sm:text-lg', subtextSize: 'text-xs sm:text-sm' }
+    sm: { card: 'w-48 sm:w-56', img: 'h-10 sm:h-12', textSize: 'text-xs', subtextSize: 'text-[11px]' },
+    md: { card: 'w-60 sm:w-72', img: 'h-14 sm:h-16', textSize: 'text-xs sm:text-sm', subtextSize: 'text-xs' },
+    lg: { card: 'w-72 sm:w-84', img: 'h-18 sm:h-20', textSize: 'text-sm sm:text-base', subtextSize: 'text-xs sm:text-sm' },
+    xl: { card: 'w-80 sm:w-96', img: 'h-22 sm:h-24', textSize: 'text-base sm:text-lg', subtextSize: 'text-xs sm:text-sm' }
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
 
   const content = (
     <div className={`flex flex-col items-center justify-center text-center select-none ${className}`}>
-      {/* Injeção de Estilo dos Keyframes da Animação Linear */}
+      {/* Keyframes de animação estritamente lineares */}
       <style>{`
-        @keyframes wfLinearSlide {
+        @keyframes wfLinearRunner {
           0% {
-            left: -40%;
-            width: 35%;
+            left: -45%;
+            width: 40%;
           }
           50% {
-            left: 30%;
-            width: 50%;
+            left: 25%;
+            width: 55%;
           }
           100% {
-            left: 100%;
-            width: 35%;
+            left: 105%;
+            width: 40%;
           }
         }
-        @keyframes wfGlowPulse {
+        @keyframes wfSubtleGlow {
           0%, 100% {
-            opacity: 0.9;
-            transform: scale(1);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
           }
           50% {
-            opacity: 1;
-            transform: scale(1.015);
+            box-shadow: 0 6px 28px 0px rgba(227, 0, 15, 0.15), 0 0 0 1px rgba(227, 0, 15, 0.2);
           }
         }
       `}</style>
 
-      {/* Cartão Linear da Logo (Sem anéis circulares discrepantes) */}
-      <div className="relative mb-5" style={{ animation: 'wfGlowPulse 2.4s ease-in-out infinite' }}>
-        <div className="relative z-10 px-6 py-5 rounded-2xl bg-white/90 dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800 backdrop-blur-md shadow-xl flex items-center justify-center">
+      {/* BLOCO UNIFICADO LINEAR (Card + Barra Linear Integrada) */}
+      <div 
+        className={`${currentSize.card} rounded-xl bg-white/95 dark:bg-neutral-900/95 border border-neutral-200 dark:border-neutral-800 shadow-2xl overflow-hidden mb-5 transition-all duration-300`}
+        style={{ animation: 'wfSubtleGlow 3s ease-in-out infinite' }}
+      >
+        {/* Espaço da Logo */}
+        <div className="px-6 py-6 sm:py-7 flex items-center justify-center relative">
           <img
             src={wfLogo}
             alt="WorkFlow Logo"
-            className={`${currentSize.img} h-auto object-contain transition-all duration-300 drop-shadow-md`}
+            className={`${currentSize.img} w-auto object-contain drop-shadow-sm`}
           />
 
-          {/* Ícone de Desconexão caso Status seja Offline */}
+          {/* Badge linear de desconexão caso offline */}
           {status === 'offline' && (
-            <div className="absolute -bottom-2 -right-2 bg-amber-500 text-neutral-950 p-2 rounded-full border-2 border-white dark:border-neutral-900 shadow-lg">
-              <WifiOff size={16} />
+            <div className="absolute top-2 right-2 flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+              <WifiOff size={12} />
+              <span>Offline</span>
             </div>
+          )}
+        </div>
+
+        {/* BARRA DE PROGRESSO RETILÍNEA INTEGRADA À BASE DO CARD */}
+        <div className="w-full h-1 sm:h-1.5 bg-neutral-100 dark:bg-neutral-800 relative overflow-hidden">
+          {status === 'loading' ? (
+            <div
+              className="absolute top-0 bottom-0 bg-gradient-to-r from-[#E3000F] via-red-500 to-[#E3000F]"
+              style={{
+                animation: 'wfLinearRunner 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite'
+              }}
+            />
+          ) : (
+            <div
+              className="absolute top-0 bottom-0 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500"
+              style={{
+                animation: 'wfLinearRunner 2s cubic-bezier(0.4, 0, 0.2, 1) infinite'
+              }}
+            />
           )}
         </div>
       </div>
 
-      {/* BARRA DE CARREGAMENTO LINEAR (Padrão Oficial Telecom) */}
-      <div className={`relative ${currentSize.bar} rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden shadow-inner mb-4`}>
-        {status === 'loading' ? (
-          <div
-            className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-[#E3000F] via-red-500 to-[#E3000F] shadow-sm shadow-red-500/50"
-            style={{
-              animation: 'wfLinearSlide 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite'
-            }}
-          />
-        ) : (
-          <div
-            className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500"
-            style={{
-              animation: 'wfLinearSlide 2s cubic-bezier(0.4, 0, 0.2, 1) infinite'
-            }}
-          />
-        )}
-      </div>
-
-      {/* Título Principal */}
+      {/* Título Principal Linear */}
       {text && (
         <h2 className={`font-black uppercase tracking-wider text-neutral-800 dark:text-neutral-100 ${currentSize.textSize} drop-shadow-sm`}>
           {text}
@@ -100,16 +104,16 @@ export const WFLogoLoader = ({
 
       {/* Subtítulo ou Mensagem de Conexão */}
       {subtext && (
-        <p className={`mt-1 font-bold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 max-w-md ${currentSize.subtextSize}`}>
+        <p className={`mt-1 font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 max-w-md ${currentSize.subtextSize}`}>
           {subtext}
         </p>
       )}
 
-      {/* Status Offline ou Indicador Linear Complementar */}
+      {/* Mensagem linear em caso offline */}
       {status === 'offline' && (
-        <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold shadow-sm">
-          <RefreshCw size={14} className="animate-spin" />
-          <span className="uppercase text-[11px] tracking-wider">Tentando restabelecer conexão com o servidor...</span>
+        <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[11px] font-bold uppercase tracking-wider">
+          <span className="w-1.5 h-1.5 rounded-none bg-amber-500 animate-pulse" />
+          <span>Tentando restabelecer conexão com o servidor...</span>
         </div>
       )}
     </div>
