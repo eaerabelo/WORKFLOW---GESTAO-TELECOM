@@ -5,11 +5,41 @@ import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { PRODUTOS_CONTRATO_OBRIGATORIO, PRODUTOS, DEFAULT_SEGURO_OPTIONS, DEFAULT_DEPENDENTE_OPTIONS } from '../utils/constants';
 import { usePricing } from '../context/PricingContext';
-import { applyCpfCnpjMask, applyContratoMask, applyCurrencyMask, parseCurrencyToFloat, getTodaySP } from '../utils/masks';
+import { applyPhoneMask, applyCpfCnpjMask, applyContratoMask, applyCurrencyMask, parseCurrencyToFloat, getTodaySP } from '../utils/masks';
 import { parseExcelSales } from '../utils/excelImporter';
 import ClaroContractForm from '../utils/contrato.jsx';
 
 const safeProdutos = Array.isArray(PRODUTOS) ? PRODUTOS : [];
+
+export const CATEGORIAS_VENDA = ['MÓVEL', 'RESIDENCIAL', 'APARELHO & OUTROS'];
+
+export const PRODUTOS_POR_CATEGORIA = {
+    'MÓVEL': [
+        'POS 50GB', 'POS 100GB', 'POS 150GB', 'POS 200GB', 'POS 300GB', 'POS 500GB',
+        'CONTROLE 40GB', 'CONTROLE 45GB', 'CONTROLE 45GB GAMER',
+        'DEPENDENTE', 'FLEX', 'POS PME',
+        'POS 60GB', 'POS 50GB GAMING', 'CONTROLE 41GB', 'CONTROLE 46GB', 'CONTROLE 46GB GAMING'
+    ],
+    'RESIDENCIAL': [
+        'FIBRA', 'TVBOX', 'TV CABO', 'SOUNDBOX', 'TV-BOX',
+        'PONTO ADICIONAL BOX', 'PONTO ADICIONAL CABO', 'PONTO ADICIONAL SOUND',
+        'FIXO', 'MESH', 'FIBRA PME'
+    ],
+    'APARELHO & OUTROS': [
+        'APARELHO', 'ACESSORIO', 'PELICULA', 'SEGURO'
+    ]
+};
+
+const detectCategoria = (prod) => {
+    const p = String(prod || '').toUpperCase();
+    if (p.includes('FIBRA') || p.includes('TV') || p.includes('SOUNDBOX') || p.includes('PONTO ADICIONAL') || p.includes('FIXO') || p.includes('MESH')) {
+        return 'RESIDENCIAL';
+    }
+    if (p.includes('APARELHO') || p.includes('ACESS') || p.includes('PELICULA') || p.includes('PELÍCULA') || p.includes('SEGURO')) {
+        return 'APARELHO & OUTROS';
+    }
+    return 'MÓVEL';
+};
 
 export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB = {}, globalMonth }) => {
     const { pricingData } = usePricing();
@@ -39,12 +69,12 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     // --- ESTADOS DO COMBO ---
     const [vendaMode, setVendaMode] = useState('INDIVIDUAL'); // 'INDIVIDUAL' | 'COMBO'
     const [comboItems, setComboItems] = useState([]);
-    const [comboGlobal, setComboGlobal] = useState({ cpf: '', contrato: '', adicionais: [] });
+    const [comboGlobal, setComboGlobal] = useState({ celular: '', cpf: '', contrato: '', adicionais: [] });
 
     const [formData, setFormData] = useState({
         vendedor: '', data: getTodaySP(), qtda: 1, portabilidade: '', operadoraOrigem: '',
-        combo: 'SINGLE', produto: '', subOption: '', receita: '', isReceitaReadonly: false,
-        cpf: '', contrato: '', mplay: '', adicionais: [], tipoOperacao: '', seguroOption: ''
+        combo: 'SINGLE', categoriaVenda: 'MÓVEL', produto: '', subOption: '', receita: '', isReceitaReadonly: false,
+        celular: '', cpf: '', contrato: '', mplay: '', adicionais: [], tipoOperacao: '', seguroOption: ''
     });
 
     useEffect(() => {
@@ -66,11 +96,19 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isModalOpen]);
 
+    const isResidencialProduct = (p) => {
+        const prod = String(p || '').toUpperCase();
+        return prod.includes('FIBRA') || prod.includes('TV') || prod.includes('SOUNDBOX') || prod.includes('PONTO ADICIONAL') || prod.includes('FIXO') || prod.includes('MESH');
+    };
+
     const isComissionado = ['APARELHO', 'ACESSORIO', 'PELICULA'].includes(formData?.produto || '');
-    const requiresContrato = (PRODUTOS_CONTRATO_OBRIGATORIO || []).includes(formData?.produto || '');
-    const isMovel = ['POS', 'PÓS', 'CONTROLE', 'FLEX', 'PRÉ', 'PRE', 'DEPENDENTE'].some(term => String(formData?.produto || '').toUpperCase().includes(term));
+    const currentCategoria = formData?.categoriaVenda || detectCategoria(formData?.produto) || 'MÓVEL';
+    const isResidencial = currentCategoria === 'RESIDENCIAL' || isResidencialProduct(formData?.produto);
+    const requiresContrato = isResidencial;
+    const requiresCelular = !isResidencial;
+    const isMovel = currentCategoria === 'MÓVEL' || ['POS', 'PÓS', 'CONTROLE', 'FLEX', 'PRÉ', 'PRE', 'DEPENDENTE'].some(term => String(formData?.produto || '').toUpperCase().includes(term));
     const isMplayAlreadySelectedInCombo = vendaMode === 'COMBO' && comboItems.some(item => item.mplay === 'SIM');
-    const showMplay = (isMovel || ['FIBRA', 'TV-BOX', 'FIXO', 'MESH'].includes(formData?.produto || '')) && !isMplayAlreadySelectedInCombo;
+    const showMplay = (isMovel || isResidencial) && !isMplayAlreadySelectedInCombo;
     const isServico = isMovel;
 
     const calcularComissaoDinamica = (produto, adicionaisList, valorBruto, seguroOption) => {
@@ -148,13 +186,49 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         return [];
     };
 
+    const handleCategoriaChange = (cat) => {
+        setFormData(prev => ({
+            ...prev,
+            categoriaVenda: cat,
+            produto: '',
+            subOption: '',
+            receita: '',
+            isReceitaReadonly: false,
+            contrato: '',
+            celular: '',
+            tipoOperacao: '',
+            portabilidade: '',
+            operadoraOrigem: '',
+            seguroOption: ''
+        }));
+    };
+
     const openNovaVendaModal = () => {
         setFormError('');
         setEditingId(null);
         setVendaMode('INDIVIDUAL');
         setComboItems([]);
-        setComboGlobal({ cpf: '', contrato: '', adicionais: [] });
-        setFormData({ vendedor: isVendedor && globalUser ? String(globalUser?.name || '') : '', data: filterDateEnd || getTodaySP(), qtda: 1, portabilidade: '', operadoraOrigem: '', combo: 'SINGLE', produto: '', subOption: '', receita: '', isReceitaReadonly: false, cpf: '', contrato: '', mplay: '', adicionais: [], tipoOperacao: '', seguroOption: '' });
+        setComboGlobal({ celular: '', cpf: '', contrato: '', adicionais: [] });
+        setFormData({
+            vendedor: isVendedor && globalUser ? String(globalUser?.name || '') : '',
+            data: filterDateEnd || getTodaySP(),
+            qtda: 1,
+            portabilidade: '',
+            operadoraOrigem: '',
+            combo: 'SINGLE',
+            categoriaVenda: 'MÓVEL',
+            produto: '',
+            subOption: '',
+            receita: '',
+            isReceitaReadonly: false,
+            celular: '',
+            cpf: '',
+            contrato: '',
+            mplay: '',
+            adicionais: [],
+            tipoOperacao: '',
+            seguroOption: ''
+        });
         setIsModalOpen(true);
     };
 
@@ -162,6 +236,8 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         setFormError('');
         setEditingId(sale.id);
         setVendaMode('INDIVIDUAL');
+        const prodBase = sale.produtoBase || (String(sale.produto || '').includes(' (') ? String(sale.produto || '').split(' (')[0] : sale.produto);
+        const catDetected = detectCategoria(prodBase);
         setFormData({
             vendedor: sale.vendedor || '',
             data: (sale.data || '').includes('/') ? sale.data.split('/').reverse().join('-') : (sale.data || ''),
@@ -169,10 +245,12 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             portabilidade: sale.portabilidade || '',
             operadoraOrigem: sale.operadoraOrigem || '',
             combo: sale.combo || 'SINGLE',
-            produto: sale.produtoBase || (String(sale.produto || '').includes(' (') ? String(sale.produto || '').split(' (')[0] : sale.produto),
+            categoriaVenda: catDetected,
+            produto: prodBase,
             subOption: sale.subOption || (String(sale.produto || '').includes('(') ? String(sale.produto || '').split('(')[1].replace(')', '') : ''),
             receita: applyCurrencyMask(sale.valorBruto || sale.receita),
             isReceitaReadonly: false,
+            celular: sale.celular || '',
             cpf: sale.cpf || '',
             contrato: sale.contrato === '-' ? '' : sale.contrato,
             mplay: sale.mplay || '',
@@ -192,6 +270,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
 
     const handleFormChange = (e) => {
         let { name, value } = e.target;
+        if (name === 'celular') value = applyPhoneMask(value);
         if (name === 'cpf') value = applyCpfCnpjMask(value);
         if (name === 'contrato') value = applyContratoMask(value);
         if (name === 'receita') value = applyCurrencyMask(value);
@@ -288,6 +367,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             receita: valorParaGravar,
             comissao: valorComissao,
             valorBruto: receitaFloat,
+            celular: !requiresContrato ? (formData.celular || '') : '',
             cpf: '',
             contrato: requiresContrato ? contrato : '-',
             portabilidade: finalPortabilidade,
@@ -355,13 +435,14 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
 
         setComboItems(prev => [...prev, {
             vendedor, data, qtda, portabilidade: finalPortabilidade, operadoraOrigem: finalOperadoraOrigem, combo: formData.combo,
-            produtoBase: produto, subOption, produto, receita, mplay: finalMplay, tipoOperacao, seguroOption: formData.seguroOption
+            produtoBase: produto, subOption, produto, receita, mplay: finalMplay, tipoOperacao, seguroOption: formData.seguroOption,
+            celular: formData.celular || ''
         }]);
 
         // Limpa apenas os dados do produto para facilitar a inclusão do próximo
         setFormData(prev => ({
             ...prev, produto: '', subOption: '', receita: '', isReceitaReadonly: false,
-            portabilidade: '', operadoraOrigem: '', mplay: '', tipoOperacao: '', seguroOption: '', qtda: 1
+            portabilidade: '', operadoraOrigem: '', mplay: '', tipoOperacao: '', seguroOption: '', qtda: 1, celular: ''
         }));
         setFormError('');
     };
@@ -391,7 +472,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         let currentId = Date.now();
 
         comboItems.forEach(item => {
-            const isItemResidential = (PRODUTOS_CONTRATO_OBRIGATORIO || []).includes(item.produtoBase || item.produto);
+            const isItemResidential = isResidencialProduct(item.produtoBase || item.produto);
             const pBase = String(item.produtoBase || item.produto || '').toUpperCase();
             const isTitularCandidate = !mainTitularFound && (pBase.includes('POS') || pBase.includes('PÓS') || pBase.includes('CONTROLE')) && !pBase.includes('DEPENDENTE') && !pBase.includes('DEP');
 
@@ -406,11 +487,14 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             const valorComissao = isItemComissionado ? calcularComissaoDinamica(item.produtoBase || item.produto, itemAdicionais, receitaFloat, item.seguroOption) : receitaFloat;
 
             const cleanedAdicionais = (item.produtoBase || item.produto) === 'APARELHO' ? itemAdicionais.filter(a => a !== 'SEGURO') : itemAdicionais;
+            const itemCelular = item.celular || comboGlobal.celular || '';
 
             novasVendas.push({
                 id: currentId++, vendedor: item.vendedor, data: convertToBRDate(item.data), qtda: item.qtda, portabilidade: item.portabilidade, operadoraOrigem: item.operadoraOrigem, combo: item.combo,
                 produtoBase: item.produtoBase || item.produto, subOption: item.subOption, produto: item.subOption ? `${item.produtoBase || item.produto} (${item.subOption})` : (item.produtoBase || item.produto),
-                receita: valorComissao, comissao: valorComissao, valorBruto: receitaFloat, cpf: '', contrato: isItemResidential ? comboGlobal.contrato : '-',
+                receita: valorComissao, comissao: valorComissao, valorBruto: receitaFloat,
+                celular: !isItemResidential ? itemCelular : '',
+                cpf: '', contrato: isItemResidential ? comboGlobal.contrato : '-',
                 mplay: item.mplay, adicionais: cleanedAdicionais, tipoOperacao: item.tipoOperacao, seguroOption: item.seguroOption || '',
                 ...(cidadeAuto && isItemResidential ? { cidade: cidadeAuto } : {})
             });
@@ -419,7 +503,8 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                 const precoSeguro = calculatePrice('SEGURO', 'SINGLE', item.seguroOption) || 0;
                 novasVendas.unshift({
                     id: currentId++, vendedor: item.vendedor, data: convertToBRDate(item.data), qtda: 1, portabilidade: 'NÃO', operadoraOrigem: '', combo: 'SINGLE', produtoBase: 'SEGURO',
-                    subOption: item.seguroOption, produto: `SEGURO (${item.seguroOption})`, receita: precoSeguro, comissao: precoSeguro, valorBruto: precoSeguro, cpf: '',
+                    subOption: item.seguroOption, produto: `SEGURO (${item.seguroOption})`, receita: precoSeguro, comissao: precoSeguro, valorBruto: precoSeguro,
+                    celular: itemCelular, cpf: '',
                     contrato: '-', mplay: 'NÃO', adicionais: [], tipoOperacao: ''
                 });
             }
@@ -507,7 +592,8 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             'Operadora Origem': sale.operadoraOrigem || '-',
             'Operação': sale.tipoOperacao || '-',
             'Receita (R$)': sale.receita,
-            'Contrato': sale.contrato,
+            'Celular': sale.celular || '-',
+            'Contrato': sale.contrato || '-',
             'M-Play': sale.mplay,
             'Adicionais': Array.isArray(sale.adicionais) ? sale.adicionais.join(', ') : ''
         }));
@@ -627,7 +713,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                 <div className="overflow-auto flex-1">
                     <table className="w-full text-sm text-left whitespace-nowrap">
                         <thead className="text-xs text-neutral-500 dark:text-neutral-400 uppercase bg-neutral-50/80 dark:bg-neutral-800/80 sticky top-0 border-b border-neutral-200 dark:border-neutral-800 z-10">
-                            <tr><th className="px-6 py-4 font-medium tracking-wider">Vendedor</th><th className="px-6 py-4 font-medium tracking-wider">Data</th><th className="px-6 py-4 font-medium tracking-wider">Produto</th><th className="px-6 py-4 font-medium tracking-wider">Tipo</th><th className="px-6 py-4 font-medium tracking-wider text-center">Qtda</th><th className="px-6 py-4 font-medium tracking-wider">Portabilidade</th><th className="px-6 py-4 font-medium tracking-wider text-center">Operação</th><th className="px-6 py-4 font-medium tracking-wider">Receita (R$)</th><th className="px-6 py-4 font-medium tracking-wider">Contrato</th><th className="px-6 py-4 font-medium tracking-wider">M-Play</th><th className="px-6 py-4 font-medium tracking-wider text-center">Adicional</th><th className="px-6 py-4 font-medium tracking-wider text-center">Ações</th></tr>
+                            <tr><th className="px-6 py-4 font-medium tracking-wider">Vendedor</th><th className="px-6 py-4 font-medium tracking-wider">Data</th><th className="px-6 py-4 font-medium tracking-wider">Produto</th><th className="px-6 py-4 font-medium tracking-wider">Tipo</th><th className="px-6 py-4 font-medium tracking-wider text-center">Qtda</th><th className="px-6 py-4 font-medium tracking-wider">Portabilidade</th><th className="px-6 py-4 font-medium tracking-wider text-center">Operação</th><th className="px-6 py-4 font-medium tracking-wider">Receita (R$)</th><th className="px-6 py-4 font-medium tracking-wider">Celular / Contrato</th><th className="px-6 py-4 font-medium tracking-wider">M-Play</th><th className="px-6 py-4 font-medium tracking-wider text-center">Adicional</th><th className="px-6 py-4 font-medium tracking-wider text-center">Ações</th></tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                             {filteredSales.map((sale, index) => (
@@ -649,7 +735,20 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                     </td>
                                     <td className="px-6 py-3 text-center"><span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${sale.tipoOperacao === 'ATIVAÇÃO' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : sale.tipoOperacao === 'MIGRAÇÃO' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' : 'text-neutral-400'}`}>{sale.tipoOperacao || '-'}</span></td>
                                     <td className="px-6 py-3 font-medium text-neutral-800 dark:text-neutral-200">{applyCurrencyMask(sale.receita)}</td>
-                                    <td className="px-6 py-3 text-neutral-500 dark:text-neutral-400 font-mono text-xs">{sale.contrato}</td>
+                                    <td className="px-6 py-3 font-mono text-xs">
+                                        {sale.celular ? (
+                                            <span className="text-neutral-800 dark:text-neutral-200 font-semibold flex items-center gap-1.5">
+                                                <span className="text-[#E3000F] font-bold text-[10px] bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">CEL</span>
+                                                {sale.celular}
+                                            </span>
+                                        ) : (sale.contrato && sale.contrato !== '-') ? (
+                                            <span className="text-neutral-600 dark:text-neutral-300">
+                                                {sale.contrato}
+                                            </span>
+                                        ) : (
+                                            <span className="text-neutral-300 dark:text-neutral-600">-</span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-3"><span className={`flex items-center gap-1.5 text-xs font-medium ${sale.mplay === 'SIM' ? 'text-[#E3000F]' : 'text-neutral-400 dark:text-neutral-500'}`}>{sale.mplay === 'SIM' ? <MonitorPlay size={14} /> : <div className="w-3.5 h-3.5 rounded-full border border-neutral-300 dark:border-neutral-600"></div>}{sale.mplay}</span></td>
                                     <td className="px-6 py-3 text-center">{Array.isArray(sale.adicionais) && sale.adicionais.length > 0 ? (<div className="flex justify-center gap-1.5 flex-wrap">{sale.adicionais.map(ad => (<span key={ad} className="bg-[#E3000F]/10 text-[#E3000F] px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">{ad}</span>))}</div>) : <span className="text-neutral-300 text-xs">-</span>}</td>
                                     <td className="px-6 py-3 text-center">
@@ -704,10 +803,32 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                 <form onSubmit={handleSubmitSale} className="p-4 sm:p-6 space-y-6 max-h-[75vh] overflow-y-auto">
                                     {formError && (<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-[#E3000F] px-4 py-3 rounded-lg flex items-center gap-3 text-sm font-medium animate-fade-in"><AlertCircle size={18} className="shrink-0" />{formError}</div>)}
                                     <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 flex flex-col md:flex-row md:items-center gap-4 justify-between"><div><h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 uppercase tracking-wide">Contexto da Venda</h3><p className="text-xs text-neutral-500 dark:text-neutral-400">Selecione o formato para calcular a receita corretamente.</p></div><div className="flex flex-wrap sm:flex-nowrap bg-white dark:bg-neutral-900 rounded-lg p-1 border border-neutral-200 dark:border-neutral-700 shadow-sm w-full md:w-auto">{['SINGLE', 'MULTI', 'MULTI 3P'].map(tipo => (<button key={tipo} type="button" onClick={() => handleFormChange({ target: { name: 'combo', value: tipo } })} className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all ${formData.combo === tipo ? 'bg-[#E3000F] text-white shadow-md' : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}>{tipo}</button>))}</div></div>
+                                    <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 flex flex-col md:flex-row md:items-center gap-4 justify-between">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 uppercase tracking-wide">Categoria do Serviço</h3>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400">MÓVEL, RESIDENCIAL ou APARELHO & OUTROS.</p>
+                                        </div>
+                                        <div className="flex flex-wrap sm:flex-nowrap bg-white dark:bg-neutral-900 rounded-lg p-1 border border-neutral-200 dark:border-neutral-700 shadow-sm w-full md:w-auto">
+                                            {CATEGORIAS_VENDA.map(cat => (
+                                                <button
+                                                    key={cat}
+                                                    type="button"
+                                                    onClick={() => handleCategoriaChange(cat)}
+                                                    className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all ${
+                                                        (formData.categoriaVenda || 'MÓVEL') === cat 
+                                                            ? 'bg-[#E3000F] text-white shadow-md' 
+                                                            : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                                                    }`}
+                                                >
+                                                    {cat}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                                         <div className="space-y-1.5 relative"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between"><span>Vendedor <span className="text-[#E3000F]">*</span></span>{isVendedor && <Lock size={12} className="text-[#E3000F]" />}</label><select name="vendedor" value={formData.vendedor} onChange={handleFormChange} disabled={isVendedor} className={`w-full border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium ${isVendedor ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-[#E3000F]' : 'bg-neutral-50 dark:bg-neutral-800/50'}`}><option className="bg-white dark:bg-neutral-900" value="">Selecione o vendedor</option>{safeVendedores.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)}</select></div>
                                         <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Data <span className="text-[#E3000F]">*</span></label><input type="date" name="data" max={getTodaySP()} value={formData.data} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" /></div>
-                                        <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Produto Principal <span className="text-[#E3000F]">*</span></label><select name="produto" value={formData.produto} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium"><option className="bg-white dark:bg-neutral-900" value="">Selecione o produto</option>{safeProdutos.map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select></div>
+                                        <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Produto Principal <span className="text-[#E3000F]">*</span></label><select name="produto" value={formData.produto} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium"><option className="bg-white dark:bg-neutral-900" value="">Selecione o produto</option>{(PRODUTOS_POR_CATEGORIA[formData.categoriaVenda || 'MÓVEL'] || safeProdutos).map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select></div>
                                         {getSubOptions().length > 0 && (<div className="space-y-1.5 animate-fade-in bg-yellow-50/50 dark:bg-yellow-900/20 p-2 -m-2 rounded-lg border border-yellow-100 dark:border-yellow-800"><label className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1">Especificação <span className="text-[#E3000F]">*</span></label><select name="subOption" value={formData.subOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-[#E3000F]"><option className="bg-white dark:bg-neutral-900" value="">Selecione a opção</option>{getSubOptions().map(o => <option className="bg-white dark:bg-neutral-900" key={o.label} value={o.label}>{o.label}</option>)}</select></div>)}
                                         {isServico && (<div className="space-y-1.5 animate-fade-in bg-purple-50/50 dark:bg-purple-900/20 p-2 -m-2 rounded-lg border border-purple-100 dark:border-purple-800"><label className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">Tipo de Operação <span className="text-[#E3000F]">*</span></label><select name="tipoOperacao" value={formData.tipoOperacao} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-purple-700 dark:text-purple-400"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option><option className="bg-white dark:bg-neutral-900" value="ATIVAÇÃO">ATIVAÇÃO</option><option className="bg-white dark:bg-neutral-900" value="MIGRAÇÃO">MIGRAÇÃO</option></select></div>)}
                                         <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex items-center justify-between"><span>{isComissionado ? 'Valor Bruto (R$)' : 'Receita (R$)'} <span className="text-[#E3000F]">*</span></span>{formData.isReceitaReadonly && <span className="text-[10px] bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 px-1.5 py-0.5 rounded flex items-center gap-1"><Check size={10} /> Automático</span>}</label>{formData.isReceitaReadonly ? (<input type="text" readOnly value={formData.receita} className="w-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 px-3 py-2.5 rounded-lg outline-none text-sm font-bold cursor-not-allowed" />) : (<input type="text" name="receita" value={formData.receita} onChange={handleFormChange} placeholder="R$ 0,00" className="w-full bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] focus:border-[#E3000F] outline-none text-sm font-bold" />)}</div>
@@ -737,8 +858,36 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                 </select>
                                             </div>
                                         )}
-                                        {/* Campo CPF removido (LGPD - não armazena mais dado pessoal na venda) */}
-                                        <div className="space-y-1.5 relative"><label className={`text-xs font-bold uppercase tracking-wider flex justify-between ${requiresContrato ? 'text-neutral-500 dark:text-neutral-400' : 'text-neutral-400 dark:text-neutral-500'}`}><span>Contrato {requiresContrato && <span className="text-[#E3000F]">*</span>}</span>{!requiresContrato && <Lock size={12} />}</label><input type="text" name="contrato" value={formData.contrato} onChange={handleFormChange} placeholder={requiresContrato ? "Ex: 000/000000000" : "Não aplicável"} disabled={!requiresContrato} className={`w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border ${requiresContrato ? 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100' : 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-400 dark:text-neutral-500 cursor-not-allowed'}`} /></div>
+                                        {requiresContrato ? (
+                                            <div className="space-y-1.5 relative animate-fade-in">
+                                                <label className="text-xs font-bold uppercase tracking-wider flex justify-between text-neutral-500 dark:text-neutral-400">
+                                                    <span>Contrato Residencial <span className="text-[#E3000F]">*</span></span>
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    name="contrato" 
+                                                    value={formData.contrato} 
+                                                    onChange={handleFormChange} 
+                                                    placeholder="Ex: 000/000000000" 
+                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100" 
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-1.5 relative animate-fade-in">
+                                                <label className="text-xs font-bold uppercase tracking-wider flex justify-between text-neutral-500 dark:text-neutral-400">
+                                                    <span>Número de Celular (Cliente)</span>
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    name="celular" 
+                                                    value={formData.celular} 
+                                                    onChange={handleFormChange} 
+                                                    placeholder="(XX) XXXXX-XXXX" 
+                                                    maxLength={15}
+                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium border bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100" 
+                                                />
+                                            </div>
+                                        )}
                                         {showMplay && (<div className="space-y-1.5 animate-fade-in"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">M-Play <span className="text-[#E3000F]">*</span></label><select name="mplay" value={formData.mplay} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option><option className="bg-white dark:bg-neutral-900" value="SIM">SIM</option><option className="bg-white dark:bg-neutral-900" value="NÃO">NÃO</option></select></div>)}
                                     </div>
                                     <div className="mt-6 pt-6 border-t border-neutral-100 dark:border-neutral-800">
@@ -758,11 +907,33 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                         <div className="flex-1 p-4 sm:p-6 space-y-6">
                                             {formError && (<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-[#E3000F] px-4 py-3 rounded-lg flex items-center gap-3 text-sm font-medium animate-fade-in"><AlertCircle size={18} className="shrink-0" />{formError}</div>)}
                                             <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 flex flex-col md:flex-row md:items-center gap-4 justify-between"><div><h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 uppercase tracking-wide">Contexto da Venda</h3><p className="text-xs text-neutral-500 dark:text-neutral-400">Selecione o formato para calcular a receita corretamente.</p></div><div className="flex flex-wrap sm:flex-nowrap bg-white dark:bg-neutral-900 rounded-lg p-1 border border-neutral-200 dark:border-neutral-700 shadow-sm w-full md:w-auto">{['SINGLE', 'MULTI', 'MULTI 3P'].map(tipo => (<button key={tipo} type="button" onClick={() => handleFormChange({ target: { name: 'combo', value: tipo } })} className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all ${formData.combo === tipo ? 'bg-[#E3000F] text-white shadow-md' : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}>{tipo}</button>))}</div></div>
+                                            <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 flex flex-col md:flex-row md:items-center gap-4 justify-between">
+                                                <div>
+                                                    <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 uppercase tracking-wide">Categoria do Item</h3>
+                                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">MÓVEL, RESIDENCIAL ou APARELHO & OUTROS.</p>
+                                                </div>
+                                                <div className="flex flex-wrap sm:flex-nowrap bg-white dark:bg-neutral-900 rounded-lg p-1 border border-neutral-200 dark:border-neutral-700 shadow-sm w-full md:w-auto">
+                                                    {CATEGORIAS_VENDA.map(cat => (
+                                                        <button
+                                                            key={cat}
+                                                            type="button"
+                                                            onClick={() => handleCategoriaChange(cat)}
+                                                            className={`flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-bold rounded-md transition-all ${
+                                                                (formData.categoriaVenda || 'MÓVEL') === cat 
+                                                                    ? 'bg-[#E3000F] text-white shadow-md' 
+                                                                    : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                                                            }`}
+                                                        >
+                                                            {cat}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
                                             
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                                 <div className="space-y-1.5 relative"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between"><span>Vendedor <span className="text-[#E3000F]">*</span></span>{isVendedor && <Lock size={12} className="text-[#E3000F]" />}</label><select name="vendedor" value={formData.vendedor} onChange={handleFormChange} disabled={isVendedor} className={`w-full border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium ${isVendedor ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-[#E3000F]' : 'bg-neutral-50 dark:bg-neutral-800/50'}`}><option className="bg-white dark:bg-neutral-900" value="">Selecione o vendedor</option>{safeVendedores.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)}</select></div>
                                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Data <span className="text-[#E3000F]">*</span></label><input type="date" name="data" value={formData.data} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" /></div>
-                                                <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Produto <span className="text-[#E3000F]">*</span></label><select name="produto" value={formData.produto} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium"><option className="bg-white dark:bg-neutral-900" value="">Selecione o produto</option>{safeProdutos.map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select></div>
+                                                <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Produto <span className="text-[#E3000F]">*</span></label><select name="produto" value={formData.produto} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium"><option className="bg-white dark:bg-neutral-900" value="">Selecione o produto</option>{(PRODUTOS_POR_CATEGORIA[formData.categoriaVenda || 'MÓVEL'] || safeProdutos).map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select></div>
                                                 {getSubOptions().length > 0 && (<div className="space-y-1.5 animate-fade-in bg-yellow-50/50 dark:bg-yellow-900/20 p-2 -m-2 rounded-lg border border-yellow-100 dark:border-yellow-800"><label className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1">Especificação <span className="text-[#E3000F]">*</span></label><select name="subOption" value={formData.subOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-[#E3000F]"><option className="bg-white dark:bg-neutral-900" value="">Selecione a opção</option>{getSubOptions().map(o => <option className="bg-white dark:bg-neutral-900" key={o.label} value={o.label}>{o.label}</option>)}</select></div>)}
                                                 {isServico && (<div className="space-y-1.5 animate-fade-in bg-purple-50/50 dark:bg-purple-900/20 p-2 -m-2 rounded-lg border border-purple-100 dark:border-purple-800"><label className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">Tipo de Operação <span className="text-[#E3000F]">*</span></label><select name="tipoOperacao" value={formData.tipoOperacao} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-purple-700 dark:text-purple-400"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option><option className="bg-white dark:bg-neutral-900" value="ATIVAÇÃO">ATIVAÇÃO</option><option className="bg-white dark:bg-neutral-900" value="MIGRAÇÃO">MIGRAÇÃO</option></select></div>)}
                                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex items-center justify-between"><span>{isComissionado ? 'Valor Bruto (R$)' : 'Receita (R$)'} <span className="text-[#E3000F]">*</span></span>{formData.isReceitaReadonly && <span className="text-[10px] bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 px-1.5 py-0.5 rounded flex items-center gap-1"><Check size={10} /> Automático</span>}</label>{formData.isReceitaReadonly ? (<input type="text" readOnly value={formData.receita} className="w-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 px-3 py-2.5 rounded-lg outline-none text-sm font-bold cursor-not-allowed" />) : (<input type="text" name="receita" value={formData.receita} onChange={handleFormChange} placeholder="R$ 0,00" className="w-full bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] focus:border-[#E3000F] outline-none text-sm font-bold" />)}</div>
@@ -792,6 +963,22 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                         </select>
                                                     </div>
                                                 )}
+                                                {requiresCelular && (
+                                                    <div className="space-y-1.5 animate-fade-in">
+                                                        <label className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                                            <span>Celular (Linha/Item)</span>
+                                                        </label>
+                                                        <input 
+                                                            type="text" 
+                                                            name="celular" 
+                                                            value={formData.celular} 
+                                                            onChange={handleFormChange} 
+                                                            placeholder="(XX) XXXXX-XXXX" 
+                                                            maxLength={15}
+                                                            className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium" 
+                                                        />
+                                                    </div>
+                                                )}
                                                 {showMplay && (<div className="space-y-1.5 animate-fade-in"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">M-Play <span className="text-[#E3000F]">*</span></label><select name="mplay" value={formData.mplay} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option><option className="bg-white dark:bg-neutral-900" value="SIM">SIM</option><option className="bg-white dark:bg-neutral-900" value="NÃO">NÃO</option></select></div>)}
                                             </div>
                                         </div>
@@ -813,7 +1000,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#E3000F]"></div>
                                                         <div className="flex flex-col pl-2">
                                                             <span className="text-xs font-bold text-neutral-800 dark:text-neutral-100">{item.qtda}x {item.produtoBase || item.produto} {item.subOption && `(${item.subOption})`}</span>
-                                                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">{item.combo} {item.tipoOperacao ? `• ${item.tipoOperacao}` : ''}</span>
+                                                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">{item.combo} {item.tipoOperacao ? `• ${item.tipoOperacao}` : ''} {item.celular ? `• Cel: ${item.celular}` : ''}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3">
                                                             <span className="text-xs font-black text-green-600 dark:text-green-500">{item.receita}</span>
@@ -825,14 +1012,40 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                         </div>
 
                                         <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-700 shrink-0">
-                                            {/* Campo CPF do Titular removido (LGPD - não armazena mais dado pessoal na venda) */}
-                                            
                                             {(() => {
-                                                const hasResidential = comboItems.some(i => (PRODUTOS_CONTRATO_OBRIGATORIO || []).includes(i.produtoBase || i.produto));
+                                                const hasResidential = comboItems.some(i => isResidencialProduct(i.produtoBase || i.produto));
+                                                const hasMovelOuVenda = comboItems.length === 0 || comboItems.some(i => !isResidencialProduct(i.produtoBase || i.produto));
                                                 return (
-                                                    <div className="space-y-1.5 relative">
-                                                        <label className={`text-xs font-bold uppercase tracking-wider flex justify-between ${hasResidential ? 'text-neutral-500 dark:text-neutral-400' : 'text-neutral-400 dark:text-neutral-500'}`}><span>Contrato {hasResidential && <span className="text-[#E3000F]">*</span>}</span>{!hasResidential && <Lock size={12} />}</label>
-                                                        <input type="text" value={comboGlobal.contrato} onChange={e => setComboGlobal({ ...comboGlobal, contrato: applyContratoMask(e.target.value) })} placeholder={hasResidential ? "Ex: 000/000000000" : "Não aplicável"} disabled={!hasResidential} className={`w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border ${hasResidential ? 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100' : 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-400 dark:text-neutral-500 cursor-not-allowed'}`} />
+                                                    <div className="space-y-3">
+                                                        {hasMovelOuVenda && (
+                                                            <div className="space-y-1.5 relative">
+                                                                <label className="text-xs font-bold uppercase tracking-wider flex justify-between text-neutral-500 dark:text-neutral-400">
+                                                                    <span>Número de Celular (Cliente/Titular)</span>
+                                                                </label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={comboGlobal.celular} 
+                                                                    onChange={e => setComboGlobal({ ...comboGlobal, celular: applyPhoneMask(e.target.value) })} 
+                                                                    placeholder="(XX) XXXXX-XXXX" 
+                                                                    maxLength={15}
+                                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100" 
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        {hasResidential && (
+                                                            <div className="space-y-1.5 relative">
+                                                                <label className="text-xs font-bold uppercase tracking-wider flex justify-between text-neutral-500 dark:text-neutral-400">
+                                                                    <span>Contrato Residencial <span className="text-[#E3000F]">*</span></span>
+                                                                </label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={comboGlobal.contrato} 
+                                                                    onChange={e => setComboGlobal({ ...comboGlobal, contrato: applyContratoMask(e.target.value) })} 
+                                                                    placeholder="Ex: 000/000000000" 
+                                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100" 
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 );
                                             })()}

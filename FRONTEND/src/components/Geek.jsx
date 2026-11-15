@@ -60,13 +60,54 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
     const [isNovaCategoria, setIsNovaCategoria] = useState(false);
     const [novaCategoriaNome, setNovaCategoriaNome] = useState('');
 
+    // --- COMPRESSÃO INTELIGENTE DE IMAGEM PARA FLYERS (ALTA DEFINIÇÃO E PESO LEVE) ---
+    const compressImageFile = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const maxDim = 1400;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) {
+                            h = Math.round((h * maxDim) / w);
+                            w = maxDim;
+                        } else {
+                            w = Math.round((w * maxDim) / h);
+                            h = maxDim;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.90);
+                        resolve(compressedBase64);
+                    } else {
+                        resolve(e.target.result);
+                    }
+                };
+                img.onerror = () => resolve(e.target.result);
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(file);
+        });
+    };
+
     // --- ESTADOS DO CARROSSEL DE FLYERS (3:4) ---
     const [flyers, setFlyers] = useState(() => {
         try {
             const saved = localStorage.getItem('CLARO_GEEK_FLYERS_34');
-            if (saved) {
+            if (saved !== null) {
                 const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                if (Array.isArray(parsed)) return parsed;
             }
         } catch {}
         return DEFAULT_FLYERS;
@@ -84,12 +125,42 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
     const [previewFlyer, setPreviewFlyer] = useState(null);
     const carouselRef = useRef(null);
 
-    // Salvar flyers no localStorage
+    // Sincronizar com documento de flyers na nuvem (Oracle / GEEK_DOCS)
     useEffect(() => {
         try {
-            localStorage.setItem('CLARO_GEEK_FLYERS_34', JSON.stringify(flyers));
+            const cloudDoc = (geekDocs || []).find(d => d.id === 'CONFIG_FLYERS_34' || d.categoria === '__FLYERS_CARROSSEL__');
+            if (cloudDoc && Array.isArray(cloudDoc.flyersList)) {
+                setFlyers(cloudDoc.flyersList);
+                try {
+                    localStorage.setItem('CLARO_GEEK_FLYERS_34', JSON.stringify(cloudDoc.flyersList));
+                } catch {}
+            }
         } catch {}
-    }, [flyers]);
+    }, [geekDocs]);
+
+    // Função central para salvar flyers com persistência local e nuvem
+    const saveFlyersList = (newList) => {
+        setFlyers(newList);
+        try {
+            localStorage.setItem('CLARO_GEEK_FLYERS_34', JSON.stringify(newList));
+        } catch (err) {
+            console.warn('Erro ao salvar flyers no localStorage:', err);
+        }
+        if (typeof setGeekDocs === 'function') {
+            setGeekDocs(prev => {
+                const filtered = (prev || []).filter(d => d.id !== 'CONFIG_FLYERS_34' && d.categoria !== '__FLYERS_CARROSSEL__');
+                const cloudDoc = {
+                    id: 'CONFIG_FLYERS_34',
+                    titulo: 'Flyers de Campanha 3:4',
+                    categoria: '__FLYERS_CARROSSEL__',
+                    flyersList: newList,
+                    data: new Date().toLocaleDateString('pt-BR'),
+                    updatedAt: Date.now()
+                };
+                return [cloudDoc, ...filtered];
+            });
+        }
+    };
 
     const viewedDocs = globalUser?.viewedGeekDocs || {};
 
@@ -103,7 +174,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
         { id: 'OUTROS', icon: <Archive size={20} className="text-orange-500" /> }
     ];
 
-    const categoriasUnicas = Array.from(new Set((geekDocs || []).map(d => d.categoria)));
+    const categoriasUnicas = Array.from(new Set((geekDocs || []).filter(d => d.categoria !== '__FLYERS_CARROSSEL__').map(d => d.categoria)));
     const allCategorias = [...categoriasPadrao];
     categoriasUnicas.forEach(catId => {
         if (!allCategorias.some(c => c.id === catId)) {
@@ -111,7 +182,8 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
         }
     });
 
-    const canEdit = ['GEEK', 'ADMINISTRAÇÃO', 'GERENTE'].includes(globalUser?.role);
+    const userRole = String(globalUser?.role || '').trim().toUpperCase();
+    const canEdit = isGerente || ['GEEK', 'ADMINISTRAÇÃO', 'GERENTE', 'SENIOR', 'ASSISTENTE RELACIONAMENTO', 'JOVEM APRENDIZ'].includes(userRole);
 
     // --- FUNÇÕES DE NAVEGAÇÃO DO CARROSSEL ---
     const scrollCarousel = (direction) => {
@@ -152,30 +224,29 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             toast.error('Acesso negado. Apenas perfis autorizados podem excluir flyers.');
             return;
         }
-        if (window.confirm('Deseja excluir este flyer de campanha?')) {
-            setFlyers(prev => prev.filter(f => f.id !== id));
+        if (window.confirm('Deseja excluir este flyer de campanha definitivamente?')) {
+            const updated = flyers.filter(f => f.id !== id);
+            saveFlyersList(updated);
+            if (previewFlyer?.id === id) {
+                setPreviewFlyer(null);
+            }
             toast.success('Flyer excluído com sucesso!');
         }
     };
 
-    const handleImageUpload = (e) => {
+    const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 4 * 1024 * 1024) {
-            toast.error('A imagem deve ter no máximo 4MB.');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (uploadEvent) => {
-            const base64 = uploadEvent.target?.result;
-            if (base64) {
-                setFlyerFormData(prev => ({ ...prev, imagemUrl: String(base64) }));
-                toast.success('Imagem carregada com sucesso!');
+        try {
+            const compressed = await compressImageFile(file);
+            if (compressed) {
+                setFlyerFormData(prev => ({ ...prev, imagemUrl: compressed }));
+                toast.success('Imagem otimizada em alta definição!');
             }
-        };
-        reader.readAsDataURL(file);
+        } catch {
+            toast.error('Erro ao processar imagem.');
+        }
     };
 
     const handleFlyerSubmit = (e) => {
@@ -194,8 +265,9 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             finalLink = 'https://' + finalLink;
         }
 
+        let updatedList = [];
         if (editingFlyerId) {
-            setFlyers(prev => prev.map(f => f.id === editingFlyerId ? {
+            updatedList = flyers.map(f => f.id === editingFlyerId ? {
                 ...f,
                 titulo: flyerFormData.titulo.trim(),
                 subtitulo: flyerFormData.subtitulo.trim(),
@@ -203,7 +275,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                 imagemUrl: flyerFormData.imagemUrl.trim(),
                 link: finalLink,
                 updatedAt: Date.now()
-            } : f));
+            } : f);
             toast.success('Flyer atualizado com sucesso!');
         } else {
             const novoFlyer = {
@@ -216,10 +288,11 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                 data: new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
                 updatedAt: Date.now()
             };
-            setFlyers(prev => [novoFlyer, ...prev]);
+            updatedList = [novoFlyer, ...flyers];
             toast.success('Novo flyer publicado no carrossel!');
         }
 
+        saveFlyersList(updatedList);
         setIsFlyerModalOpen(false);
         setEditingFlyerId(null);
     };
@@ -440,13 +513,13 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                 {/* Ações do Flyer (Editar / Excluir para perfis autorizados) */}
                                 {canEdit && (
                                     <div
-                                        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 flex items-center gap-1 z-20 transition-all bg-black/70 backdrop-blur-sm p-1 rounded-lg"
+                                        className="absolute top-3 right-3 flex items-center gap-1 z-20 transition-all bg-black/80 backdrop-blur-sm p-1 rounded-lg border border-white/20 shadow-md"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <button
                                             type="button"
                                             onClick={() => handleEditFlyer(flyer)}
-                                            className="p-1 text-white hover:text-blue-400 rounded transition-colors"
+                                            className="p-1.5 text-white hover:text-blue-400 hover:bg-white/10 rounded transition-colors"
                                             title="Editar Flyer"
                                         >
                                             <Edit3 size={14} />
@@ -454,7 +527,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                         <button
                                             type="button"
                                             onClick={() => handleDeleteFlyer(flyer.id)}
-                                            className="p-1 text-white hover:text-red-400 rounded transition-colors"
+                                            className="p-1.5 text-white hover:text-red-400 hover:bg-white/10 rounded transition-colors"
                                             title="Excluir Flyer"
                                         >
                                             <Trash2 size={14} />
@@ -706,57 +779,103 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                 </div>
             )}
 
-            {/* MODAL DE VISUALIZAÇÃO AMPLIADA DO FLYER 3:4 */}
+            {/* MODAL DE VISUALIZAÇÃO AMPLIADA DO FLYER - CAMPO 16:9 NÍTIDO SEM DESFOCAR */}
             {previewFlyer && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md p-4 flex items-center justify-center no-print"
+                    className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md p-2 sm:p-6 flex items-center justify-center no-print"
                     onClick={() => setPreviewFlyer(null)}
                 >
                     <div
-                        className="relative max-w-sm sm:max-w-md w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border border-white/20 flex flex-col justify-end bg-neutral-900 animate-fade-in"
+                        className="relative w-full max-w-5xl aspect-[16/9] max-h-[90vh] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-neutral-950 flex flex-col justify-between animate-fade-in select-none"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {/* Imagem de Fundo com desfoque suave para preenchimento de cinema nas abas laterais */}
                         <img
                             src={previewFlyer.imagemUrl}
-                            alt={previewFlyer.titulo}
-                            className="absolute inset-0 w-full h-full object-cover"
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-25 scale-110 pointer-events-none"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
 
-                        {/* Botão Fechar */}
-                        <button
-                            type="button"
-                            onClick={() => setPreviewFlyer(null)}
-                            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all z-20"
-                            title="Fechar Visualização"
-                        >
-                            <X size={20} />
-                        </button>
+                        {/* Imagem Principal Central NÍTIDA em Alta Resolução SEM DESFOCAR */}
+                        <div className="absolute inset-0 flex items-center justify-center p-2 sm:p-6 z-10 pointer-events-none">
+                            <img
+                                src={previewFlyer.imagemUrl}
+                                alt={previewFlyer.titulo}
+                                className="max-h-full max-w-full object-contain rounded-xl shadow-2xl pointer-events-auto"
+                                style={{ imageRendering: '-webkit-optimize-contrast' }}
+                            />
+                        </div>
 
-                        <div className="relative z-10 p-6 flex flex-col gap-2 text-white">
-                            <span className="self-start px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#E3000F] shadow-lg">
-                                {previewFlyer.tag || 'CAMPANHA'}
-                            </span>
-                            <h3 className="text-xl font-black uppercase tracking-wide leading-tight drop-shadow-md">
-                                {previewFlyer.titulo}
-                            </h3>
-                            {previewFlyer.subtitulo && (
-                                <p className="text-xs text-neutral-200 font-medium leading-relaxed drop-shadow">
-                                    {previewFlyer.subtitulo}
-                                </p>
-                            )}
+                        {/* Barra Superior com Tags e Botões de Ação */}
+                        <div className="relative z-20 p-4 sm:p-6 flex items-center justify-between gap-3 bg-gradient-to-b from-black/85 via-black/40 to-transparent">
+                            <div className="flex items-center gap-2">
+                                <span className="px-3 py-1 rounded-md text-[10px] sm:text-xs font-black uppercase tracking-wider bg-[#E3000F] text-white shadow-lg">
+                                    {previewFlyer.tag || 'CAMPANHA'}
+                                </span>
+                                <span className="px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold text-white/90 bg-black/60 backdrop-blur-sm border border-white/10">
+                                    {previewFlyer.data}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {canEdit && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const toEdit = previewFlyer;
+                                                setPreviewFlyer(null);
+                                                handleEditFlyer(toEdit);
+                                            }}
+                                            className="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white text-white hover:text-neutral-900 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                                            title="Editar dados e imagem deste flyer"
+                                        >
+                                            <Edit3 size={14} /> Editar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteFlyer(previewFlyer.id)}
+                                            className="px-3 py-1.5 rounded-lg bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                                            title="Excluir este flyer"
+                                        >
+                                            <Trash2 size={14} /> Excluir
+                                        </button>
+                                    </>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewFlyer(null)}
+                                    className="w-9 h-9 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center transition-all border border-white/20 hover:border-white shadow-lg"
+                                    title="Fechar Visualização"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Barra Inferior com Título, Subtítulo e Link Externo */}
+                        <div className="relative z-20 p-4 sm:p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent flex flex-col sm:flex-row sm:items-end justify-between gap-3 text-white">
+                            <div className="max-w-2xl">
+                                <h3 className="text-base sm:text-xl font-black uppercase tracking-wide leading-tight drop-shadow-md">
+                                    {previewFlyer.titulo}
+                                </h3>
+                                {previewFlyer.subtitulo && (
+                                    <p className="text-xs sm:text-sm text-neutral-200 font-medium leading-relaxed drop-shadow mt-1">
+                                        {previewFlyer.subtitulo}
+                                    </p>
+                                )}
+                            </div>
 
                             {previewFlyer.link && (
-                                <div className="pt-2">
-                                    <a
-                                        href={previewFlyer.link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full py-2.5 px-4 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg"
-                                    >
-                                        Acessar Regulamento / Link Oficial <ExternalLink size={14} />
-                                    </a>
-                                </div>
+                                <a
+                                    href={previewFlyer.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="py-2.5 px-4 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0"
+                                >
+                                    Acessar Link Oficial <ExternalLink size={14} />
+                                </a>
                             )}
                         </div>
                     </div>

@@ -87,6 +87,7 @@ export const parseExcelSales = (file) => {
                     const tipoKeys = Object.keys(row).filter(k => k.toUpperCase() === 'TIPO' || k.toUpperCase().includes('COMBO'));
                     const qtdaKeys = Object.keys(row).filter(k => k.toUpperCase().includes('QTD') || k.toUpperCase().includes('QUANT'));
                     const cpfKeys = Object.keys(row).filter(k => k.toUpperCase().includes('CPF') || k.toUpperCase().includes('CNPJ') || k.toUpperCase().includes('DOC'));
+                    const celKeys = Object.keys(row).filter(k => k.toUpperCase().includes('CELULAR') || k.toUpperCase().includes('FONE') || k.toUpperCase().includes('TEL') || k.toUpperCase().includes('NUMERO'));
                     const contKeys = Object.keys(row).filter(k => k.toUpperCase().includes('CONTRATO') || k.toUpperCase().includes('OS'));
                     const addKeys = Object.keys(row).filter(k => k.toUpperCase().includes('ADICION'));
 
@@ -120,6 +121,7 @@ export const parseExcelSales = (file) => {
                         portabilidade: 'NÃO',
                         receita: receitaVal,
                         cpf: cpfKeys.length > 0 ? String(row[cpfKeys[0]]).trim() : '',
+                        celular: celKeys.length > 0 ? String(row[celKeys[0]]).trim() : '',
                         contrato: contKeys.length > 0 ? String(row[contKeys[0]]).trim() : '-',
                         mplay: 'NÃO',
                         adicionais: addKeys.length > 0 && row[addKeys[0]] ? String(row[addKeys[0]]).split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : [],
