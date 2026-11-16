@@ -353,4 +353,17 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - **Sincronização Completa na VM Oracle (`137.131.172.16`) e Firebase Hosting**:
   - Enviados os arquivos atualizados do backend via SCP para `/home/ubuntu/BACKEND/src/` na VM Oracle e reiniciado o processo `painel-backend` no PM2.
   - Frontend compilado e publicado em `https://workflow-sistema.web.app`.
+- **Atualização Completa da Seção `[FATOR RV]` — Norma `PL-DRH-042` (Anexo I - G, Rev. 08) & Campo `"FONTE"` (PDF de Regras) (`BACKEND/src/utils/rules.js` & `FRONTEND/src/components/FatorRvv.jsx`)**:
+  - **Associação Simétrica dos 6 Cargos às Suas Regras Oficiais:**
+    1. **Assistente de Relacionamentos (`Grupo VII • Anexo VIII`)**: Base Loja Alocada; Gatilhos ≥ 80% (Gross Pós, Receita, Residencial); Faixas: `0,75%` / `1,20%` / `1,50%`; Bônus SMS ≥ 8 (`+5%`); Teto: `R$ 4.000,00`.
+    2. **Gerente de Loja (`Grupo II • Anexo III`)**: Base Lojas sob Gestão; Gatilhos ≥ 80% (Gross Pós, Receita, Residencial); Faixas: `1,00%` / `2,00%` / `3,00%`; Bônus SMS ≥ 8 (`+5%`) + Bônus Gestão (`+R$ 250` se ≥ 80% vendedores elegíveis | `+R$ 500` se 100% elegíveis); Teto: `R$ 7.000,00`.
+    3. **Vendedor Sênior (`Grupo III • Anexo IV`)**: Base Loja Alocada; Gatilhos ≥ 80% (Gross Pós, Receita, Residencial); Faixas: `1,00%` / `1,50%` / `2,00%`; Bônus SMS ≥ 8 (`+5%`); Teto: `R$ 6.000,00`.
+    4. **Vendedor (`Grupo VIII • Anexo IX`)**: Base Individual; Gatilhos ≥ 80% (Gross Pós, Receita, Residencial); Faixas: `4,50%` / `7,00%` / `9,00%` / `11,00%`; Bônus SMS ≥ 8 (`+5%`) + Bônus Unitário por Venda Acima da Meta (Pós Titular/Controle, Fibra e TV: `R$ 10` [100-114,99%] | `R$ 15` [≥ 115%]); Teto: `R$ 6.000,00`.
+    5. **Assistente Tecnológico / Geek (`Grupo IV • Anexo V`)**: Base Loja Alocada; Gatilhos Quantitativos ≥ 80% (**Gross Pós**, **Acessório Qtde**, **Aparelho Qtde** — sem exigir Receita/Residencial na elegibilidade); Faixas: `1,00%` / `1,50%` / `2,00%`; Bônus Exclusivos: Fibra/Virtua PME (`+R$ 200` / `+R$ 300`) + Ticket Médio Acessórios (`+R$ 235` fixo); Teto: `R$ 6.000,00`.
+    6. **ADM / Assistente Administrativo (`Grupo V • Anexo VI`)**: Base Loja Alocada; Gatilhos ≥ 80% (Gross Pós, Receita, Residencial); Faixas: `0,50%` / `1,00%` / `1,50%`; Bônus SMS ≥ 8 (`+5%`); Teto: `R$ 2.000,00`.
+  - **Mapeamento de Nomes Compostos para Produtos da Base (Anexo I)**:
+    - *Banda Larga Fixa ("Virtua")* = `FIBRA` / `FIBRA PME`; *TV Ponto Principal* = `TVBOX` / `TV-BOX` / `TV CABO` / `SOUNDBOX`; *Telefone Fixo* = `FIXO`; *Smarthome* = `MESH`; *Aparelho* = `5%` (`6%` com Seguro); *Seguro Avulso* = `40%`; *Acessórios/Películas* = `15%` da NF; *Portabilidade* = `+30%`; *Fator Multi/M-Play* = `1,2x` / `1,4x` / `1,6x` / `1,8x`; *Movimentações* = Upgrade (`50%`), Sidegrade (`25%`), Downgrade (`0%`).
+  - **Campo `"FONTE"` (Leitor e Gerador de PDF Oficial A4)**:
+    - Botão `"FONTE OFICIAL (PDF): Norma PL-DRH-042"` no cabeçalho e rodapé da seção `[FATOR RV]`, abrindo o leitor interativo por cargo e gerando o documento PDF A4 dimensionado para impressão/download.
+
 
