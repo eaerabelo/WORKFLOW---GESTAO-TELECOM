@@ -715,10 +715,13 @@ export default function App() {
         setUsersDB(recoveredUsers);
         setGlobalUser(prev => {
           if (!prev || !prev.username) return prev;
+          if (prev.storeId && prev.storeId !== 'DEFAULT') {
+            localStorage.setItem('storeId', prev.storeId);
+          }
           const uKey = String(prev.username).toUpperCase();
           const dbU = recoveredUsers[uKey] || recoveredUsers[prev.username] || Object.values(recoveredUsers).find(u => String(u?.username || '').toUpperCase() === uKey);
           if (!dbU) return prev;
-          const next = { ...prev, name: dbU.name || prev.name, photoUrl: dbU.photoUrl ?? prev.photoUrl ?? '' };
+          const next = { ...prev, name: dbU.name || prev.name, role: dbU.role || prev.role, photoUrl: dbU.photoUrl ?? prev.photoUrl ?? '' };
           localStorage.setItem('sessionUser', JSON.stringify(next));
           return next;
         });
@@ -749,12 +752,16 @@ export default function App() {
     socket.on('disconnect', () => setIsSocketConnected(false));
     socket.on('connect_error', () => setIsSocketConnected(false));
 
-    socket.on('vendas-atualizadas', (sId) => { if (sId === STORE_ID) fetchAllData(); });
-    socket.on('simcards-atualizados', (sId) => { if (sId === STORE_ID) fetchAllData(); });
-    socket.on('reprovados-atualizados', (sId) => { if (sId === STORE_ID) fetchAllData(); });
-    socket.on('geek-docs-atualizados', (sId) => { if (sId === STORE_ID) fetchAllData(); });
-    socket.on('campanhas-atualizadas', (sId) => { if (sId === STORE_ID) fetchAllData(); });
-    socket.on('config-atualizada', (sId) => { if (sId === STORE_ID) fetchAllData(); });
+    const isCurrentStoreEvent = (sId) => {
+      const currentSId = localStorage.getItem('storeId') || STORE_ID;
+      return sId === currentSId;
+    };
+    socket.on('vendas-atualizadas', (sId) => { if (isCurrentStoreEvent(sId)) fetchAllData(); });
+    socket.on('simcards-atualizados', (sId) => { if (isCurrentStoreEvent(sId)) fetchAllData(); });
+    socket.on('reprovados-atualizados', (sId) => { if (isCurrentStoreEvent(sId)) fetchAllData(); });
+    socket.on('geek-docs-atualizados', (sId) => { if (isCurrentStoreEvent(sId)) fetchAllData(); });
+    socket.on('campanhas-atualizadas', (sId) => { if (isCurrentStoreEvent(sId)) fetchAllData(); });
+    socket.on('config-atualizada', (sId) => { if (isCurrentStoreEvent(sId)) fetchAllData(); });
 
     return () => {
       socket.off('connect');
@@ -934,17 +941,18 @@ export default function App() {
 
   // --- REGRAS DE HIERARQUIA DERIVADAS DO LOGIN ---
   // Determina através de variáveis booleanas as permissões de acordo com os cargos
-  const isGerente = globalUser?.role === 'GERENTE';
-  const isSeniorEquivalent = ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'JOVEM APRENDIZ', 'GEEK'].includes(globalUser?.role);
+  const userRoleUpper = String(globalUser?.role || '').toUpperCase();
+  const isGerente = ['GERENTE', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
+  const isSeniorEquivalent = ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'ADM', 'JOVEM APRENDIZ', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   
-  const canModifySimcard = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'JOVEM APRENDIZ', 'GEEK'].includes(globalUser?.role);
+  const canModifySimcard = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'ADM', 'JOVEM APRENDIZ', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   const canEditSchedule = isGerente;
-  const hasScheduleAccess = ['GERENTE'].includes(globalUser?.role);
-  const hasMetaAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(globalUser?.role);
-  const canEditMeta = ['GERENTE', 'SENIOR'].includes(globalUser?.role);
-  const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(globalUser?.role);
-  const hasAreaLojasAccess = ['GERENTE', 'SENIOR', 'GEEK'].includes(globalUser?.role);
-  const isVendedor = globalUser?.role === 'VENDEDOR';
+  const hasScheduleAccess = ['GERENTE', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
+  const hasMetaAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'ADM', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
+  const canEditMeta = ['GERENTE', 'SENIOR', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
+  const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'ADM', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
+  const hasAreaLojasAccess = ['GERENTE', 'SENIOR', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
+  const isVendedor = userRoleUpper === 'VENDEDOR';
   const hasResultadoAccess = !isVendedor;
   const [standaloneView, setStandaloneView] = useState(null); // null | 'PROFILE' | 'HELP'
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);

@@ -1,3 +1,4 @@
+import oracledb from 'oracledb';
 import { getOracleConnection } from '../config/oracle.js';
 // O QUE FAZ : Busca as configuracoes na tabela CONFIGURACOES e os usuarios na tabela USUARIOS
 export const getConfig = async (req, res) => {
@@ -127,15 +128,20 @@ export const syncConfig = async (req, res) => {
             }
         }
 
+        const docString = JSON.stringify(configData);
         await conn.execute(
             `MERGE INTO CONFIGURACOES c
             USING (SELECT :storeId AS STORE_ID FROM DUAL) src
             ON (c.STORE_ID = src.STORE_ID)
             WHEN MATCHED THEN
-                UPDATE SET DOCUMENT_DATA = :documentData
+                UPDATE SET DOCUMENT_DATA = :docUpdate
             WHEN NOT MATCHED THEN
-                INSERT (ID, STORE_ID, DOCUMENT_DATA) VALUES ('config', :storeId, :documentData)`,
-            { storeId: storeId, documentData: JSON.stringify(configData) },
+                INSERT (ID, STORE_ID, DOCUMENT_DATA) VALUES ('config', :storeId, :docInsert)`,
+            {
+                storeId: storeId,
+                docUpdate: { val: docString, type: oracledb.CLOB },
+                docInsert: { val: docString, type: oracledb.CLOB }
+            },
             { autoCommit: true }
         );
 

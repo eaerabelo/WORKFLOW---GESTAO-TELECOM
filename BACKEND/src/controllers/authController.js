@@ -4,21 +4,7 @@ import bcrypt from 'bcrypt';
 import fs from 'fs';
 import { STORES, findStore } from '../config/stores.js';
 import { findColaboradorPreCadastro, vincularColaboradorAoCadastrar } from '../services/colaboradoresService.js';
-
-
-// Lojas carregadas dinamicamente via stores.js
-const _OLD_STORES = [
-    { id: 'DEFAULT', name: 'Administração Geral', code: 'DEV' },
-    { id: 'uniao_osasco', name: 'LP UNIÃO OSASCO', code: 'AT1M' },
-    { id: 'shopping_bourbon', name: 'LP BOURBON', code: 'LB46' },
-    { id: 'shopping_butanta', name: 'LP BUTANTÃ', code: 'G5Z9' },
-    { id: 'calcadao', name: 'LP CALÇADÃO OSASCO', code: 'LB32' },
-    { id: 'shopping_higienopolis', name: 'LP HIGIENÓPOLIS', code: 'LB24' },
-    { id: 'lapa', name: 'LP LAPA', code: 'FKJ6' },
-    { id: 'shopping_villa_lobos', name: 'LP VILLA LOBOS', code: 'LB43' },
-    { id: 'shopping_west_plaza', name: 'LP WEST PLAZA', code: 'LB36' },
-    { id: 'shopping_raposo', name: 'LP RAPOSO', code: 'K7W8' }
-];
+import { ensureStoreSpaceInDB } from '../services/storeSpaceService.js';
 
 const validarSenha = (password) => {
     if (password.length < 8) return 'A senha deve ter no mínimo 8 caracteres.';
@@ -28,7 +14,6 @@ const validarSenha = (password) => {
     if (!/[(,!.*@#%$&/\-+=)]/.test(password)) return 'A senha deve ter pelo menos 1 caractere especial permitido: (,!.*@#%$&/-+=)';
     return null;
 };
-
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -88,28 +73,6 @@ const updateUserPasswordInDB = async (username, newPass) => {
     }
 };
 
-const insertUserInDB = async (username, storeId, userData) => {
-    const conn = await getOracleConnection();
-    try {
-        const rawPass = userData.password || userData.pass;
-        const hashedPass = await bcrypt.hash(rawPass, 10);
-        await conn.execute(
-            `INSERT INTO USUARIOS (USERNAME, STORE_ID, ROLE, NAME, PASS, EMAIL) VALUES (:username, :storeId, :role, :name, :pass, :email)`,
-            {
-                username: username.toUpperCase(),
-                storeId,
-                role: userData.role,
-                name: userData.name,
-                pass: hashedPass,
-                email: userData.email
-            },
-            { autoCommit: true }
-        );
-    } finally {
-        await conn.close();
-    }
-};
-
 export const login = async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -118,13 +81,11 @@ export const login = async (req, res) => {
             return res.status(400).json({ error: "Preencha usuário e senha." });
         }
 
-        const userUpper = username.toUpperCase();
-        
+        const userUpper = username.toUpperCase().trim();
         const user = await getUserFromDB(userUpper);
 
         if (!user) {
-            import('fs').then(fs => fs.appendFileSync('requests.log', `FALHA LOGIN (Invalido): ${userUpper}
-`)).catch(()=>{});
+            import('fs').then(fs => fs.appendFileSync('requests.log', `FALHA LOGIN (Invalido): ${userUpper}\n`)).catch(()=>{});
             return res.status(401).json({ error: "Usuário ou senha inválidos." });
         }
 
@@ -132,10 +93,8 @@ export const login = async (req, res) => {
         let isMatch = false;
         
         if (user.pass && user.pass.startsWith('$2b$')) {
-            // Senha está em hash Bcrypt
             isMatch = await bcrypt.compare(password, user.pass);
         } else {
-            // Senha está em texto puro (legado). Verifica e faz a migração automática para Bcrypt!
             if (user.pass === password) {
                 isMatch = true;
                 const hashedPass = await bcrypt.hash(password, 10);
@@ -144,17 +103,54 @@ export const login = async (req, res) => {
                     await conn.execute(`UPDATE USUARIOS SET PASS = :newPass WHERE USERNAME = :username`, { newPass: hashedPass, username: userUpper }, { autoCommit: true });
                 } catch(e) { console.error("Erro ao migrar senha para bcrypt no login:", e); }
                 finally { await conn.close(); }
-                user.pass = hashedPass; // Atualiza em memoria
+                user.pass = hashedPass;
             }
         }
         
         if (!isMatch) {
-            import('fs').then(fs => fs.appendFileSync('requests.log', `FALHA LOGIN (Senha errada): ${userUpper}
-`)).catch(()=>{});
+            import('fs').then(fs => fs.appendFileSync('requests.log', `FALHA LOGIN (Senha errada): ${userUpper}\n`)).catch(()=>{});
             return res.status(401).json({ error: "Usuário ou senha inválidos." });
         }
 
-        import('fs').then(fs => fs.appendFileSync('requests.log', `SUCESSO LOGIN: ${userUpper} vinculado na loja ${user.storeId}\n`)).catch(()=>{});
+        // Verifica se o colaborador consta na base pré-cadastrada e sincroniza cargo caso estivesse como VENDEDOR
+        try {
+            if (!user.role || user.role === 'VENDEDOR') {
+                const colabMatch = await findColaboradorPreCadastro({ nome: user.name, phone: user.phone, email: user.email });
+                if (colabMatch && colabMatch.role && colabMatch.role !== 'VENDEDOR') {
+                    user.role = colabMatch.role;
+                    const conn = await getOracleConnection();
+                    try {
+                        await conn.execute(
+                            `UPDATE USUARIOS SET ROLE = :newRole WHERE USERNAME = :username`,
+                            { newRole: colabMatch.role, username: userUpper },
+                            { autoCommit: true }
+                        );
+                    } finally {
+                        await conn.close();
+                    }
+                    await vincularColaboradorAoCadastrar({
+                        colabId: colabMatch.id,
+                        nome: user.name,
+                        phone: user.phone,
+                        email: user.email,
+                        username: userUpper,
+                        storeId: user.storeId
+                    });
+                    console.log(`✅ [LOGIN] Cargo sincronizado automaticamente para ${userUpper}: ${user.role}`);
+                }
+            }
+        } catch (roleSyncErr) {
+            console.error("Aviso ao conferir cargo no login:", roleSyncErr.message);
+        }
+
+        // Garante que o espaço da loja existe no banco de dados Oracle
+        const matchedStore = findStore(user.storeId);
+        if (matchedStore) {
+            user.storeId = matchedStore.id;
+            ensureStoreSpaceInDB(matchedStore).catch(() => {});
+        }
+
+        import('fs').then(fs => fs.appendFileSync('requests.log', `SUCESSO LOGIN: ${userUpper} (${user.role}) vinculado na loja ${user.storeId}\n`)).catch(()=>{});
 
         // Verifica Férias
         if (user.vacationStart && user.vacationEnd) {
@@ -174,7 +170,12 @@ export const login = async (req, res) => {
         );
 
         // Remove a senha antes de retornar os dados do usuário pro front
-        const safeUser = { ...user };
+        const safeUser = {
+            ...user,
+            storeName: matchedStore ? matchedStore.name : 'LP UNIÃO OSASCO',
+            storeCode: matchedStore ? matchedStore.code : 'AT1M',
+            storeSap: matchedStore ? matchedStore.sap : '1150'
+        };
         delete safeUser.pass;
 
         // Calcula isBirthday
@@ -315,7 +316,7 @@ export const solicitarCadastro = async (req, res) => {
         const isManagerSetup = setupKey === 'lideranca2026';
 
         // Validação do Prefixo
-        const userUpper = username.toUpperCase();
+        const userUpper = username.toUpperCase().trim();
         if (!isManagerSetup && !userUpper.startsWith('9') && !userUpper.startsWith('F') && !userUpper.startsWith('T') && !userUpper.startsWith('Z')) {
             return res.status(400).json({ error: "O Login deve iniciar com 9, F, T ou Z." });
         }
@@ -343,7 +344,21 @@ export const solicitarCadastro = async (req, res) => {
             return res.status(400).json({ error: passError });
         }
 
-        // 1. Busca se o colaborador possui cargo pré-cadastrado na base (por Nome ou por Celular)
+        // 1. Mapeamento da Loja (Aceita Código ID ex: LB31/K7W8, Código SAP ex: 1119/1146, Nome ou Alias)
+        const matchedStore = findStore(storeCode) || findStore(req.body.storeId) || findStore(req.body.storeSap);
+        if (!matchedStore && !isManagerSetup) {
+            return res.status(400).json({ error: "Código da loja não identificado. Informe o ID (ex: LB31, K7W8) ou SAP (ex: 1119, 1146) válido da sua loja." });
+        }
+
+        const storeId = matchedStore ? matchedStore.id : 'DEFAULT';
+
+        if (matchedStore) {
+            console.log(`🏬 [CADASTRO] Loja identificada: ${matchedStore.name} (ID: ${matchedStore.code} | SAP: ${matchedStore.sap}) -> storeId: ${matchedStore.id}`);
+            // Garante que o espaço da loja seja imediatamente reservado no banco de dados Oracle
+            await ensureStoreSpaceInDB(matchedStore);
+        }
+
+        // 2. Busca se o colaborador possui cargo pré-cadastrado na base (por Nome Completo, Primeiro+Último Nome ou por Celular)
         const colabPre = await findColaboradorPreCadastro({ nome, phone, email });
         
         let role = 'VENDEDOR';
@@ -354,21 +369,8 @@ export const solicitarCadastro = async (req, res) => {
             role = 'GERENTE';
         }
 
-        // Mapeamento da Loja (Aceita ID, SAP, Nome ou Alias)
-        const matchedStore = findStore(storeCode) || findStore(req.body.storeId) || findStore(req.body.storeSap);
-        if (role !== 'GERENTE' && role !== 'ADMINISTRAÇÃO' && role !== 'COORDENADOR' && !matchedStore) {
-            return res.status(400).json({ error: "Código da loja não identificado. Informe o ID (ex: K7W8) ou SAP (ex: 1146) válido da sua loja." });
-        }
-        
-        if (matchedStore) {
-            console.log(`Loja identificada no cadastro: ${matchedStore.name} (ID: ${matchedStore.code} | SAP: ${matchedStore.sap}) -> storeId: ${matchedStore.id}`);
-        }
-
-        // Se for managerSetup ou regional e ele informou um código de loja válido, joga ele na loja. Senão, vai pro DEFAULT.
-        const storeId = matchedStore ? matchedStore.id : 'DEFAULT';
-
         // Verifica se o usuário já existe globalmente
-        const user = await getUserFromDB(username);
+        const user = await getUserFromDB(userUpper);
         if (user) {
             return res.status(400).json({ error: "Este nome de usuário já está em uso no sistema." });
         }
@@ -382,7 +384,7 @@ export const solicitarCadastro = async (req, res) => {
             otpHash,
             userData: {
                 username: userUpper,
-                name: (nome || userUpper).toUpperCase(),
+                name: (nome || userUpper).toUpperCase().trim(),
                 pass: hashedPass,
                 phone: phone ? phone.replace(/\D/g, '') : null,
                 birthDate,
@@ -401,7 +403,11 @@ export const solicitarCadastro = async (req, res) => {
             registrationToken,
             cargoAtribuido: role,
             colaboradorReconhecido: !!colabPre,
-            nomeColaborador: colabPre?.nome || null
+            nomeColaborador: colabPre?.nome || null,
+            storeId,
+            storeName: matchedStore?.name || null,
+            storeCode: matchedStore?.code || null,
+            storeSap: matchedStore?.sap || null
         });
     } catch (error) {
         console.error("Erro ao solicitar cadastro:", error);
@@ -432,16 +438,36 @@ export const efetivarCadastro = async (req, res) => {
             return res.status(400).json({ error: "Código inválido." });
         }
 
-        const { username, storeId, role, name, pass, phone, birthDate, colaboradorId } = decoded.userData;
+        const { username, storeId, role: initialRole, name, pass, phone, birthDate, colaboradorId } = decoded.userData;
+
+        // Confirma novamente se o colaborador consta na base para garantir atribuição do cargo
+        let finalRole = initialRole || 'VENDEDOR';
+        let finalColabId = colaboradorId || null;
+        if (!finalColabId || finalRole === 'VENDEDOR') {
+            const colabCheck = await findColaboradorPreCadastro({ nome: name, phone, email: decoded.email });
+            if (colabCheck) {
+                finalRole = colabCheck.role;
+                finalColabId = colabCheck.id;
+            }
+        }
+
+        // Reserva e garante o espaço da loja no banco de dados Oracle (CONFIGURACOES e LOJAS_SISTEMA)
+        const matchedStore = await ensureStoreSpaceInDB(storeId);
+        const resolvedStoreId = matchedStore ? matchedStore.id : (storeId || 'uniao_osasco');
 
         const conn = await getOracleConnection();
         try {
+            const existing = await conn.execute(`SELECT STORE_ID FROM USUARIOS WHERE USERNAME = :username`, { username });
+            if (existing.rows && existing.rows.length > 0) {
+                await conn.execute(`DELETE FROM USUARIOS WHERE USERNAME = :username`, { username });
+            }
             await conn.execute(
-                `INSERT INTO USUARIOS (USERNAME, STORE_ID, ROLE, NAME, PASS, EMAIL, PHONE, BIRTH_DATE) VALUES (:username, :storeId, :role, :name, :pass, :email, :phone, :birthDate)`,
+                `INSERT INTO USUARIOS (USERNAME, STORE_ID, ROLE, NAME, PASS, EMAIL, PHONE, BIRTH_DATE)
+                 VALUES (:username, :storeId, :role, :name, :pass, :email, :phone, :birthDate)`,
                 {
                     username,
-                    storeId,
-                    role,
+                    storeId: resolvedStoreId,
+                    role: finalRole,
                     name,
                     pass,
                     email: decoded.email,
@@ -454,21 +480,28 @@ export const efetivarCadastro = async (req, res) => {
             await conn.close();
         }
 
-        // Atualiza a tabela COLABORADORES_BASE salvando o e-mail e username do colaborador pré-cadastrado
+        // Atualiza a tabela COLABORADORES_BASE salvando o e-mail, username e storeId do colaborador pré-cadastrado
         try {
             await vincularColaboradorAoCadastrar({
-                colabId: colaboradorId,
+                colabId: finalColabId,
                 nome: name,
                 phone: phone,
                 email: decoded.email,
-                username: username
+                username: username,
+                storeId: resolvedStoreId
             });
-            console.log(`✅ [CADASTRO] Vínculo de e-mail e username atualizado em COLABORADORES_BASE para ${username}`);
+            console.log(`✅ [CADASTRO] Usuário ${username} efetivado na loja ${resolvedStoreId} com cargo ${finalRole}`);
         } catch (syncErr) {
             console.error("Aviso: Falha ao sincronizar e-mail em COLABORADORES_BASE:", syncErr);
         }
 
-        res.status(200).json({ success: true, message: "Cadastro realizado com sucesso.", roleAtribuido: role });
+        res.status(200).json({
+            success: true,
+            message: "Cadastro realizado com sucesso.",
+            roleAtribuido: finalRole,
+            storeId: resolvedStoreId,
+            storeName: matchedStore?.name || resolvedStoreId
+        });
     } catch (error) {
         console.error("Erro ao efetivar cadastro:", error);
         res.status(500).json({ error: "Erro interno ao salvar o usuário." });

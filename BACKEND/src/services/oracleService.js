@@ -1,5 +1,6 @@
+import oracledb from 'oracledb';
 import { getOracleConnection } from '../config/oracle.js';
-// consultar vendas E OUTROS DADOS DANDO ERRO NO VENDEDOR 
+
 export async function queryTable(tableName, storeId, startDate, endDate) {
     const conn = await getOracleConnection();
     try {
@@ -30,17 +31,18 @@ export async function syncTable(tableName, storeId, upserts, deletes) {
         if (upserts && upserts.length > 0) {
             for (const item of upserts) {
                 const itemId = String(item.id);
+                const docStr = JSON.stringify(item);
                 if (tableName === 'VENDAS') {
                     await conn.execute(
                         `MERGE INTO VENDAS v
-                        USING (SELECT :id_val AS ID FROM DUAL) src
-                        ON (v.ID = src.ID)
+                        USING (SELECT :id_val AS ID, :storeId AS STORE_ID FROM DUAL) src
+                        ON (v.ID = src.ID AND v.STORE_ID = src.STORE_ID)
                         WHEN MATCHED THEN
                             UPDATE SET 
-                                STORE_ID = :storeId, DATA_VENDA = :dataVenda, VENDEDOR = :vendedor, PRODUTO = :produto, RECEITA = :receita, DOCUMENT_DATA = :documentData
+                                DATA_VENDA = :dataVenda, VENDEDOR = :vendedor, PRODUTO = :produto, RECEITA = :receita, DOCUMENT_DATA = :docUpdate
                         WHEN NOT MATCHED THEN
                             INSERT (ID, STORE_ID, DATA_VENDA, VENDEDOR, PRODUTO, RECEITA, DOCUMENT_DATA)
-                            VALUES (:id_val, :storeId, :dataVenda, :vendedor, :produto, :receita, :documentData)`,
+                            VALUES (:id_val, :storeId, :dataVenda, :vendedor, :produto, :receita, :docInsert)`,
                         {
                             id_val: itemId,
                             storeId: storeId,
@@ -48,24 +50,26 @@ export async function syncTable(tableName, storeId, upserts, deletes) {
                             vendedor: item.vendedor || '',
                             produto: item.produto || '',
                             receita: Number(item.receita) || 0,
-                            documentData: JSON.stringify(item)
+                            docUpdate: { val: docStr, type: oracledb.CLOB },
+                            docInsert: { val: docStr, type: oracledb.CLOB }
                         },
                         { autoCommit: false }
                     );
                 } else {
                     await conn.execute(
                         `MERGE INTO ${tableName} v
-                        USING (SELECT :id_val AS ID FROM DUAL) src
-                        ON (v.ID = src.ID)
+                        USING (SELECT :id_val AS ID, :storeId AS STORE_ID FROM DUAL) src
+                        ON (v.ID = src.ID AND v.STORE_ID = src.STORE_ID)
                         WHEN MATCHED THEN
-                            UPDATE SET STORE_ID = :storeId, DOCUMENT_DATA = :documentData
+                            UPDATE SET DOCUMENT_DATA = :docUpdate
                         WHEN NOT MATCHED THEN
                             INSERT (ID, STORE_ID, DOCUMENT_DATA)
-                            VALUES (:id_val, :storeId, :documentData)`,
+                            VALUES (:id_val, :storeId, :docInsert)`,
                         {
                             id_val: itemId,
                             storeId: storeId,
-                            documentData: JSON.stringify(item)
+                            docUpdate: { val: docStr, type: oracledb.CLOB },
+                            docInsert: { val: docStr, type: oracledb.CLOB }
                         },
                         { autoCommit: false }
                     );

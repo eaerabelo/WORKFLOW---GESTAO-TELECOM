@@ -10,6 +10,16 @@ export const getAuthToken = () => localStorage.getItem('jwt_token');
 
 export const MSG_SERVIDOR_OFFLINE = "SERVIDOR FORA MOMENTANEAMENTE, TENTE NOVAMENTE MAIS TARDE...";
 
+export const getActiveStoreId = () => {
+    try {
+        const sess = JSON.parse(localStorage.getItem('sessionUser') || '{}');
+        if (sess && sess.storeId && sess.storeId !== 'DEFAULT') {
+            return sess.storeId;
+        }
+    } catch (e) {}
+    return localStorage.getItem('storeId') || 'uniao_osasco';
+};
+
 // Wrapper seguro de fetch que intercepta 'Failed to fetch' e quedas de rede
 export const safeFetch = async (url, options = {}) => {
     try {
@@ -98,14 +108,14 @@ export const resetarSenhaAPI = async (username, email, codigo, newPass, recovery
     return handleResponse(res);
 };
 
-export const solicitarCadastroAPI = async (username, email, nome, storeCode, setupKey, pass, birthDate, phone) => {
+export const solicitarCadastroAPI = async (username, email, nome, storeCode, setupKey, pass, birthDate, phone, storeId = null, storeSap = null) => {
     console.log(`FETCHING TO: ${API_URL}/api/auth/cadastro/solicitar`);
     try {
         const res = await safeFetch(`${API_URL}/api/auth/cadastro/solicitar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ username, email, nome, storeCode, setupKey, pass, birthDate, phone })
+            body: JSON.stringify({ username, email, nome, storeCode, storeId, storeSap, setupKey, pass, birthDate, phone })
         });
         return await handleResponse(res);
     } catch (error) {
@@ -248,13 +258,13 @@ export const syncCampanhasData = async (upserts, deletes) => {
 // CONFIGURAÇÕES GLOBAIS (Metas, Usuários, etc)
 // ============================================================================
 export const fetchConfig = async () => {
-    const storeId = localStorage.getItem('storeId') || 'uniao_osasco';
+    const storeId = getActiveStoreId();
     const res = await authFetch(`${API_URL}/api/config?storeId=${storeId}`);
     return handleResponse(res);
 };
 
 export const syncConfigData = async (configData) => {
-    const storeId = localStorage.getItem('storeId') || 'uniao_osasco';
+    const storeId = getActiveStoreId();
     const res = await authFetch(`${API_URL}/api/config/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -275,7 +285,7 @@ export const fetchAreaLojas = async (month) => {
 // COLABORADORES (DASHBOARD CALCULADO NO BACKEND)
 // ============================================================================
 export const fetchColaboradoresDashboard = async (month) => {
-    const storeId = localStorage.getItem('storeId') || 'uniao_osasco';
+    const storeId = getActiveStoreId();
     // Format needs to be MM-YYYY, but month comes as YYYY-MM
     let formattedMonth = month;
     if (month && month.includes('-')) {
@@ -303,7 +313,7 @@ export const syncCollectionDynamic = async (endpoint, upserts, deletes) => {
 // PERFIL (profile.js) E AJUDA / ARGUMENTAÇÕES (help.js)
 // ============================================================================
 export const fetchProfileAPI = async (username) => {
-    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const storeId = getActiveStoreId();
     const res = await authFetch(`${API_URL}/api/profile?username=${encodeURIComponent(username || '')}&storeId=${encodeURIComponent(storeId)}`);
     return handleResponse(res);
 };
@@ -318,7 +328,7 @@ export const enviarIdeiaScriptAPI = async (titulo, ideia, autor, loja) => {
 };
 
 export const saveProfileAPI = async (username, profile) => {
-    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const storeId = getActiveStoreId();
     const res = await authFetch(`${API_URL}/api/profile/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -328,13 +338,13 @@ export const saveProfileAPI = async (username, profile) => {
 };
 
 export const fetchHelpAPI = async () => {
-    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const storeId = getActiveStoreId();
     const res = await authFetch(`${API_URL}/api/help?storeId=${encodeURIComponent(storeId)}`);
     return handleResponse(res);
 };
 
 export const createArgumentacaoAPI = async (payload) => {
-    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const storeId = getActiveStoreId();
     const res = await authFetch(`${API_URL}/api/help/argumentacao`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -344,7 +354,7 @@ export const createArgumentacaoAPI = async (payload) => {
 };
 
 export const deleteArgumentacaoAPI = async (id) => {
-    const storeId = localStorage.getItem('storeId') || 'shopping_raposo';
+    const storeId = getActiveStoreId();
     const res = await authFetch(`${API_URL}/api/help/argumentacao/${encodeURIComponent(id)}?storeId=${encodeURIComponent(storeId)}`, {
         method: 'DELETE'
     });

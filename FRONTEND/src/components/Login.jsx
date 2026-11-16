@@ -533,17 +533,41 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
 
         const matchedStore = findStore(regStoreCode);
         if (!matchedStore && setupKey !== 'lideranca2026') {
-            toast.error('Loja não encontrada. Digite o código ID (ex: K7W8) ou SAP (ex: 1146) da sua loja.');
+            toast.error('Loja não encontrada. Digite o código ID (ex: LB31, K7W8) ou SAP (ex: 1119, 1146) da sua loja.');
             return;
         }
 
         const resolvedStoreCode = matchedStore ? matchedStore.code : regStoreCode;
+        const resolvedStoreId = matchedStore ? matchedStore.id : null;
+        const resolvedStoreSap = matchedStore ? matchedStore.sap : null;
 
         toast.loading('Validando no banco de dados e enviando e-mail...', { id: 'regEmailToast' });
 
         try {
-            const res = await solicitarCadastroAPI(userUpper, emailClean, nameUpper, resolvedStoreCode, setupKey, regPass, regBirthDate, regPhone);
-            setTempRegData({ registrationToken: res.registrationToken, email: emailClean, setupKey, userUpper });
+            const res = await solicitarCadastroAPI(
+                userUpper,
+                emailClean,
+                nameUpper,
+                resolvedStoreCode,
+                setupKey,
+                regPass,
+                regBirthDate,
+                regPhone,
+                resolvedStoreId,
+                resolvedStoreSap
+            );
+            if (matchedStore) {
+                localStorage.setItem('storeId', matchedStore.id);
+            }
+            setTempRegData({
+                registrationToken: res.registrationToken,
+                email: emailClean,
+                setupKey,
+                userUpper,
+                cargoAtribuido: res.cargoAtribuido,
+                storeId: res.storeId || resolvedStoreId,
+                storeName: res.storeName || matchedStore?.name
+            });
             toast.success('Código de confirmação enviado para seu e-mail!', { id: 'regEmailToast' });
             setRegStep(2);
             setResendTimer(60);
@@ -555,11 +579,23 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
 
     const handleRegisterCodeVerify = async (e) => {
         e.preventDefault();
-        const { registrationToken, email, setupKey, userUpper } = tempRegData;
+        const { registrationToken, email, setupKey, userUpper, cargoAtribuido, storeId, storeName } = tempRegData;
 
         try {
-            await efetivarCadastroAPI(email, regCurrentCode, registrationToken);
-            toast.success(setupKey === 'lideranca2026' ? 'CONTA DE GERENTE CRIADA COM SUCESSO!' : 'CADASTRO REALIZADO COM SUCESSO. Faça seu login!');
+            const resEfetivar = await efetivarCadastroAPI(email, regCurrentCode, registrationToken);
+            const finalStoreId = resEfetivar?.storeId || storeId;
+            const finalStoreName = resEfetivar?.storeName || storeName || '';
+            const finalRole = resEfetivar?.roleAtribuido || cargoAtribuido || (setupKey === 'lideranca2026' ? 'GERENTE' : 'VENDEDOR');
+
+            if (finalStoreId) {
+                localStorage.setItem('storeId', finalStoreId);
+                setSelectedStore(finalStoreId);
+            }
+
+            toast.success(
+                `CADASTRO REALIZADO COM SUCESSO! Cargo: ${finalRole}${finalStoreName ? ` • ${finalStoreName}` : ''}. Faça seu login!`,
+                { duration: 6000 }
+            );
         } catch (error) {
             toast.error(formatErrorMsg(error, 'Código inválido ou incorreto. Verifique seu e-mail novamente.'));
             return;

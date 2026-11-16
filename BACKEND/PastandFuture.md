@@ -336,3 +336,21 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - **Deploy & Publicação**:
   - Build de produção compilado em 2.4s e publicado no Firebase Hosting (`https://workflow-sistema.web.app`).
   - Backend sincronizado e reiniciado via PM2 na Oracle Cloud (`137.131.172.16`).
+
+### [Sessão de 16/11/2026 - Reserva Automática do Espaço de Lojas (ID e SAP), Sincronização da VM Oracle e Atribuição de Cargos Pré-Cadastrados]
+
+- **Mapeamento Completo de Todas as 50 Lojas por ID e SAP (`BACKEND/src/config/stores.js` & `FRONTEND/src/utils/stores.js`)**:
+  - Conferidos e validados todos os 49 códigos de lojas físicas (Código ID e Código SAP) + espaço `DEFAULT` (50 espaços no total), incluindo combinações (`ID + Nome`, `SAP + Nome`, `ID + SAP`) e bloqueio contra códigos conflitantes de lojas distintas.
+- **Reserva e Criação Automática de Espaço de Loja no Banco Oracle (`BACKEND/src/services/storeSpaceService.js`)**:
+  - Criada a tabela `LOJAS_SISTEMA` e executada a reserva inicial na tabela `CONFIGURACOES` para **todas as 50 lojas**, garantindo que cada loja possua seu próprio espaço isolado de banco de dados (`goalsDB`, `scheduleData`, `pricingData`, `profilesDB`, `userPreferences`) sem sobrescrever lojas que já possuem dados ativos.
+  - Integrado `ensureStoreSpaceInDB` diretamente nos fluxos de `solicitarCadastro`, `efetivarCadastro` e `login` em [`authController.js`](file:///C:/PAINEL%20CLARO/painel-claro/BACKEND/src/controllers/authController.js).
+- **Reconhecimento Inteligente de Colaboradores e Atribuição Automática de Cargo (`BACKEND/src/services/colaboradoresService.js`)**:
+  - Suporte a busca por **Nome Completo**, **Primeiro + Último Nome** (ex.: `HEMILY MONTEIRO` -> `HEMILY LOIANE ALVES MONTEIRO`) e **Número de Celular** na tabela `COLABORADORES_BASE` (249 colaboradores pré-cadastrados: ADM, GERENTE, SENIOR, GEEK e COORDENADOR/Regional).
+  - Sincronização automática de `EMAIL`, `USERNAME`, `STORE_ID` e `STATUS = 'ATIVO'` em `COLABORADORES_BASE` ao efetivar cadastro ou autenticar no sistema.
+  - Atualizado o cadastro de teste `F1234567` (`HEMILY MONTEIRO`) no banco `USUARIOS` para o cargo `GERENTE` vinculado à loja `LP MORUMBI (LB31 / 1119)`.
+- **Isolamento Multi-Tenant e Correção de Buffer CLOB (`oracleService.js` & `configController.js`)**:
+  - Corrigido o `MERGE INTO` em `oracleService.js` para usar a chave composta `ON (v.ID = src.ID AND v.STORE_ID = src.STORE_ID)` e bind explícito `oracledb.CLOB`, eliminando o erro `ORA-03146` em configurações acima de 32 KB.
+- **Sincronização Completa na VM Oracle (`137.131.172.16`) e Firebase Hosting**:
+  - Enviados os arquivos atualizados do backend via SCP para `/home/ubuntu/BACKEND/src/` na VM Oracle e reiniciado o processo `painel-backend` no PM2.
+  - Frontend compilado e publicado em `https://workflow-sistema.web.app`.
+
