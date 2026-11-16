@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { aplicarRegrasDeProduto, calcularFatorRV, normalizeCargoRV } from '../utils/rules.js';
+import { aplicarRegrasDeProduto, calcularFatorRV, normalizeRoleForRV } from '../utils/rules.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,7 +71,7 @@ export const getFatorRV = (req, res) => {
 export const getRegraRvPdf = (req, res) => {
     try {
         const rawUserRole = String(req.user?.role || 'VENDEDOR').trim().toUpperCase();
-        const normalizedUserRole = normalizeCargoRV(rawUserRole);
+        const normalizedUserRole = normalizeRoleForRV(rawUserRole);
         const canAccessAll = ['GERENTE', 'COORDENADOR', 'ESPECIALISTA', 'SENIOR', 'ADMINISTRAÇÃO', 'ADM', 'GEEK'].includes(rawUserRole) ||
                              ['GERENTE', 'COORDENADOR', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK'].includes(normalizedUserRole);
 
@@ -85,7 +85,7 @@ export const getRegraRvPdf = (req, res) => {
         } else if (PDF_POR_CARGO_OU_CHAVE[upperKey]) {
             targetFileName = PDF_POR_CARGO_OU_CHAVE[upperKey];
         } else {
-            const normalizedKey = normalizeCargoRV(upperKey);
+            const normalizedKey = normalizeRoleForRV(upperKey);
             if (ARQUIVOS_PERMITIDOS.has(rawKey)) {
                 targetFileName = rawKey;
             } else if (PDF_POR_CARGO_OU_CHAVE[normalizedKey]) {
