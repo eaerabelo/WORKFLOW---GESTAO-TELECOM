@@ -5,6 +5,7 @@ import {
     resetarSenha, 
     solicitarCadastro, 
     efetivarCadastro,
+    consultarPreCadastro,
     logout
 } from '../controllers/authController.js';
 
@@ -15,6 +16,7 @@ router.post('/esqueci-senha/solicitar', solicitarRecuperacao);
 router.post('/esqueci-senha/resetar', resetarSenha);
 router.post('/cadastro/solicitar', solicitarCadastro);
 router.post('/cadastro/efetivar', efetivarCadastro);
+router.post('/precadastro/consultar', consultarPreCadastro);
 router.post('/logout', logout);
 
 export default router;

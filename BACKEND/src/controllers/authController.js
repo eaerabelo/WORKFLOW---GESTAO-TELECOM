@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import fs from 'fs';
 import { STORES, findStore } from '../config/stores.js';
+import { findColaboradorPreCadastro, vincularColaboradorAoCadastrar } from '../services/colaboradoresService.js';
 
 
 // Lojas carregadas dinamicamente via stores.js
@@ -342,12 +343,20 @@ export const solicitarCadastro = async (req, res) => {
             return res.status(400).json({ error: passError });
         }
 
-        // Papel baseado na SetupKey
-        const role = isManagerSetup ? 'GERENTE' : 'VENDEDOR';
+        // 1. Busca se o colaborador possui cargo pré-cadastrado na base (por Nome ou por Celular)
+        const colabPre = await findColaboradorPreCadastro({ nome, phone, email });
+        
+        let role = 'VENDEDOR';
+        if (colabPre) {
+            role = colabPre.role;
+            console.log(`✅ [CADASTRO] Colaborador Pré-Cadastrado Reconhecido: ${colabPre.nome} -> Cargo: ${colabPre.cargo} (Role: ${role})`);
+        } else if (isManagerSetup) {
+            role = 'GERENTE';
+        }
 
         // Mapeamento da Loja (Aceita ID, SAP, Nome ou Alias)
         const matchedStore = findStore(storeCode) || findStore(req.body.storeId) || findStore(req.body.storeSap);
-        if (role !== 'GERENTE' && !matchedStore) {
+        if (role !== 'GERENTE' && role !== 'ADMINISTRAÇÃO' && role !== 'COORDENADOR' && !matchedStore) {
             return res.status(400).json({ error: "Código da loja não identificado. Informe o ID (ex: K7W8) ou SAP (ex: 1146) válido da sua loja." });
         }
         
@@ -355,7 +364,7 @@ export const solicitarCadastro = async (req, res) => {
             console.log(`Loja identificada no cadastro: ${matchedStore.name} (ID: ${matchedStore.code} | SAP: ${matchedStore.sap}) -> storeId: ${matchedStore.id}`);
         }
 
-        // Se for managerSetup e ele informou um código de loja válido, joga ele na loja. Senão, vai pro DEFAULT.
+        // Se for managerSetup ou regional e ele informou um código de loja válido, joga ele na loja. Senão, vai pro DEFAULT.
         const storeId = matchedStore ? matchedStore.id : 'DEFAULT';
 
         // Verifica se o usuário já existe globalmente
@@ -378,14 +387,22 @@ export const solicitarCadastro = async (req, res) => {
                 phone: phone ? phone.replace(/\D/g, '') : null,
                 birthDate,
                 role,
-                storeId
+                storeId,
+                colaboradorId: colabPre ? colabPre.id : null
             }
         };
 
         const registrationToken = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '15m' });
 
         await sendCodeEmail(email, nome, `Código de Confirmação - Workflow [${codigo}]`, codigo, 'template_1dn6s55');
-        res.status(200).json({ success: true, message: "Código enviado para o e-mail.", registrationToken });
+        res.status(200).json({ 
+            success: true, 
+            message: "Código enviado para o e-mail.", 
+            registrationToken,
+            cargoAtribuido: role,
+            colaboradorReconhecido: !!colabPre,
+            nomeColaborador: colabPre?.nome || null
+        });
     } catch (error) {
         console.error("Erro ao solicitar cadastro:", error);
         res.status(500).json({ error: "Erro ao enviar e-mail de validação: " + (error.message || "Falha interna.") });
@@ -415,7 +432,7 @@ export const efetivarCadastro = async (req, res) => {
             return res.status(400).json({ error: "Código inválido." });
         }
 
-        const { username, storeId, role, name, pass, phone, birthDate } = decoded.userData;
+        const { username, storeId, role, name, pass, phone, birthDate, colaboradorId } = decoded.userData;
 
         const conn = await getOracleConnection();
         try {
@@ -437,10 +454,68 @@ export const efetivarCadastro = async (req, res) => {
             await conn.close();
         }
 
-        res.status(200).json({ success: true, message: "Cadastro realizado com sucesso." });
+        // Atualiza a tabela COLABORADORES_BASE salvando o e-mail e username do colaborador pré-cadastrado
+        try {
+            await vincularColaboradorAoCadastrar({
+                colabId: colaboradorId,
+                nome: name,
+                phone: phone,
+                email: decoded.email,
+                username: username
+            });
+            console.log(`✅ [CADASTRO] Vínculo de e-mail e username atualizado em COLABORADORES_BASE para ${username}`);
+        } catch (syncErr) {
+            console.error("Aviso: Falha ao sincronizar e-mail em COLABORADORES_BASE:", syncErr);
+        }
+
+        res.status(200).json({ success: true, message: "Cadastro realizado com sucesso.", roleAtribuido: role });
     } catch (error) {
         console.error("Erro ao efetivar cadastro:", error);
         res.status(500).json({ error: "Erro interno ao salvar o usuário." });
+    }
+};
+
+/**
+ * Consulta pré-cadastro por Nome ou Telefone (com retorno JWT assinado)
+ * Válido para o momento de cadastro e para conferência no reset de senha
+ */
+export const consultarPreCadastro = async (req, res) => {
+    try {
+        const { nome, phone } = req.body;
+        if (!nome && !phone) {
+            return res.status(400).json({ error: "Informe o nome completo ou telefone para consulta." });
+        }
+
+        const colab = await findColaboradorPreCadastro({ nome, phone });
+        if (!colab) {
+            return res.status(200).json({ encontrado: false });
+        }
+
+        const preCadastroToken = jwt.sign(
+            { 
+                id: colab.id, 
+                nome: colab.nome, 
+                cargo: colab.cargo, 
+                role: colab.role,
+                numeroLimpo: colab.numeroLimpo
+            }, 
+            JWT_SECRET, 
+            { expiresIn: '30m' }
+        );
+
+        return res.status(200).json({
+            encontrado: true,
+            id: colab.id,
+            nome: colab.nome,
+            cargo: colab.cargo,
+            role: colab.role,
+            numero: colab.numero,
+            status: colab.status,
+            token: preCadastroToken
+        });
+    } catch (error) {
+        console.error("Erro ao consultar pré-cadastro:", error);
+        res.status(500).json({ error: "Erro interno ao consultar pré-cadastro." });
     }
 };
 

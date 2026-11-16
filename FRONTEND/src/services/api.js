@@ -124,6 +124,19 @@ export const efetivarCadastroAPI = async (email, codigo, registrationToken) => {
     return handleResponse(res);
 };
 
+export const consultarPreCadastroAPI = async (nome, phone) => {
+    try {
+        const res = await safeFetch(`${API_URL}/api/auth/precadastro/consultar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, phone })
+        });
+        return await handleResponse(res);
+    } catch (e) {
+        return { encontrado: false };
+    }
+};
+
 export const logoutAPI = async () => {
     const res = await safeFetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock, ArrowLeft, Key, Mail, Calendar, Smartphone, Store, Activity, ShieldCheck, FileText, CheckCircle, Sun, Moon, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { findStore } from '../utils/stores.js';
-import { loginAPI, solicitarRecuperacaoAPI, resetarSenhaAPI, solicitarCadastroAPI, efetivarCadastroAPI, fetchStatus } from '../services/api.js';
+import { loginAPI, solicitarRecuperacaoAPI, resetarSenhaAPI, solicitarCadastroAPI, efetivarCadastroAPI, consultarPreCadastroAPI, fetchStatus } from '../services/api.js';
 import wfLogo from '../assets/logo_WF.png';
 import desktopBg from '../assets/DESKTOP_PAGE.jpeg';
 import mobileBg from '../assets/MOBILE_PAGE.jpg';
@@ -11,11 +11,11 @@ import mobileBg from '../assets/MOBILE_PAGE.jpg';
  * 1. COMPONENTE DA LOGO ANIMADA (Escrita e Desescrita Contínua)
  */
 export const AnimatedWFLogo = ({ className = "w-36 h-24", duration = 6.2, delay = 0 }) => {
-  const uid = useRef(`wf-${Math.random().toString(36).substring(2, 9)}`).current;
+    const uid = useRef(`wf-${Math.random().toString(36).substring(2, 9)}`).current;
 
-  return (
-    <>
-      <style>{`
+    return (
+        <>
+            <style>{`
         @keyframes wfWriteErase1 {
           0%, 4% { stroke-dashoffset: 100; opacity: 0; }
           6% { opacity: 1; }
@@ -74,233 +74,232 @@ export const AnimatedWFLogo = ({ className = "w-36 h-24", duration = 6.2, delay 
         }
       `}</style>
 
-      <svg
-        viewBox="0 0 520 320"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={className}
-        style={{ '--cycle': `${duration}s`, '--delay': `${delay}s` }}
-      >
-        <defs>
-          <linearGradient id={`${uid}-leftGrad`} x1="90" y1="60" x2="225" y2="265" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FF9E00" />
-            <stop offset="55%" stopColor="#FF7700" />
-            <stop offset="100%" stopColor="#E04800" />
-          </linearGradient>
+            <svg
+                viewBox="0 0 520 320"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className={className}
+                style={{ '--cycle': `${duration}s`, '--delay': `${delay}s` }}
+            >
+                <defs>
+                    <linearGradient id={`${uid}-leftGrad`} x1="90" y1="60" x2="225" y2="265" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#FF9E00" />
+                        <stop offset="55%" stopColor="#FF7700" />
+                        <stop offset="100%" stopColor="#E04800" />
+                    </linearGradient>
 
-          <linearGradient id={`${uid}-loopGrad`} x1="165" y1="265" x2="310" y2="65" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FF7B00" />
-            <stop offset="50%" stopColor="#FF4D00" />
-            <stop offset="100%" stopColor="#E61E14" />
-          </linearGradient>
+                    <linearGradient id={`${uid}-loopGrad`} x1="165" y1="265" x2="310" y2="65" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#FF7B00" />
+                        <stop offset="50%" stopColor="#FF4D00" />
+                        <stop offset="100%" stopColor="#E61E14" />
+                    </linearGradient>
 
-          <linearGradient id={`${uid}-rightUGrad`} x1="275" y1="175" x2="395" y2="265" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#D9230F" />
-            <stop offset="50%" stopColor="#E61919" />
-            <stop offset="100%" stopColor="#DF1522" />
-          </linearGradient>
+                    <linearGradient id={`${uid}-rightUGrad`} x1="275" y1="175" x2="395" y2="265" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#D9230F" />
+                        <stop offset="50%" stopColor="#E61919" />
+                        <stop offset="100%" stopColor="#DF1522" />
+                    </linearGradient>
 
-          <linearGradient id={`${uid}-arrowRibbonTop`} x1="272" y1="185" x2="435" y2="75" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FF6D00" />
-            <stop offset="45%" stopColor="#F52814" />
-            <stop offset="100%" stopColor="#E3121E" />
-          </linearGradient>
+                    <linearGradient id={`${uid}-arrowRibbonTop`} x1="272" y1="185" x2="435" y2="75" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#FF6D00" />
+                        <stop offset="45%" stopColor="#F52814" />
+                        <stop offset="100%" stopColor="#E3121E" />
+                    </linearGradient>
 
-          <linearGradient id={`${uid}-arrowRibbonFold`} x1="315" y1="185" x2="445" y2="95" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#D8220E" />
-            <stop offset="100%" stopColor="#B80818" />
-          </linearGradient>
+                    <linearGradient id={`${uid}-arrowRibbonFold`} x1="315" y1="185" x2="445" y2="95" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#D8220E" />
+                        <stop offset="100%" stopColor="#B80818" />
+                    </linearGradient>
 
-          <mask id={`${uid}-weaveMask`}>
-            <rect x="0" y="0" width="520" height="320" fill="white" />
-            <path d="M 162 222 L 245 72" stroke="black" strokeWidth="38" strokeLinecap="round" />
-            <path d="M 162 200 C 154 228, 158 258, 178 274" stroke="black" strokeWidth="36" strokeLinecap="round" />
-          </mask>
-        </defs>
+                    <mask id={`${uid}-weaveMask`}>
+                        <rect x="0" y="0" width="520" height="320" fill="white" />
+                        <path d="M 162 222 L 245 72" stroke="black" strokeWidth="38" strokeLinecap="round" />
+                        <path d="M 162 200 C 154 228, 158 258, 178 274" stroke="black" strokeWidth="36" strokeLinecap="round" />
+                    </mask>
+                </defs>
 
-        <g mask={`url(#${uid}-weaveMask)`}>
-          <path d="M 162 248 L 106 135 C 88 96, 142 66, 164 108 L 222 220" stroke={`url(#${uid}-leftGrad)`} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-1" />
-        </g>
+                <g mask={`url(#${uid}-weaveMask)`}>
+                    <path d="M 162 248 L 106 135 C 88 96, 142 66, 164 108 L 222 220" stroke={`url(#${uid}-leftGrad)`} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-1" />
+                </g>
 
-        <path d="M 278 182 L 306 234 C 322 263, 358 263, 374 234 L 402 178" stroke={`url(#${uid}-rightUGrad)`} strokeWidth="25" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-3" />
+                <path d="M 278 182 L 306 234 C 322 263, 358 263, 374 234 L 402 178" stroke={`url(#${uid}-rightUGrad)`} strokeWidth="25" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-3" />
 
-        <path d="M 232 98 C 250 64, 304 92, 286 126 L 228 234 C 210 268, 156 240, 174 206 Z" stroke={`url(#${uid}-loopGrad)`} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-2" />
+                <path d="M 232 98 C 250 64, 304 92, 286 126 L 228 234 C 210 268, 156 240, 174 206 Z" stroke={`url(#${uid}-loopGrad)`} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" pathLength="100" className="wf-stroke-2" />
 
-        <path d="M 278 168 C 292 198, 326 196, 342 162 C 360 124, 386 102, 418 98" stroke={`url(#${uid}-arrowRibbonFold)`} strokeWidth="22" strokeLinecap="round" pathLength="100" className="wf-stroke-4" />
-        <path d="M 275 162 C 290 192, 322 190, 338 154 C 356 114, 382 88, 416 84" stroke={`url(#${uid}-arrowRibbonTop)`} strokeWidth="18" strokeLinecap="round" pathLength="100" className="wf-stroke-4" />
+                <path d="M 278 168 C 292 198, 326 196, 342 162 C 360 124, 386 102, 418 98" stroke={`url(#${uid}-arrowRibbonFold)`} strokeWidth="22" strokeLinecap="round" pathLength="100" className="wf-stroke-4" />
+                <path d="M 275 162 C 290 192, 322 190, 338 154 C 356 114, 382 88, 416 84" stroke={`url(#${uid}-arrowRibbonTop)`} strokeWidth="18" strokeLinecap="round" pathLength="100" className="wf-stroke-4" />
 
-        <g className="wf-arrowhead">
-          <path d="M 388 42 L 464 78 L 404 96 L 388 42 Z" fill="#E51520" />
-          <path d="M 404 96 L 464 78 L 402 142 L 404 96 Z" fill="#C50B18" />
-        </g>
-      </svg>
-    </>
-  );
+                <g className="wf-arrowhead">
+                    <path d="M 388 42 L 464 78 L 404 96 L 388 42 Z" fill="#E51520" />
+                    <path d="M 404 96 L 464 78 L 402 142 L 404 96 Z" fill="#C50B18" />
+                </g>
+            </svg>
+        </>
+    );
 };
 
 /**
  * 2. COMPONENTE DE BACKGROUND (Canvas de Partículas e Ondas Reativas com suporte Dark / Light)
  */
 export const AnimatedBackground = ({ children, isDark = true }) => {
-  const canvasRef = useRef(null);
-  const isDarkRef = useRef(isDark);
+    const canvasRef = useRef(null);
+    const isDarkRef = useRef(isDark);
 
-  useEffect(() => {
-    isDarkRef.current = isDark;
-  }, [isDark]);
+    useEffect(() => {
+        isDarkRef.current = isDark;
+    }, [isDark]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let animationFrameId;
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let animationFrameId;
 
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
 
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
+        const handleResize = () => {
+            if (!canvas) return;
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', handleResize);
 
-    const mouse = { x: width / 2, y: height / 2, targetX: width / 2, targetY: height / 2 };
-    const handleMouseMove = (e) => {
-      mouse.targetX = e.clientX;
-      mouse.targetY = e.clientY;
-    };
-    window.addEventListener('mousemove', handleMouseMove);
+        const mouse = { x: width / 2, y: height / 2, targetX: width / 2, targetY: height / 2 };
+        const handleMouseMove = (e) => {
+            mouse.targetX = e.clientX;
+            mouse.targetY = e.clientY;
+        };
+        window.addEventListener('mousemove', handleMouseMove);
 
-    const particles = Array.from({ length: 45 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      r: Math.random() * 2.5 + 0.8,
-      vx: (Math.random() - 0.3) * 0.35,
-      vy: -(Math.random() * 0.45 + 0.15),
-      alpha: Math.random() * 0.6 + 0.2,
-      hue: Math.random() > 0.4 ? '#FF7A00' : '#E51520',
-    }));
+        const particles = Array.from({ length: 45 }, () => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            r: Math.random() * 2.5 + 0.8,
+            vx: (Math.random() - 0.3) * 0.35,
+            vy: -(Math.random() * 0.45 + 0.15),
+            alpha: Math.random() * 0.6 + 0.2,
+            hue: Math.random() > 0.4 ? '#FF7A00' : '#E51520',
+        }));
 
-    let time = 0;
-    const render = () => {
-      time += 0.008;
-      mouse.x += (mouse.targetX - mouse.x) * 0.06;
-      mouse.y += (mouse.targetY - mouse.y) * 0.06;
+        let time = 0;
+        const render = () => {
+            time += 0.008;
+            mouse.x += (mouse.targetX - mouse.x) * 0.06;
+            mouse.y += (mouse.targetY - mouse.y) * 0.06;
 
-      const dark = isDarkRef.current;
+            const dark = isDarkRef.current;
 
-      if (dark) {
-        ctx.fillStyle = '#08090c';
-        ctx.fillRect(0, 0, width, height);
+            if (dark) {
+                ctx.fillStyle = '#08090c';
+                ctx.fillRect(0, 0, width, height);
 
-        const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 480);
-        spotGrad.addColorStop(0, 'rgba(255, 110, 0, 0.13)');
-        spotGrad.addColorStop(0.5, 'rgba(229, 21, 32, 0.06)');
-        spotGrad.addColorStop(1, 'rgba(8, 9, 12, 0)');
-        ctx.fillStyle = spotGrad;
-        ctx.fillRect(0, 0, width, height);
-      } else {
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(0, 0, width, height);
+                const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 480);
+                spotGrad.addColorStop(0, 'rgba(255, 110, 0, 0.13)');
+                spotGrad.addColorStop(0.5, 'rgba(229, 21, 32, 0.06)');
+                spotGrad.addColorStop(1, 'rgba(8, 9, 12, 0)');
+                ctx.fillStyle = spotGrad;
+                ctx.fillRect(0, 0, width, height);
+            } else {
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(0, 0, width, height);
 
-        const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 460);
-        spotGrad.addColorStop(0, 'rgba(227, 0, 15, 0.08)');
-        spotGrad.addColorStop(0.5, 'rgba(255, 122, 0, 0.04)');
-        spotGrad.addColorStop(1, 'rgba(248, 250, 252, 0)');
-        ctx.fillStyle = spotGrad;
-        ctx.fillRect(0, 0, width, height);
-      }
+                const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 460);
+                spotGrad.addColorStop(0, 'rgba(227, 0, 15, 0.08)');
+                spotGrad.addColorStop(0.5, 'rgba(255, 122, 0, 0.04)');
+                spotGrad.addColorStop(1, 'rgba(248, 250, 252, 0)');
+                ctx.fillStyle = spotGrad;
+                ctx.fillRect(0, 0, width, height);
+            }
 
-      for (let i = 0; i < 3; i++) {
-        ctx.beginPath();
-        const yOffset = height * (0.25 + i * 0.25);
-        ctx.moveTo(0, yOffset);
-        for (let x = 0; x <= width; x += 40) {
-          const y =
-            yOffset +
-            Math.sin(x * 0.0025 + time + i * 1.5) * 50 +
-            Math.cos(x * 0.0012 - time * 0.7) * 30;
-          ctx.lineTo(x, y);
-        }
-        if (dark) {
-          ctx.strokeStyle = i === 1 ? 'rgba(229, 21, 32, 0.15)' : 'rgba(255, 136, 0, 0.12)';
-        } else {
-          ctx.strokeStyle = i === 1 ? 'rgba(227, 0, 15, 0.12)' : 'rgba(249, 115, 22, 0.09)';
-        }
-        ctx.lineWidth = 1.8;
-        ctx.stroke();
-      }
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                const yOffset = height * (0.25 + i * 0.25);
+                ctx.moveTo(0, yOffset);
+                for (let x = 0; x <= width; x += 40) {
+                    const y =
+                        yOffset +
+                        Math.sin(x * 0.0025 + time + i * 1.5) * 50 +
+                        Math.cos(x * 0.0012 - time * 0.7) * 30;
+                    ctx.lineTo(x, y);
+                }
+                if (dark) {
+                    ctx.strokeStyle = i === 1 ? 'rgba(229, 21, 32, 0.15)' : 'rgba(255, 136, 0, 0.12)';
+                } else {
+                    ctx.strokeStyle = i === 1 ? 'rgba(227, 0, 15, 0.12)' : 'rgba(249, 115, 22, 0.09)';
+                }
+                ctx.lineWidth = 1.8;
+                ctx.stroke();
+            }
 
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.y < -10) p.y = height + 10;
-        if (p.x > width + 10) p.x = -10;
-        if (p.x < -10) p.x = width + 10;
+            particles.forEach((p) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.y < -10) p.y = height + 10;
+                if (p.x > width + 10) p.x = -10;
+                if (p.x < -10) p.x = width + 10;
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.hue;
-        ctx.globalAlpha = dark
-          ? p.alpha * (0.6 + Math.sin(time * 2 + p.x) * 0.4)
-          : p.alpha * 0.55 * (0.6 + Math.sin(time * 2 + p.x) * 0.4);
-        ctx.shadowColor = p.hue;
-        ctx.shadowBlur = dark ? 10 : 4;
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
-      });
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.hue;
+                ctx.globalAlpha = dark
+                    ? p.alpha * (0.6 + Math.sin(time * 2 + p.x) * 0.4)
+                    : p.alpha * 0.55 * (0.6 + Math.sin(time * 2 + p.x) * 0.4);
+                ctx.shadowColor = p.hue;
+                ctx.shadowBlur = dark ? 10 : 4;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.shadowBlur = 0;
+            });
 
-      animationFrameId = requestAnimationFrame(render);
-    };
+            animationFrameId = requestAnimationFrame(render);
+        };
 
-    render();
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
+        render();
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, []);
 
-  // Lista de posições dos logotipos WF espalhados no fundo com tempos assíncronos
-  const bgLogos = [
-    { top: '8%', left: '6%', scale: 'scale-95', rot: '-rotate-6', dur: 7.4, delay: 0.2, opDark: 'opacity-[0.16]', opLight: 'opacity-[0.06]' },
-    { top: '65%', left: '5%', scale: 'scale-110', rot: 'rotate-3', dur: 8.2, delay: 1.5, opDark: 'opacity-[0.14]', opLight: 'opacity-[0.05]' },
-    { top: '12%', right: '7%', scale: 'scale-100', rot: 'rotate-6', dur: 7.8, delay: 0.8, opDark: 'opacity-[0.16]', opLight: 'opacity-[0.06]' },
-    { top: '70%', right: '6%', scale: 'scale-90', rot: '-rotate-3', dur: 8.6, delay: 2.1, opDark: 'opacity-[0.14]', opLight: 'opacity-[0.05]' },
-    { top: '38%', left: '15%', scale: 'scale-75', rot: 'rotate-2', dur: 9.0, delay: 1.1, opDark: 'opacity-[0.09]', opLight: 'opacity-[0.04]' },
-    { top: '42%', right: '16%', scale: 'scale-75', rot: '-rotate-3', dur: 8.4, delay: 2.7, opDark: 'opacity-[0.09]', opLight: 'opacity-[0.04]' },
-  ];
+    // Lista de posições dos logotipos WF espalhados no fundo com tempos assíncronos
+    const bgLogos = [
+        { top: '8%', left: '6%', scale: 'scale-95', rot: '-rotate-6', dur: 7.4, delay: 0.2, opDark: 'opacity-[0.16]', opLight: 'opacity-[0.06]' },
+        { top: '65%', left: '5%', scale: 'scale-110', rot: 'rotate-3', dur: 8.2, delay: 1.5, opDark: 'opacity-[0.14]', opLight: 'opacity-[0.05]' },
+        { top: '12%', right: '7%', scale: 'scale-100', rot: 'rotate-6', dur: 7.8, delay: 0.8, opDark: 'opacity-[0.16]', opLight: 'opacity-[0.06]' },
+        { top: '70%', right: '6%', scale: 'scale-90', rot: '-rotate-3', dur: 8.6, delay: 2.1, opDark: 'opacity-[0.14]', opLight: 'opacity-[0.05]' },
+        { top: '38%', left: '15%', scale: 'scale-75', rot: 'rotate-2', dur: 9.0, delay: 1.1, opDark: 'opacity-[0.09]', opLight: 'opacity-[0.04]' },
+        { top: '42%', right: '16%', scale: 'scale-75', rot: '-rotate-3', dur: 8.4, delay: 2.7, opDark: 'opacity-[0.09]', opLight: 'opacity-[0.04]' },
+    ];
 
-  return (
-    <div className={`relative min-h-screen w-full transition-colors duration-500 ${
-      isDark
-        ? 'bg-gradient-to-br from-[#12141a] via-[#0d0f14] to-[#08090c] text-slate-100'
-        : 'bg-gradient-to-br from-slate-100 via-rose-50/30 to-neutral-200 text-neutral-800'
-    } flex flex-col items-center justify-center p-4 overflow-hidden`}>
-      {/* Camada do Canvas (Ondas e Partículas) */}
-      <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-0" />
+    return (
+        <div className={`relative min-h-screen w-full transition-colors duration-500 ${isDark
+                ? 'bg-gradient-to-br from-[#12141a] via-[#0d0f14] to-[#08090c] text-slate-100'
+                : 'bg-gradient-to-br from-slate-100 via-rose-50/30 to-neutral-200 text-neutral-800'
+            } flex flex-col items-center justify-center p-4 overflow-hidden`}>
+            {/* Camada do Canvas (Ondas e Partículas) */}
+            <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-0" />
 
-      {/* Camada dos Logos WF Flutuando no Fundo */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        {bgLogos.map((item, idx) => (
-          <div
-            key={idx}
-            style={{ top: item.top, left: item.left, right: item.right }}
-            className={`absolute ${item.scale} ${item.rot} ${isDark ? item.opDark : item.opLight} transition-opacity duration-500`}
-          >
-            <AnimatedWFLogo className="w-64 h-44" duration={item.dur} delay={item.delay} />
-          </div>
-        ))}
-      </div>
+            {/* Camada dos Logos WF Flutuando no Fundo */}
+            <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+                {bgLogos.map((item, idx) => (
+                    <div
+                        key={idx}
+                        style={{ top: item.top, left: item.left, right: item.right }}
+                        className={`absolute ${item.scale} ${item.rot} ${isDark ? item.opDark : item.opLight} transition-opacity duration-500`}
+                    >
+                        <AnimatedWFLogo className="w-64 h-44" duration={item.dur} delay={item.delay} />
+                    </div>
+                ))}
+            </div>
 
-      {/* Conteúdo Central */}
-      <div className="relative z-10 w-full flex flex-col items-center justify-center">
-        {children}
-      </div>
-    </div>
-  );
+            {/* Conteúdo Central */}
+            <div className="relative z-10 w-full flex flex-col items-center justify-center">
+                {children}
+            </div>
+        </div>
+    );
 };
 
 const formatErrorMsg = (err, fallback) => {
@@ -387,7 +386,7 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
         window.addEventListener('resize', handleResize);
-        
+
         // Busca a mensagem de feriado do servidor
         fetchStatus().then(data => {
             if (data && data.holidayMessage) {
@@ -427,6 +426,30 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
     const [regBirthDate, setRegBirthDate] = useState('');
     const [regConfirmPass, setRegConfirmPass] = useState('');
     const [regStoreCode, setRegStoreCode] = useState('');
+    const [detectedCargo, setDetectedCargo] = useState(null);
+
+    // Consulta pré-cadastro em tempo real ao digitar Nome ou Celular
+    useEffect(() => {
+        if (view !== 'REGISTER' || regStep !== 1) return;
+        const nameClean = regName.trim();
+        const phoneDigits = regPhone.replace(/\D/g, '');
+
+        if (nameClean.length < 4 && phoneDigits.length < 8) {
+            setDetectedCargo(null);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            const res = await consultarPreCadastroAPI(nameClean, phoneDigits);
+            if (res && res.encontrado) {
+                setDetectedCargo(res);
+            } else {
+                setDetectedCargo(null);
+            }
+        }, 350);
+
+        return () => clearTimeout(timer);
+    }, [regName, regPhone, view, regStep]);
 
     // Forgot Password State
     const [forgotStep, setForgotStep] = useState(1);
@@ -461,10 +484,10 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
                 localStorage.setItem('jwt_token', result.token);
             }
             localStorage.setItem('storeId', realStoreId);
-            
+
             const userDataToSave = { ...result.user, loginTime: Date.now() };
             localStorage.setItem('sessionUser', JSON.stringify(userDataToSave));
-            
+
             toast.dismiss(toastId);
 
             const userData = result.user;
@@ -490,7 +513,7 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        
+
         if (regPass !== regConfirmPass) {
             toast.error('As senhas não coincidem.');
             return;
@@ -503,7 +526,7 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
 
         const urlParams = new URLSearchParams(window.location.search);
         const setupKey = urlParams.get('setup');
-        
+
         const userUpper = regUser.toUpperCase();
         const emailClean = regEmail.trim().replace(/\.$/, '');
         const nameUpper = regName.toUpperCase();
@@ -723,7 +746,7 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
                                             <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">E-mail <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5 group">
                                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#E3000F] transition-colors" size={17} />
-                                                <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="Ex: seunome@corporativo.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm transition-all shadow-sm" />
+                                                <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="Ex: seunome@seuemail.com.br" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm transition-all shadow-sm" />
                                             </div>
                                         </div>
                                         <div>
@@ -740,6 +763,26 @@ export function Login({ usersDB, setUsersDB, onLogin, theme: propTheme, toggleTh
                                                 }} placeholder="Ex: (11) 90000-0000" required className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-white/[0.04] hover:bg-neutral-100/70 dark:hover:bg-white/[0.07] border border-neutral-300/80 dark:border-white/10 focus:border-[#E3000F] dark:focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/20 focus:bg-white dark:focus:bg-white/[0.06] text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 rounded-xl outline-none text-sm font-mono transition-all shadow-sm" />
                                             </div>
                                         </div>
+
+                                        {/* BANNER DE CARGO PRÉ-IDENTIFICADO */}
+                                        {detectedCargo && (
+                                            <div className="p-2.5 bg-gradient-to-r from-red-500/10 via-amber-500/10 to-red-500/10 border border-[#E3000F]/30 rounded-xl text-xs flex items-center justify-between animate-fade-in shadow-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <Sparkles size={16} className="text-[#E3000F] shrink-0 animate-pulse" />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-neutral-800 dark:text-neutral-100 text-[11px]">
+                                                            Colaborador Reconhecido: <strong className="text-[#E3000F]">{detectedCargo.nome}</strong>
+                                                        </span>
+                                                        <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                                            Cargo pré-atribuído: <strong className="uppercase text-emerald-600 dark:text-emerald-400 font-extrabold">{detectedCargo.cargo}</strong>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-[#E3000F]/15 text-[#E3000F] border border-[#E3000F]/30 tracking-wider shrink-0">
+                                                    {detectedCargo.cargo}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div>
                                             <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 ml-1">Data de Nascimento (18+ Anos) <span className="text-[#E3000F]">*</span></label>
                                             <div className="relative mt-0.5 group">
