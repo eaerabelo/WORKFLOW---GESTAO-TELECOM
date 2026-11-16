@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Calculator, User, DollarSign, Target, TrendingUp, AlertCircle, 
     Award, Lock, CheckCircle2, AlertTriangle, ShieldCheck, 
-    ChevronDown, Zap, BarChart2, FileText, Printer, ExternalLink, X, BookOpen, Sparkles
+    ChevronDown, Zap, BarChart2, FileText, ExternalLink, BookOpen, Download
 } from 'lucide-react';
 import { applyCurrencyMask } from '../utils/masks';
 import { METAS_PADRAO } from '../utils/constants';
@@ -18,11 +18,14 @@ const FATORES_ACELERADOR_MULTI = {
 };
 
 /**
- * Normaliza qualquer variação de cargo para um dos 6 cargos oficiais da Norma PL-DRH-042
+ * Normaliza o cargo do usuário para uma das categorias oficiais da Norma PL-DRH-042
  */
 const normalizeRoleForRV = (rawRole) => {
     const r = String(rawRole || 'VENDEDOR').trim().toUpperCase();
-    if (r === 'GERENTE' || r === 'COORDENADOR' || r === 'ESPECIALISTA' || r.includes('GERENTE') || r.includes('SUPERVISOR')) {
+    if (r === 'COORDENADOR' || r === 'ESPECIALISTA' || r.includes('COORDENADOR') || r.includes('ESPECIALISTA')) {
+        return 'COORDENADOR';
+    }
+    if (r === 'GERENTE' || r.includes('GERENTE') || r.includes('SUPERVISOR')) {
         return 'GERENTE';
     }
     if (r === 'SENIOR' || r === 'SÊNIOR' || r.includes('SENIOR') || r.includes('SÊNIOR')) {
@@ -30,6 +33,9 @@ const normalizeRoleForRV = (rawRole) => {
     }
     if (r === 'GEEK' || r.includes('GEEK') || r.includes('TECNOLOGICO') || r.includes('TECNOLÓGICO')) {
         return 'GEEK';
+    }
+    if (r === 'CAIXA' || r.includes('CAIXA')) {
+        return 'CAIXA';
     }
     if (r === 'ADMINISTRAÇÃO' || r === 'ADMINISTRACAO' || r === 'ADM' || r.includes('ADMIN')) {
         return 'ADMINISTRAÇÃO';
@@ -41,149 +47,162 @@ const normalizeRoleForRV = (rawRole) => {
 };
 
 /**
- * Catálogo Oficial Simétrico dos 6 Cargos — Norma PL-DRH-042 (Anexo I - G, Revisão 08 — 23/02/2026)
+ * Mapeamento de cada cargo para o seu respectivo PDF na pasta /uploads e regras resumidas na aba FONTE
  */
 const REGRAS_CARGOS_NORMA = {
-    'ASSISTENTE RELACIONAMENTO': {
-        codigo: 'ASSISTENTE RELACIONAMENTO',
-        titulo: 'Assistente de Relacionamentos (Loja)',
-        grupoAnexo: 'Grupo VII • Anexo VIII (Rev. 04)',
-        baseApuracao: 'Loja Alocada (Somatória da Loja Própria/Quiosque)',
+    'VENDEDOR': {
+        codigo: 'VENDEDOR',
+        titulo: 'Vendedor',
+        grupoAnexo: 'Grupo VIII • Anexo IX (Rev. 03)',
+        baseApuracao: 'Individual',
+        pdfFile: 'REGRAS RV VENDEDOR.pdf',
+        pdfKey: 'VENDEDOR',
         gatilhosLabel: 'Gross Pós (≥ 80%), Receita (≥ 80%), Residencial [Fibra + TV] (≥ 80%)',
         isGeekEligibility: false,
         faixas: [
-            { label: 'Faixa 0 (< 80,00%)', min: 0, max: 79.99, pct: 0, texto: '0,00%' },
-            { label: 'Faixa 1 (80,00% a 99,99%)', min: 80, max: 99.99, pct: 0.0075, texto: '0,75%' },
-            { label: 'Faixa 2 (100,00% a 114,99%)', min: 100, max: 114.99, pct: 0.012, texto: '1,20%' },
-            { label: 'Faixa 3 (≥ 115,00%)', min: 115, max: 9999, pct: 0.015, texto: '1,50%' }
+            { label: '80,00% a 99,99%', min: 80, max: 99.99, pct: 0.045, texto: '4,50%' },
+            { label: '100,00% a 119,99%', min: 100, max: 119.99, pct: 0.07, texto: '7,00%' },
+            { label: '120,00% a 149,99%', min: 120, max: 149.99, pct: 0.09, texto: '9,00%' },
+            { label: '≥ 150,00%', min: 150, max: 9999, pct: 0.11, texto: '11,00%' }
         ],
-        temBonusSms: true,
-        bonusResumo: 'Pesquisa de Satisfação (SMS ≥ 8): +5,00% sobre o valor de RV da Etapa 2.',
-        teto: 4000.00,
-        etapasDetalhadas: [
-            '1ª Etapa — Elegibilidade: Obrigatório atingir ≥ 80,00% em TODOS os 3 indicadores da loja (Gross Pós-Pago Consumo, Receita Consumo e PME, e Produtos Residenciais Consumo e PME [Fibra + TV Principal]). Falhar em 1 zera a RV.',
-            '2ª Etapa — Cálculo da RV (% sobre Receita Gerada da loja): < 80%: 0,00% | 80% a < 100%: 0,75% | 100% a < 115%: 1,20% | ≥ 115%: 1,50%.',
-            '3ª Etapa — Bônus: Pesquisa de Satisfação (SMS) +5,00% sobre o valor da Etapa 2 se a média das notas válidas dos vendedores da loja for ≥ 8.',
-            '4ª Etapa — Teto Monetário: R$ 4.000,00.'
-        ]
-    },
-    'GERENTE': {
-        codigo: 'GERENTE',
-        titulo: 'Gerente de Loja',
-        grupoAnexo: 'Grupo II • Anexo III (Rev. 04)',
-        baseApuracao: 'Lojas sob Gestão (Somatória das Lojas Próprias sob responsabilidade)',
-        gatilhosLabel: 'Gross Pós (≥ 80%), Receita (≥ 80%), Residencial [Fibra + TV] (≥ 80%)',
-        isGeekEligibility: false,
-        faixas: [
-            { label: 'Faixa 0 (< 80,00%)', min: 0, max: 79.99, pct: 0, texto: '0,00%' },
-            { label: 'Faixa 1 (80,00% a 99,99%)', min: 80, max: 99.99, pct: 0.01, texto: '1,00%' },
-            { label: 'Faixa 2 (100,00% a 114,99%)', min: 100, max: 114.99, pct: 0.02, texto: '2,00%' },
-            { label: 'Faixa 3 (≥ 115,00%)', min: 115, max: 9999, pct: 0.03, texto: '3,00%' }
-        ],
-        temBonusSms: true,
-        bonusResumo: 'SMS ≥ 8 (+5% sobre Etapa 2) + Bônus Gestão (+R$ 250 se ≥ 80% vendedores elegíveis | +R$ 500 se 100% elegíveis).',
-        teto: 7000.00,
-        etapasDetalhadas: [
-            '1ª Etapa — Elegibilidade: Obrigatório atingir ≥ 80,00% em TODOS os 3 indicadores das lojas sob gestão (Gross Pós-Pago Consumo, Receita Consumo e PME, e Produtos Residenciais Consumo e PME [Fibra + TV Principal]).',
-            '2ª Etapa — Cálculo da RV (% sobre Receita Gerada das lojas): < 80%: 0,00% | 80% a < 100%: 1,00% | 100% a < 115%: 2,00% | ≥ 115%: 3,00%.',
-            '3ª Etapa — Bônus: (a) Pesquisa de Satisfação (SMS) +5,00% sobre a Etapa 2 se média ≥ 8; (b) Bônus Gestão (fixo, não acumulativo): +R$ 250,00 se ≥ 80% dos vendedores elegíveis à RV, ou +R$ 500,00 se 100% dos vendedores elegíveis à RV.',
-            '4ª Etapa — Teto Monetário: R$ 7.000,00.'
-        ]
+        bonusResumo: 'SMS ≥ 8 (+5%) + Bônus Unitário Acima da Meta (Pós, Fibra e TV: R$ 10 [100–114,99%] | R$ 15 [≥ 115%])',
+        teto: 6000.00
     },
     'SENIOR': {
         codigo: 'SENIOR',
         titulo: 'Vendedor Sênior',
         grupoAnexo: 'Grupo III • Anexo IV (Rev. 04)',
-        baseApuracao: 'Loja Alocada (Somatória da Loja Própria/Quiosque)',
+        baseApuracao: 'Loja Alocada',
+        pdfFile: 'REGRAS RV SENIOR.pdf',
+        pdfKey: 'SENIOR',
         gatilhosLabel: 'Gross Pós (≥ 80%), Receita (≥ 80%), Residencial [Fibra + TV] (≥ 80%)',
         isGeekEligibility: false,
         faixas: [
-            { label: 'Faixa 0 (< 80,00%)', min: 0, max: 79.99, pct: 0, texto: '0,00%' },
-            { label: 'Faixa 1 (80,00% a 99,99%)', min: 80, max: 99.99, pct: 0.01, texto: '1,00%' },
-            { label: 'Faixa 2 (100,00% a 114,99%)', min: 100, max: 114.99, pct: 0.015, texto: '1,50%' },
-            { label: 'Faixa 3 (≥ 115,00%)', min: 115, max: 9999, pct: 0.02, texto: '2,00%' }
+            { label: '80,00% a 99,99%', min: 80, max: 99.99, pct: 0.01, texto: '1,00%' },
+            { label: '100,00% a 114,99%', min: 100, max: 114.99, pct: 0.015, texto: '1,50%' },
+            { label: '≥ 115,00%', min: 115, max: 9999, pct: 0.02, texto: '2,00%' }
         ],
-        temBonusSms: true,
-        bonusResumo: 'Pesquisa de Satisfação (SMS ≥ 8): +5,00% sobre o valor de RV da Etapa 2.',
-        teto: 6000.00,
-        etapasDetalhadas: [
-            '1ª Etapa — Elegibilidade: Obrigatório atingir ≥ 80,00% em TODOS os 3 indicadores da loja (Gross Pós-Pago Consumo, Receita Consumo e PME, e Produtos Residenciais Consumo e PME [Fibra + TV Principal]).',
-            '2ª Etapa — Cálculo da RV (% sobre Receita Gerada da loja): < 80%: 0,00% | 80% a < 100%: 1,00% | 100% a < 115%: 1,50% | ≥ 115%: 2,00%.',
-            '3ª Etapa — Bônus: Pesquisa de Satisfação (SMS) +5,00% sobre o valor da Etapa 2 se a média das notas válidas dos vendedores da loja for ≥ 8.',
-            '4ª Etapa — Teto Monetário: R$ 6.000,00.'
-        ]
+        bonusResumo: 'Pesquisa de Satisfação (SMS ≥ 8): +5,00% sobre o valor da Etapa 2',
+        teto: 6000.00
     },
-    'VENDEDOR': {
-        codigo: 'VENDEDOR',
-        titulo: 'Vendedor (Lojas Próprias)',
-        grupoAnexo: 'Grupo VIII • Anexo IX (Rev. 03)',
-        baseApuracao: 'Individual (Meta e Realizado individuais do colaborador)',
+    'GERENTE': {
+        codigo: 'GERENTE',
+        titulo: 'Gerente de Loja',
+        grupoAnexo: 'Grupo II • Anexo III (Rev. 04)',
+        baseApuracao: 'Lojas sob Gestão',
+        pdfFile: 'REGRAS RV GERENTE.pdf',
+        pdfKey: 'GERENTE',
         gatilhosLabel: 'Gross Pós (≥ 80%), Receita (≥ 80%), Residencial [Fibra + TV] (≥ 80%)',
         isGeekEligibility: false,
         faixas: [
-            { label: 'Faixa 0 (< 80,00%)', min: 0, max: 79.99, pct: 0, texto: '0,00%' },
-            { label: 'Faixa 1 (80,00% a 99,99%)', min: 80, max: 99.99, pct: 0.045, texto: '4,50%' },
-            { label: 'Faixa 2 (100,00% a 119,99%)', min: 100, max: 119.99, pct: 0.07, texto: '7,00%' },
-            { label: 'Faixa 3 (120,00% a 149,99%)', min: 120, max: 149.99, pct: 0.09, texto: '9,00%' },
-            { label: 'Faixa 4 (≥ 150,00%)', min: 150, max: 9999, pct: 0.11, texto: '11,00%' }
+            { label: '80,00% a 99,99%', min: 80, max: 99.99, pct: 0.01, texto: '1,00%' },
+            { label: '100,00% a 114,99%', min: 100, max: 114.99, pct: 0.02, texto: '2,00%' },
+            { label: '≥ 115,00%', min: 115, max: 9999, pct: 0.03, texto: '3,00%' }
         ],
-        temBonusSms: true,
-        bonusResumo: 'SMS ≥ 8 (+5% sobre Etapa 2) + Bônus Unitário por Venda Acima da Meta (Pós Titular/Controle, Fibra e TV: R$ 10 [100-114,99%] ou R$ 15 [≥ 115%]).',
-        teto: 6000.00,
-        etapasDetalhadas: [
-            '1ª Etapa — Elegibilidade: Obrigatório atingir ≥ 80,00% em TODOS os 3 indicadores individuais (Gross Pós-Pago Consumo, Receita Consumo e PME, e Produtos Residenciais Consumo e PME [Fibra + TV Principal]).',
-            '2ª Etapa — Cálculo da RV (% sobre Receita Gerada individual): < 80%: 0,00% | 80% a < 100%: 4,50% | 100% a < 120%: 7,00% | 120% a < 150%: 9,00% | ≥ 150%: 11,00%.',
-            '3ª Etapa — Bônus: (a) Pesquisa de Satisfação (SMS) +5,00% sobre a Etapa 2 se média individual ≥ 8; (b) Bônus Unitário Excedente por produto (Pós Titular Conta/Controle, Fibra/Virtua e TV): R$ 10,00 por venda acima da meta (100% a 114,99%) ou R$ 15,00 por venda acima da meta (≥ 115%).',
-            '4ª Etapa — Teto Monetário: R$ 6.000,00.'
-        ]
+        bonusResumo: 'SMS ≥ 8 (+5%) + Bônus Gestão (R$ 250 se ≥ 80% vendedores elegíveis | R$ 500 se 100% elegíveis)',
+        teto: 7000.00
     },
     'GEEK': {
         codigo: 'GEEK',
         titulo: 'Assistente Tecnológico (Geek)',
         grupoAnexo: 'Grupo IV • Anexo V (Rev. 04)',
-        baseApuracao: 'Loja Alocada (Somatória da Loja Própria/Quiosque)',
+        baseApuracao: 'Loja Alocada',
+        pdfFile: 'REGRAS RV GEEK.pdf',
+        pdfKey: 'GEEK',
         gatilhosLabel: 'Gross Pós (≥ 80%), Acessório Qtde (≥ 80%), Aparelho Qtde (≥ 80%)',
         isGeekEligibility: true,
         faixas: [
-            { label: 'Faixa 0 (< 80,00% Receita)', min: 0, max: 79.99, pct: 0, texto: '0,00%' },
-            { label: 'Faixa 1 (80,00% a 99,99%)', min: 80, max: 99.99, pct: 0.01, texto: '1,00%' },
-            { label: 'Faixa 2 (100,00% a 114,99%)', min: 100, max: 114.99, pct: 0.015, texto: '1,50%' },
-            { label: 'Faixa 3 (≥ 115,00%)', min: 115, max: 9999, pct: 0.02, texto: '2,00%' }
+            { label: '80,00% a 99,99%', min: 80, max: 99.99, pct: 0.01, texto: '1,00%' },
+            { label: '100,00% a 114,99%', min: 100, max: 114.99, pct: 0.015, texto: '1,50%' },
+            { label: '≥ 115,00%', min: 115, max: 9999, pct: 0.02, texto: '2,00%' }
         ],
-        temBonusSms: false,
-        bonusResumo: 'Sem Bônus SMS. Exclusivos: Fibra PME (+R$ 200 [100-129,99%] ou +R$ 300 [≥ 130%]) + Ticket Médio Acessórios (+R$ 235 fixo se Qtde ≥ 100% e TM ≥ 100%).',
-        teto: 6000.00,
-        etapasDetalhadas: [
-            '1ª Etapa — Elegibilidade: Exige ≥ 80,00% nos 3 indicadores quantitativos da loja: Gross Pós-Pago Consumo, Acessório (Qtde) e Aparelho (Qtde). Não exige Receita nem Residencial para destravar elegibilidade.',
-            '2ª Etapa — Cálculo da RV (% sobre Receita Gerada da loja): < 80%: 0,00% | 80% a < 100%: 1,00% | 100% a < 115%: 1,50% | ≥ 115%: 2,00%.',
-            '3ª Etapa — Bônus Exclusivos (não possui Bônus SMS): (a) Banda Larga Fixa (Fibra/Virtua) PME: +R$ 200,00 (100% a 129,99%) ou +R$ 300,00 (≥ 130%); (b) Ticket Médio Acessórios: +R$ 235,00 fixo se atingir simultaneamente ≥ 100% da Meta Qtde Acessórios e ≥ 100% da Meta Ticket Médio de Acessórios.',
-            '4ª Etapa — Teto Monetário: R$ 6.000,00.'
-        ]
+        bonusResumo: 'Fibra/Virtua PME (+R$ 200 [100–129,99%] | +R$ 300 [≥ 130%]) + Ticket Médio Acessórios (+R$ 235 fixo)',
+        teto: 6000.00
     },
     'ADMINISTRAÇÃO': {
         codigo: 'ADMINISTRAÇÃO',
-        titulo: 'ADM (Assistente Administrativo Loja)',
+        titulo: 'ADM (Assistente Administrativo)',
         grupoAnexo: 'Grupo V • Anexo VI (Rev. 03)',
-        baseApuracao: 'Loja Alocada (Somatória da Loja Própria/Quiosque)',
+        baseApuracao: 'Loja Alocada',
+        pdfFile: 'REGRAS RV ADM.pdf',
+        pdfKey: 'ADMINISTRAÇÃO',
         gatilhosLabel: 'Gross Pós (≥ 80%), Receita (≥ 80%), Residencial [Fibra + TV] (≥ 80%)',
         isGeekEligibility: false,
         faixas: [
-            { label: 'Faixa 0 (< 80,00%)', min: 0, max: 79.99, pct: 0, texto: '0,00%' },
-            { label: 'Faixa 1 (80,00% a 99,99%)', min: 80, max: 99.99, pct: 0.005, texto: '0,50%' },
-            { label: 'Faixa 2 (100,00% a 114,99%)', min: 100, max: 114.99, pct: 0.01, texto: '1,00%' },
-            { label: 'Faixa 3 (≥ 115,00%)', min: 115, max: 9999, pct: 0.015, texto: '1,50%' }
+            { label: '80,00% a 99,99%', min: 80, max: 99.99, pct: 0.005, texto: '0,50%' },
+            { label: '100,00% a 114,99%', min: 100, max: 114.99, pct: 0.01, texto: '1,00%' },
+            { label: '≥ 115,00%', min: 115, max: 9999, pct: 0.015, texto: '1,50%' }
         ],
-        temBonusSms: true,
-        bonusResumo: 'Pesquisa de Satisfação (SMS ≥ 8): +5,00% sobre o valor de RV da Etapa 2.',
-        teto: 2000.00,
-        etapasDetalhadas: [
-            '1ª Etapa — Elegibilidade: Obrigatório atingir ≥ 80,00% em TODOS os 3 indicadores da loja (Gross Pós-Pago Consumo, Receita Consumo e PME, e Produtos Residenciais Consumo e PME [Fibra + TV Principal]).',
-            '2ª Etapa — Cálculo da RV (% sobre Receita Gerada da loja): < 80%: 0,00% | 80% a < 100%: 0,50% | 100% a < 115%: 1,00% | ≥ 115%: 1,50%.',
-            '3ª Etapa — Bônus: Pesquisa de Satisfação (SMS) +5,00% sobre o valor da Etapa 2 se a média das notas válidas dos vendedores da loja for ≥ 8.',
-            '4ª Etapa — Teto Monetário: R$ 2.000,00.'
-        ]
+        bonusResumo: 'Pesquisa de Satisfação (SMS ≥ 8): +5,00% sobre o valor da Etapa 2',
+        teto: 2000.00
+    },
+    'ASSISTENTE RELACIONAMENTO': {
+        codigo: 'ASSISTENTE RELACIONAMENTO',
+        titulo: 'Assistente de Relacionamentos',
+        grupoAnexo: 'Grupo VII • Anexo VIII (Rev. 04)',
+        baseApuracao: 'Loja Alocada',
+        pdfFile: 'REGRAS RV ASSISTENTE RELACIONAMENTO.pdf',
+        pdfKey: 'ASSISTENTE RELACIONAMENTO',
+        gatilhosLabel: 'Gross Pós (≥ 80%), Receita (≥ 80%), Residencial [Fibra + TV] (≥ 80%)',
+        isGeekEligibility: false,
+        faixas: [
+            { label: '80,00% a 99,99%', min: 80, max: 99.99, pct: 0.0075, texto: '0,75%' },
+            { label: '100,00% a 114,99%', min: 100, max: 114.99, pct: 0.012, texto: '1,20%' },
+            { label: '≥ 115,00%', min: 115, max: 9999, pct: 0.015, texto: '1,50%' }
+        ],
+        bonusResumo: 'Pesquisa de Satisfação (SMS ≥ 8): +5,00% sobre o valor da Etapa 2',
+        teto: 4000.00
+    },
+    'CAIXA': {
+        codigo: 'CAIXA',
+        titulo: 'Operador de Caixa',
+        grupoAnexo: 'Grupo V • Anexo VI (Caixa)',
+        baseApuracao: 'Loja Alocada',
+        pdfFile: 'REGRAS RV CAIXA.pdf',
+        pdfKey: 'CAIXA',
+        gatilhosLabel: 'Gross Pós (≥ 80%), Receita (≥ 80%), Residencial [Fibra + TV] (≥ 80%)',
+        isGeekEligibility: false,
+        faixas: [
+            { label: '80,00% a 99,99%', min: 80, max: 99.99, pct: 0.005, texto: '0,50%' },
+            { label: '100,00% a 114,99%', min: 100, max: 114.99, pct: 0.01, texto: '1,00%' },
+            { label: '≥ 115,00%', min: 115, max: 9999, pct: 0.015, texto: '1,50%' }
+        ],
+        bonusResumo: 'Pesquisa de Satisfação (SMS ≥ 8): +5,00% sobre o valor da Etapa 2',
+        teto: 2000.00
+    },
+    'COORDENADOR': {
+        codigo: 'COORDENADOR',
+        titulo: 'Coordenador & Equipe Regional',
+        grupoAnexo: 'Grupo I/II • Coordenador e Outros',
+        baseApuracao: 'Regional / Lojas sob Gestão',
+        pdfFile: 'REGRAS COORDENADOR E OUTROS.pdf',
+        pdfKey: 'COORDENADOR',
+        gatilhosLabel: 'Gross Pós (≥ 80%), Receita (≥ 80%), Residencial [Fibra + TV] (≥ 80%)',
+        isGeekEligibility: false,
+        faixas: [
+            { label: '80,00% a 99,99%', min: 80, max: 99.99, pct: 0.01, texto: '1,00%' },
+            { label: '100,00% a 114,99%', min: 100, max: 114.99, pct: 0.02, texto: '2,00%' },
+            { label: '≥ 115,00%', min: 115, max: 9999, pct: 0.03, texto: '3,00%' }
+        ],
+        bonusResumo: 'SMS ≥ 8 (+5%) + Bônus Gestão Regional (R$ 250 / R$ 500)',
+        teto: 7000.00
     }
 };
+
+const DOCUMENTOS_EXTRAS_UPLOADS = [
+    {
+        titulo: 'Regras Gerais de Comissionamento (Anexo I)',
+        subtitulo: 'Apuração por Serviço, Portabilidade, Multi, Aparelhos e Residencial',
+        pdfFile: 'REGRAS GERAIS COMISSIONAMENTO.pdf',
+        pdfKey: 'GERAIS'
+    },
+    {
+        titulo: 'Regras de Férias, Elegibilidade e Outros',
+        subtitulo: 'Política de Férias, Fechamento de Loja, Redutores e Contestações',
+        pdfFile: 'REGRAS DE FERIAS E OUTROS.pdf',
+        pdfKey: 'FERIAS'
+    }
+];
 
 // Cálculo local de receita por serviço/produto conforme Anexo I da PL-DRH-042
 const calcularReceitaProdutoLocal = (sale, pctAtingimentoMplay = 0) => {
@@ -304,21 +323,13 @@ const calcularFatorRVLocal = (pctAtingimento, totalComissao, metricasExtras = {}
     const pctPos = Number(metricasExtras.pctAtingimentoPos) || 0;
     const pctUr = Number(metricasExtras.pctAtingimentoUr) || 0;
     const pctRec = Number(pctAtingimento) || 0;
-    const notaNps = Number(metricasExtras.notaNps) || 0;
 
     let fator = 0;
     let elegivel = true;
-    let bonusSms = 0;
-    let bonusGestao = 0;
     let bonusUnitario = 0;
-    let bonusPos = 0;
-    let bonusFibra = 0;
-    let bonusTv = 0;
-    let bonusBlPme = 0;
-    let bonusTmAcessorio = 0;
     let tetoCargo = 6000.00;
 
-    if (role === 'GERENTE') {
+    if (role === 'GERENTE' || role === 'COORDENADOR') {
         tetoCargo = 7000.00;
         if (pctRec < 80 || pctPos < 80 || pctUr < 80) elegivel = false;
         else if (pctRec >= 115) fator = 0.03;
@@ -327,24 +338,15 @@ const calcularFatorRVLocal = (pctAtingimento, totalComissao, metricasExtras = {}
 
         const rvEtapa2 = elegivel ? totalComissao * fator : 0;
         if (elegivel) {
-            if (notaNps >= 8) bonusSms = rvEtapa2 * 0.05;
             const pctEleg = Number(metricasExtras.pctVendedoresElegiveis) || 0;
-            if (pctEleg >= 100) bonusGestao = 500;
-            else if (pctEleg >= 80) bonusGestao = 250;
+            if (pctEleg >= 100) bonusUnitario = 500;
+            else if (pctEleg >= 80) bonusUnitario = 250;
         }
-        const totalBonus = bonusSms + bonusGestao;
-        const previaBruta = rvEtapa2 + totalBonus;
         return {
             fatorAplicado: fator,
-            rvEtapa2,
-            bonusSms,
-            bonusGestao,
-            bonusUnitario: bonusGestao,
-            totalBonus,
-            tetoCargo,
-            atingiuTeto: previaBruta > tetoCargo,
             elegivel,
-            previaPagamento: Math.min(Math.max(0, previaBruta), tetoCargo)
+            bonusUnitario,
+            previaPagamento: Math.min(Math.max(0, rvEtapa2 + bonusUnitario), tetoCargo)
         };
     }
 
@@ -356,19 +358,11 @@ const calcularFatorRVLocal = (pctAtingimento, totalComissao, metricasExtras = {}
         else fator = 0.01;
 
         const rvEtapa2 = elegivel ? totalComissao * fator : 0;
-        if (elegivel && notaNps >= 8) bonusSms = rvEtapa2 * 0.05;
-        const previaBruta = rvEtapa2 + bonusSms;
         return {
             fatorAplicado: fator,
-            rvEtapa2,
-            bonusSms,
-            bonusGestao: 0,
-            bonusUnitario: 0,
-            totalBonus: bonusSms,
-            tetoCargo,
-            atingiuTeto: previaBruta > tetoCargo,
             elegivel,
-            previaPagamento: Math.min(Math.max(0, previaBruta), tetoCargo)
+            bonusUnitario: 0,
+            previaPagamento: Math.min(Math.max(0, rvEtapa2), tetoCargo)
         };
     }
 
@@ -380,23 +374,15 @@ const calcularFatorRVLocal = (pctAtingimento, totalComissao, metricasExtras = {}
         else fator = 0.0075;
 
         const rvEtapa2 = elegivel ? totalComissao * fator : 0;
-        if (elegivel && notaNps >= 8) bonusSms = rvEtapa2 * 0.05;
-        const previaBruta = rvEtapa2 + bonusSms;
         return {
             fatorAplicado: fator,
-            rvEtapa2,
-            bonusSms,
-            bonusGestao: 0,
-            bonusUnitario: 0,
-            totalBonus: bonusSms,
-            tetoCargo,
-            atingiuTeto: previaBruta > tetoCargo,
             elegivel,
-            previaPagamento: Math.min(Math.max(0, previaBruta), tetoCargo)
+            bonusUnitario: 0,
+            previaPagamento: Math.min(Math.max(0, rvEtapa2), tetoCargo)
         };
     }
 
-    if (role === 'ADMINISTRAÇÃO') {
+    if (role === 'ADMINISTRAÇÃO' || role === 'CAIXA') {
         tetoCargo = 2000.00;
         if (pctRec < 80 || pctPos < 80 || pctUr < 80) elegivel = false;
         else if (pctRec >= 115) fator = 0.015;
@@ -404,19 +390,11 @@ const calcularFatorRVLocal = (pctAtingimento, totalComissao, metricasExtras = {}
         else fator = 0.005;
 
         const rvEtapa2 = elegivel ? totalComissao * fator : 0;
-        if (elegivel && notaNps >= 8) bonusSms = rvEtapa2 * 0.05;
-        const previaBruta = rvEtapa2 + bonusSms;
         return {
             fatorAplicado: fator,
-            rvEtapa2,
-            bonusSms,
-            bonusGestao: 0,
-            bonusUnitario: 0,
-            totalBonus: bonusSms,
-            tetoCargo,
-            atingiuTeto: previaBruta > tetoCargo,
             elegivel,
-            previaPagamento: Math.min(Math.max(0, previaBruta), tetoCargo)
+            bonusUnitario: 0,
+            previaPagamento: Math.min(Math.max(0, rvEtapa2), tetoCargo)
         };
     }
 
@@ -437,27 +415,17 @@ const calcularFatorRVLocal = (pctAtingimento, totalComissao, metricasExtras = {}
         const rvEtapa2 = elegivel ? totalComissao * fator : 0;
         if (elegivel) {
             const pctBlPme = Number(metricasExtras.pctAtingimentoBlPme) || 0;
-            if (pctBlPme >= 130) bonusBlPme = 300;
-            else if (pctBlPme >= 100) bonusBlPme = 200;
+            if (pctBlPme >= 130) bonusUnitario += 300;
+            else if (pctBlPme >= 100) bonusUnitario += 200;
 
             const pctTmAces = Number(metricasExtras.pctAtingimentoTmAcessorio) || 0;
-            if (pctAces >= 100 && pctTmAces >= 100) bonusTmAcessorio = 235;
+            if (pctAces >= 100 && pctTmAces >= 100) bonusUnitario += 235;
         }
-        const totalBonus = bonusBlPme + bonusTmAcessorio;
-        const previaBruta = rvEtapa2 + totalBonus;
         return {
             fatorAplicado: fator,
-            rvEtapa2,
-            bonusSms: 0,
-            bonusGestao: 0,
-            bonusBlPme,
-            bonusTmAcessorio,
-            bonusUnitario: totalBonus,
-            totalBonus,
-            tetoCargo,
-            atingiuTeto: previaBruta > tetoCargo,
             elegivel,
-            previaPagamento: Math.min(Math.max(0, previaBruta), tetoCargo)
+            bonusUnitario,
+            previaPagamento: Math.min(Math.max(0, rvEtapa2 + bonusUnitario), tetoCargo)
         };
     }
 
@@ -482,196 +450,18 @@ const calcularFatorRVLocal = (pctAtingimento, totalComissao, metricasExtras = {}
     };
 
     if (elegivel) {
-        if (notaNps >= 8) bonusSms = rvEtapa2 * 0.05;
-        bonusPos = calcExcedente(metricasExtras.volPosPago, metricasExtras.metaPosPago);
-        bonusFibra = calcExcedente(metricasExtras.volFibra, metricasExtras.metaFibra);
-        bonusTv = calcExcedente(metricasExtras.volTv, metricasExtras.metaTv);
-        bonusUnitario = bonusPos + bonusFibra + bonusTv;
+        bonusUnitario =
+            calcExcedente(metricasExtras.volPosPago, metricasExtras.metaPosPago) +
+            calcExcedente(metricasExtras.volFibra, metricasExtras.metaFibra) +
+            calcExcedente(metricasExtras.volTv, metricasExtras.metaTv);
     }
 
-    const totalBonus = bonusSms + bonusUnitario;
-    const previaBruta = rvEtapa2 + totalBonus;
     return {
         fatorAplicado: fator,
-        rvEtapa2,
-        bonusSms,
-        bonusGestao: 0,
-        bonusUnitario,
-        bonusPos,
-        bonusFibra,
-        bonusTv,
-        totalBonus,
-        tetoCargo,
-        atingiuTeto: previaBruta > tetoCargo,
         elegivel,
-        previaPagamento: Math.min(Math.max(0, previaBruta), tetoCargo)
+        bonusUnitario,
+        previaPagamento: Math.min(Math.max(0, rvEtapa2 + bonusUnitario), tetoCargo)
     };
-};
-
-/**
- * Abre e dimensiona em nova guia um documento PDF oficial A4 pronto para impressão/salvamento
- */
-const abrirDocumentoPDFNorma = (roleKey, sellerName) => {
-    const regra = REGRAS_CARGOS_NORMA[roleKey] || REGRAS_CARGOS_NORMA['VENDEDOR'];
-    const win = window.open('', '_blank');
-    if (!win) return;
-
-    const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8" />
-<title>Norma PL-DRH-042 - Regras de Remuneração Variável (${regra.titulo})</title>
-<style>
-  @page { size: A4; margin: 14mm; }
-  * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
-  body { margin: 0; padding: 24px; color: #171717; background: #f5f5f5; }
-  .sheet { max-width: 900px; margin: 0 auto; background: #fff; padding: 32px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border-top: 6px solid #E3000F; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e5e5e5; padding-bottom: 16px; margin-bottom: 20px; }
-  .badge { display: inline-block; background: #fee2e2; color: #E3000F; font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  h1 { margin: 6px 0 4px 0; font-size: 20px; color: #111; }
-  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.6px; color: #E3000F; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-top: 22px; }
-  .meta-info { font-size: 12px; color: #555; }
-  .highlight-box { background: #fff8f8; border: 1px solid #fecaca; border-left: 4px solid #E3000F; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; }
-  .highlight-box h3 { margin: 0 0 8px 0; font-size: 15px; color: #b91c1c; }
-  .highlight-box ul { margin: 6px 0 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.55; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11.5px; }
-  th, td { border: 1px solid #e5e5e5; padding: 8px 10px; text-align: left; }
-  th { background: #171717; color: #fff; font-weight: 700; text-transform: uppercase; font-size: 10.5px; }
-  tr.active-row { background: #fef2f2; font-weight: 700; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-  .card { border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px 12px; font-size: 11.5px; line-height: 1.45; }
-  .card strong { color: #111; display: block; margin-bottom: 3px; }
-  .print-bar { display: flex; justify-content: flex-end; gap: 10px; max-width: 900px; margin: 0 auto 14px auto; }
-  .btn { background: #E3000F; color: #fff; border: none; padding: 9px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
-  @media print {
-    body { background: #fff; padding: 0; }
-    .sheet { box-shadow: none; padding: 0; max-width: 100%; }
-    .print-bar { display: none; }
-  }
-</style>
-</head>
-<body>
-  <div class="print-bar">
-    <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar como PDF</button>
-  </div>
-  <div class="sheet">
-    <div class="header">
-      <div>
-        <span class="badge">FONTE OFICIAL • NORMA PL-DRH-042 (ANEXO I - G, REV. 08 — 23/02/2026)</span>
-        <h1>Política de Remuneração Variável (Fator RV)</h1>
-        <div class="meta-info">Colaborador(a): <strong>${sellerName || 'Simulação'}</strong> • Enquadramento Ativo: <strong>${regra.titulo} (${regra.grupoAnexo})</strong></div>
-      </div>
-      <div style="text-align:right; font-size:11px; color:#666;">
-        <strong>WorkFlow Gestão Telecom</strong><br/>
-        Documento Dimensionado por Cargo
-      </div>
-    </div>
-
-    <div class="highlight-box">
-      <h3>📌 Regra Específica do Seu Cargo: ${regra.titulo} — ${regra.grupoAnexo}</h3>
-      <div style="font-size:12px; margin-bottom:6px;"><strong>Base de Apuração:</strong> ${regra.baseApuracao} | <strong>Teto Monetário:</strong> R$ ${regra.teto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-      <ul>
-        ${regra.etapasDetalhadas.map(e => `<li>${e}</li>`).join('')}
-      </ul>
-    </div>
-
-    <h2>Visão Geral Comparativa por Cargo (PL-DRH-042)</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Cargo</th>
-          <th>Grupo / Anexo</th>
-          <th>Base</th>
-          <th>Gatilhos (Mín. 80%)</th>
-          <th>Faixas % Receita</th>
-          <th>Bônus</th>
-          <th>Teto RV</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="${roleKey === 'ASSISTENTE RELACIONAMENTO' ? 'active-row' : ''}">
-          <td>Assistente de Relacionamentos</td>
-          <td>Grupo VII (Anexo VIII)</td>
-          <td>Loja alocada</td>
-          <td>Gross Pós, Receita, Residencial</td>
-          <td>0,75% / 1,20% / 1,50%</td>
-          <td>SMS ≥ 8 (+5%)</td>
-          <td>R$ 4.000,00</td>
-        </tr>
-        <tr class="${roleKey === 'GERENTE' ? 'active-row' : ''}">
-          <td>Gerente de Loja</td>
-          <td>Grupo II (Anexo III)</td>
-          <td>Lojas sob gestão</td>
-          <td>Gross Pós, Receita, Residencial</td>
-          <td>1,00% / 2,00% / 3,00%</td>
-          <td>SMS ≥ 8 (+5%) + Gestão (R$ 250 / R$ 500)</td>
-          <td>R$ 7.000,00</td>
-        </tr>
-        <tr class="${roleKey === 'SENIOR' ? 'active-row' : ''}">
-          <td>Vendedor Sênior</td>
-          <td>Grupo III (Anexo IV)</td>
-          <td>Loja alocada</td>
-          <td>Gross Pós, Receita, Residencial</td>
-          <td>1,00% / 1,50% / 2,00%</td>
-          <td>SMS ≥ 8 (+5%)</td>
-          <td>R$ 6.000,00</td>
-        </tr>
-        <tr class="${roleKey === 'VENDEDOR' ? 'active-row' : ''}">
-          <td>Vendedor</td>
-          <td>Grupo VIII (Anexo IX)</td>
-          <td>Individual</td>
-          <td>Gross Pós, Receita, Residencial</td>
-          <td>4,50% / 7,00% / 9,00% / 11,00%</td>
-          <td>SMS ≥ 8 (+5%) + Unitário (R$ 10 / R$ 15)</td>
-          <td>R$ 6.000,00</td>
-        </tr>
-        <tr class="${roleKey === 'GEEK' ? 'active-row' : ''}">
-          <td>Assistente Tecnológico (Geek)</td>
-          <td>Grupo IV (Anexo V)</td>
-          <td>Loja alocada</td>
-          <td>Gross Pós, Acessório, Aparelho</td>
-          <td>1,00% / 1,50% / 2,00%</td>
-          <td>Virtua PME (R$ 200 / R$ 300) + TM Acess. (R$ 235)</td>
-          <td>R$ 6.000,00</td>
-        </tr>
-        <tr class="${roleKey === 'ADMINISTRAÇÃO' ? 'active-row' : ''}">
-          <td>ADM (Assistente Administrativo)</td>
-          <td>Grupo V (Anexo VI)</td>
-          <td>Loja alocada</td>
-          <td>Gross Pós, Receita, Residencial</td>
-          <td>0,50% / 1,00% / 1,50%</td>
-          <td>SMS ≥ 8 (+5%)</td>
-          <td>R$ 2.000,00</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2>Regras de Apuração por Serviço e Equivalência na Base (Anexo I)</h2>
-    <div class="grid-2">
-      <div class="card">
-        <strong>📱 Móvel (Pós, Controle, Flex, Dependente) & Portabilidade</strong>
-        Portabilidade recebe <b>+30%</b> sobre a Tabela de Referência. Dependente gratuito conta 1 no Gross quantitativo, mas R$ 0,00 na receita. Claro Flex Cartão conta 1 Gross e 100% da tabela; Recarga Flex compõe 40% na receita. PME Móvel (POS PME) soma na Receita Consumo e PME.
-      </div>
-      <div class="card">
-        <strong>⚡ Fator Claro Multi (Móvel + Residencial / M-Play)</strong>
-        Multiplicador sobre vendas novas no contrato Multi: <b>1,2x</b> (0%–99,99%), <b>1,4x</b> (100%–129,99%), <b>1,6x</b> (130%–159,99%) e <b>1,8x</b> (≥ 160%). No Single ou sem M-Play, o fator é 1,0x.
-      </div>
-      <div class="card">
-        <strong>🏠 Residencial (Banda Larga Fixa = FIBRA | TV | Fixo)</strong>
-        Banda Larga Fixa ("Virtua") corresponde a <b>FIBRA / FIBRA PME</b> na base. TV Ponto Principal corresponde a <b>TVBOX / TV CABO / SOUNDBOX</b>. Telefone Fixo (<b>FIXO</b>) e Smarthome (<b>MESH</b>) compõem a Receita monetária.
-      </div>
-      <div class="card">
-        <strong>📲 Aparelhos, Acessórios, Películas & Seguro</strong>
-        Venda/Troca de Aparelho: <b>5,00%</b> do valor (<b>6,00%</b> quando com Seguro Proteção Móvel). Seguro avulso: <b>40,00%</b> da 1ª parcela. Acessórios e Películas: <b>15,00%</b> do valor da NF. Movimentações: Upgrade = <b>50%</b>, Sidegrade = <b>25%</b>, Downgrade = <b>0%</b>.
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
-
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
 };
 
 export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {}, globalMonth }) => {
@@ -680,10 +470,8 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
     const canChangeSeller = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'ADM', 'COORDENADOR', 'ESPECIALISTA', 'GEEK'].includes(userRole);
     const loggedName = String(globalUser?.name || '');
 
-    // Estados de simulação complementar e modal FONTE (PDF de Regras)
-    const [simularSms8, setSimularSms8] = useState(false);
-    const [showFonteModal, setShowFonteModal] = useState(false);
-    const [fonteTab, setFonteTab] = useState('MEU_CARGO'); // 'MEU_CARGO' | 'COMPARATIVO' | 'SERVICOS'
+    // Abas da Seção: 'SIMULADOR' (Painel Principal Limpo) | 'FONTE' (Regras por Usuário & PDFs da pasta uploads)
+    const [activeSectionTab, setActiveSectionTab] = useState('SIMULADOR');
 
     // Listagem de vendedores ativos para rateio de metas individuais
     const safeVendedores = useMemo(() => {
@@ -738,7 +526,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
             );
             const rawSelectedRole = selectedUserObj?.role || (targetSeller === loggedName ? userRole : 'VENDEDOR');
             const selectedUserRole = normalizeRoleForRV(rawSelectedRole);
-            const isStoreLevelRole = ['GERENTE', 'SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'GEEK'].includes(selectedUserRole);
+            const isStoreLevelRole = ['GERENTE', 'COORDENADOR', 'SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'CAIXA', 'GEEK'].includes(selectedUserRole);
 
             const activeMetas = (goalsDB || {})[globalMonth] || METAS_PADRAO || {};
             const numSellers = Math.max(1, safeVendedores.length || 1);
@@ -821,7 +609,6 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
             let totalComissao = 0;
             let comissaoAparelho = 0;
             let comissaoSeguro = 0;
-            let comissaoAcessorio = 0;
 
             sellerSales.forEach((sale) => {
                 const resApi = (resultados || []).find(r => r.id === sale.id);
@@ -850,19 +637,16 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     comissaoSeguro += receitaBase;
                 }
 
-                // Acessórios (inclui Películas na base)
                 if (pBase.includes('ACESSORIO') || pBase.includes('ACESSÓRIO') || pBase.includes('PELICULA') || pBase.includes('PELÍCULA')) {
                     volAcessorio += q;
                     receitaAcessorio += Number(sale.valorBruto !== undefined ? sale.valorBruto : sale.receita) || 0;
-                    comissaoAcessorio += receitaBase;
                 }
 
-                // Banda Larga Fixa (Virtua) PME = FIBRA PME na nossa base
                 if (pBase.includes('FIBRA PME') || pBase.includes('UR PME') || pBase.includes('BL PME') || pBase.includes('VIRTUA PME')) {
                     volBlPme += q;
                 }
 
-                // Gross Pós-Pago Consumo (Quantitativo): Conta Titular/Dep, Controle, Flex PF, BL Móvel (exclui PME e upgrades/sidegrades)
+                // Gross Pós-Pago Consumo (Conta, Controle, Flex PF, Dependente, BL Móvel — sem PME)
                 const isGrossPosConsumo = (
                     (pBase.includes('POS') || pBase.includes('PÓS') || pBase.includes('CONTROLE') || pBase.includes('FLEX') || pBase.includes('DEPENDENTE') || pBase.includes('DEP') || ((pBase.includes('BANDA LARGA') || pBase === 'BL') && !pBase.includes('RESIDENCIAL') && !pBase.includes('FIXA'))) &&
                     !pBase.includes('PME') &&
@@ -873,18 +657,12 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     totalPos += q;
                 }
 
-                // Pós-Pago Titular (Conta ou Controle) para Bônus Unitário de Vendedor
-                const isPosTitularOuControle = (
-                    (pBase.includes('POS') || pBase.includes('PÓS') || pBase.includes('CONTROLE')) &&
-                    !pBase.includes('PME') &&
-                    !pBase.includes('DEP') &&
-                    !isUpgradeOrSidegrade
-                );
-                if (isPosTitularOuControle) {
+                // Pós Titular (Conta ou Controle) para Bônus Unitário de Vendedor
+                if ((pBase.includes('POS') || pBase.includes('PÓS') || pBase.includes('CONTROLE')) && !pBase.includes('PME') && !pBase.includes('DEP') && !isUpgradeOrSidegrade) {
                     volPosPago += q;
                 }
 
-                // Banda Larga Fixa ("Virtua") = FIBRA e FIBRA PME na nossa base
+                // Banda Larga Fixa ("Virtua") = FIBRA / FIBRA PME
                 const isBandaLargaFixa = (
                     (pBase.includes('FIBRA') || pBase.includes('VIRTUA') || pBase.includes('BANDA LARGA FIXA') || pBase.includes('BANDA LARGA RESIDENCIAL')) &&
                     !isUpgradeOrSidegrade
@@ -893,7 +671,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     volFibra += q;
                 }
 
-                // TV Ponto Principal = TVBOX, TV-BOX, TV CABO, SOUNDBOX (exclui Ponto Adicional e TV+APP)
+                // TV Ponto Principal = TVBOX, TV-BOX, TV CABO, SOUNDBOX
                 const isTvPrincipal = (
                     (pBase.includes('TV') || pBase.includes('SOUNDBOX')) &&
                     !pBase.includes('PONTO ADICIONAL') &&
@@ -905,7 +683,6 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     volTv += q;
                 }
 
-                // Produtos Residenciais Consumo e PME (Quantitativo): Banda Larga Fixa (Fibra) + TV Ponto Principal
                 if (isBandaLargaFixa || isTvPrincipal) {
                     totalUr += q;
                 }
@@ -917,7 +694,6 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
             const metaPos = (Number(activeMetas.posTotal) || 0) / divisor;
             const metaUr = (Number(activeMetas.urTotal) || (Number(activeMetas.fibra || 0) + Number(activeMetas.tv || 0))) / divisor;
             
-            // Para Bônus Unitário de Vendedor (Pós Titular Conta/Controle, Fibra, TV)
             const rawMetaPosTitular = Number(activeMetas.posPago || 0) + Number(activeMetas.controle || 0);
             const metaPosPago = Math.ceil((rawMetaPosTitular > 0 ? rawMetaPosTitular : Number(activeMetas.posTotal || 0)) / divisor);
             const metaFibra = Math.ceil((Number(activeMetas.fibra) || 0) / divisor);
@@ -974,7 +750,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                 totalVendas,
                 pctAtingimentoPos,
                 pctAtingimentoUr,
-                notaNps: simularSms8 ? 8.5 : 0,
+                notaNps: 0,
                 pctVendedoresElegiveis,
                 volPosPago,
                 metaPosPago,
@@ -1012,31 +788,19 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
             }
 
             if (isMounted) {
-                const regraCargo = REGRAS_CARGOS_NORMA[selectedUserRole] || REGRAS_CARGOS_NORMA['VENDEDOR'];
                 setMetrics({
                     totalReceita, totalComissao, totalVendas, totalPos, totalUr,
                     metaReceita, metaPos, metaUr, pctAtingimento, pctAtingimentoPos, pctAtingimentoUr,
                     pctAtingimentoMplay, volMplay, metaMplay, receitaExtraMplay,
                     previaPagamento: resultRV.previaPagamento ?? 0,
-                    rvEtapa2: resultRV.rvEtapa2 ?? ((totalComissao || 0) * (resultRV.fatorAplicado || 0)),
                     fatorSimulado: resultRV.fatorAplicado ?? 0,
                     elegivel: resultRV.elegivel ?? false,
                     bonusUnitario: resultRV.bonusUnitario ?? 0,
-                    bonusSms: resultRV.bonusSms ?? 0,
-                    bonusGestao: resultRV.bonusGestao ?? 0,
-                    bonusBlPme: resultRV.bonusBlPme ?? 0,
-                    bonusTmAcessorio: resultRV.bonusTmAcessorio ?? 0,
-                    totalBonus: resultRV.totalBonus ?? ((resultRV.bonusSms || 0) + (resultRV.bonusUnitario || 0)),
-                    tetoCargo: resultRV.tetoCargo ?? regraCargo.teto,
-                    atingiuTeto: resultRV.atingiuTeto ?? false,
                     fatorMultiplicador, volPortabilidade, volMulti, volPme,
-                    volPosPago, metaPosPago, volFibra, metaFibra, volTv, metaTv,
-                    volAparelho, metaAparelho, comissaoAparelho, volSeguro, comissaoSeguro,
+                    volAparelho, comissaoAparelho, volSeguro, comissaoSeguro,
                     pctAtingimentoAparelho, pctAtingimentoAcessorio, pctAtingimentoTmAcessorio, pctAtingimentoBlPme,
-                    volAcessorio, metaAcessorio, receitaAcessorio, comissaoAcessorio, tmAcessorio, metaTmAcessorio,
-                    volBlPme, metaBlPme,
-                    vendedoresElegiveisCount, totalVendedoresLoja: safeVendedores.length, pctVendedoresElegiveis,
-                    isStoreLevelRole, selectedUserRole, regraCargo,
+                    volAcessorio, receitaAcessorio,
+                    isStoreLevelRole, selectedUserRole,
                     targetSeller
                 });
                 setIsLoading(false);
@@ -1048,7 +812,7 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
         return () => {
             isMounted = false;
         };
-    }, [salesData, selectedSeller, globalMonth, goalsDB, safeVendedores, canChangeSeller, loggedName, userRole, simularSms8, usersDB]);
+    }, [salesData, selectedSeller, globalMonth, goalsDB, safeVendedores, canChangeSeller, loggedName, userRole, usersDB]);
 
     if (userRole === 'JOVEM APRENDIZ') {
         return (
@@ -1064,11 +828,93 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
         );
     }
 
+    // Identifica a regra e o PDF oficial do usuário logado / selecionado
     const activeRoleKey = metrics?.selectedUserRole || normalizedLoggedRole;
     const activeRegra = REGRAS_CARGOS_NORMA[activeRoleKey] || REGRAS_CARGOS_NORMA['VENDEDOR'];
 
+    // Estados para carregamento seguro dos PDFs via JWT no Backend (sem exposição pública)
+    const [pdfBlobCache, setPdfBlobCache] = useState({});
+    const [activePdfPreviewUrl, setActivePdfPreviewUrl] = useState('');
+    const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+    const [pdfError, setPdfError] = useState('');
+
+    const fetchProtectedPdfBlobUrl = async (pdfKey = activeRegra.pdfKey) => {
+        const key = String(pdfKey || activeRegra.pdfKey || 'VENDEDOR').trim();
+        if (pdfBlobCache[key]) {
+            return pdfBlobCache[key];
+        }
+        const res = await authFetch(`${API_URL}/api/calcular/fator-rv/pdf/${encodeURIComponent(key)}`);
+        if (!res.ok) {
+            throw new Error(`Falha ao carregar documento protegido (${res.status})`);
+        }
+        const blob = await res.blob();
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        const objectUrl = URL.createObjectURL(pdfBlob);
+        setPdfBlobCache(prev => ({ ...prev, [key]: objectUrl }));
+        return objectUrl;
+    };
+
+    // Carrega automaticamente o PDF do cargo no visualizador interno ao abrir a aba FONTE
+    useEffect(() => {
+        if (activeSectionTab !== 'FONTE') return;
+        let active = true;
+        setIsLoadingPdf(true);
+        setPdfError('');
+
+        fetchProtectedPdfBlobUrl(activeRegra.pdfKey)
+            .then(url => {
+                if (active) {
+                    setActivePdfPreviewUrl(url);
+                    setIsLoadingPdf(false);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setPdfError('Não foi possível carregar a pré-visualização do documento protegido.');
+                    setIsLoadingPdf(false);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [activeSectionTab, activeRegra.pdfKey]);
+
+    // Abre o PDF autenticado via JWT em nova aba (Blob temporário na memória do navegador)
+    const handleOpenCargoPDF = async (pdfKey = activeRegra.pdfKey) => {
+        try {
+            setIsLoadingPdf(true);
+            const blobUrl = await fetchProtectedPdfBlobUrl(pdfKey);
+            window.open(blobUrl, '_blank', 'noopener,noreferrer');
+        } catch (err) {
+            console.error('Erro ao abrir PDF protegido via JWT:', err);
+            alert('Não foi possível abrir o PDF. Verifique sua sessão e tente novamente.');
+        } finally {
+            setIsLoadingPdf(false);
+        }
+    };
+
+    // Baixa o PDF autenticado via JWT
+    const handleDownloadCargoPDF = async (pdfKey = activeRegra.pdfKey, fileName = activeRegra.pdfFile) => {
+        try {
+            setIsLoadingPdf(true);
+            const blobUrl = await fetchProtectedPdfBlobUrl(pdfKey);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName || 'REGRA_RV.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            console.error('Erro ao baixar PDF protegido via JWT:', err);
+            alert('Não foi possível baixar o PDF. Verifique sua sessão e tente novamente.');
+        } finally {
+            setIsLoadingPdf(false);
+        }
+    };
+
     return (
-        <div className="h-full flex flex-col animate-fade-in transition-colors space-y-4">
+        <div className="h-full flex flex-col animate-fade-in transition-colors space-y-4 font-sans">
             {/* CABEÇALHO PRINCIPAL */}
             <div className="p-5 sm:p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shrink-0">
                 <div className="flex items-center gap-3.5">
@@ -1076,64 +922,66 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                         <Calculator size={24} />
                     </div>
                     <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h2 className="text-lg sm:text-xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h2 className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-neutral-100 tracking-tight">
                                 Painel Fator RV
                             </h2>
-                            <span className="text-[11px] font-bold bg-[#E3000F]/10 text-[#E3000F] dark:bg-[#E3000F]/20 px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-[#E3000F]/20">
+                            <span className="text-xs font-extrabold bg-[#E3000F]/10 text-[#E3000F] dark:bg-[#E3000F]/20 px-2.5 py-0.5 rounded-lg uppercase tracking-wider border border-[#E3000F]/20">
                                 PRÉVIA
                             </span>
-                            <span className="text-[11px] font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-neutral-200 dark:border-neutral-700">
-                                {activeRegra.titulo} • {activeRegra.grupoAnexo}
-                            </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 font-semibold uppercase tracking-wide">
+                        <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 mt-1 font-bold uppercase tracking-wide">
                             SIMULADOR DE COMISSIONAMENTO , NÃO VALIDO PARA RECEBIMENTO , SOMENTE PARA ESTIMATIVA
                         </p>
                     </div>
                 </div>
                 
-                {/* BARRA DE AÇÕES: CAMPO "FONTE" (PDF DE REGRAS) + SELETOR DE COLABORADOR */}
-                <div className="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                    {/* CAMPO "FONTE" -> DIMENSIONA PARA O PDF DE REGRAS DA REMUNERAÇÃO */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setFonteTab('MEU_CARGO');
-                            setShowFonteModal(true);
-                        }}
-                        className="flex items-center justify-between sm:justify-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#E3000F]/10 via-red-500/5 to-[#E3000F]/10 hover:from-[#E3000F] hover:to-red-700 text-[#E3000F] hover:text-white border border-[#E3000F]/30 transition-all shadow-sm cursor-pointer group"
-                        title="Abrir Fonte Oficial e PDF de Regras da sua Remuneração (Norma PL-DRH-042)"
-                    >
-                        <div className="flex items-center gap-2">
-                            <FileText size={17} className="shrink-0" />
-                            <div className="text-left">
-                                <span className="text-[9.5px] font-black uppercase tracking-widest block opacity-80">
-                                    FONTE OFICIAL (PDF)
-                                </span>
-                                <span className="text-xs font-extrabold whitespace-nowrap">
-                                    Norma PL-DRH-042 • {activeRoleKey}
-                                </span>
-                            </div>
-                        </div>
-                        <ExternalLink size={14} className="opacity-75 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    </button>
+                {/* CONTROLES DO TOPO: ABAS (SIMULADOR / FONTE) + SELETOR DE COLABORADOR */}
+                <div className="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    {/* SELETOR DE ABAS: SIMULADOR vs FONTE */}
+                    <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSectionTab('SIMULADOR')}
+                            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                activeSectionTab === 'SIMULADOR'
+                                    ? 'bg-white dark:bg-neutral-900 text-[#E3000F] shadow-sm'
+                                    : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
+                            }`}
+                        >
+                            <Calculator size={15} />
+                            <span>Simulador</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveSectionTab('FONTE')}
+                            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                activeSectionTab === 'FONTE'
+                                    ? 'bg-[#E3000F] text-white shadow-sm'
+                                    : 'text-neutral-600 dark:text-neutral-300 hover:text-[#E3000F]'
+                            }`}
+                            title={`Ver Fonte e PDF da Regra (${activeRegra.pdfFile})`}
+                        >
+                            <FileText size={15} />
+                            <span>FONTE</span>
+                        </button>
+                    </div>
 
                     {canChangeSeller ? (
-                        <div className="flex items-center gap-2.5 bg-neutral-50 dark:bg-neutral-800/60 px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700/80 shadow-inner">
-                            <User size={16} className="text-[#E3000F] shrink-0" />
+                        <div className="flex items-center gap-2.5 bg-neutral-50 dark:bg-neutral-800/60 px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700/80 shadow-inner">
+                            <User size={17} className="text-[#E3000F] shrink-0" />
                             <div className="flex flex-col flex-1">
-                                <span className="text-[10px] font-bold uppercase text-neutral-400 dark:text-neutral-400 tracking-wider">
-                                    Colaborador / Cargo
+                                <span className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400 tracking-wider">
+                                    Consultor Selecionado
                                 </span>
                                 <select 
                                     value={selectedSeller} 
                                     onChange={(e) => setSelectedSeller(e.target.value)}
-                                    className="bg-transparent text-sm font-semibold text-neutral-800 dark:text-neutral-100 outline-none pr-3 cursor-pointer w-full md:min-w-[200px]"
+                                    className="bg-transparent text-sm font-bold text-neutral-900 dark:text-neutral-100 outline-none pr-3 cursor-pointer w-full md:min-w-[200px]"
                                 >
                                     {uniqueSelectableUsers.map(v => {
                                         const usrObj = Object.values(usersDB || {}).find(u => String(u?.name || '') === v);
-                                        const roleLabel = usrObj?.role ? ` (${usrObj.role})` : ' (VENDEDOR)';
+                                        const roleLabel = usrObj?.role && usrObj.role !== 'VENDEDOR' ? ` (${usrObj.role})` : '';
                                         return (
                                             <option key={v} value={v} className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100">
                                                 {v}{roleLabel}
@@ -1142,18 +990,18 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                     })}
                                 </select>
                             </div>
-                            <ChevronDown size={14} className="text-neutral-400 shrink-0 pointer-events-none" />
+                            <ChevronDown size={15} className="text-neutral-400 shrink-0 pointer-events-none" />
                         </div>
                     ) : (
                         <div className="flex items-center gap-2.5 bg-neutral-50 dark:bg-neutral-800/60 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700/80">
-                            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                                <ShieldCheck size={16} />
+                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                <ShieldCheck size={18} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-bold uppercase text-neutral-400 dark:text-neutral-400 tracking-wider flex items-center gap-1">
-                                    <Lock size={10} className="text-[#E3000F]" /> {activeRoleKey}
+                                <span className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400 tracking-wider flex items-center gap-1">
+                                    <Lock size={11} className="text-[#E3000F]" /> Painel Individual
                                 </span>
-                                <span className="text-xs sm:text-sm font-bold text-neutral-800 dark:text-neutral-100">
+                                <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
                                     {loggedName || 'Colaborador'}
                                 </span>
                             </div>
@@ -1162,58 +1010,247 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                 </div>
             </div>
 
-            {/* CORPO DO DASHBOARD */}
+            {/* CORPO DA SEÇÃO */}
             <div className="flex-1 overflow-auto">
                 {isLoading || !metrics ? (
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-12 min-h-[400px] flex items-center justify-center">
                         <WFLogoLoader
                             size="md"
                             text="Calculando Fator RV..."
-                            subtext="Processando pontuação de metas, aceleradores e comissão por cargo..."
+                            subtext="Processando pontuação de metas, aceleradores e comissão..."
                         />
                     </div>
-                ) : (
-                    <div className="space-y-5 pb-6">
-                        {/* BARRA DE INFORMAÇÃO DE NORMA + SIMULADOR DE PESQUISA SMS >= 8 */}
-                        <div className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800/90 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5">
-                            <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                                    <AlertTriangle size={18} />
+                ) : activeSectionTab === 'FONTE' ? (
+                    /* ============================================================================
+                       ABA "FONTE": DIRECIONAMENTO AO PDF DA PASTA UPLOADS + REGRAS POR CARGO
+                       ============================================================================ */
+                    <div className="space-y-5 pb-6 animate-fade-in">
+                        {/* CARD PRINCIPAL DA REGRA ATRIBUÍDA AO USUÁRIO IDENTIFICADO */}
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border-2 border-[#E3000F]/30 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                            <div className="space-y-1.5">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#E3000F]/10 text-[#E3000F] text-xs font-extrabold uppercase tracking-wider">
+                                    <FileText size={15} />
+                                    <span>Regra Atribuída ao Seu Perfil ({activeRoleKey})</span>
                                 </div>
-                                <div className="text-xs leading-relaxed text-neutral-600 dark:text-neutral-300">
-                                    <strong className="text-neutral-900 dark:text-neutral-100 font-bold block mb-0.5">
-                                        Enquadramento Ativo: {activeRegra.titulo} — {activeRegra.grupoAnexo}
-                                    </strong>
-                                    Base de Apuração: <strong>{activeRegra.baseApuracao}</strong> • Teto Monetário do Cargo: <strong>{applyCurrencyMask(activeRegra.teto)}</strong>.
-                                </div>
+                                <h3 className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white">
+                                    {activeRegra.titulo} — {activeRegra.grupoAnexo}
+                                </h3>
+                                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                                    Colaborador identificado: <strong className="text-neutral-900 dark:text-white">{metrics.targetSeller}</strong> • Documento Oficial: <strong className="text-[#E3000F]">{activeRegra.pdfFile}</strong>
+                                </p>
                             </div>
 
-                            <div className="flex items-center gap-2.5 self-end md:self-center shrink-0">
-                                {activeRegra.temBonusSms && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setSimularSms8(prev => !prev)}
-                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                                            simularSms8
-                                                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 shadow-sm'
-                                                : 'bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-emerald-500/40'
-                                        }`}
-                                        title="Simular atingimento da Pesquisa de Satisfação SMS ≥ 8 (+5,00% sobre a RV da Etapa 2)"
-                                    >
-                                        <Sparkles size={13} className={simularSms8 ? 'text-emerald-500' : 'text-neutral-400'} />
-                                        <span>Bônus SMS ≥ 8 (+5%): {simularSms8 ? 'SIMULADO' : 'OFF'}</span>
-                                    </button>
-                                )}
-
+                            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0">
                                 <button
                                     type="button"
-                                    onClick={() => abrirDocumentoPDFNorma(activeRoleKey, metrics.targetSeller)}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white/10 dark:hover:bg-white/15 border border-neutral-800 dark:border-white/10 transition-all cursor-pointer flex items-center gap-1.5"
+                                    disabled={isLoadingPdf}
+                                    onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
+                                    className="flex-1 md:flex-initial px-5 py-3 rounded-xl bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 disabled:opacity-60 text-white font-bold text-sm shadow-lg shadow-red-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
                                 >
-                                    <Printer size={13} />
-                                    <span>PDF da Regra</span>
+                                    <ExternalLink size={17} />
+                                    <span>{isLoadingPdf ? 'Autenticando PDF...' : `Abrir PDF (${activeRegra.pdfFile})`}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isLoadingPdf}
+                                    onClick={() => handleDownloadCargoPDF(activeRegra.pdfKey, activeRegra.pdfFile)}
+                                    className="px-4 py-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-60 text-neutral-800 dark:text-neutral-100 font-bold text-sm flex items-center justify-center gap-2 border border-neutral-200 dark:border-neutral-700 transition-all cursor-pointer"
+                                >
+                                    <Download size={17} />
+                                    <span>Baixar PDF</span>
                                 </button>
                             </div>
+                        </div>
+
+                        {/* RESUMO SIMPLES E LEGÍVEL DA REGRA DO USUÁRIO */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                                <span className="text-xs font-extrabold text-[#E3000F] uppercase tracking-wider block mb-1.5">
+                                    1. Base & Gatilhos (Mín. 80%)
+                                </span>
+                                <div className="text-base font-extrabold text-neutral-900 dark:text-white mb-1">
+                                    Base: {activeRegra.baseApuracao}
+                                </div>
+                                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                                    {activeRegra.gatilhosLabel}
+                                </p>
+                            </div>
+
+                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                                <span className="text-xs font-extrabold text-[#E3000F] uppercase tracking-wider block mb-1.5">
+                                    2. Faixas % sobre Receita
+                                </span>
+                                <div className="space-y-1.5 mt-2">
+                                    {activeRegra.faixas.map(f => (
+                                        <div key={f.label} className="flex items-center justify-between text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+                                            <span>{f.label}:</span>
+                                            <strong className="text-neutral-900 dark:text-white font-extrabold tabular-nums">{f.texto}</strong>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                                <span className="text-xs font-extrabold text-[#E3000F] uppercase tracking-wider block mb-1.5">
+                                    3. Bônus & Teto do Cargo
+                                </span>
+                                <div className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 mb-1 tabular-nums">
+                                    Teto RV: {applyCurrencyMask(activeRegra.teto)}
+                                </div>
+                                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                                    {activeRegra.bonusResumo}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* VISUALIZADOR EMBUTIDO DO PDF DO CARGO LOGADO (AUTENTICADO VIA JWT) */}
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
+                            <div className="px-5 py-3.5 bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                                <span className="text-sm font-extrabold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                                    <BookOpen size={17} className="text-[#E3000F]" />
+                                    Visualização Segura (JWT) — {activeRegra.pdfFile}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
+                                    className="text-xs font-bold text-[#E3000F] hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                    <span>Abrir em Nova Guia</span>
+                                    <ExternalLink size={13} />
+                                </button>
+                            </div>
+                            <div className="w-full h-[540px] bg-neutral-100 dark:bg-neutral-950 flex items-center justify-center">
+                                {isLoadingPdf && !activePdfPreviewUrl ? (
+                                    <div className="text-sm font-bold text-neutral-600 dark:text-neutral-300 flex items-center gap-2">
+                                        <span>Autenticando e carregando documento PDF...</span>
+                                    </div>
+                                ) : pdfError ? (
+                                    <div className="text-center p-6 space-y-3">
+                                        <p className="text-sm font-bold text-neutral-600 dark:text-neutral-300">{pdfError}</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
+                                            className="px-4 py-2 rounded-xl bg-[#E3000F] text-white text-xs font-bold cursor-pointer"
+                                        >
+                                            Tentar Abrir Novamente
+                                        </button>
+                                    </div>
+                                ) : activePdfPreviewUrl ? (
+                                    <iframe
+                                        src={activePdfPreviewUrl}
+                                        title={activeRegra.pdfFile}
+                                        className="w-full h-full border-0"
+                                    />
+                                ) : null}
+                            </div>
+                        </div>
+
+                        {/* BIBLIOTECA DE PDFs PROTEGIDA POR JWT */}
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                            <h3 className="text-sm font-extrabold text-neutral-800 dark:text-neutral-100 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <FileText size={17} className="text-[#E3000F]" />
+                                {canChangeSeller
+                                    ? 'Todos os Cadernos de Regras por Cargo (Acesso Protegido JWT)'
+                                    : 'Cadernos Oficiais Disponíveis para o Seu Perfil'}
+                            </h3>
+
+                            {canChangeSeller && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
+                                    {Object.values(REGRAS_CARGOS_NORMA).map((item) => {
+                                        const isUserRole = item.codigo === activeRoleKey;
+                                        return (
+                                            <button
+                                                key={item.codigo}
+                                                type="button"
+                                                onClick={() => handleOpenCargoPDF(item.pdfKey)}
+                                                className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 group ${
+                                                    isUserRole
+                                                        ? 'bg-red-50/70 dark:bg-[#E3000F]/15 border-[#E3000F] shadow-sm'
+                                                        : 'bg-neutral-50 dark:bg-neutral-800/40 border-neutral-200 dark:border-neutral-700/70 hover:border-[#E3000F]/50'
+                                                }`}
+                                            >
+                                                <div>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="text-xs font-extrabold uppercase text-[#E3000F]">
+                                                            {item.codigo}
+                                                        </span>
+                                                        {isUserRole && (
+                                                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-[#E3000F] text-white">
+                                                                ATIVO
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-sm font-bold text-neutral-900 dark:text-white mt-1">
+                                                        {item.titulo}
+                                                    </div>
+                                                    <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                                        {item.pdfFile}
+                                                    </div>
+                                                </div>
+                                                <div className="pt-2 border-t border-neutral-200/70 dark:border-neutral-700/60 flex items-center justify-between text-xs font-bold text-neutral-700 dark:text-neutral-200 group-hover:text-[#E3000F]">
+                                                    <span>Abrir PDF</span>
+                                                    <ExternalLink size={14} />
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* DOCUMENTOS GERAIS E DE FÉRIAS */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                {DOCUMENTOS_EXTRAS_UPLOADS.map((doc) => (
+                                    <button
+                                        key={doc.pdfFile}
+                                        type="button"
+                                        onClick={() => handleOpenCargoPDF(doc.pdfKey)}
+                                        className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700/70 hover:border-[#E3000F] text-left transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                                    >
+                                        <div>
+                                            <div className="text-sm font-extrabold text-neutral-900 dark:text-white group-hover:text-[#E3000F]">
+                                                {doc.titulo}
+                                            </div>
+                                            <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                                {doc.subtitulo} ({doc.pdfFile})
+                                            </div>
+                                        </div>
+                                        <ExternalLink size={18} className="text-neutral-400 group-hover:text-[#E3000F] shrink-0" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    /* ============================================================================
+                       ABA "SIMULADOR": LAYOUT LÚDICO, SIMPLES, LIMPO E COM FONTES BEM LEGÍVEIS
+                       ============================================================================ */
+                    <div className="space-y-5 pb-6">
+                        {/* AVISO DO SIMULADOR + BOTÃO DIRETO PARA O PDF DA REGRA DO USUÁRIO ("FONTE") */}
+                        <div className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800/90 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                    <AlertTriangle size={20} />
+                                </div>
+                                <div className="text-sm leading-snug text-neutral-700 dark:text-neutral-200">
+                                    <strong className="text-neutral-900 dark:text-white font-bold block">
+                                        Simulador de Remuneração Variável — {activeRegra.titulo}
+                                    </strong>
+                                    <span className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 font-medium">
+                                        Os cálculos exibidos são estimativas baseadas na tabela oficial do seu cargo.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
+                                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#E3000F]/10 hover:bg-[#E3000F] text-[#E3000F] hover:text-white border border-[#E3000F]/30 font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-sm"
+                                title={`Abrir PDF Oficial: ${activeRegra.pdfFile}`}
+                            >
+                                <FileText size={16} />
+                                <span>FONTE: Abrir PDF ({activeRoleKey})</span>
+                                <ExternalLink size={14} />
+                            </button>
                         </div>
 
                         {/* CARDS PRINCIPAIS */}
@@ -1226,79 +1263,66 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                 </div>
                                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div>
-                                        <div className="flex items-center gap-2 mb-2 text-xs font-semibold text-neutral-400 uppercase tracking-widest flex-wrap">
-                                            <Award className="text-amber-400" size={16} /> 
+                                        <div className="flex items-center gap-2 mb-2 text-xs sm:text-sm font-bold text-neutral-300 uppercase tracking-wider flex-wrap">
+                                            <Award className="text-amber-400" size={18} /> 
                                             <span>Prévia de Remuneração Variável (RV)</span>
                                             <span className="text-neutral-500">•</span>
-                                            <span className="text-neutral-200">{metrics.targetSeller}</span>
-                                            <span className="px-2 py-0.5 rounded bg-white/10 text-amber-300 text-[10px] font-black">
-                                                {activeRoleKey}
-                                            </span>
+                                            <span className="text-white">{metrics.targetSeller}</span>
                                         </div>
-                                        <div className="text-4xl sm:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 mb-2 font-sans">
+                                        <div className="text-4xl sm:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 mb-2 font-sans tabular-nums">
                                             {applyCurrencyMask(metrics.previaPagamento)}
                                         </div>
-                                        <p className="text-xs sm:text-sm text-neutral-400 font-normal max-w-2xl">
-                                            Atingimento de <strong className="text-neutral-100 font-semibold">{metrics.pctAtingimento.toFixed(1)}%</strong> da meta de receita {metrics.isStoreLevelRole ? 'da LOJA' : 'individual'} • Faixa Aplicada (Etapa 2): <strong className="text-amber-400 font-sans font-black">{(metrics.fatorSimulado * 100).toFixed(2)}%</strong> ({applyCurrencyMask(metrics.rvEtapa2)})
-                                            {metrics.totalBonus > 0 && (
-                                                <> • Bônus (Etapa 3): <strong className="text-emerald-400 font-sans font-black">+{applyCurrencyMask(metrics.totalBonus)}</strong></>
-                                            )}
-                                            {metrics.atingiuTeto && (
-                                                <> • <span className="text-amber-300 font-bold">(Limitado ao Teto de {applyCurrencyMask(metrics.tetoCargo)})</span></>
-                                            )}
+                                        <p className="text-sm sm:text-base text-neutral-300 font-medium max-w-xl">
+                                            Atingimento de <strong className="text-white font-extrabold tabular-nums">{metrics.pctAtingimento.toFixed(1)}%</strong> da meta {metrics.isStoreLevelRole ? 'geral da LOJA' : 'individual'} • Fator Simulado: <strong className="text-amber-400 font-black tabular-nums">{(metrics.fatorSimulado * 100).toFixed(2)}%</strong>.
                                         </p>
                                     </div>
 
                                     {/* STATUS BADGE GRANDE */}
                                     <div className="shrink-0 flex md:flex-col items-center md:items-end justify-between border-t md:border-t-0 md:border-l border-neutral-800 pt-4 md:pt-0 md:pl-8">
-                                        <span className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">1ª Etapa • Elegibilidade</span>
-                                        <div className={`mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider ${
+                                        <span className="text-xs sm:text-sm text-neutral-300 uppercase tracking-wider font-bold">Status de Elegibilidade</span>
+                                        <div className={`mt-1.5 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold uppercase tracking-wider ${
                                             metrics.elegivel 
-                                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                                : 'bg-[#E3000F]/20 text-red-400 border border-[#E3000F]/30'
+                                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                                : 'bg-[#E3000F]/20 text-red-300 border border-[#E3000F]/40'
                                         }`}>
                                             {metrics.elegivel ? (
                                                 <>
-                                                    <CheckCircle2 size={14} /> Elegível ao Pagamento
+                                                    <CheckCircle2 size={16} /> Elegível ao Pagamento
                                                 </>
                                             ) : (
                                                 <>
-                                                    <AlertCircle size={14} /> Abaixo do Piso (80%)
+                                                    <AlertCircle size={16} /> Abaixo do Piso Mínimo
                                                 </>
                                             )}
                                         </div>
-                                        <span className="text-[10px] text-neutral-400 mt-1.5 hidden md:block">
-                                            Teto do Cargo: <strong className="text-neutral-200">{applyCurrencyMask(metrics.tetoCargo)}</strong>
-                                        </span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* CARD 1: 1ª ETAPA — METAS DE ELEGIBILIDADE (ADAPTADO AO CARGO!) */}
+                            {/* CARD 1: ELEGIBILIDADE DAS METAS */}
                             <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Target size={15} className="text-[#E3000F]" /> 1ª Etapa: Elegibilidade
+                                        <h3 className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200 uppercase tracking-wider flex items-center gap-2">
+                                            <Target size={17} className="text-[#E3000F]" /> Metas de Elegibilidade
                                         </h3>
-                                        <span className="text-[10px] font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
-                                            Mín. 80% nos 3
+                                        <span className="text-xs font-extrabold text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-full">
+                                            Piso: 80%
                                         </span>
                                     </div>
                                     
                                     {activeRegra.isGeekEligibility ? (
-                                        /* ELEGIBILIDADE ESPECÍFICA DO GEEK (Anexo V: Gross Pós, Acessório Qtde, Aparelho Qtde) */
                                         <div className="space-y-4">
                                             <div>
-                                                <div className="flex justify-between items-center mb-1.5 text-xs">
-                                                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">
-                                                        1. Gross Pós Loja ({metrics.totalPos}/{Math.ceil(metrics.metaPos)} un)
+                                                <div className="flex justify-between items-center mb-1.5 text-sm">
+                                                    <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                                                        Gross Móvel ({metrics.totalPos} un)
                                                     </span>
-                                                    <span className={`font-sans font-extrabold ${metrics.pctAtingimentoPos >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                    <span className={`font-extrabold tabular-nums ${metrics.pctAtingimentoPos >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
                                                         {metrics.pctAtingimentoPos.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden">
+                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2.5 overflow-hidden">
                                                     <div 
                                                         className={`h-full rounded-full transition-all duration-700 ${
                                                             metrics.pctAtingimentoPos >= 100 ? 'bg-emerald-500' : metrics.pctAtingimentoPos >= 80 ? 'bg-amber-500' : 'bg-[#E3000F]'
@@ -1309,15 +1333,15 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                             </div>
 
                                             <div>
-                                                <div className="flex justify-between items-center mb-1.5 text-xs">
-                                                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">
-                                                        2. Acessórios Loja ({metrics.volAcessorio}/{metrics.metaAcessorio} un)
+                                                <div className="flex justify-between items-center mb-1.5 text-sm">
+                                                    <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                                                        Acessórios ({metrics.volAcessorio} un)
                                                     </span>
-                                                    <span className={`font-sans font-extrabold ${metrics.pctAtingimentoAcessorio >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                    <span className={`font-extrabold tabular-nums ${metrics.pctAtingimentoAcessorio >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
                                                         {metrics.pctAtingimentoAcessorio.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden">
+                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2.5 overflow-hidden">
                                                     <div 
                                                         className={`h-full rounded-full transition-all duration-700 ${
                                                             metrics.pctAtingimentoAcessorio >= 100 ? 'bg-emerald-500' : metrics.pctAtingimentoAcessorio >= 80 ? 'bg-amber-500' : 'bg-[#E3000F]'
@@ -1328,15 +1352,15 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                             </div>
 
                                             <div>
-                                                <div className="flex justify-between items-center mb-1.5 text-xs">
-                                                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">
-                                                        3. Aparelhos Loja ({metrics.volAparelho}/{metrics.metaAparelho} un)
+                                                <div className="flex justify-between items-center mb-1.5 text-sm">
+                                                    <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                                                        Aparelhos ({metrics.volAparelho} un)
                                                     </span>
-                                                    <span className={`font-sans font-extrabold ${metrics.pctAtingimentoAparelho >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                    <span className={`font-extrabold tabular-nums ${metrics.pctAtingimentoAparelho >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
                                                         {metrics.pctAtingimentoAparelho.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden">
+                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2.5 overflow-hidden">
                                                     <div 
                                                         className={`h-full rounded-full transition-all duration-700 ${
                                                             metrics.pctAtingimentoAparelho >= 100 ? 'bg-emerald-500' : metrics.pctAtingimentoAparelho >= 80 ? 'bg-amber-500' : 'bg-[#E3000F]'
@@ -1345,44 +1369,20 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                     />
                                                 </div>
                                             </div>
-
-                                            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex justify-between items-center text-[11px] text-neutral-500">
-                                                <span>Receita Loja (Base da Faixa %):</span>
-                                                <strong className="text-neutral-800 dark:text-neutral-200">{metrics.pctAtingimento.toFixed(1)}% ({applyCurrencyMask(metrics.totalComissao)})</strong>
-                                            </div>
                                         </div>
                                     ) : (
-                                        /* ELEGIBILIDADE PADRÃO (Gross Pós, Receita, Residencial [Fibra + TV]) */
                                         <div className="space-y-4">
+                                            {/* META 1: RECEITA */}
                                             <div>
-                                                <div className="flex justify-between items-center mb-1.5 text-xs">
-                                                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">
-                                                        1. Gross Pós-Pago ({metrics.totalPos}/{Math.ceil(metrics.metaPos)} un)
+                                                <div className="flex justify-between items-center mb-1.5 text-sm">
+                                                    <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                                                        Receita ({applyCurrencyMask(metrics.totalComissao)})
                                                     </span>
-                                                    <span className={`font-sans font-extrabold ${metrics.pctAtingimentoPos >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
-                                                        {metrics.pctAtingimentoPos.toFixed(1)}%
-                                                    </span>
-                                                </div>
-                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden">
-                                                    <div 
-                                                        className={`h-full rounded-full transition-all duration-700 ${
-                                                            metrics.pctAtingimentoPos >= 100 ? 'bg-emerald-500' : metrics.pctAtingimentoPos >= 80 ? 'bg-amber-500' : 'bg-[#E3000F]'
-                                                        }`} 
-                                                        style={{ width: `${Math.min(metrics.pctAtingimentoPos, 100)}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1.5 text-xs">
-                                                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">
-                                                        2. Receita ({applyCurrencyMask(metrics.totalComissao)})
-                                                    </span>
-                                                    <span className={`font-sans font-extrabold ${metrics.pctAtingimento >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                    <span className={`font-extrabold tabular-nums ${metrics.pctAtingimento >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
                                                         {metrics.pctAtingimento.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden">
+                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2.5 overflow-hidden">
                                                     <div 
                                                         className={`h-full rounded-full transition-all duration-700 ${
                                                             metrics.pctAtingimento >= 100 ? 'bg-emerald-500' : metrics.pctAtingimento >= 80 ? 'bg-amber-500' : 'bg-[#E3000F]'
@@ -1392,16 +1392,37 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                                 </div>
                                             </div>
 
+                                            {/* META 2: GROSS TOTAL */}
                                             <div>
-                                                <div className="flex justify-between items-center mb-1.5 text-xs">
-                                                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">
-                                                        3. Residencial [Fibra + TV] ({metrics.totalUr}/{Math.ceil(metrics.metaUr)} un)
+                                                <div className="flex justify-between items-center mb-1.5 text-sm">
+                                                    <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                                                        Gross Móvel ({metrics.totalPos} un)
                                                     </span>
-                                                    <span className={`font-sans font-extrabold ${metrics.pctAtingimentoUr >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                    <span className={`font-extrabold tabular-nums ${metrics.pctAtingimentoPos >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
+                                                        {metrics.pctAtingimentoPos.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2.5 overflow-hidden">
+                                                    <div 
+                                                        className={`h-full rounded-full transition-all duration-700 ${
+                                                            metrics.pctAtingimentoPos >= 100 ? 'bg-emerald-500' : metrics.pctAtingimentoPos >= 80 ? 'bg-amber-500' : 'bg-[#E3000F]'
+                                                        }`} 
+                                                        style={{ width: `${Math.min(metrics.pctAtingimentoPos, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* META 3: RESIDENCIAL */}
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1.5 text-sm">
+                                                    <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                                                        Residencial ({metrics.totalUr} un)
+                                                    </span>
+                                                    <span className={`font-extrabold tabular-nums ${metrics.pctAtingimentoUr >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#E3000F]'}`}>
                                                         {metrics.pctAtingimentoUr.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2 overflow-hidden">
+                                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2.5 overflow-hidden">
                                                     <div 
                                                         className={`h-full rounded-full transition-all duration-700 ${
                                                             metrics.pctAtingimentoUr >= 100 ? 'bg-emerald-500' : metrics.pctAtingimentoUr >= 80 ? 'bg-amber-500' : 'bg-[#E3000F]'
@@ -1415,256 +1436,238 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                 </div>
 
                                 <div className="mt-5 pt-3.5 border-t border-neutral-100 dark:border-neutral-800 text-center">
-                                    <span className={`text-[11px] font-bold px-3 py-1.5 rounded-xl uppercase tracking-wider block ${
+                                    <span className={`text-xs sm:text-sm font-extrabold px-3 py-2 rounded-xl uppercase tracking-wider block ${
                                         metrics.elegivel 
                                             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' 
                                             : 'bg-red-50 text-[#E3000F] dark:bg-red-950/40 dark:text-red-400'
                                     }`}>
-                                        {metrics.elegivel ? '✓ Destravou Comissões (≥ 80%)' : '✗ Falhou em ≥ 1 Gatilho Mínimo (80%)'}
+                                        {metrics.elegivel ? '✓ Destravou Comissões' : '✗ Abaixo do Gatilho Mínimo'}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* CARD 2: ACELERADOR MULTI & 3ª ETAPA (BÔNUS ESPECÍFICOS DO CARGO) */}
+                            {/* CARD 2: ACELERADORES E BÔNUS M-PLAY */}
                             <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Zap size={15} className="text-[#E3000F]" /> 3ª Etapa: Bônus & Multi
+                                        <h3 className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200 uppercase tracking-wider flex items-center gap-2">
+                                            <Zap size={17} className="text-[#E3000F]" /> Aceleradores M-Play
                                         </h3>
-                                        <span className="text-[10px] font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
-                                            {activeRoleKey}
+                                        <span className="text-xs font-extrabold text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-full">
+                                            Multiplicador
                                         </span>
                                     </div>
 
-                                    <div className="space-y-3.5">
-                                        {/* FATOR CLARO MULTI */}
+                                    <div className="space-y-4">
                                         <div>
-                                            <div className="flex justify-between items-center mb-1 text-xs">
-                                                <span className="font-semibold text-neutral-700 dark:text-neutral-300">
-                                                    Fator Multi / M-Play ({metrics.volMplay}/{metrics.metaMplay})
+                                            <div className="flex justify-between items-center mb-1.5 text-sm">
+                                                <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                                                    Meta M-Play ({metrics.volMplay}/{metrics.metaMplay})
                                                 </span>
-                                                <span className="font-sans font-extrabold text-blue-600 dark:text-blue-400">
-                                                    {metrics.fatorMultiplicador}x ({metrics.pctAtingimentoMplay.toFixed(0)}%)
+                                                <span className={`font-extrabold tabular-nums ${metrics.pctAtingimentoMplay >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                                    {metrics.pctAtingimentoMplay.toFixed(1)}%
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
+                                            <div className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-full h-2.5 overflow-hidden mb-2">
                                                 <div 
-                                                    className="h-full rounded-full bg-blue-500 transition-all duration-700" 
+                                                    className={`h-full rounded-full transition-all duration-700 ${
+                                                        metrics.pctAtingimentoMplay >= 100 ? 'bg-emerald-500' : 'bg-blue-500'
+                                                    }`} 
                                                     style={{ width: `${Math.min(metrics.pctAtingimentoMplay, 100)}%` }}
                                                 />
                                             </div>
-                                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 mt-1">
-                                                Receita extra Multi injetada: <strong className="text-neutral-800 dark:text-neutral-200">+{applyCurrencyMask(metrics.receitaExtraMplay || 0)}</strong>
+                                            <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-snug font-medium">
+                                                Fator aplicado: <strong className="text-neutral-900 dark:text-white font-extrabold">{metrics.fatorMultiplicador}x</strong> nas vendas combo com M-Play.
                                             </p>
                                         </div>
 
-                                        {/* DETALHAMENTO DOS BÔNUS POR CARGO */}
-                                        {activeRoleKey === 'VENDEDOR' && (
-                                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60 space-y-1.5 text-xs">
-                                                <div className="font-bold text-neutral-800 dark:text-neutral-200 text-[11px] uppercase">
-                                                    Bônus Unitário Acima da Meta (R$ 10 / R$ 15):
-                                                </div>
-                                                <div className="flex justify-between text-[11px] text-neutral-600 dark:text-neutral-400">
-                                                    <span>• Pós Titular/Ctrl ({metrics.volPosPago}/{metrics.metaPosPago}):</span>
-                                                    <strong className="text-neutral-900 dark:text-neutral-100">{applyCurrencyMask(resultBonusItem(metrics.volPosPago, metrics.metaPosPago))}</strong>
-                                                </div>
-                                                <div className="flex justify-between text-[11px] text-neutral-600 dark:text-neutral-400">
-                                                    <span>• Banda Larga Fixa / Fibra ({metrics.volFibra}/{metrics.metaFibra}):</span>
-                                                    <strong className="text-neutral-900 dark:text-neutral-100">{applyCurrencyMask(resultBonusItem(metrics.volFibra, metrics.metaFibra))}</strong>
-                                                </div>
-                                                <div className="flex justify-between text-[11px] text-neutral-600 dark:text-neutral-400">
-                                                    <span>• TV Principal ({metrics.volTv}/{metrics.metaTv}):</span>
-                                                    <strong className="text-neutral-900 dark:text-neutral-100">{applyCurrencyMask(resultBonusItem(metrics.volTv, metrics.metaTv))}</strong>
-                                                </div>
+                                        <div className="p-3.5 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60">
+                                            <span className="text-xs font-bold uppercase text-neutral-500 dark:text-neutral-400 block mb-0.5">
+                                                Aporte no Run Rate
+                                            </span>
+                                            <div className="text-base sm:text-lg font-extrabold text-neutral-900 dark:text-neutral-100 tabular-nums">
+                                                +{applyCurrencyMask(metrics.receitaExtraMplay || 0)}
+                                            </div>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 font-medium">
+                                                Receita adicional injetada pelo acelerador nas vendas elegíveis.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-5 pt-3.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-sm">
+                                    <span className="font-semibold text-neutral-600 dark:text-neutral-300">Bônus Excedente / Cargo:</span>
+                                    <span className={`font-extrabold tabular-nums ${metrics.bonusUnitario > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-neutral-400'}`}>
+                                        {metrics.bonusUnitario > 0 ? `+${applyCurrencyMask(metrics.bonusUnitario)}` : 'R$ 0,00'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* CARD 3: DICAS DE FOCO & RUN RATE */}
+                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200 uppercase tracking-wider flex items-center gap-2">
+                                            <TrendingUp size={17} className="text-[#E3000F]" /> Dicas de Alavancagem
+                                        </h3>
+                                        <span className="text-xs font-extrabold text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-full">
+                                            Operação
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {metrics.pctAtingimento < 100 ? (
+                                            <div className="p-3.5 bg-red-50/70 dark:bg-red-950/20 rounded-xl border border-red-200/50 dark:border-red-900/30">
+                                                <h4 className="text-xs font-extrabold text-[#E3000F] uppercase tracking-wider mb-1">
+                                                    Alavancagem de Receita
+                                                </h4>
+                                                <p className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-200 leading-relaxed font-medium">
+                                                    Priorize planos Pós com maior conectividade, combos Multi e venda agregada de Seguros e Acessórios para acelerar o run rate.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/50 dark:border-emerald-900/30">
+                                                <h4 className="text-xs font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1">
+                                                    Meta de Receita Superada!
+                                                </h4>
+                                                <p className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-200 leading-relaxed font-medium">
+                                                    Excelente ritmo. Mantenha as vendas ativas para maximizar o multiplicador nas faixas mais altas de comissão.
+                                                </p>
                                             </div>
                                         )}
 
-                                        {activeRoleKey === 'GERENTE' && (
-                                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60 space-y-1.5 text-xs">
-                                                <div className="font-bold text-neutral-800 dark:text-neutral-200 text-[11px] uppercase">
-                                                    Bônus Gestão de Equipe (Anexo III):
-                                                </div>
-                                                <div className="flex justify-between text-[11px] text-neutral-600 dark:text-neutral-400">
-                                                    <span>Vendedores Elegíveis ({metrics.vendedoresElegiveisCount}/{metrics.totalVendedoresLoja}):</span>
-                                                    <strong className="text-neutral-900 dark:text-neutral-100">{metrics.pctVendedoresElegiveis.toFixed(0)}%</strong>
-                                                </div>
-                                                <div className="flex justify-between text-[11px] text-neutral-600 dark:text-neutral-400">
-                                                    <span>Prêmio Gestão (≥80%: R$250 | 100%: R$500):</span>
-                                                    <strong className="text-emerald-600 dark:text-emerald-400">+{applyCurrencyMask(metrics.bonusGestao)}</strong>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {activeRoleKey === 'GEEK' && (
-                                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60 space-y-1.5 text-xs">
-                                                <div className="font-bold text-neutral-800 dark:text-neutral-200 text-[11px] uppercase">
-                                                    Bônus Exclusivos Geek (Anexo V):
-                                                </div>
-                                                <div className="flex justify-between text-[11px] text-neutral-600 dark:text-neutral-400">
-                                                    <span>• Fibra/Virtua PME ({metrics.pctAtingimentoBlPme.toFixed(0)}%):</span>
-                                                    <strong className="text-neutral-900 dark:text-neutral-100">+{applyCurrencyMask(metrics.bonusBlPme)}</strong>
-                                                </div>
-                                                <div className="flex justify-between text-[11px] text-neutral-600 dark:text-neutral-400">
-                                                    <span>• TM Acessórios ({applyCurrencyMask(metrics.tmAcessorio)}):</span>
-                                                    <strong className="text-neutral-900 dark:text-neutral-100">+{applyCurrencyMask(metrics.bonusTmAcessorio)}</strong>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {['SENIOR', 'ADMINISTRAÇÃO', 'ASSISTENTE RELACIONAMENTO'].includes(activeRoleKey) && (
-                                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60 space-y-1 text-xs">
-                                                <div className="font-bold text-neutral-800 dark:text-neutral-200 text-[11px] uppercase">
-                                                    Bônus Pesquisa de Satisfação (SMS ≥ 8):
-                                                </div>
-                                                <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                                                    Adiciona <strong>+5,00%</strong> sobre o valor apurado na Etapa 2 quando a média de notas válidas da loja é ≥ 8.
+                                        {metrics.pctAtingimentoPos < 100 && (
+                                            <div className="p-3.5 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60">
+                                                <h4 className="text-xs font-extrabold text-neutral-800 dark:text-neutral-100 uppercase tracking-wider mb-1">
+                                                    Portabilidade (+30%)
+                                                </h4>
+                                                <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed font-medium">
+                                                    Traga clientes de outras operadoras: linhas portadas geram bônus direto de 30% sobre o plano ativado.
                                                 </p>
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="mt-5 pt-3.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs">
-                                    <span className="text-neutral-500 dark:text-neutral-400">Total Bônus (Etapa 3):</span>
-                                    <span className={`font-sans font-extrabold ${metrics.totalBonus > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-neutral-400'}`}>
-                                        {metrics.totalBonus > 0 ? `+${applyCurrencyMask(metrics.totalBonus)}` : 'R$ 0,00'}
-                                    </span>
+                                <div className="mt-5 pt-3.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-sm text-neutral-600 dark:text-neutral-300">
+                                    <span className="font-semibold">Volume Total:</span>
+                                    <span className="font-extrabold text-neutral-900 dark:text-neutral-100">{metrics.totalVendas} vendas computadas</span>
                                 </div>
                             </div>
 
-                            {/* CARD 3: 2ª ETAPA — FAIXAS % SOBRE RECEITA DO CARGO ATUAL */}
-                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest flex items-center gap-2">
-                                            <TrendingUp size={15} className="text-[#E3000F]" /> 2ª Etapa: Faixas do Cargo
-                                        </h3>
-                                        <span className="text-[10px] font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
-                                            % s/ Receita
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {activeRegra.faixas.map((fx, idx) => {
-                                            const isCurrentFaixa = metrics.elegivel
-                                                ? (metrics.pctAtingimento >= fx.min && metrics.pctAtingimento <= fx.max)
-                                                : (idx === 0);
-                                            return (
-                                                <div
-                                                    key={fx.label}
-                                                    className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${
-                                                        isCurrentFaixa
-                                                            ? 'bg-[#E3000F]/10 border-[#E3000F]/40 text-neutral-900 dark:text-white font-bold shadow-sm'
-                                                            : 'bg-neutral-50 dark:bg-neutral-800/40 border-neutral-200/60 dark:border-neutral-700/60 text-neutral-600 dark:text-neutral-400'
-                                                    }`}
-                                                >
-                                                    <span>{fx.label}</span>
-                                                    <span className={`font-sans font-black ${isCurrentFaixa ? 'text-[#E3000F] dark:text-amber-400 text-sm' : ''}`}>
-                                                        {fx.texto}
-                                                    </span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <div className="mt-5 pt-3.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-                                    <span>Volume Apurado:</span>
-                                    <span className="font-bold text-neutral-900 dark:text-neutral-100">{metrics.totalVendas} vendas • Teto {applyCurrencyMask(activeRegra.teto)}</span>
-                                </div>
-                            </div>
-
-                            {/* SEÇÃO: DETALHAMENTO DE COMPOSIÇÃO DE RECEITA E PRODUTOS DA BASE */}
+                            {/* SEÇÃO: DETALHAMENTO DE COMPOSIÇÃO DE RECEITA */}
                             <div className="md:col-span-3 bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-                                <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <BarChart2 size={16} className="text-[#E3000F]" /> Composição da Receita Apurada por Serviço (Anexo I)
+                                <h3 className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <BarChart2 size={18} className="text-[#E3000F]" /> Composição da Receita Apurada
                                 </h3>
                                 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                     <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60">
-                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Portabilidades (+30%)</span>
-                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-sans">
-                                            {metrics.volPortabilidade} <span className="text-xs font-normal text-neutral-400">linhas</span>
+                                        <span className="text-xs font-extrabold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Portabilidades (+30%)</span>
+                                        <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-neutral-100 mt-1 tabular-nums">
+                                            {metrics.volPortabilidade} <span className="text-sm font-semibold text-neutral-500">linhas</span>
                                         </div>
-                                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
-                                            +30% sobre a Tabela de Referência nas novas ativações portadas.
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 font-medium">
+                                            Bônus de 30% aplicado sobre o valor do plano.
                                         </p>
                                     </div>
 
                                     <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60">
-                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Aparelhos (5%/6%) & Seguros (40%)</span>
-                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-sans">
-                                            {metrics.volAparelho + metrics.volSeguro} <span className="text-xs font-normal text-neutral-400">itens</span>
+                                        <span className="text-xs font-extrabold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Aparelhos & Seguros</span>
+                                        <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-neutral-100 mt-1 tabular-nums">
+                                            {metrics.volAparelho + metrics.volSeguro} <span className="text-sm font-semibold text-neutral-500">itens</span>
                                         </div>
-                                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
-                                            Receita elegível: {applyCurrencyMask(metrics.comissaoAparelho + metrics.comissaoSeguro)}
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 font-medium">
+                                            Comissão: {applyCurrencyMask(metrics.comissaoAparelho + metrics.comissaoSeguro)}
                                         </p>
                                     </div>
 
                                     <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60">
-                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Acessórios & Películas (15% NF)</span>
-                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-sans">
-                                            {metrics.volAcessorio} <span className="text-xs font-normal text-neutral-400">itens</span>
+                                        <span className="text-xs font-extrabold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Planos PME / PJ</span>
+                                        <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-neutral-100 mt-1 tabular-nums">
+                                            {metrics.volPme} <span className="text-sm font-semibold text-neutral-500">planos</span>
                                         </div>
-                                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
-                                            Receita elegível (15%): {applyCurrencyMask(metrics.comissaoAcessorio || 0)}
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 font-medium">
+                                            100% da receita soma na base de comissão.
                                         </p>
                                     </div>
 
                                     <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60">
-                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Banda Larga Fixa (Fibra) & TV</span>
-                                        <div className="text-2xl font-black text-neutral-900 dark:text-neutral-100 mt-1 font-sans">
-                                            {metrics.volFibra} Fibra • {metrics.volTv} TV
+                                        <span className="text-xs font-extrabold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Ajustes de Operação</span>
+                                        <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-neutral-100 mt-1 flex items-center gap-1.5">
+                                            Ativo <CheckCircle2 size={20} className="text-emerald-500" />
                                         </div>
-                                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
-                                            Upgrades (50%), Sidegrades (25%) e PME ({metrics.volPme}) integrados.
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 font-medium">
+                                            Upgrades (50%) e Sidegrades (25%) ajustados.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* SEÇÃO: QUADRO RESUMO DO CARGO + CAMPO "FONTE" */}
+                            {/* SEÇÃO SIMPLES E ENXUTA: REGRAS DE ENQUADRAMENTO + LINK DIRETO PARA "FONTE" */}
                             <div className="md:col-span-3 bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-neutral-100 dark:border-neutral-800">
-                                    <div>
-                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest flex items-center gap-2">
-                                            <BookOpen size={16} className="text-[#E3000F]" /> Diretrizes Oficiais de Comissionamento — {activeRegra.titulo}
-                                        </h3>
-                                        <p className="text-[11px] text-neutral-400 mt-0.5">
-                                            {activeRegra.grupoAnexo} • Norma PL-DRH-042 (Anexo I - G, Revisão 08 — 23/02/2026)
-                                        </p>
-                                    </div>
-
+                                    <h3 className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200 uppercase tracking-wider flex items-center gap-2">
+                                        <AlertCircle size={18} className="text-[#E3000F]" /> Regras de Enquadramento ({activeRegra.titulo})
+                                    </h3>
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setFonteTab('MEU_CARGO');
-                                                setShowFonteModal(true);
-                                            }}
-                                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#E3000F]/10 text-[#E3000F] hover:bg-[#E3000F] hover:text-white border border-[#E3000F]/30 transition-all cursor-pointer flex items-center gap-1.5"
+                                            onClick={() => setActiveSectionTab('FONTE')}
+                                            className="px-3.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-100 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
                                         >
-                                            <FileText size={14} />
-                                            <span>FONTE: Ver Regras Completas</span>
+                                            <BookOpen size={14} className="text-[#E3000F]" />
+                                            <span>Ir para Aba FONTE</span>
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => abrirDocumentoPDFNorma(activeRoleKey, metrics.targetSeller)}
-                                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all cursor-pointer flex items-center gap-1.5"
+                                            onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
+                                            className="px-3.5 py-1.5 rounded-xl bg-[#E3000F] hover:bg-red-700 text-white text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
                                         >
-                                            <Printer size={14} />
-                                            <span>Abrir PDF</span>
+                                            <FileText size={14} />
+                                            <span>PDF: {activeRegra.pdfFile}</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                                    {activeRegra.etapasDetalhadas.map((etapa, i) => (
-                                        <div key={i} className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200/60 dark:border-neutral-700/50 text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                                            {etapa}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                                    <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200/60 dark:border-neutral-700/50">
+                                        <span className="text-xs font-extrabold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block mb-1">
+                                            Piso Mínimo
+                                        </span>
+                                        <div className="text-base font-extrabold text-neutral-900 dark:text-white">
+                                            80% de Atingimento
                                         </div>
-                                    ))}
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 leading-snug font-medium">
+                                            Destrava o pagamento da comissão sobre a receita apurada ({activeRegra.baseApuracao}).
+                                        </p>
+                                    </div>
+
+                                    <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200/60 dark:border-neutral-700/50">
+                                        <span className="text-xs font-extrabold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block mb-1">
+                                            Faixas Base ({activeRegra.titulo})
+                                        </span>
+                                        <div className="text-xs sm:text-sm space-y-1 text-neutral-700 dark:text-neutral-200 font-semibold tabular-nums">
+                                            {activeRegra.faixas.map((f) => (
+                                                <div key={f.label} className="flex justify-between">
+                                                    <span>{f.label}:</span>
+                                                    <strong className="text-neutral-900 dark:text-white font-extrabold">{f.texto}</strong>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200/60 dark:border-neutral-700/50">
+                                        <span className="text-xs font-extrabold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block mb-1">
+                                            Aceleração & Teto
+                                        </span>
+                                        <div className="text-base font-extrabold text-neutral-900 dark:text-white tabular-nums">
+                                            Até 1.8x Multi • Teto {applyCurrencyMask(activeRegra.teto)}
+                                        </div>
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 leading-snug font-medium">
+                                            Multiplicador progressivo aplicado sobre planos combo e +30% em portabilidades.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1672,217 +1675,6 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     </div>
                 )}
             </div>
-
-            {/* MODAL LEITOR DO PDF DE REGRAS ("FONTE") */}
-            {showFonteModal && (
-                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
-                    <div className="bg-white dark:bg-neutral-900 w-full max-w-4xl rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-                        {/* Cabeçalho do Modal PDF */}
-                        <div className="p-4 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-800/60">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-[#E3000F]/10 text-[#E3000F] border border-[#E3000F]/20 flex items-center justify-center shrink-0">
-                                    <FileText size={20} />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-[#E3000F] text-white">
-                                            FONTE OFICIAL
-                                        </span>
-                                        <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
-                                            Norma PL-DRH-042 (Anexo I - G, Rev. 08 — 23/02/2026)
-                                        </span>
-                                    </div>
-                                    <h3 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white mt-0.5">
-                                        Caderno de Regras de Remuneração Variável — {activeRegra.titulo}
-                                    </h3>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => abrirDocumentoPDFNorma(activeRoleKey, metrics?.targetSeller || loggedName)}
-                                    className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#E3000F] hover:bg-red-700 text-white shadow-md shadow-red-600/20 transition-all cursor-pointer flex items-center gap-1.5"
-                                >
-                                    <Printer size={14} />
-                                    <span className="hidden sm:inline">Abrir / Baixar PDF (A4)</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowFonteModal(false)}
-                                    className="p-2 rounded-xl bg-neutral-200/70 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 cursor-pointer"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Abas Internas do Documento */}
-                        <div className="px-5 pt-3 border-b border-neutral-200 dark:border-neutral-800 flex gap-2 overflow-x-auto bg-white dark:bg-neutral-900">
-                            <button
-                                type="button"
-                                onClick={() => setFonteTab('MEU_CARGO')}
-                                className={`px-3.5 py-2 text-xs font-bold rounded-t-xl border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                                    fonteTab === 'MEU_CARGO'
-                                        ? 'border-[#E3000F] text-[#E3000F] bg-red-50/50 dark:bg-[#E3000F]/10'
-                                        : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
-                                }`}
-                            >
-                                1. Regra do Cargo ({activeRoleKey})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setFonteTab('COMPARATIVO')}
-                                className={`px-3.5 py-2 text-xs font-bold rounded-t-xl border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                                    fonteTab === 'COMPARATIVO'
-                                        ? 'border-[#E3000F] text-[#E3000F] bg-red-50/50 dark:bg-[#E3000F]/10'
-                                        : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
-                                }`}
-                            >
-                                2. Tabela Comparativa (6 Cargos)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setFonteTab('SERVICOS')}
-                                className={`px-3.5 py-2 text-xs font-bold rounded-t-xl border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                                    fonteTab === 'SERVICOS'
-                                        ? 'border-[#E3000F] text-[#E3000F] bg-red-50/50 dark:bg-[#E3000F]/10'
-                                        : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
-                                }`}
-                            >
-                                3. Regras por Serviço & Equivalência na Base
-                            </button>
-                        </div>
-
-                        {/* Conteúdo do Modal */}
-                        <div className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                            {fonteTab === 'MEU_CARGO' && (
-                                <div className="space-y-4">
-                                    <div className="p-4 rounded-2xl bg-red-50/60 dark:bg-[#E3000F]/10 border border-red-200 dark:border-[#E3000F]/30">
-                                        <div className="text-[11px] font-black uppercase text-[#E3000F] tracking-wider">
-                                            {activeRegra.grupoAnexo}
-                                        </div>
-                                        <h4 className="text-base font-black text-neutral-900 dark:text-white mt-0.5">
-                                            {activeRegra.titulo}
-                                        </h4>
-                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">
-                                            <strong>Base de Apuração:</strong> {activeRegra.baseApuracao} • <strong>Teto Monetário:</strong> {applyCurrencyMask(activeRegra.teto)}
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-2.5">
-                                        {activeRegra.etapasDetalhadas.map((etapa, idx) => (
-                                            <div key={idx} className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
-                                                {etapa}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {fonteTab === 'COMPARATIVO' && (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse text-xs">
-                                        <thead>
-                                            <tr className="bg-neutral-900 text-white text-[10.5px] uppercase">
-                                                <th className="p-2.5 rounded-tl-xl">Cargo</th>
-                                                <th className="p-2.5">Grupo / Anexo</th>
-                                                <th className="p-2.5">Base</th>
-                                                <th className="p-2.5">Gatilhos (Mín. 80%)</th>
-                                                <th className="p-2.5">Faixas % Receita</th>
-                                                <th className="p-2.5">Bônus</th>
-                                                <th className="p-2.5 rounded-tr-xl">Teto RV</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                                            {Object.values(REGRAS_CARGOS_NORMA).map(r => (
-                                                <tr
-                                                    key={r.codigo}
-                                                    className={r.codigo === activeRoleKey ? 'bg-red-50/80 dark:bg-[#E3000F]/15 font-bold' : 'bg-white dark:bg-neutral-900'}
-                                                >
-                                                    <td className="p-2.5 text-neutral-900 dark:text-white">{r.titulo}</td>
-                                                    <td className="p-2.5">{r.grupoAnexo}</td>
-                                                    <td className="p-2.5">{r.baseApuracao.split(' (')[0]}</td>
-                                                    <td className="p-2.5">{r.gatilhosLabel}</td>
-                                                    <td className="p-2.5">{r.faixas.filter(f => f.pct > 0).map(f => f.texto).join(' / ')}</td>
-                                                    <td className="p-2.5">{r.bonusResumo}</td>
-                                                    <td className="p-2.5 font-mono font-bold text-[#E3000F]">{applyCurrencyMask(r.teto)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-
-                            {fonteTab === 'SERVICOS' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                                    <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
-                                        <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-[11px] mb-1 text-[#E3000F]">
-                                            1. Móvel, Portabilidade (+30%) & Dependente
-                                        </h4>
-                                        <p>
-                                            <strong>Pós-Pago Titular / Controle / BL Móvel / Claro Flex PF:</strong> Contam 1 Gross e 100% da Tabela de Referência.
-                                            <br/><strong>Portabilidade:</strong> Recebe <strong>+30%</strong> sobre o valor da Tabela de Referência.
-                                            <br/><strong>Dependente Gratuito:</strong> Entra no Gross quantitativo, mas não compõe receita monetária (R$ 0,00).
-                                            <br/><strong>Móvel PME (POS PME):</strong> Compõe 100% da Receita Consumo e PME.
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
-                                        <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-[11px] mb-1 text-[#E3000F]">
-                                            2. Fator Claro Multi (Móvel + Residencial / M-Play)
-                                        </h4>
-                                        <p>
-                                            Vendas novas dentro de contrato Claro Multi recebem multiplicador conforme atingimento da meta Multi:
-                                            <br/>• 0,00% a 99,99%: <strong>1,2x</strong>
-                                            <br/>• 100,00% a 129,99%: <strong>1,4x</strong>
-                                            <br/>• 130,00% a 159,99%: <strong>1,6x</strong>
-                                            <br/>• ≥ 160,00%: <strong>1,8x</strong>
-                                            <br/>No Single ou sem M-Play marcado, o fator é <strong>1,0x</strong>.
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
-                                        <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-[11px] mb-1 text-[#E3000F]">
-                                            3. Equivalência de Nomes Compostos (Residencial)
-                                        </h4>
-                                        <p>
-                                            • <strong>Banda Larga Fixa ("Virtua")</strong> = <strong>FIBRA / FIBRA PME</strong> na nossa base.
-                                            <br/>• <strong>TV Ponto Principal</strong> = <strong>TVBOX / TV-BOX / TV CABO / SOUNDBOX</strong>.
-                                            <br/>• <strong>Telefone Fixo</strong> = <strong>FIXO</strong> (entra na Receita monetária).
-                                            <br/>• <strong>Smarthome</strong> = <strong>MESH</strong> (entra na Receita monetária).
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
-                                        <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-[11px] mb-1 text-[#E3000F]">
-                                            4. Aparelhos, Acessórios, Seguro & Movimentações
-                                        </h4>
-                                        <p>
-                                            • <strong>Venda/Troca de Aparelho:</strong> <strong>5,00%</strong> do preço do aparelho (<strong>6,00%</strong> quando vendido com Seguro Proteção Móvel).
-                                            <br/>• <strong>Seguro Proteção Móvel Avulso:</strong> <strong>40,00%</strong> da 1ª parcela.
-                                            <br/>• <strong>Acessórios e Películas:</strong> <strong>15,00%</strong> do valor emitido na NF.
-                                            <br/>• <strong>Movimentações:</strong> Upgrade = <strong>50%</strong> | Sidegrade = <strong>25%</strong> | Downgrade = <strong>0%</strong>.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
-
-// Helper auxiliar para exibir bônus individual por item no card de Vendedor
-function resultBonusItem(vol, meta) {
-    const v = Number(vol) || 0;
-    const m = Number(meta) || 0;
-    if (m <= 0 || v <= m) return 0;
-    const pct = (v / m) * 100;
-    const exc = v - m;
-    if (pct >= 115) return exc * 15;
-    if (pct >= 100) return exc * 10;
-    return 0;
-}

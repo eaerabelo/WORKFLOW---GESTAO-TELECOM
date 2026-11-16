@@ -367,3 +367,16 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
     - Botão `"FONTE OFICIAL (PDF): Norma PL-DRH-042"` no cabeçalho e rodapé da seção `[FATOR RV]`, abrindo o leitor interativo por cargo e gerando o documento PDF A4 dimensionado para impressão/download.
 
 
+
+---
+
+## 16/11/2026 — Refinamento Visual do Painel [FATOR RV], Aba "FONTE" e Proteção JWT dos PDFs de Regras (`PL-DRH-042`)
+
+### 1. Interface Limpa, Lúdica e Tipografia Legível (`FRONTEND/src/components/FatorRvv.jsx`)
+- Simplificada a visualização principal (**Simulador**) do painel **Fator RV**, removendo textos densos de diretrizes e mantendo apenas os indicadores essenciais com fontes maiores, alto contraste e leitura imediata.
+- Criada a aba e botão **"FONTE"**, concentrando o resumo da regra do cargo identificado e a visualização/download do documento PDF oficial correspondente (`REGRAS RV {CARGO}.pdf`).
+
+### 2. Proteção dos PDFs via Autenticação JWT no Backend (`BACKEND/uploads` + `fatorRvController.js`)
+- Movidos os 10 cadernos oficiais em PDF para `BACKEND/uploads/` (e sincronizados em `/home/ubuntu/BACKEND/uploads/` na VM Oracle), removendo qualquer exposição estática pública no deploy do Frontend (`dist`).
+- Criado o endpoint autenticado `GET /api/calcular/fator-rv/pdf/:key` em `BACKEND/src/controllers/fatorRvController.js` e `BACKEND/src/routes/calcRoutes.js` (protegido pelo middleware `requireAuth` via JWT), com whitelist estrita de arquivos e controle de acesso por cargo (`req.user.role`).
+- No Frontend (`FatorRvv.jsx`), os PDFs são requisitados via `authFetch` com token JWT no header `Authorization: Bearer` e convertidos em `Blob` temporário (`URL.createObjectURL`) para abertura, download e visualização segura.
