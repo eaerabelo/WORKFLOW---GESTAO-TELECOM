@@ -53,7 +53,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         .filter(Boolean);
 
     const historicalVendedores = (salesData || []).map(s => String(s.vendedor || '')).filter(Boolean);
-    
+
     const safeVendedores = [...new Set([...activeVendedores, ...historicalVendedores])].sort();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,7 +65,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     const [isOptionsCollapsed, setIsOptionsCollapsed] = useState(false);
     const fileInputRef = useRef(null);
     const [contractSale, setContractSale] = useState(null);
-    
+
     // --- ESTADOS DO COMBO ---
     const [vendaMode, setVendaMode] = useState('INDIVIDUAL'); // 'INDIVIDUAL' | 'COMBO'
     const [comboItems, setComboItems] = useState([]);
@@ -74,7 +74,8 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     const [formData, setFormData] = useState({
         vendedor: '', data: getTodaySP(), qtda: 1, portabilidade: '', operadoraOrigem: '',
         combo: 'SINGLE', categoriaVenda: 'MÓVEL', produto: '', subOption: '', receita: '', isReceitaReadonly: false,
-        celular: '', cpf: '', contrato: '', mplay: '', adicionais: [], tipoOperacao: '', seguroOption: ''
+        celular: '', cpf: '', contrato: '', mplay: '', adicionais: [], tipoOperacao: '', seguroOption: '',
+        dataInstalacao: '', baixaImediata: false
     });
 
     useEffect(() => {
@@ -101,9 +102,15 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         return prod.includes('FIBRA') || prod.includes('TV') || prod.includes('SOUNDBOX') || prod.includes('PONTO ADICIONAL') || prod.includes('FIXO') || prod.includes('MESH');
     };
 
+    const isTvProduct = (p) => {
+        const prod = String(p || '').toUpperCase();
+        return prod.includes('TV') || prod.includes('SOUNDBOX') || prod.includes('PONTO ADICIONAL');
+    };
+
     const isComissionado = ['APARELHO', 'ACESSORIO', 'PELICULA'].includes(formData?.produto || '');
     const currentCategoria = formData?.categoriaVenda || detectCategoria(formData?.produto) || 'MÓVEL';
     const isResidencial = currentCategoria === 'RESIDENCIAL' || isResidencialProduct(formData?.produto);
+    const isCurrentProdTv = isTvProduct(formData?.produto);
     const requiresContrato = isResidencial;
     const requiresCelular = !isResidencial;
     const isMovel = currentCategoria === 'MÓVEL' || ['POS', 'PÓS', 'CONTROLE', 'FLEX', 'PRÉ', 'PRE', 'DEPENDENTE'].some(term => String(formData?.produto || '').toUpperCase().includes(term));
@@ -199,7 +206,9 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             tipoOperacao: '',
             portabilidade: '',
             operadoraOrigem: '',
-            seguroOption: ''
+            seguroOption: '',
+            dataInstalacao: '',
+            baixaImediata: false
         }));
     };
 
@@ -227,7 +236,9 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             mplay: '',
             adicionais: [],
             tipoOperacao: '',
-            seguroOption: ''
+            seguroOption: '',
+            dataInstalacao: '',
+            baixaImediata: false
         });
         setIsModalOpen(true);
     };
@@ -256,7 +267,9 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             mplay: sale.mplay || '',
             adicionais: sale.adicionais || [],
             tipoOperacao: sale.tipoOperacao || '',
-            seguroOption: ''
+            seguroOption: '',
+            dataInstalacao: sale.dataInstalacao || '',
+            baixaImediata: Boolean(sale.baixaImediata)
         });
         setIsModalOpen(true);
     };
@@ -279,6 +292,12 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             if (['produto', 'combo', 'subOption'].includes(name)) {
                 if (name === 'produto') {
                     next.contrato = '';
+                    if (!isTvProduct(value)) {
+                        next.baixaImediata = false;
+                    }
+                    if (!isResidencialProduct(value)) {
+                        next.dataInstalacao = '';
+                    }
                     if (value === 'FIBRA') next.subOption = '350 MEGA'; else if (value === 'TV-BOX') next.subOption = 'TV BOX'; else if (value === 'FIXO') next.subOption = 'FIXO MUNDO'; else if (value === 'MESH') next.subOption = 'MESH 2UN'; else if (value === 'SEGURO') next.subOption = 'SEGURO R$ 14,00'; else if (value === 'DEPENDENTE') next.subOption = 'GRATUITO'; else next.subOption = '';
                     const isNewMovel = ['POS', 'PÓS', 'CONTROLE', 'FLEX', 'PRÉ', 'PRE', 'DEPENDENTE'].some(term => String(value || '').toUpperCase().includes(term));
                     if (!isNewMovel) { next.tipoOperacao = ''; next.operadoraOrigem = ''; }
@@ -311,10 +330,10 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         setComboGlobal(prev => {
             let nextAdicionais = [...prev.adicionais];
             if (op === 'NENHUM') {
-                nextAdicionais = []; 
-            } else { 
-                if (nextAdicionais.includes(op)) nextAdicionais = nextAdicionais.filter(item => item !== op); 
-                else nextAdicionais.push(op); 
+                nextAdicionais = [];
+            } else {
+                if (nextAdicionais.includes(op)) nextAdicionais = nextAdicionais.filter(item => item !== op);
+                else nextAdicionais.push(op);
             }
             return { ...prev, adicionais: nextAdicionais };
         });
@@ -330,7 +349,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     const handleSubmitSale = (e) => {
         e.preventDefault();
         const { vendedor, data, qtda, portabilidade, produto, receita, cpf, contrato, mplay, adicionais, tipoOperacao, subOption } = formData;
-        
+
         const finalPortabilidade = isMovel ? (tipoOperacao === 'MIGRAÇÃO' ? 'NÃO' : portabilidade) : 'NÃO';
         const finalOperadoraOrigem = (isMovel && finalPortabilidade === 'SIM' && tipoOperacao === 'ATIVAÇÃO') ? formData.operadoraOrigem : '';
         const finalMplay = showMplay ? mplay : 'NÃO';
@@ -353,8 +372,12 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         const receitaFloat = parseCurrencyToFloat(receita);
         const valorComissao = isComissionado ? calcularComissaoDinamica(produto, adicionais, receitaFloat, formData.seguroOption) : receitaFloat;
         const valorParaGravar = valorComissao;
-        
+
         const cleanedAdicionais = produto === 'APARELHO' ? adicionais.filter(a => a !== 'SEGURO') : adicionais;
+        const finalBaixaImediata = isCurrentProdTv && Boolean(formData.baixaImediata);
+        const finalDataInstalacao = isResidencial
+            ? (finalBaixaImediata ? (formData.dataInstalacao || formData.data || getTodaySP()) : (formData.dataInstalacao || ''))
+            : '';
 
         const novaVenda = {
             id: editingId || Date.now(),
@@ -373,6 +396,9 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             portabilidade: finalPortabilidade,
             operadoraOrigem: finalOperadoraOrigem,
             mplay: finalMplay,
+            dataInstalacao: finalDataInstalacao,
+            baixaImediata: finalBaixaImediata,
+            ...(finalBaixaImediata && !editingId ? { obsUr: 'BAIXA IMEDIATA' } : {}),
             ...(cidadeAuto && !editingId ? { cidade: cidadeAuto } : {})
         };
 
@@ -381,7 +407,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             toast.success('Alterações salvas com sucesso!');
         } else {
             const novasVendas = [novaVenda];
-            
+
             if (produto === 'APARELHO' && formData.seguroOption) {
                 const precoSeguro = calculatePrice('SEGURO', 'SINGLE', formData.seguroOption) || 0;
                 const vendaSeguro = {
@@ -417,7 +443,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     // =========================================================
     const handleAddComboItem = () => {
         const { vendedor, data, qtda, portabilidade, produto, receita, mplay, tipoOperacao, subOption } = formData;
-        
+
         const isItemMovel = ['POS', 'PÓS', 'CONTROLE', 'FLEX', 'PRÉ', 'PRE', 'DEPENDENTE'].some(term => String(produto || '').toUpperCase().includes(term));
         const itemShowMplay = (isItemMovel || ['FIBRA', 'TV-BOX', 'FIXO', 'MESH'].includes(produto || '')) && !isMplayAlreadySelectedInCombo;
 
@@ -425,24 +451,34 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         const finalOperadoraOrigem = (isItemMovel && finalPortabilidade === 'SIM' && tipoOperacao === 'ATIVAÇÃO') ? formData.operadoraOrigem : '';
         const finalMplay = itemShowMplay ? mplay : 'NÃO';
 
-        if (!vendedor || !data || !qtda || !produto || receita === '' || (isItemMovel && !finalPortabilidade) || (itemShowMplay && !mplay)) { 
-            setFormError('Preencha os campos obrigatórios do produto para adicioná-lo ao combo.'); 
-            return; 
+        if (!vendedor || !data || !qtda || !produto || receita === '' || (isItemMovel && !finalPortabilidade) || (itemShowMplay && !mplay)) {
+            setFormError('Preencha os campos obrigatórios do produto para adicioná-lo ao combo.');
+            return;
         }
         if (isItemMovel && finalPortabilidade === 'SIM' && tipoOperacao === 'ATIVAÇÃO' && !formData.operadoraOrigem) { setFormError('Selecione a operadora de origem da portabilidade.'); return; }
         if (getSubOptions().length > 0 && !subOption) { setFormError('Selecione a especificação do produto.'); return; }
         if (isItemMovel && !tipoOperacao) { setFormError('Selecione o Tipo de Operação.'); return; }
 
+        const itemIsTv = isTvProduct(produto);
+        const itemIsRes = isResidencialProduct(produto);
+        const itemBaixaImediata = itemIsTv && Boolean(formData.baixaImediata);
+        const itemDataInstalacao = itemIsRes
+            ? (itemBaixaImediata ? (formData.dataInstalacao || data || getTodaySP()) : (formData.dataInstalacao || ''))
+            : '';
+
         setComboItems(prev => [...prev, {
             vendedor, data, qtda, portabilidade: finalPortabilidade, operadoraOrigem: finalOperadoraOrigem, combo: formData.combo,
             produtoBase: produto, subOption, produto, receita, mplay: finalMplay, tipoOperacao, seguroOption: formData.seguroOption,
-            celular: formData.celular || ''
+            celular: formData.celular || '',
+            dataInstalacao: itemDataInstalacao,
+            baixaImediata: itemBaixaImediata
         }]);
 
         // Limpa apenas os dados do produto para facilitar a inclusão do próximo
         setFormData(prev => ({
             ...prev, produto: '', subOption: '', receita: '', isReceitaReadonly: false,
-            portabilidade: '', operadoraOrigem: '', mplay: '', tipoOperacao: '', seguroOption: '', qtda: 1, celular: ''
+            portabilidade: '', operadoraOrigem: '', mplay: '', tipoOperacao: '', seguroOption: '', qtda: 1, celular: '',
+            dataInstalacao: '', baixaImediata: false
         }));
         setFormError('');
     };
@@ -496,6 +532,9 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                 celular: !isItemResidential ? itemCelular : '',
                 cpf: '', contrato: isItemResidential ? comboGlobal.contrato : '-',
                 mplay: item.mplay, adicionais: cleanedAdicionais, tipoOperacao: item.tipoOperacao, seguroOption: item.seguroOption || '',
+                dataInstalacao: isItemResidential ? (item.dataInstalacao || '') : '',
+                baixaImediata: Boolean(item.baixaImediata),
+                ...(item.baixaImediata ? { obsUr: 'BAIXA IMEDIATA' } : {}),
                 ...(cidadeAuto && isItemResidential ? { cidade: cidadeAuto } : {})
             });
 
@@ -527,7 +566,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     const filteredSales = (salesData || []).filter(sale => {
         const saleIsoDate = parseDateToISO(sale.data);
         let matchDate = true;
-        
+
         if (filterDate && filterDateEnd) {
             matchDate = saleIsoDate >= filterDate && saleIsoDate <= filterDateEnd;
         } else if (filterDate) {
@@ -570,7 +609,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         else if (pBase.includes('FIBRA')) summaryCount.fib += q;
         else if (pBase.includes('TV')) summaryCount.tv += q;
         else if (pBase.includes('SEGURO')) summaryCount.seg += q;
-        
+
         if (sale.mplay === 'SIM') summaryCount.mplay += 1;
 
         summaryCount.receita += Number(sale.receita) || 0;
@@ -581,7 +620,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             toast.error('Nenhum dado para exportar no período selecionado.');
             return;
         }
-        
+
         const dataToExport = filteredSales.map(sale => ({
             'Vendedor': sale.vendedor,
             'Data': sale.data,
@@ -653,7 +692,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         <>
             <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden flex flex-col h-full animate-fade-in transition-colors print:hidden">
                 <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 flex flex-col md:flex-row gap-3 justify-between items-start md:items-center bg-white dark:bg-neutral-900 shrink-0">
-                    <h2 
+                    <h2
                         onDoubleClick={() => setIsOptionsCollapsed(!isOptionsCollapsed)}
                         className="font-semibold text-neutral-800 dark:text-neutral-100 flex items-center gap-2 cursor-pointer select-none hover:text-[#E3000F] transition-colors"
                         title="Duplo clique para expandir/recolher as opções"
@@ -794,11 +833,11 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                 {!editingId && (
                                     <div className="flex gap-6 px-6 pt-0">
                                         <button type="button" onClick={() => setVendaMode('INDIVIDUAL')} className={`pb-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors ${vendaMode === 'INDIVIDUAL' ? 'border-[#E3000F] text-[#E3000F]' : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}>Venda Individual</button>
-                                        <button type="button" onClick={() => setVendaMode('COMBO')} className={`pb-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors ${vendaMode === 'COMBO' ? 'border-[#E3000F] text-[#E3000F]' : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}>Venda Múltipla (Combo)</button>
+                                        <button type="button" onClick={() => setVendaMode('COMBO')} className={`pb-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors ${vendaMode === 'COMBO' ? 'border-[#E3000F] text-[#E3000F]' : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}>Venda Conjunta</button>
                                     </div>
                                 )}
                             </div>
-                            
+
                             {vendaMode === 'INDIVIDUAL' || editingId ? (
                                 <form onSubmit={handleSubmitSale} className="p-4 sm:p-6 space-y-6 max-h-[75vh] overflow-y-auto">
                                     {formError && (<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-[#E3000F] px-4 py-3 rounded-lg flex items-center gap-3 text-sm font-medium animate-fade-in"><AlertCircle size={18} className="shrink-0" />{formError}</div>)}
@@ -814,11 +853,10 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                     key={cat}
                                                     type="button"
                                                     onClick={() => handleCategoriaChange(cat)}
-                                                    className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all ${
-                                                        (formData.categoriaVenda || 'MÓVEL') === cat 
-                                                            ? 'bg-[#E3000F] text-white shadow-md' 
+                                                    className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all ${(formData.categoriaVenda || 'MÓVEL') === cat
+                                                            ? 'bg-[#E3000F] text-white shadow-md'
                                                             : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {cat}
                                                 </button>
@@ -863,13 +901,13 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                 <label className="text-xs font-bold uppercase tracking-wider flex justify-between text-neutral-500 dark:text-neutral-400">
                                                     <span>Contrato Residencial <span className="text-[#E3000F]">*</span></span>
                                                 </label>
-                                                <input 
-                                                    type="text" 
-                                                    name="contrato" 
-                                                    value={formData.contrato} 
-                                                    onChange={handleFormChange} 
-                                                    placeholder="Ex: 000/000000000" 
-                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100" 
+                                                <input
+                                                    type="text"
+                                                    name="contrato"
+                                                    value={formData.contrato}
+                                                    onChange={handleFormChange}
+                                                    placeholder="Ex: 000/000000000"
+                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100"
                                                 />
                                             </div>
                                         ) : (
@@ -877,14 +915,57 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                 <label className="text-xs font-bold uppercase tracking-wider flex justify-between text-neutral-500 dark:text-neutral-400">
                                                     <span>Número de Celular (Cliente)</span>
                                                 </label>
-                                                <input 
-                                                    type="text" 
-                                                    name="celular" 
-                                                    value={formData.celular} 
-                                                    onChange={handleFormChange} 
-                                                    placeholder="(XX) XXXXX-XXXX" 
+                                                <input
+                                                    type="text"
+                                                    name="celular"
+                                                    value={formData.celular}
+                                                    onChange={handleFormChange}
+                                                    placeholder="(XX) XXXXX-XXXX"
                                                     maxLength={15}
-                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium border bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100" 
+                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium border bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100"
+                                                />
+                                            </div>
+                                        )}
+                                        {isResidencial && (
+                                            <div className="space-y-1.5 animate-fade-in bg-blue-50/40 dark:bg-blue-950/20 p-2.5 -m-1 rounded-xl border border-blue-200/70 dark:border-blue-800/50">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <label className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                                                        <Calendar size={12} /> Data de Instalação (UR)
+                                                    </label>
+                                                    {isCurrentProdTv && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setFormData(prev => {
+                                                                    const nextBaixa = !prev.baixaImediata;
+                                                                    return {
+                                                                        ...prev,
+                                                                        baixaImediata: nextBaixa,
+                                                                        dataInstalacao: nextBaixa ? (prev.data || getTodaySP()) : prev.dataInstalacao
+                                                                    };
+                                                                });
+                                                            }}
+                                                            className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 ${
+                                                                formData.baixaImediata
+                                                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                                                    : 'bg-white dark:bg-neutral-800 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 hover:bg-emerald-50'
+                                                            }`}
+                                                            title="Exclusivo TV: Marca Baixa Imediata e encaminha a data preenchida para a UR"
+                                                        >
+                                                            {formData.baixaImediata && <Check size={10} />}
+                                                            <span>BAIXA IMEDIATA</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    type="date"
+                                                    name="dataInstalacao"
+                                                    value={formData.dataInstalacao || ''}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setFormData(prev => ({ ...prev, dataInstalacao: val }));
+                                                    }}
+                                                    className="w-full px-3 py-2 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-semibold border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 cursor-pointer"
                                                 />
                                             </div>
                                         )}
@@ -918,18 +999,17 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                             key={cat}
                                                             type="button"
                                                             onClick={() => handleCategoriaChange(cat)}
-                                                            className={`flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-bold rounded-md transition-all ${
-                                                                (formData.categoriaVenda || 'MÓVEL') === cat 
-                                                                    ? 'bg-[#E3000F] text-white shadow-md' 
+                                                            className={`flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-bold rounded-md transition-all ${(formData.categoriaVenda || 'MÓVEL') === cat
+                                                                    ? 'bg-[#E3000F] text-white shadow-md'
                                                                     : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {cat}
                                                         </button>
                                                     ))}
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                                 <div className="space-y-1.5 relative"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between"><span>Vendedor <span className="text-[#E3000F]">*</span></span>{isVendedor && <Lock size={12} className="text-[#E3000F]" />}</label><select name="vendedor" value={formData.vendedor} onChange={handleFormChange} disabled={isVendedor} className={`w-full border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium ${isVendedor ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-[#E3000F]' : 'bg-neutral-50 dark:bg-neutral-800/50'}`}><option className="bg-white dark:bg-neutral-900" value="">Selecione o vendedor</option>{safeVendedores.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)}</select></div>
                                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Data <span className="text-[#E3000F]">*</span></label><input type="date" name="data" value={formData.data} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" /></div>
@@ -968,14 +1048,57 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                         <label className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                                                             <span>Celular (Linha/Item)</span>
                                                         </label>
-                                                        <input 
-                                                            type="text" 
-                                                            name="celular" 
-                                                            value={formData.celular} 
-                                                            onChange={handleFormChange} 
-                                                            placeholder="(XX) XXXXX-XXXX" 
+                                                        <input
+                                                            type="text"
+                                                            name="celular"
+                                                            value={formData.celular}
+                                                            onChange={handleFormChange}
+                                                            placeholder="(XX) XXXXX-XXXX"
                                                             maxLength={15}
-                                                            className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium" 
+                                                            className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium"
+                                                        />
+                                                    </div>
+                                                )}
+                                                {isResidencial && (
+                                                    <div className="space-y-1.5 animate-fade-in bg-blue-50/40 dark:bg-blue-950/20 p-2.5 -m-1 rounded-xl border border-blue-200/70 dark:border-blue-800/50">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <label className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                                                                <Calendar size={12} /> Data de Instalação (UR)
+                                                            </label>
+                                                            {isCurrentProdTv && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setFormData(prev => {
+                                                                            const nextBaixa = !prev.baixaImediata;
+                                                                            return {
+                                                                                ...prev,
+                                                                                baixaImediata: nextBaixa,
+                                                                                dataInstalacao: nextBaixa ? (prev.data || getTodaySP()) : prev.dataInstalacao
+                                                                            };
+                                                                        });
+                                                                    }}
+                                                                    className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 ${
+                                                                        formData.baixaImediata
+                                                                            ? 'bg-emerald-600 text-white shadow-sm'
+                                                                            : 'bg-white dark:bg-neutral-800 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 hover:bg-emerald-50'
+                                                                    }`}
+                                                                    title="Exclusivo TV: Marca Baixa Imediata e encaminha a data preenchida para a UR"
+                                                                >
+                                                                    {formData.baixaImediata && <Check size={10} />}
+                                                                    <span>BAIXA IMEDIATA</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <input
+                                                            type="date"
+                                                            name="dataInstalacao"
+                                                            value={formData.dataInstalacao || ''}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setFormData(prev => ({ ...prev, dataInstalacao: val }));
+                                                            }}
+                                                            className="w-full px-3 py-2 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-semibold border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 cursor-pointer"
                                                         />
                                                     </div>
                                                 )}
@@ -1022,13 +1145,13 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                                 <label className="text-xs font-bold uppercase tracking-wider flex justify-between text-neutral-500 dark:text-neutral-400">
                                                                     <span>Número de Celular (Cliente/Titular)</span>
                                                                 </label>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={comboGlobal.celular} 
-                                                                    onChange={e => setComboGlobal({ ...comboGlobal, celular: applyPhoneMask(e.target.value) })} 
-                                                                    placeholder="(XX) XXXXX-XXXX" 
+                                                                <input
+                                                                    type="text"
+                                                                    value={comboGlobal.celular}
+                                                                    onChange={e => setComboGlobal({ ...comboGlobal, celular: applyPhoneMask(e.target.value) })}
+                                                                    placeholder="(XX) XXXXX-XXXX"
                                                                     maxLength={15}
-                                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100" 
+                                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100"
                                                                 />
                                                             </div>
                                                         )}
@@ -1037,12 +1160,12 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                                 <label className="text-xs font-bold uppercase tracking-wider flex justify-between text-neutral-500 dark:text-neutral-400">
                                                                     <span>Contrato Residencial <span className="text-[#E3000F]">*</span></span>
                                                                 </label>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={comboGlobal.contrato} 
-                                                                    onChange={e => setComboGlobal({ ...comboGlobal, contrato: applyContratoMask(e.target.value) })} 
-                                                                    placeholder="Ex: 000/000000000" 
-                                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100" 
+                                                                <input
+                                                                    type="text"
+                                                                    value={comboGlobal.contrato}
+                                                                    onChange={e => setComboGlobal({ ...comboGlobal, contrato: applyContratoMask(e.target.value) })}
+                                                                    placeholder="Ex: 000/000000000"
+                                                                    className="w-full px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-mono border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100"
                                                                 />
                                                             </div>
                                                         )}

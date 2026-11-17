@@ -1,24 +1,99 @@
 import React, { useState } from 'react';
-import { getFirstName, getFirstAndLastName } from '../utils/nameFormatter.js';
-import { Edit2, Save, X, Search, Calendar, Filter, Trash2, Home, User, Lock } from 'lucide-react';
+import { getFirstName } from '../utils/nameFormatter.js';
+import {
+    Edit2, Save, X, Search, Calendar, Filter, Trash2, Home,
+    Lock, MessageCircle, MapPin, Loader2, Check, Send
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { applyPhoneMask } from '../utils/masks';
+import { getCurrentStoreName } from '../utils/stores.js';
+
+const formatCepMask = (val) => {
+    const digits = String(val || '').replace(/\D/g, '').slice(0, 8);
+    if (digits.length > 5) {
+        return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    }
+    return digits;
+};
+
+const formatStoreDisplayName = () => {
+    const raw = String(getCurrentStoreName() || 'LP RAPOSO').trim();
+    const cleaned = raw.replace(/^LP\s+/i, '').trim();
+    if (!cleaned) return 'Loja Claro Raposo';
+    const titleCase = cleaned
+        .toLowerCase()
+        .split(' ')
+        .map(w => (w.length > 2 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+        .join(' ');
+    return `Loja Claro ${titleCase}`;
+};
+
+const formatPeriodoTexto = (agendamento) => {
+    const ag = String(agendamento || '').trim().toUpperCase();
+    if (ag === '08:00 A 12:00') return '08h as 12h';
+    if (ag === '12:00 A 15:00') return '12h as 15h';
+    if (ag === '15:00 A 18:00') return '15h as 18h';
+    if (!ag) return '12h as 15h';
+    return ag.toLowerCase();
+};
+
+const formatDiaMesTexto = (isoDate) => {
+    if (!isoDate) return '__/__';
+    if (typeof isoDate === 'string' && isoDate.includes('-')) {
+        const parts = isoDate.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
+    }
+    if (typeof isoDate === 'string' && isoDate.includes('/')) {
+        const parts = isoDate.split('/');
+        if (parts.length >= 2) return `${parts[0]}/${parts[1]}`;
+    }
+    return String(isoDate);
+};
+
+const formatProdutoTextoWhatsApp = (produto) => {
+    const p = String(produto || '').toUpperCase();
+    if (p.includes('FIBRA') || p.includes('VIRTUA') || p.includes('BANDA LARGA')) return 'virtua';
+    if (p.includes('SOUNDBOX')) return 'Claro Soundbox';
+    if (p.includes('TV')) return 'Claro TV';
+    if (p.includes('FIXO')) return 'Claro Fixo';
+    if (p.includes('MESH')) return 'Wi-Fi Mesh';
+    return 'virtua';
+};
 
 export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, usersDB = {}, globalMonth, setGlobalMonth }) {
-    const isLideranca = isGerente || ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'GEEK'].includes(globalUser?.role);
+    const userRoleUpper = String(globalUser?.role || 'VENDEDOR').trim().toUpperCase();
+    const isVendedor = userRoleUpper === 'VENDEDOR';
+    // Botão de encaminhamento disponível para TODOS os cargos EXCETO VENDEDOR
+    const canForwardWhatsApp = !isVendedor;
+    const isLideranca = isGerente || ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'ADM', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
 
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
     const [isOptionsCollapsed, setIsOptionsCollapsed] = useState(false);
-    
-    const isVendedor = globalUser?.role === 'VENDEDOR';
+
+    // Estado do Modal de Compartilhamento WhatsApp com busca de CEP via API
+    const [whatsModalItem, setWhatsModalItem] = useState(null);
+    const [isLoadingCep, setIsLoadingCep] = useState(false);
+    const [whatsForm, setWhatsForm] = useState({
+        nomeCliente: '',
+        celular: '',
+        dataInstalacao: '',
+        agendamento: '12:00 A 15:00',
+        cep: '',
+        logradouro: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        uf: 'SP'
+    });
+
     const loggedName = String(globalUser?.name || '');
     const [sellerFilter, setSellerFilter] = useState(isVendedor ? loggedName : '');
-  
+
     const monthFilter = globalMonth;
-    const setMonthFilter = setGlobalMonth;
 
     // OPÇÕES TRAVADAS DO SISTEMA
     const STATUS_OPTIONS = ['PEND.DE INSTALAÇÃO', 'CONECTADO', 'CANCELADO'];
@@ -27,11 +102,11 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
 
     const activeVendedoresOptions = Object.values(usersDB || {})
         .filter(u => !u?.role || u?.role === 'VENDEDOR')
-        .map(u => String(u?.name || ""))
+        .map(u => String(u?.name || ''))
         .filter(Boolean);
-        
+
     const historicalVendedoresOptions = (salesData || []).map(s => String(s.vendedor || '')).filter(Boolean);
-    
+
     const VENDEDORES_OPTIONS = [...new Set([...activeVendedoresOptions, ...historicalVendedoresOptions])].sort();
 
     const RESIDENTIAL_PRODUCTS = [
@@ -52,7 +127,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
     // Identifica automaticamente se a venda possui caráter residencial
     const isResidential = (produto) => {
         const p = String(produto || '').toUpperCase();
-        return p.includes('FIBRA') || p.includes('TV') || p.includes('FIXO') || p.includes('RESIDENCIAL') || p.includes('MESH');
+        return p.includes('FIBRA') || p.includes('TV') || p.includes('SOUNDBOX') || p.includes('FIXO') || p.includes('RESIDENCIAL') || p.includes('MESH') || p.includes('PONTO ADICIONAL');
     };
 
     // Filtrando a Base Central de Vendas para exibir somente UR-RESIDENCIAL
@@ -67,7 +142,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
             const term = String(searchTerm).toLowerCase();
             const dataVendaBr = typeof item.data === 'string' && item.data.includes('-') ? new Date(item.data + 'T12:00:00').toLocaleDateString('pt-BR') : String(item.data || '');
             const dataInstBr = item.dataInstalacao ? new Date(item.dataInstalacao + 'T12:00:00').toLocaleDateString('pt-BR') : '';
-            
+
             return (
                 String(item.contrato || '').toLowerCase().includes(term) ||
                 String(item.celular || item.cpf || '').toLowerCase().includes(term) ||
@@ -120,7 +195,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
     const handleChange = (e, field) => {
         let value = e.target.value;
         if (field === 'celular' || field === 'cpf') value = applyPhoneMask(value);
-        
+
         setEditForm(prev => {
             const nextForm = { ...prev, [field]: value };
             if (field === 'contrato') {
@@ -141,6 +216,128 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
             }
             return nextForm;
         });
+    };
+
+    // Abre o modal de encaminhamento WhatsApp (Exclusivo ao clicar em Compartilhar Contrato via WhatsApp)
+    const handleOpenWhatsModal = (item) => {
+        if (!canForwardWhatsApp) return;
+        setWhatsModalItem(item);
+        setWhatsForm({
+            nomeCliente: item.nomeCliente || '',
+            celular: item.celular || item.cpf || '',
+            dataInstalacao: item.dataInstalacao || '',
+            agendamento: item.agendamento || '12:00 A 15:00',
+            cep: item.cepInstalacao || '',
+            logradouro: item.logradouroInstalacao || '',
+            numero: item.numeroInstalacao || '',
+            complemento: item.complementoInstalacao || '',
+            bairro: item.bairroInstalacao || '',
+            cidade: item.cidade || getCidadePorContrato(item.contrato) || 'SAO PAULO',
+            uf: item.ufInstalacao || 'SP'
+        });
+    };
+
+    // Consulta automática de CEP via API ViaCEP
+    const fetchCepApi = async (rawCep) => {
+        const cleanCep = String(rawCep || '').replace(/\D/g, '');
+        if (cleanCep.length !== 8) return;
+
+        setIsLoadingCep(true);
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+            const data = await response.json();
+            if (data && !data.erro) {
+                setWhatsForm(prev => ({
+                    ...prev,
+                    cep: formatCepMask(cleanCep),
+                    logradouro: String(data.logradouro || prev.logradouro || '').toUpperCase(),
+                    bairro: String(data.bairro || prev.bairro || '').toUpperCase(),
+                    cidade: String(data.localidade || prev.cidade || '').toUpperCase(),
+                    uf: String(data.uf || prev.uf || 'SP').toUpperCase()
+                }));
+                toast.success('Endereço localizado pelo CEP!');
+            } else {
+                toast.error('CEP não encontrado. Verifique os números informados.');
+            }
+        } catch (err) {
+            console.error('Erro ao buscar CEP:', err);
+            toast.error('Não foi possível consultar o CEP no momento.');
+        } finally {
+            setIsLoadingCep(false);
+        }
+    };
+
+    const handleWhatsCepChange = (e) => {
+        const masked = formatCepMask(e.target.value);
+        setWhatsForm(prev => ({ ...prev, cep: masked }));
+        const digits = masked.replace(/\D/g, '');
+        if (digits.length === 8) {
+            fetchCepApi(digits);
+        }
+    };
+
+    // Monta o texto padrão exato solicitado para confirmação de instalação residencial
+    const buildWhatsAppConfirmationText = (formState, itemRef) => {
+        const nomeCliente = String(formState.nomeCliente || 'CLIENTE').trim().toUpperCase();
+        const nomeLoja = formatStoreDisplayName();
+        const produtoLabel = formatProdutoTextoWhatsApp(itemRef?.produto);
+        const diaMes = formatDiaMesTexto(formState.dataInstalacao);
+        const periodo = formatPeriodoTexto(formState.agendamento);
+        const rua = String(formState.logradouro || 'ENDEREÇO NÃO INFORMADO').trim().toUpperCase();
+        const num = String(formState.numero || 'S/N').trim().toUpperCase();
+        const compl = String(formState.complemento || '').trim().toUpperCase();
+        const bairro = String(formState.bairro || 'BAIRRO').trim().toUpperCase();
+        const cidade = String(formState.cidade || 'SAO PAULO').trim().toUpperCase();
+        const uf = String(formState.uf || 'SP').trim().toUpperCase();
+        const cep = String(formState.cep || '00000-000').trim();
+
+        const linhaEndereco = compl
+            ? `${rua},    ${num},  ${compl}`
+            : `${rua},    ${num}`;
+
+        return `Sr ${nomeCliente} sou da ${nomeLoja}, estou entrando em contato para confirmar o agendamento para instalar de um ${produtoLabel} no dia ${diaMes} no período das ${periodo} No endereço: ${linhaEndereco}\n${bairro} - ${cidade}/${uf}\n${cep}, disponibilizamos o APP Minha Claro  para acompanhamento do técnico responsável, além de várias outras funcionalidades`;
+    };
+
+    const handleConfirmAndSendWhatsApp = (e) => {
+        e.preventDefault();
+        if (!whatsModalItem) return;
+
+        const cleanPhone = String(whatsForm.celular || '').replace(/\D/g, '');
+        if (cleanPhone.length < 10) {
+            toast.error('Informe o número de Celular / WhatsApp do cliente com DDD.');
+            return;
+        }
+        if (!whatsForm.cep || !whatsForm.logradouro || !whatsForm.numero) {
+            toast.error('Preencha o CEP e o Número da residência para compor o endereço de instalação.');
+            return;
+        }
+
+        // Salva os dados adicionais do endereço e agendamento no registro da venda
+        setSalesData(prev => prev.map(item => {
+            if (item.id !== whatsModalItem.id) return item;
+            return {
+                ...item,
+                nomeCliente: whatsForm.nomeCliente.trim().toUpperCase(),
+                celular: whatsForm.celular,
+                dataInstalacao: whatsForm.dataInstalacao,
+                agendamento: whatsForm.agendamento,
+                cidade: whatsForm.cidade.trim().toUpperCase() || item.cidade,
+                cepInstalacao: whatsForm.cep,
+                logradouroInstalacao: whatsForm.logradouro.trim().toUpperCase(),
+                numeroInstalacao: whatsForm.numero.trim().toUpperCase(),
+                complementoInstalacao: whatsForm.complemento.trim().toUpperCase(),
+                bairroInstalacao: whatsForm.bairro.trim().toUpperCase(),
+                ufInstalacao: whatsForm.uf.trim().toUpperCase()
+            };
+        }));
+
+        const mensagem = buildWhatsAppConfirmationText(whatsForm, whatsModalItem);
+        const fullPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+        const url = `https://wa.me/${fullPhone}?text=${encodeURIComponent(mensagem)}`;
+
+        window.open(url, '_blank', 'noopener,noreferrer');
+        setWhatsModalItem(null);
+        toast.success('Dados salvos e confirmação aberta no WhatsApp!');
     };
 
     const getStatusStyle = (status) => {
@@ -170,6 +367,8 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
             'Agendamento': item.agendamento || '-',
             'Nome Cliente': item.nomeCliente || '-',
             'Celular': item.celular || item.cpf || '-',
+            'CEP': item.cepInstalacao || '-',
+            'Endereço': item.logradouroInstalacao ? `${item.logradouroInstalacao}, ${item.numeroInstalacao || ''} ${item.complementoInstalacao || ''}` : '-',
             'Obs': item.obsUr || '-',
             'Ação': item.acaoUr || '-'
         }));
@@ -189,7 +388,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                     <div className="w-10 h-10 rounded-xl bg-[#E3000F]/10 flex items-center justify-center text-[#E3000F]">
                         <Home size={22} />
                     </div>
-                    <div 
+                    <div
                         onDoubleClick={() => setIsOptionsCollapsed(!isOptionsCollapsed)}
                         className="cursor-pointer select-none hover:text-[#E3000F] transition-colors"
                         title="Duplo clique para expandir/recolher as opções"
@@ -220,7 +419,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                 className={`w-full sm:w-40 bg-transparent py-2 pl-2 pr-1 text-sm text-neutral-800 dark:text-neutral-100 outline-none ${isVendedor ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                             >
                                 {!isVendedor && <option className="bg-white dark:bg-neutral-900" value="">Todos Vendedores</option>}
-                                {isVendedor 
+                                {isVendedor
                                     ? <option className="bg-white dark:bg-neutral-900" value={loggedName}>{loggedName}</option>
                                     : VENDEDORES_OPTIONS.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)
                                 }
@@ -254,7 +453,9 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Celular</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Obs</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Ação</th>
-                                    <th className="px-3 py-3 font-bold uppercase tracking-wider text-center sticky right-0 bg-[#E3000F] shadow-[-4px_0_10px_rgba(0,0,0,0.1)]">Editar</th>
+                                    <th className="px-3 py-3 font-bold uppercase tracking-wider text-center sticky right-0 bg-[#E3000F] shadow-[-4px_0_10px_rgba(0,0,0,0.1)]">
+                                        {canForwardWhatsApp ? 'Ações / WhatsApp' : 'Editar'}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -280,7 +481,20 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                                     {isEditing ? <input type="date" value={editForm.data || ''} onChange={(e) => handleChange(e, 'data')} className="w-32 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F]" /> : <span className="text-neutral-600 dark:text-neutral-400">{typeof item.data === 'string' && item.data.includes('-') ? new Date(item.data + 'T12:00:00').toLocaleDateString('pt-BR') : item.data}</span>}
                                                 </td>
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800">
-                                                    {isEditing ? <input type="date" value={editForm.dataInstalacao || ''} onChange={(e) => handleChange(e, 'dataInstalacao')} className="w-32 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer focus:border-[#E3000F]" /> : <span className="text-neutral-700 dark:text-neutral-300">{item.dataInstalacao ? new Date(item.dataInstalacao + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}</span>}
+                                                    {isEditing ? (
+                                                        <input type="date" value={editForm.dataInstalacao || ''} onChange={(e) => handleChange(e, 'dataInstalacao')} className="w-32 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer focus:border-[#E3000F]" />
+                                                    ) : (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-neutral-700 dark:text-neutral-300 font-semibold">
+                                                                {item.dataInstalacao ? new Date(item.dataInstalacao + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}
+                                                            </span>
+                                                            {item.baixaImediata && (
+                                                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[9px] font-black uppercase">
+                                                                    Baixa Imediata
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800">
                                                     {isEditing ? <select value={editForm.vendedor || ''} onChange={(e) => handleChange(e, 'vendedor')} className="w-28 px-1 py-1 border border-neutral-200 dark:border-neutral-700 rounded bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 outline-none"><option className="bg-white dark:bg-neutral-900" value="">Selecione...</option>{VENDEDORES_OPTIONS.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)}</select> : <span className="font-medium text-neutral-800 dark:text-neutral-200">{getFirstName(item.vendedor)}</span>}
@@ -312,14 +526,25 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 text-center sticky right-0 shadow-[-4px_0_10px_rgba(0,0,0,0.03)] dark:shadow-[-4px_0_10px_rgba(0,0,0,0.2)] bg-white dark:bg-neutral-900 z-10">
                                                     {isEditing ? (
                                                         <div className="flex items-center justify-center gap-2">
-                                                            <button onClick={handleSave} className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"><Save size={16} /></button>
-                                                            <button onClick={handleCancel} className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><X size={16} /></button>
+                                                            <button onClick={handleSave} className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors" title="Salvar"><Save size={16} /></button>
+                                                            <button onClick={handleCancel} className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Cancelar"><X size={16} /></button>
                                                         </div>
                                                     ) : (
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <button onClick={() => handleEdit(item)} className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"><Edit2 size={16} /></button>
+                                                        <div className="flex items-center justify-center gap-1.5">
+                                                            {canForwardWhatsApp && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleOpenWhatsModal(item)}
+                                                                    className="px-2 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
+                                                                    title="Encaminhar Confirmação de Instalação via WhatsApp (com busca de CEP)"
+                                                                >
+                                                                    <MessageCircle size={13} />
+                                                                    <span>WhatsApp</span>
+                                                                </button>
+                                                            )}
+                                                            <button onClick={() => handleEdit(item)} className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Editar Linha"><Edit2 size={16} /></button>
                                                             {isLideranca && (
-                                                                <button onClick={() => handleDelete(item.id)} className="p-1.5 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                                                                <button onClick={() => handleDelete(item.id)} className="p-1.5 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button>
                                                             )}
                                                         </div>
                                                     )}
@@ -342,6 +567,240 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                     </div>
                 </div>
             </div>
+
+            {/* MODAL DE COMPARTILHAMENTO VIA WHATSAPP COM BUSCA DE CEP VIA API (EXCLUSIVO AO COMPARTILHAR CONTRATO) */}
+            {whatsModalItem && canForwardWhatsApp && (
+                <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center no-print">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden animate-fade-in">
+                        <div className="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+                                    <MessageCircle size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="text-base sm:text-lg font-extrabold tracking-tight">
+                                        Encaminhar Confirmação de Instalação (WhatsApp)
+                                    </h3>
+                                    <p className="text-xs text-emerald-100 font-medium">
+                                        Contrato: <strong>{whatsModalItem.contrato || '-'}</strong> • Produto: <strong>{whatsModalItem.produto}</strong>
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setWhatsModalItem(null)}
+                                className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleConfirmAndSendWhatsApp} className="p-6 space-y-5 max-h-[82vh] overflow-y-auto">
+                            {/* DADOS DO CLIENTE E AGENDAMENTO */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+                                <div className="sm:col-span-2 space-y-1">
+                                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                        Nome do Cliente <span className="text-[#E3000F]">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={whatsForm.nomeCliente}
+                                        onChange={(e) => setWhatsForm(prev => ({ ...prev, nomeCliente: e.target.value }))}
+                                        placeholder="Ex: JOÃO DA SILVA"
+                                        className="w-full px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white uppercase outline-none focus:border-emerald-500"
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2 space-y-1">
+                                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                        WhatsApp do Cliente <span className="text-[#E3000F]">*</span>
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        required
+                                        maxLength={15}
+                                        value={whatsForm.celular}
+                                        onChange={(e) => setWhatsForm(prev => ({ ...prev, celular: applyPhoneMask(e.target.value) }))}
+                                        placeholder="(11) 99999-9999"
+                                        className="w-full px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-sm font-extrabold text-neutral-900 dark:text-white outline-none focus:border-emerald-500 tabular-nums"
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2 space-y-1">
+                                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                        Data da Instalação <span className="text-[#E3000F]">*</span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={whatsForm.dataInstalacao}
+                                        onChange={(e) => setWhatsForm(prev => ({ ...prev, dataInstalacao: e.target.value }))}
+                                        className="w-full px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white outline-none focus:border-emerald-500 cursor-pointer"
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2 space-y-1">
+                                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                        Período do Agendamento <span className="text-[#E3000F]">*</span>
+                                    </label>
+                                    <select
+                                        value={whatsForm.agendamento}
+                                        onChange={(e) => setWhatsForm(prev => ({ ...prev, agendamento: e.target.value }))}
+                                        className="w-full px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white outline-none focus:border-emerald-500 cursor-pointer"
+                                    >
+                                        {AGENDAMENTO_OPTIONS.map(op => (
+                                            <option key={op} value={op}>{op}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* SEÇÃO DE ENDEREÇO CONECTADA À API DE CEP */}
+                            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700/80 space-y-3.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                                        <MapPin size={15} /> Dados de Endereço da Instalação (Busca Automática por CEP)
+                                    </span>
+                                    {isLoadingCep && (
+                                        <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                                            <Loader2 size={13} className="animate-spin" /> Buscando CEP...
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                    <div className="sm:col-span-4 space-y-1">
+                                        <label className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                                            CEP <span className="text-[#E3000F]">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            maxLength={9}
+                                            value={whatsForm.cep}
+                                            onChange={handleWhatsCepChange}
+                                            placeholder="05373-000"
+                                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-sm font-extrabold text-neutral-900 dark:text-white outline-none focus:border-emerald-500 tabular-nums"
+                                        />
+                                    </div>
+
+                                    <div className="sm:col-span-8 space-y-1">
+                                        <label className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                                            Rua / Logradouro <span className="text-[#E3000F]">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={whatsForm.logradouro}
+                                            onChange={(e) => setWhatsForm(prev => ({ ...prev, logradouro: e.target.value }))}
+                                            placeholder="Ex: R ROSARIA ANA BARBOSA"
+                                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white uppercase outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+
+                                    <div className="sm:col-span-3 space-y-1">
+                                        <label className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                                            Número <span className="text-[#E3000F]">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={whatsForm.numero}
+                                            onChange={(e) => setWhatsForm(prev => ({ ...prev, numero: e.target.value }))}
+                                            placeholder="Ex: 108"
+                                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-sm font-extrabold text-neutral-900 dark:text-white uppercase outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+
+                                    <div className="sm:col-span-4 space-y-1">
+                                        <label className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                                            Complemento
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={whatsForm.complemento}
+                                            onChange={(e) => setWhatsForm(prev => ({ ...prev, complemento: e.target.value }))}
+                                            placeholder="Ex: CASA 3 / APTO 12"
+                                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white uppercase outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+
+                                    <div className="sm:col-span-5 space-y-1">
+                                        <label className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                                            Bairro <span className="text-[#E3000F]">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={whatsForm.bairro}
+                                            onChange={(e) => setWhatsForm(prev => ({ ...prev, bairro: e.target.value }))}
+                                            placeholder="Ex: JARDIM ESTER"
+                                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white uppercase outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+
+                                    <div className="sm:col-span-9 space-y-1">
+                                        <label className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                                            Cidade <span className="text-[#E3000F]">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={whatsForm.cidade}
+                                            onChange={(e) => setWhatsForm(prev => ({ ...prev, cidade: e.target.value }))}
+                                            placeholder="Ex: SAO PAULO"
+                                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white uppercase outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+
+                                    <div className="sm:col-span-3 space-y-1">
+                                        <label className="text-[11px] font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                                            UF <span className="text-[#E3000F]">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            maxLength={2}
+                                            value={whatsForm.uf}
+                                            onChange={(e) => setWhatsForm(prev => ({ ...prev, uf: e.target.value }))}
+                                            placeholder="SP"
+                                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white uppercase outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PRÉVIA DA MENSAGEM PADRÃO QUE SERÁ ENVIADA */}
+                            <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 space-y-1.5">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
+                                    Prévia da Mensagem Padrão Formatada:
+                                </span>
+                                <pre className="text-xs font-medium text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap font-sans leading-relaxed">
+                                    {buildWhatsAppConfirmationText(whatsForm, whatsModalItem)}
+                                </pre>
+                            </div>
+
+                            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                                <button
+                                    type="button"
+                                    onClick={() => setWhatsModalItem(null)}
+                                    className="px-5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 text-xs sm:text-sm font-bold hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                >
+                                    <Send size={16} />
+                                    <span>Salvar Endereço & Enviar no WhatsApp</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
-} 
+}

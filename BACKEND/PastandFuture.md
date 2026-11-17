@@ -399,3 +399,17 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 
 ### 2. Correção da Bolinha de Notificação na Seção `[GEEK]` (`FRONTEND/src/components/Geek.jsx`)
 - Ignorado o registro interno de configuração do carrossel (`CONFIG_FLYERS_34` / `__FLYERS_CARROSSEL__`) na verificação `checkHasNewGeek`, adicionado auto-reconhecimento de visualização ao entrar na aba GEEK e persistência híbrida (`usersDB` + `localStorage`).
+
+---
+
+## 16/11/2026 — Encaminhamento WhatsApp com CEP na `[UR]` & Data de Instalação / Baixa Imediata na `[VENDA]`
+
+### 1. Seção `[UR-RESIDENCIAL]` (`FRONTEND/src/components/UrResidencial.jsx`)
+- **Botão de Encaminhamento WhatsApp:** Disponível para todos os cargos, exceto `VENDEDOR`.
+- **Modal Exclusivo ao Compartilhar Contrato via WhatsApp (Conexão com API de CEP):**
+  - Ao clicar no botão **WhatsApp** de uma venda residencial, abre a janela de dados adicionais do endereço de instalação (`CEP` integrado via API `ViaCEP`, `Logradouro`, `Número`, `Complemento`, `Bairro`, `Cidade`, `UF`, `Data de Instalação` e `Período`).
+  - Salva os dados no registro e dispara a mensagem no formato padrão oficial da loja com os dados dinâmicos do cliente.
+
+### 2. Seção `[VENDA]` (`FRONTEND/src/components/Venda.jsx`)
+- Ao selecionar uma venda de categoria/produto **RESIDENCIAL** (tanto em Venda Individual quanto em Venda Conjunta/Combo), exibe a caixa **"Data de Instalação (UR)"** para encaminhar a data já preenchida à seção `[UR-RESIDENCIAL]` (onde continua normalmente editável).
+- Exclusivamente quando o produto selecionado é **TV** (`TVBOX`, `TV-BOX`, `TV CABO`, `SOUNDBOX`, `PONTO ADICIONAL`), exibe o botão extra **"BAIXA IMEDIATA"** que preenche automaticamente a data e identifica o lançamento na `[UR]`.
