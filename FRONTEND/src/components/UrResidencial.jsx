@@ -433,18 +433,6 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                             </select>
                         </div>
 
-                        {canForwardWhatsApp && filteredData.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => handleOpenWhatsModal(filteredData[0])}
-                                className="w-full sm:w-auto px-4 py-2 bg-[#25D366] hover:bg-[#1ebe57] text-white text-sm font-extrabold rounded-xl transition-all shadow-md shadow-emerald-600/25 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
-                                title="Compartilhar Confirmação de Instalação no WhatsApp"
-                            >
-                                <MessageCircle size={17} />
-                                <span>Compartilhar WhatsApp</span>
-                            </button>
-                        )}
-
                         {isLideranca && (
                             <button type="button" onClick={handleExportExcel} className="w-full sm:w-auto px-4 py-2 bg-[#107c41] text-white text-sm font-medium rounded-xl hover:bg-[#0c5e31] transition-colors shadow-sm shadow-green-700/30 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer">Exportar Excel</button>
                         )}
@@ -459,11 +447,6 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                         <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
                             <thead className="bg-[#E3000F] text-white">
                                 <tr>
-                                    {canForwardWhatsApp && (
-                                        <th className="px-3 py-3 font-extrabold uppercase tracking-wider border-r border-red-500/30 text-center bg-emerald-700">
-                                            WhatsApp
-                                        </th>
-                                    )}
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Contrato</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Cidade</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Data</th>
@@ -478,14 +461,14 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Obs</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Ação</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider text-center sticky right-0 bg-[#E3000F] shadow-[-4px_0_10px_rgba(0,0,0,0.1)]">
-                                        {canForwardWhatsApp ? 'Compartilhar / Editar' : 'Editar'}
+                                        {canForwardWhatsApp ? 'WhatsApp / Editar' : 'Editar'}
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredData.length === 0 ? (
                                     <tr>
-                                        <td colSpan={canForwardWhatsApp ? 15 : 14} className="px-4 py-8 text-center text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-900">
+                                        <td colSpan={14} className="px-4 py-8 text-center text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-900">
                                             Nenhuma venda residencial registrada neste período.
                                         </td>
                                     </tr>
@@ -494,20 +477,6 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                         const isEditing = editingId === item.id;
                                         return (
                                             <tr key={item.id || index} className="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors bg-white dark:bg-neutral-900">
-                                                {/* 1ª COLUNA VISÍVEL IMEDIATAMENTE: BOTÃO COMPARTILHAR WHATSAPP (EXCETO VENDEDOR) */}
-                                                {canForwardWhatsApp && (
-                                                    <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800 text-center">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleOpenWhatsModal(item)}
-                                                            className="px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#1da851] text-white font-extrabold text-[11px] inline-flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
-                                                            title="Compartilhar Confirmação de Instalação no WhatsApp"
-                                                        >
-                                                            <MessageCircle size={14} />
-                                                            <span>Compartilhar</span>
-                                                        </button>
-                                                    </td>
-                                                )}
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800">
                                                     {isEditing ? <input type="text" value={editForm.contrato || ''} onChange={(e) => handleChange(e, 'contrato')} disabled={!isLideranca} className={`w-28 px-2 py-1 border rounded ${!isLideranca ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-neutral-500 dark:text-neutral-400 border-transparent' : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 border-neutral-200 dark:border-neutral-700 focus:border-[#E3000F] outline-none'}`} /> : <span className="font-mono text-neutral-700 dark:text-neutral-300">{item.contrato || '-'}</span>}
                                                 </td>
@@ -719,7 +688,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                             <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700/80 space-y-3.5">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                                        <MapPin size={15} /> Dados de Endereço da Instalação (Conectado à API de CEP)
+                                        <MapPin size={15} /> Dados de Endereço da Instalação
                                     </span>
                                     {isLoadingCep && (
                                         <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
