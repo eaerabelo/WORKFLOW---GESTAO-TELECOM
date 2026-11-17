@@ -380,3 +380,22 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - Movidos os 10 cadernos oficiais em PDF para `BACKEND/uploads/` (e sincronizados em `/home/ubuntu/BACKEND/uploads/` na VM Oracle), removendo qualquer exposição estática pública no deploy do Frontend (`dist`).
 - Criado o endpoint autenticado `GET /api/calcular/fator-rv/pdf/:key` em `BACKEND/src/controllers/fatorRvController.js` e `BACKEND/src/routes/calcRoutes.js` (protegido pelo middleware `requireAuth` via JWT), com whitelist estrita de arquivos e controle de acesso por cargo (`req.user.role`).
 - No Frontend (`FatorRvv.jsx`), os PDFs são requisitados via `authFetch` com token JWT no header `Authorization: Bearer` e convertidos em `Blob` temporário (`URL.createObjectURL`) para abertura, download e visualização segura.
+
+---
+
+## 16/11/2026 — Criação da Nova Seção `[RETENÇÃO]` & Correção de Notificação Geek
+
+### 1. Nova Seção `[RETENÇÃO]` (`FRONTEND/src/components/Retencao.jsx` & `App.jsx`)
+- Criado o módulo **Central de Retenção & Pós-Venda**, visível no menu lateral para vendedores e lideranças.
+- Permite registrar clientes de atendimento pós-venda para aplicação de desconto de retenção com:
+  - **Nome do Cliente** (opcional);
+  - **Celular / Linha Titular** (obrigatório com máscara);
+  - **Tipo de Operação:** Seleção interativa entre `SIMPLIFICA` e `NETSALES`;
+  - **Portfólio Atual do Cliente:** Seleção visual de `MÓVEL`, `TVBOX`, `FIBRA` e/ou `COMBO MULTI`.
+- **Espaço do Cliente para Trabalho Futuro:**
+  - Calcula automaticamente a **Próxima Oferta Sugerida** (Radar de Cross-Sell/Upsell, indicando quais produtos o cliente ainda não possui para abordagem futura);
+  - Permite filtrar por operação, oportunidade (`Ofertar Fibra`, `Ofertar Móvel`, `Ofertar TVBox`, `Combo Multi`), status (`Para Trabalhar`, `Em Negociação`, `Oferta Convertida`) e consultor;
+  - Inclui atalho de 1 clique para **WhatsApp**, cópia da linha titular e anotações de acompanhamento comercial, sincronizado em tempo real no Oracle DB (`CONFIGURACOES.retencaoData`).
+
+### 2. Correção da Bolinha de Notificação na Seção `[GEEK]` (`FRONTEND/src/components/Geek.jsx`)
+- Ignorado o registro interno de configuração do carrossel (`CONFIG_FLYERS_34` / `__FLYERS_CARROSSEL__`) na verificação `checkHasNewGeek`, adicionado auto-reconhecimento de visualização ao entrar na aba GEEK e persistência híbrida (`usersDB` + `localStorage`).

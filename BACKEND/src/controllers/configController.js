@@ -117,6 +117,9 @@ export const syncConfig = async (req, res) => {
                 if (existingDoc.customArgumentacoes && !configData.customArgumentacoes) {
                     configData.customArgumentacoes = existingDoc.customArgumentacoes;
                 }
+                if (existingDoc.retencaoData && !configData.retencaoData) {
+                    configData.retencaoData = existingDoc.retencaoData;
+                }
                 if (existingDoc.userPreferences) {
                     configData.userPreferences = {
                         ...existingDoc.userPreferences,

@@ -6,7 +6,7 @@ import {
   Menu, X, Search, ChevronRight, UserPlus,
   Users, BarChart3, FileText, Database, Home,
   Target, AlertOctagon, Phone, CreditCard, Briefcase, AlertCircle, Check, Lock,
-  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap, AlertTriangle, WifiOff, Map as MapIcon, Loader2, Activity, HelpCircle, User
+  Key, CalendarDays, UserCircle, LogOut, Crown, Undo, Sun, Moon, ClipboardCheck, Cpu, Bell, Wifi, Copy, Calculator, Megaphone, Trophy, DollarSign, BookOpen, Zap, AlertTriangle, WifiOff, Map as MapIcon, Loader2, Activity, HelpCircle, User, ShieldCheck
 } from 'lucide-react';
 
 // Importação de biblioteca de Toasts para feedback visual de ações em tela
@@ -48,6 +48,7 @@ import { Campanha, checkHasNewCampanha } from './components/Campanha.jsx';
 import { Tutorial } from './components/Tutorial.jsx';
 import { Atualizacoes } from './components/Atualizacoes.jsx';
 import { AreaLojas } from './components/AreaLojas.jsx';
+import { Retencao } from './components/Retencao.jsx';
 import { Profile } from './components/profile.jsx';
 import { Help } from './components/help.jsx';
 import { WFLogoLoader } from './components/WFLogoLoader.jsx';
@@ -309,6 +310,7 @@ export default function App() {
   const [scheduleData, setScheduleData] = useState({});
   const [monthlyOverrides, setMonthlyOverrides] = useState({});
   const [pricingData, setPricingData] = useState({});
+  const [retencaoData, setRetencaoData] = useState([]);
   // Define se o primeiro carregamento da Nuvem já foi finalizado
   const [isBackendReady, setisBackendReady] = useState(false);
 
@@ -547,6 +549,7 @@ export default function App() {
       if (lastAction.type === 'reprovadosData') setReprovadosData(lastAction.state);
       if (lastAction.type === 'geekDocs') setGeekDocs(lastAction.state);
       if (lastAction.type === 'campanhasData') setCampanhasData(lastAction.state);
+      if (lastAction.type === 'retencaoData') setRetencaoData(lastAction.state);
       toast.success('Ação desfeita com sucesso! (Ctrl+Z)');
     }
     
@@ -665,6 +668,16 @@ export default function App() {
     });
   };
 
+  const handleSetRetencaoData = (action) => {
+    setRetencaoData(prev => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      if (Array.isArray(prev) && Array.isArray(next) && JSON.stringify(prev) !== JSON.stringify(next)) {
+        addToUndoStack('retencaoData', prev);
+      }
+      return next;
+    });
+  };
+
   // 1. CARREGAMENTO REAL-TIME VIA ORACLE E SOCKET.IO
   useEffect(() => {
     const fetchAllData = async () => {
@@ -734,6 +747,7 @@ export default function App() {
         });
         setGoalsDB(recoveredGoals);
         setPricingData(recoveredPricing);
+        if (config && Array.isArray(config.retencaoData)) setRetencaoData(config.retencaoData);
         if (config && config.scheduleData) setScheduleData(config.scheduleData);
         if (config && config.monthlyOverrides) setMonthlyOverrides(config.monthlyOverrides);
 
@@ -742,7 +756,8 @@ export default function App() {
           goalsDB: recoveredGoals,
           scheduleData: config?.scheduleData || {},
           monthlyOverrides: config?.monthlyOverrides || {},
-          pricingData: recoveredPricing
+          pricingData: recoveredPricing,
+          retencaoData: Array.isArray(config?.retencaoData) ? config.retencaoData : []
         });
 
         setisBackendReady(true);
@@ -824,7 +839,7 @@ export default function App() {
         await syncCollectionOracle(campanhasData, cloudRefs.current.campanhas, 'campanhas');
 
         // Config Global
-        const currentConfigStr = safeStr({ usersDB, goalsDB, scheduleData, monthlyOverrides, pricingData });
+        const currentConfigStr = safeStr({ usersDB, goalsDB, scheduleData, monthlyOverrides, pricingData, retencaoData });
         if (cloudRefs.current.config !== '' && currentConfigStr !== cloudRefs.current.config) {
           await syncConfigData(JSON.parse(currentConfigStr));
           cloudRefs.current.config = currentConfigStr;
@@ -842,7 +857,7 @@ export default function App() {
       }
     }, 200);
     return () => clearTimeout(timeoutId);
-  }, [salesData, simcardsData, reprovadosData, geekDocs, campanhasData, goalsDB, scheduleData, monthlyOverrides, usersDB, pricingData, isBackendReady]);
+  }, [salesData, simcardsData, reprovadosData, geekDocs, campanhasData, goalsDB, scheduleData, monthlyOverrides, usersDB, pricingData, retencaoData, isBackendReady]);
 
   // 3. TIMER DE SESSÃO EXPIRADA POR INATIVIDADE (30 MINUTOS)
   // Monitoramento de inatividade global do usuário, fazendo Logout automático caso ocioso
@@ -936,6 +951,7 @@ export default function App() {
     { name: 'GESTÃO', icon: <Target size={18} /> },
     // { name: 'PROPOSTA', icon: <FileText size={18} /> }, // Oculto temporariamente a pedido
     { name: 'REPROVADOS', icon: <AlertOctagon size={18} /> },
+    { name: 'RETENÇÃO', icon: <ShieldCheck size={18} /> },
     { name: 'RESULTADO', icon: <BarChart3 size={18} /> },
     { name: 'SCRIPTS', icon: <Copy size={18} /> },
     // { name: 'SISTEMAS', icon: <Database size={18} /> }, // Oculto temporariamente a pedido
@@ -1418,6 +1434,8 @@ export default function App() {
             <Proposta globalUser={globalUser} />
           ) : activeTab === 'REPROVADOS' ? (
             <Reprovados reprovadosData={reprovadosData} setReprovadosData={handleSetReprovadosData} globalUser={globalUser} isGerente={isGerente} isVendedor={isVendedor} usersDB={usersDB} globalMonth={globalMonth} />
+          ) : activeTab === 'RETENÇÃO' ? (
+            <Retencao retencaoData={retencaoData} setRetencaoData={handleSetRetencaoData} globalUser={globalUser} isGerente={isGerente} isVendedor={isVendedor} usersDB={usersDB} />
           ) : activeTab === 'RESULTADO' ? (
             isVendedor ? (
               <div className="h-full flex flex-col items-center justify-center p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm animate-fade-in text-center">
