@@ -721,7 +721,14 @@ export default function App() {
           const uKey = String(prev.username).toUpperCase();
           const dbU = recoveredUsers[uKey] || recoveredUsers[prev.username] || Object.values(recoveredUsers).find(u => String(u?.username || '').toUpperCase() === uKey);
           if (!dbU) return prev;
-          const next = { ...prev, name: dbU.name || prev.name, role: dbU.role || prev.role, photoUrl: dbU.photoUrl ?? prev.photoUrl ?? '' };
+          const next = {
+            ...prev,
+            name: dbU.name || prev.name,
+            role: dbU.role || prev.role,
+            photoUrl: dbU.photoUrl ?? prev.photoUrl ?? '',
+            viewedGeekDocs: { ...(dbU.viewedGeekDocs || {}), ...(prev.viewedGeekDocs || {}) },
+            viewedCampanhas: { ...(dbU.viewedCampanhas || {}), ...(prev.viewedCampanhas || {}) }
+          };
           localStorage.setItem('sessionUser', JSON.stringify(next));
           return next;
         });

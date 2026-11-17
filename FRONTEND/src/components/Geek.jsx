@@ -6,14 +6,29 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const getStoredViewedGeekDocs = (globalUser) => {
+    const userKey = String(globalUser?.username || 'default').toUpperCase();
+    let localViewed = {};
+    try {
+        const raw = localStorage.getItem(`CLARO_VIEWED_GEEK_${userKey}`);
+        if (raw) localViewed = JSON.parse(raw) || {};
+    } catch {}
+    return { ...(globalUser?.viewedGeekDocs || {}), ...localViewed };
+};
+
 export const checkHasNewGeek = (docs, globalUser) => {
     try {
-        const viewed = globalUser?.viewedGeekDocs || {};
+        const viewed = getStoredViewedGeekDocs(globalUser);
         return (docs || []).some(doc => {
-            const lastUpdated = doc.updatedAt || doc.id;
-            const isRecent = (Date.now() - lastUpdated) < 15 * 24 * 60 * 60 * 1000; // 15 dias
+            if (!doc || doc.id === 'CONFIG_FLYERS_34' || doc.categoria === '__FLYERS_CARROSSEL__') {
+                return false;
+            }
+            const docKey = String(doc.id);
+            const lastUpdated = String(doc.updatedAt || doc.id);
+            const ts = Number(doc.updatedAt || doc.id);
+            const isRecent = Number.isFinite(ts) ? (Date.now() - ts) < 15 * 24 * 60 * 60 * 1000 : false;
             if (!isRecent) return false;
-            return viewed[doc.id] !== lastUpdated;
+            return String(viewed[docKey] ?? viewed[doc.id] ?? '') !== lastUpdated;
         });
     } catch {
         return false;
@@ -162,7 +177,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
         }
     };
 
-    const viewedDocs = globalUser?.viewedGeekDocs || {};
+    const viewedDocs = getStoredViewedGeekDocs(globalUser);
 
     const categoriasPadrao = [
         { id: 'BOOK DE OFERTAS', icon: <BookOpen size={20} className="text-blue-500" /> },
@@ -365,20 +380,60 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
         }
     };
 
+    const persistViewedGeekDocs = (nextViewed) => {
+        const userKey = String(globalUser?.username || 'default').toUpperCase();
+        try {
+            localStorage.setItem(`CLARO_VIEWED_GEEK_${userKey}`, JSON.stringify(nextViewed));
+        } catch {}
+        if (typeof updateUserProfile === 'function') {
+            updateUserProfile({ viewedGeekDocs: nextViewed });
+        }
+    };
+
     const markAsViewed = (doc) => {
+        if (!doc) return;
+        const docKey = String(doc.id);
         const lastUpdated = doc.updatedAt || doc.id;
-        if (viewedDocs[doc.id] !== lastUpdated) {
-            const newViewed = { ...viewedDocs, [doc.id]: lastUpdated };
-            updateUserProfile({ viewedGeekDocs: newViewed });
+        if (String(viewedDocs[docKey] ?? viewedDocs[doc.id] ?? '') !== String(lastUpdated)) {
+            const newViewed = { ...viewedDocs, [docKey]: lastUpdated, [doc.id]: lastUpdated };
+            persistViewedGeekDocs(newViewed);
         }
     };
 
     const isDocNew = (doc) => {
-        const lastUpdated = doc.updatedAt || doc.id;
-        const isRecent = (Date.now() - lastUpdated) < 15 * 24 * 60 * 60 * 1000;
+        if (!doc || doc.id === 'CONFIG_FLYERS_34' || doc.categoria === '__FLYERS_CARROSSEL__') {
+            return false;
+        }
+        const docKey = String(doc.id);
+        const lastUpdated = String(doc.updatedAt || doc.id);
+        const ts = Number(doc.updatedAt || doc.id);
+        const isRecent = Number.isFinite(ts) ? (Date.now() - ts) < 15 * 24 * 60 * 60 * 1000 : false;
         if (!isRecent) return false;
-        return viewedDocs[doc.id] !== lastUpdated;
+        return String(viewedDocs[docKey] ?? viewedDocs[doc.id] ?? '') !== lastUpdated;
     };
+
+    // Ao entrar na seção GEEK, marca automaticamente os itens atuais como visualizados para liberar a bolinha de notificação do menu
+    useEffect(() => {
+        if (!Array.isArray(geekDocs) || geekDocs.length === 0) return;
+        const currentViewed = getStoredViewedGeekDocs(globalUser);
+        let hasUnseen = false;
+        const updatedViewed = { ...currentViewed };
+
+        geekDocs.forEach(doc => {
+            if (!doc || doc.id === undefined) return;
+            const docKey = String(doc.id);
+            const lastUpdated = doc.updatedAt || doc.id;
+            if (String(updatedViewed[docKey] ?? updatedViewed[doc.id] ?? '') !== String(lastUpdated)) {
+                updatedViewed[docKey] = lastUpdated;
+                updatedViewed[doc.id] = lastUpdated;
+                hasUnseen = true;
+            }
+        });
+
+        if (hasUnseen) {
+            persistViewedGeekDocs(updatedViewed);
+        }
+    }, [geekDocs, globalUser?.username]);
 
     const hasNews = (geekDocs || []).some(isDocNew);
 
