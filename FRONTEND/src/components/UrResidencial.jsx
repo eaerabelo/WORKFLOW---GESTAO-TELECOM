@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { getFirstName } from '../utils/nameFormatter.js';
 import {
-    Edit2, Save, X, Search, Calendar, Filter, Trash2, Home,
-    Lock, MessageCircle, MapPin, Loader2, Check, Send
+    Edit2, Save, X, Search, Filter, Trash2, Home,
+    Lock, MessageCircle, MapPin, Loader2, Send, Share2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
@@ -61,12 +62,12 @@ const formatProdutoTextoWhatsApp = (produto) => {
     return 'virtua';
 };
 
-export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, usersDB = {}, globalMonth, setGlobalMonth }) {
+export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, usersDB = {}, globalMonth }) {
     const userRoleUpper = String(globalUser?.role || 'VENDEDOR').trim().toUpperCase();
     const isVendedor = userRoleUpper === 'VENDEDOR';
-    // Botão de encaminhamento disponível para TODOS os cargos EXCETO VENDEDOR
+    // Botão de encaminhamento disponível para TODOS os cargos MENOS VENDEDOR
     const canForwardWhatsApp = !isVendedor;
-    const isLideranca = isGerente || ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'ADM', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
+    const isLideranca = isGerente || ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'ADM', 'GEEK', 'COORDENADOR', 'ESPECIALISTA', 'CAIXA'].includes(userRoleUpper);
 
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({});
@@ -221,19 +222,24 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
     // Abre o modal de encaminhamento WhatsApp (Exclusivo ao clicar em Compartilhar Contrato via WhatsApp)
     const handleOpenWhatsModal = (item) => {
         if (!canForwardWhatsApp) return;
-        setWhatsModalItem(item);
+        const target = item || filteredData[0];
+        if (!target) {
+            toast.error('Nenhum lançamento residencial disponível para compartilhar.');
+            return;
+        }
+        setWhatsModalItem(target);
         setWhatsForm({
-            nomeCliente: item.nomeCliente || '',
-            celular: item.celular || item.cpf || '',
-            dataInstalacao: item.dataInstalacao || '',
-            agendamento: item.agendamento || '12:00 A 15:00',
-            cep: item.cepInstalacao || '',
-            logradouro: item.logradouroInstalacao || '',
-            numero: item.numeroInstalacao || '',
-            complemento: item.complementoInstalacao || '',
-            bairro: item.bairroInstalacao || '',
-            cidade: item.cidade || getCidadePorContrato(item.contrato) || 'SAO PAULO',
-            uf: item.ufInstalacao || 'SP'
+            nomeCliente: target.nomeCliente || '',
+            celular: target.celular || target.cpf || '',
+            dataInstalacao: target.dataInstalacao || '',
+            agendamento: target.agendamento || '12:00 A 15:00',
+            cep: target.cepInstalacao || '',
+            logradouro: target.logradouroInstalacao || '',
+            numero: target.numeroInstalacao || '',
+            complemento: target.complementoInstalacao || '',
+            bairro: target.bairroInstalacao || '',
+            cidade: target.cidade || getCidadePorContrato(target.contrato) || 'SAO PAULO',
+            uf: target.ufInstalacao || 'SP'
         });
     };
 
@@ -255,9 +261,9 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                     cidade: String(data.localidade || prev.cidade || '').toUpperCase(),
                     uf: String(data.uf || prev.uf || 'SP').toUpperCase()
                 }));
-                toast.success('Endereço localizado pelo CEP!');
+                toast.success('Endereço preenchido automaticamente pelo CEP!');
             } else {
-                toast.error('CEP não encontrado. Verifique os números informados.');
+                toast.error('CEP não encontrado. Verifique os dígitos.');
             }
         } catch (err) {
             console.error('Erro ao buscar CEP:', err);
@@ -283,7 +289,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
         const produtoLabel = formatProdutoTextoWhatsApp(itemRef?.produto);
         const diaMes = formatDiaMesTexto(formState.dataInstalacao);
         const periodo = formatPeriodoTexto(formState.agendamento);
-        const rua = String(formState.logradouro || 'ENDEREÇO NÃO INFORMADO').trim().toUpperCase();
+        const rua = String(formState.logradouro || 'R ROSARIA ANA BARBOSA').trim().toUpperCase();
         const num = String(formState.numero || 'S/N').trim().toUpperCase();
         const compl = String(formState.complemento || '').trim().toUpperCase();
         const bairro = String(formState.bairro || 'BAIRRO').trim().toUpperCase();
@@ -302,13 +308,8 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
         e.preventDefault();
         if (!whatsModalItem) return;
 
-        const cleanPhone = String(whatsForm.celular || '').replace(/\D/g, '');
-        if (cleanPhone.length < 10) {
-            toast.error('Informe o número de Celular / WhatsApp do cliente com DDD.');
-            return;
-        }
         if (!whatsForm.cep || !whatsForm.logradouro || !whatsForm.numero) {
-            toast.error('Preencha o CEP e o Número da residência para compor o endereço de instalação.');
+            toast.error('Preencha o CEP e o Número do endereço para montar a confirmação.');
             return;
         }
 
@@ -332,12 +333,18 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
         }));
 
         const mensagem = buildWhatsAppConfirmationText(whatsForm, whatsModalItem);
-        const fullPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-        const url = `https://wa.me/${fullPhone}?text=${encodeURIComponent(mensagem)}`;
+        const cleanPhone = String(whatsForm.celular || '').replace(/\D/g, '');
+        const fullPhone = cleanPhone.length >= 10
+            ? (cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`)
+            : '';
+
+        const url = fullPhone
+            ? `https://wa.me/${fullPhone}?text=${encodeURIComponent(mensagem)}`
+            : `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
 
         window.open(url, '_blank', 'noopener,noreferrer');
         setWhatsModalItem(null);
-        toast.success('Dados salvos e confirmação aberta no WhatsApp!');
+        toast.success('Confirmação gerada e encaminhada para o WhatsApp!');
     };
 
     const getStatusStyle = (status) => {
@@ -381,7 +388,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
     };
 
     return (
-        <div className="h-full flex flex-col bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden animate-fade-in transition-colors">
+        <div className="h-full flex flex-col bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden transition-colors">
             {/* CABEÇALHO DA SEÇÃO */}
             <div className="p-4 md:p-6 border-b border-neutral-100 dark:border-neutral-800 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shrink-0 bg-neutral-50/50 dark:bg-neutral-800/50">
                 <div className="flex items-center gap-3 w-full md:w-auto">
@@ -399,7 +406,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                 </div>
 
                 {!isOptionsCollapsed && (
-                    <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
+                    <div className="flex flex-col sm:flex-row flex-wrap w-full lg:w-auto gap-2.5 items-stretch sm:items-center">
                         <div className="relative w-full sm:w-auto">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" size={16} />
                             <input
@@ -426,8 +433,20 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                             </select>
                         </div>
 
+                        {canForwardWhatsApp && filteredData.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => handleOpenWhatsModal(filteredData[0])}
+                                className="w-full sm:w-auto px-4 py-2 bg-[#25D366] hover:bg-[#1ebe57] text-white text-sm font-extrabold rounded-xl transition-all shadow-md shadow-emerald-600/25 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
+                                title="Compartilhar Confirmação de Instalação no WhatsApp"
+                            >
+                                <MessageCircle size={17} />
+                                <span>Compartilhar WhatsApp</span>
+                            </button>
+                        )}
+
                         {isLideranca && (
-                            <button type="button" onClick={handleExportExcel} className="w-full sm:w-auto px-4 py-2 bg-[#107c41] text-white text-sm font-medium rounded-xl hover:bg-[#0c5e31] transition-colors shadow-sm shadow-green-700/30 flex items-center justify-center gap-2 whitespace-nowrap">Exportar Excel</button>
+                            <button type="button" onClick={handleExportExcel} className="w-full sm:w-auto px-4 py-2 bg-[#107c41] text-white text-sm font-medium rounded-xl hover:bg-[#0c5e31] transition-colors shadow-sm shadow-green-700/30 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer">Exportar Excel</button>
                         )}
                     </div>
                 )}
@@ -440,6 +459,11 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                         <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
                             <thead className="bg-[#E3000F] text-white">
                                 <tr>
+                                    {canForwardWhatsApp && (
+                                        <th className="px-3 py-3 font-extrabold uppercase tracking-wider border-r border-red-500/30 text-center bg-emerald-700">
+                                            WhatsApp
+                                        </th>
+                                    )}
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Contrato</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Cidade</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Data</th>
@@ -454,14 +478,14 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Obs</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider border-r border-red-500/30">Ação</th>
                                     <th className="px-3 py-3 font-bold uppercase tracking-wider text-center sticky right-0 bg-[#E3000F] shadow-[-4px_0_10px_rgba(0,0,0,0.1)]">
-                                        {canForwardWhatsApp ? 'Ações / WhatsApp' : 'Editar'}
+                                        {canForwardWhatsApp ? 'Compartilhar / Editar' : 'Editar'}
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="14" className="px-4 py-8 text-center text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-900">
+                                        <td colSpan={canForwardWhatsApp ? 15 : 14} className="px-4 py-8 text-center text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-900">
                                             Nenhuma venda residencial registrada neste período.
                                         </td>
                                     </tr>
@@ -470,7 +494,20 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                         const isEditing = editingId === item.id;
                                         return (
                                             <tr key={item.id || index} className="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors bg-white dark:bg-neutral-900">
-                                                {/* REGRAS DE BLOQUEIO DE CAMPO (GESTOR) APLICADOS AQUI */}
+                                                {/* 1ª COLUNA VISÍVEL IMEDIATAMENTE: BOTÃO COMPARTILHAR WHATSAPP (EXCETO VENDEDOR) */}
+                                                {canForwardWhatsApp && (
+                                                    <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenWhatsModal(item)}
+                                                            className="px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#1da851] text-white font-extrabold text-[11px] inline-flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+                                                            title="Compartilhar Confirmação de Instalação no WhatsApp"
+                                                        >
+                                                            <MessageCircle size={14} />
+                                                            <span>Compartilhar</span>
+                                                        </button>
+                                                    </td>
+                                                )}
                                                 <td className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 border-r border-neutral-100 dark:border-r-neutral-800">
                                                     {isEditing ? <input type="text" value={editForm.contrato || ''} onChange={(e) => handleChange(e, 'contrato')} disabled={!isLideranca} className={`w-28 px-2 py-1 border rounded ${!isLideranca ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-neutral-500 dark:text-neutral-400 border-transparent' : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 border-neutral-200 dark:border-neutral-700 focus:border-[#E3000F] outline-none'}`} /> : <span className="font-mono text-neutral-700 dark:text-neutral-300">{item.contrato || '-'}</span>}
                                                 </td>
@@ -535,10 +572,10 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleOpenWhatsModal(item)}
-                                                                    className="px-2 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
-                                                                    title="Encaminhar Confirmação de Instalação via WhatsApp (com busca de CEP)"
+                                                                    className="px-2.5 py-1 rounded-lg bg-[#25D366] hover:bg-[#1da851] text-white font-extrabold text-[10px] flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                                                                    title="Compartilhar Confirmação de Instalação via WhatsApp"
                                                                 >
-                                                                    <MessageCircle size={13} />
+                                                                    <Share2 size={12} />
                                                                     <span>WhatsApp</span>
                                                                 </button>
                                                             )}
@@ -568,20 +605,20 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                 </div>
             </div>
 
-            {/* MODAL DE COMPARTILHAMENTO VIA WHATSAPP COM BUSCA DE CEP VIA API (EXCLUSIVO AO COMPARTILHAR CONTRATO) */}
-            {whatsModalItem && canForwardWhatsApp && (
-                <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center no-print">
+            {/* MODAL DE COMPARTILHAMENTO VIA WHATSAPP COM BUSCA DE CEP VIA API (RENDERIZADO NO DOCUMENT.BODY VIA PORTAL) */}
+            {whatsModalItem && canForwardWhatsApp && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/65 backdrop-blur-sm p-4 flex items-center justify-center no-print">
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden animate-fade-in">
-                        <div className="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+                        <div className="px-6 py-4 bg-gradient-to-r from-[#25D366] to-emerald-700 text-white flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                                     <MessageCircle size={22} />
                                 </div>
                                 <div>
                                     <h3 className="text-base sm:text-lg font-extrabold tracking-tight">
-                                        Encaminhar Confirmação de Instalação (WhatsApp)
+                                        Compartilhar Confirmação de Instalação (WhatsApp)
                                     </h3>
-                                    <p className="text-xs text-emerald-100 font-medium">
+                                    <p className="text-xs text-emerald-50 font-medium">
                                         Contrato: <strong>{whatsModalItem.contrato || '-'}</strong> • Produto: <strong>{whatsModalItem.produto}</strong>
                                     </p>
                                 </div>
@@ -589,13 +626,36 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                             <button
                                 type="button"
                                 onClick={() => setWhatsModalItem(null)}
-                                className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer"
+                                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleConfirmAndSendWhatsApp} className="p-6 space-y-5 max-h-[82vh] overflow-y-auto">
+                        <form onSubmit={handleConfirmAndSendWhatsApp} className="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
+                            {/* SELETOR RÁPIDO DE CONTRATO CASO ABRA PELO TOPO */}
+                            {filteredData.length > 1 && (
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                        Selecionar Lançamento / Contrato da Lista
+                                    </label>
+                                    <select
+                                        value={whatsModalItem.id}
+                                        onChange={(e) => {
+                                            const found = filteredData.find(f => String(f.id) === String(e.target.value));
+                                            if (found) handleOpenWhatsModal(found);
+                                        }}
+                                        className="w-full px-3 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs sm:text-sm font-bold text-neutral-900 dark:text-white outline-none cursor-pointer"
+                                    >
+                                        {filteredData.map(f => (
+                                            <option key={f.id} value={f.id}>
+                                                Contrato: {f.contrato || '-'} | {f.produto} | {f.nomeCliente || getFirstName(f.vendedor)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
                             {/* DADOS DO CLIENTE E AGENDAMENTO */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
                                 <div className="sm:col-span-2 space-y-1">
@@ -614,11 +674,10 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
 
                                 <div className="sm:col-span-2 space-y-1">
                                     <label className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                                        WhatsApp do Cliente <span className="text-[#E3000F]">*</span>
+                                        WhatsApp do Cliente (com DDD)
                                     </label>
                                     <input
                                         type="tel"
-                                        required
                                         maxLength={15}
                                         value={whatsForm.celular}
                                         onChange={(e) => setWhatsForm(prev => ({ ...prev, celular: applyPhoneMask(e.target.value) }))}
@@ -660,11 +719,11 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                             <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700/80 space-y-3.5">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                                        <MapPin size={15} /> Dados de Endereço da Instalação (Busca Automática por CEP)
+                                        <MapPin size={15} /> Dados de Endereço da Instalação (Conectado à API de CEP)
                                     </span>
                                     {isLoadingCep && (
                                         <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                                            <Loader2 size={13} className="animate-spin" /> Buscando CEP...
+                                            <Loader2 size={13} className="animate-spin" /> Consultando CEP...
                                         </span>
                                     )}
                                 </div>
@@ -721,7 +780,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                             type="text"
                                             value={whatsForm.complemento}
                                             onChange={(e) => setWhatsForm(prev => ({ ...prev, complemento: e.target.value }))}
-                                            placeholder="Ex: CASA 3 / APTO 12"
+                                            placeholder="Ex: CASA 3"
                                             className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white uppercase outline-none focus:border-emerald-500"
                                         />
                                     </div>
@@ -791,7 +850,7 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                    className="px-6 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1da851] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
                                 >
                                     <Send size={16} />
                                     <span>Salvar Endereço & Enviar no WhatsApp</span>
@@ -799,7 +858,8 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

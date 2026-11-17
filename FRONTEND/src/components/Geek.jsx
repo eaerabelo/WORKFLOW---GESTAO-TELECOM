@@ -138,7 +138,15 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
         link: ''
     });
     const [previewFlyer, setPreviewFlyer] = useState(null);
+    const [selectedBundleBrand, setSelectedBundleBrand] = useState('SAMSUNG');
     const carouselRef = useRef(null);
+
+    // Estrutura de BUNDLES (Ofertas Conjuntas) por marca — pronta para preenchimento dos modelos
+    const BUNDLES_POR_MARCA = {
+        SAMSUNG: [],
+        MOTOROLA: [],
+        APPLE: []
+    };
 
     // Sincronizar com documento de flyers na nuvem (Oracle / GEEK_DOCS)
     useEffect(() => {
@@ -642,6 +650,103 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                 </div>
                             </button>
                         )}
+                    </div>
+                </div>
+
+                {/* SEÇÃO BUNDLES — OFERTAS CONJUNTAS (SAMSUNG, MOTOROLA, APPLE) */}
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-200/60 dark:border-purple-500/20">
+                                <Layers size={20} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="text-sm sm:text-base font-black text-neutral-800 dark:text-neutral-100 uppercase tracking-wider">
+                                        BUNDLES — Ofertas Conjuntas de Aparelhos
+                                    </h3>
+                                    <span className="bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+                                        Samsung • Motorola • Apple
+                                    </span>
+                                </div>
+                                <p className="text-xs text-neutral-400 font-medium mt-0.5">
+                                    Ofertas conjuntas exclusivas para modelos selecionados por fabricante.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* SELETOR DE MARCAS (SAMSUNG | MOTOROLA | APPLE) */}
+                        <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                            {['SAMSUNG', 'MOTOROLA', 'APPLE'].map((marca) => {
+                                const isActive = selectedBundleBrand === marca;
+                                return (
+                                    <button
+                                        key={marca}
+                                        type="button"
+                                        onClick={() => setSelectedBundleBrand(marca)}
+                                        className={`px-4 py-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                                            isActive
+                                                ? 'bg-[#E3000F] text-white shadow-sm'
+                                                : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        {marca}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* ÁREA DE EXIBIÇÃO DOS BUNDLES DA MARCA SELECIONADA */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {['SAMSUNG', 'MOTOROLA', 'APPLE'].map((marca) => {
+                            const listaModelos = BUNDLES_POR_MARCA[marca] || [];
+                            const isSelected = selectedBundleBrand === marca;
+                            return (
+                                <div
+                                    key={marca}
+                                    onClick={() => setSelectedBundleBrand(marca)}
+                                    className={`rounded-2xl border-2 p-5 transition-all cursor-pointer flex flex-col justify-between ${
+                                        isSelected
+                                            ? 'border-[#E3000F] bg-red-50/20 dark:bg-[#E3000F]/5 shadow-sm'
+                                            : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/40 hover:border-neutral-300 dark:hover:border-neutral-700'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-neutral-200/70 dark:border-neutral-800">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-2.5 h-2.5 rounded-full ${isSelected ? 'bg-[#E3000F]' : 'bg-neutral-400'}`} />
+                                            <h4 className="text-sm font-black uppercase tracking-wider text-neutral-900 dark:text-white">
+                                                BUNDLES {marca}
+                                            </h4>
+                                        </div>
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-neutral-200/70 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                                            {listaModelos.length} {listaModelos.length === 1 ? 'oferta' : 'ofertas'}
+                                        </span>
+                                    </div>
+
+                                    {listaModelos.length === 0 ? (
+                                        <div className="py-8 text-center space-y-1.5">
+                                            <Layers size={24} className="mx-auto text-neutral-400 dark:text-neutral-500 opacity-60" />
+                                            <p className="text-xs font-extrabold text-neutral-600 dark:text-neutral-300 uppercase tracking-wide">
+                                                Espaço Reservado — {marca}
+                                            </p>
+                                            <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                                                Aguardando cadastro das ofertas conjuntas dos modelos {marca}.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2.5 pt-3">
+                                            {listaModelos.map((item, idx) => (
+                                                <div key={idx} className="p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+                                                    <div className="text-xs font-extrabold text-neutral-900 dark:text-white">{item.modelo}</div>
+                                                    <div className="text-[11px] text-neutral-500 dark:text-neutral-400">{item.oferta}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 

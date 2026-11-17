@@ -429,3 +429,18 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 ### 2. Ajuste Responsivo e Correção de Vazamento de Dimensões em `[RETENÇÃO]` (`FRONTEND/src/components/Retencao.jsx`)
 - Removido o bloqueio vertical `h-full flex-col` com `overflow-hidden` que comprimia os blocos internos e causava vazamento de layout.
 - Ajustados todos os grids, espaçamentos e quebras de texto (`w-full max-w-full min-w-0`) para encaixe fluido em qualquer resolução de tela.
+
+---
+
+## 16/11/2026 — Ajustes em `[VENDA]`, `[UR]` (Botão Compartilhar WhatsApp em Destaque) e Área `BUNDLES` em `[GEEK]`
+
+### 1. Seção `[VENDA]` (`FRONTEND/src/components/Venda.jsx`)
+- **Data de Instalação Obrigatória:** Para vendas de produtos residenciais (tanto Individual quanto Conjunta/Combo), o preenchimento da **Data de Instalação (UR)** agora é obrigatório (`*`).
+- **Baixa Imediata Exclusiva para Venda Individual de TV (`statusUr: 'CONECTADO'`):** O botão **BAIXA IMEDIATA** aparece exclusivamente na aba de **Venda Individual** quando o produto selecionado é TV (`TVBOX`, `TV-BOX`, `TV CABO`, `SOUNDBOX`, `PONTO ADICIONAL`), subindo o contrato diretamente com status **`CONECTADO`** na seção `[UR-RESIDENCIAL]`.
+
+### 2. Seção `[UR-RESIDENCIAL]` (`FRONTEND/src/components/UrResidencial.jsx`)
+- **Botão de Compartilhamento WhatsApp em Destaque:** Adicionada coluna dedicada logo na **1ª coluna da tabela** (`WhatsApp -> Compartilhar`), além do botão no cabeçalho superior e na coluna de ações à direita (visível para todos os cargos, exceto `VENDEDOR`).
+- **Modal Renderizado via Portal (`createPortal`):** Garante abertura limpa em tela cheia com busca automática de endereço via API de CEP (`ViaCEP`) e disparo imediato para o WhatsApp.
+
+### 3. Seção `[GEEK]` — Área `BUNDLES` (`FRONTEND/src/components/Geek.jsx`)
+- Criada a seção **BUNDLES — Ofertas Conjuntas de Aparelhos** com abas e áreas reservadas para **SAMSUNG**, **MOTOROLA** e **APPLE**, aguardando o envio dos modelos/ofertas para preenchimento.

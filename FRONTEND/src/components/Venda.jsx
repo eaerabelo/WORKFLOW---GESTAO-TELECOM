@@ -392,6 +392,11 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             ? (finalBaixaImediata ? (formData.dataInstalacao || formData.data || getTodaySP()) : (formData.dataInstalacao || ''))
             : '';
 
+        if (isResidencial && !finalDataInstalacao) {
+            setFormError('Atenção: O preenchimento da Data de Instalação é obrigatório para vendas residenciais.');
+            return;
+        }
+
         const novaVenda = {
             id: editingId || Date.now(),
             ...formData,
@@ -411,7 +416,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             mplay: finalMplay,
             dataInstalacao: finalDataInstalacao,
             baixaImediata: finalBaixaImediata,
-            ...(finalBaixaImediata && !editingId ? { obsUr: 'BAIXA IMEDIATA' } : {}),
+            ...(finalBaixaImediata ? { statusUr: 'CONECTADO', obsUr: 'BAIXA IMEDIATA' } : {}),
             ...(cidadeAuto && !editingId ? { cidade: cidadeAuto } : {})
         };
 
@@ -473,19 +478,20 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         if (getSubOptions().length > 0 && !subOption) { setFormError('Selecione a especificação do produto.'); return; }
         if (isItemMovel && !tipoOperacao) { setFormError('Selecione o Tipo de Operação.'); return; }
 
-        const itemIsTv = isTvProduct(produto);
         const itemIsRes = isResidencialProduct(produto);
-        const itemBaixaImediata = itemIsTv && Boolean(formData.baixaImediata);
-        const itemDataInstalacao = itemIsRes
-            ? (itemBaixaImediata ? (formData.dataInstalacao || data || getTodaySP()) : (formData.dataInstalacao || ''))
-            : '';
+        const itemDataInstalacao = itemIsRes ? (formData.dataInstalacao || '') : '';
+
+        if (itemIsRes && !itemDataInstalacao) {
+            setFormError('Atenção: O preenchimento da Data de Instalação é obrigatório para produtos residenciais.');
+            return;
+        }
 
         setComboItems(prev => [...prev, {
             vendedor, data, qtda, portabilidade: finalPortabilidade, operadoraOrigem: finalOperadoraOrigem, combo: formData.combo,
             produtoBase: produto, subOption, produto, receita, mplay: finalMplay, tipoOperacao, seguroOption: formData.seguroOption,
             celular: formData.celular || '',
             dataInstalacao: itemDataInstalacao,
-            baixaImediata: itemBaixaImediata
+            baixaImediata: false
         }]);
 
         // Limpa apenas os dados do produto para facilitar a inclusão do próximo
@@ -948,7 +954,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                             <div className="space-y-1.5 animate-fade-in bg-blue-50/40 dark:bg-blue-950/20 p-2.5 -m-1 rounded-xl border border-blue-200/70 dark:border-blue-800/50">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <label className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
-                                                        <Calendar size={12} /> Data de Instalação (UR)
+                                                        <Calendar size={12} /> Data de Instalação (UR) <span className="text-[#E3000F]">*</span>
                                                     </label>
                                                     {isCurrentProdTv && (
                                                         <button
@@ -968,7 +974,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                                     ? 'bg-emerald-600 text-white shadow-sm'
                                                                     : 'bg-white dark:bg-neutral-800 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 hover:bg-emerald-50'
                                                             }`}
-                                                            title="Exclusivo TV: Marca Baixa Imediata e encaminha a data preenchida para a UR"
+                                                            title="Exclusivo Venda Individual TV: Sobe o contrato como CONECTADO na UR"
                                                         >
                                                             {formData.baixaImediata && <Check size={10} />}
                                                             <span>BAIXA IMEDIATA</span>
@@ -978,6 +984,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                 <input
                                                     type="date"
                                                     name="dataInstalacao"
+                                                    required
                                                     value={formData.dataInstalacao || ''}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
@@ -1081,36 +1088,13 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                     <div className="space-y-1.5 animate-fade-in bg-blue-50/40 dark:bg-blue-950/20 p-2.5 -m-1 rounded-xl border border-blue-200/70 dark:border-blue-800/50">
                                                         <div className="flex items-center justify-between gap-2">
                                                             <label className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
-                                                                <Calendar size={12} /> Data de Instalação (UR)
+                                                                <Calendar size={12} /> Data de Instalação (UR) <span className="text-[#E3000F]">*</span>
                                                             </label>
-                                                            {isCurrentProdTv && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setFormData(prev => {
-                                                                            const nextBaixa = !prev.baixaImediata;
-                                                                            return {
-                                                                                ...prev,
-                                                                                baixaImediata: nextBaixa,
-                                                                                dataInstalacao: nextBaixa ? (prev.data || getTodaySP()) : prev.dataInstalacao
-                                                                            };
-                                                                        });
-                                                                    }}
-                                                                    className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 ${
-                                                                        formData.baixaImediata
-                                                                            ? 'bg-emerald-600 text-white shadow-sm'
-                                                                            : 'bg-white dark:bg-neutral-800 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 hover:bg-emerald-50'
-                                                                    }`}
-                                                                    title="Exclusivo TV: Marca Baixa Imediata e encaminha a data preenchida para a UR"
-                                                                >
-                                                                    {formData.baixaImediata && <Check size={10} />}
-                                                                    <span>BAIXA IMEDIATA</span>
-                                                                </button>
-                                                            )}
                                                         </div>
                                                         <input
                                                             type="date"
                                                             name="dataInstalacao"
+                                                            required
                                                             value={formData.dataInstalacao || ''}
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
