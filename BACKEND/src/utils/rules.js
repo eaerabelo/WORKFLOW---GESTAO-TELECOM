@@ -71,10 +71,11 @@ export const aplicarRegrasDeProduto = (sale, metricasVendedor = {}) => {
     if (pBase.includes('APARELHO')) {
         // Resgate a preço zero (R$ 0,00) conta apenas no quantitativo, não na receita
         if (valorBruto <= 0 && receitaBase <= 0) return 0;
-        const temSeguro = adicionais.includes('SEGURO') || Boolean(sale.seguroOption);
-        // Se valorBruto está presente e receitaBase ainda é igual ao bruto, aplica 5% (ou 6% com seguro)
+        // Aparelhos permanecem em 5% fixo (com ou sem seguro)
         if (valorBruto > 0 && Math.abs(receitaBase - valorBruto) < 0.01) {
-            receitaBase = valorBruto * (temSeguro ? 0.06 : 0.05);
+            receitaBase = valorBruto * 0.05;
+        } else if (valorBruto > 0 && Math.abs(receitaBase - (valorBruto * 0.06)) < 0.05) {
+            receitaBase = valorBruto * 0.05;
         }
         return Math.max(0, receitaBase);
     }

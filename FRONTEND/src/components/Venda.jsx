@@ -43,8 +43,8 @@ const detectCategoria = (prod) => {
 
 export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB = {}, globalMonth }) => {
     const { pricingData } = usePricing();
-    const { PRICING_MOVEL = {}, FIBRA_OPTIONS = [], TV_BOX_OPTIONS = [], FIXO_OPTIONS = [], MESH_OPTIONS = [], DEPENDENTE_OPTIONS = [], SEGURO_OPTIONS = [] } = pricingData || {};
-    const safeSeguroOptions = (Array.isArray(SEGURO_OPTIONS) && SEGURO_OPTIONS.length > 0) ? SEGURO_OPTIONS : DEFAULT_SEGURO_OPTIONS;
+    const { PRICING_MOVEL = {}, FIBRA_OPTIONS = [], TV_BOX_OPTIONS = [], FIXO_OPTIONS = [], MESH_OPTIONS = [], DEPENDENTE_OPTIONS = [] } = pricingData || {};
+    const safeSeguroOptions = DEFAULT_SEGURO_OPTIONS;
     const safeDependenteOptions = (Array.isArray(DEPENDENTE_OPTIONS) && DEPENDENTE_OPTIONS.length > 0) ? DEPENDENTE_OPTIONS : DEFAULT_DEPENDENTE_OPTIONS;
 
     const activeVendedores = Object.values(usersDB || {})
@@ -118,10 +118,18 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
     const showMplay = (isMovel || isResidencial) && !isMplayAlreadySelectedInCombo;
     const isServico = isMovel;
 
-    const calcularComissaoDinamica = (produto, adicionaisList, valorBruto, seguroOption) => {
+    const SEGURO_TABELA = {
+        'SEGURO R$ 60,00': { bruto: 60.00, comissionavel: 24.00 },
+        'SEGURO R$ 55,00': { bruto: 55.00, comissionavel: 22.00 },
+        'SEGURO R$ 45,00': { bruto: 45.00, comissionavel: 18.00 },
+        'SEGURO R$ 35,00': { bruto: 35.00, comissionavel: 14.00 }
+    };
+
+    const calcularComissaoDinamica = (produto, adicionaisList, valorBruto) => {
         const valor = parseFloat(valorBruto || 0);
         if (isNaN(valor)) return 0;
-        if (produto === 'APARELHO') return (adicionaisList.includes('SEGURO') || seguroOption) ? valor * 0.06 : valor * 0.05;
+        // Aparelhos permanecem em 5% fixo com ou sem seguro
+        if (produto === 'APARELHO') return valor * 0.05;
         if (produto === 'ACESSORIO' || produto === 'PELICULA') return valor * 0.15;
         return valor;
     };
@@ -160,10 +168,12 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         if (produto === 'FIXO' && subOption) return FIXO_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
         if (produto === 'MESH' && subOption) return MESH_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
         if (produto === 'SEGURO' && subOption) {
+            if (SEGURO_TABELA[subOption]) return SEGURO_TABELA[subOption].comissionavel;
             const found = safeSeguroOptions.find(o => o.label === subOption);
+            if (found?.valorComissionavel !== undefined) return found.valorComissionavel;
             if (found?.prices?.UNICO !== undefined) return found.prices.UNICO;
             const match = String(subOption).match(/R\$\s*([\d,.]+)/);
-            if (match) return parseFloat(match[1].replace(',', '.'));
+            if (match) return parseFloat(match[1].replace(',', '.')) * 0.40;
             return 0;
         }
         if (produto === 'DEPENDENTE' && subOption) {
@@ -298,7 +308,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                     if (!isResidencialProduct(value)) {
                         next.dataInstalacao = '';
                     }
-                    if (value === 'FIBRA') next.subOption = '350 MEGA'; else if (value === 'TV-BOX') next.subOption = 'TV BOX'; else if (value === 'FIXO') next.subOption = 'FIXO MUNDO'; else if (value === 'MESH') next.subOption = 'MESH 2UN'; else if (value === 'SEGURO') next.subOption = 'SEGURO R$ 14,00'; else if (value === 'DEPENDENTE') next.subOption = 'GRATUITO'; else next.subOption = '';
+                    if (value === 'FIBRA') next.subOption = '350 MEGA'; else if (value === 'TV-BOX') next.subOption = 'TV BOX'; else if (value === 'FIXO') next.subOption = 'FIXO MUNDO'; else if (value === 'MESH') next.subOption = 'MESH 2UN'; else if (value === 'SEGURO') next.subOption = 'SEGURO R$ 60,00'; else if (value === 'DEPENDENTE') next.subOption = 'GRATUITO'; else next.subOption = '';
                     const isNewMovel = ['POS', 'PÓS', 'CONTROLE', 'FLEX', 'PRÉ', 'PRE', 'DEPENDENTE'].some(term => String(value || '').toUpperCase().includes(term));
                     if (!isNewMovel) { next.tipoOperacao = ''; next.operadoraOrigem = ''; }
                 }
@@ -372,6 +382,9 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         const receitaFloat = parseCurrencyToFloat(receita);
         const valorComissao = isComissionado ? calcularComissaoDinamica(produto, adicionais, receitaFloat, formData.seguroOption) : receitaFloat;
         const valorParaGravar = valorComissao;
+        const valorBrutoFinal = (produto === 'SEGURO' && SEGURO_TABELA[formData.subOption])
+            ? SEGURO_TABELA[formData.subOption].bruto
+            : receitaFloat;
 
         const cleanedAdicionais = produto === 'APARELHO' ? adicionais.filter(a => a !== 'SEGURO') : adicionais;
         const finalBaixaImediata = isCurrentProdTv && Boolean(formData.baixaImediata);
@@ -389,7 +402,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             produto: formData.subOption ? `${formData.produto} (${formData.subOption})` : formData.produto,
             receita: valorParaGravar,
             comissao: valorComissao,
-            valorBruto: receitaFloat,
+            valorBruto: valorBrutoFinal,
             celular: !requiresContrato ? (formData.celular || '') : '',
             cpf: '',
             contrato: requiresContrato ? contrato : '-',
@@ -410,6 +423,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
 
             if (produto === 'APARELHO' && formData.seguroOption) {
                 const precoSeguro = calculatePrice('SEGURO', 'SINGLE', formData.seguroOption) || 0;
+                const brutoSeguro = SEGURO_TABELA[formData.seguroOption]?.bruto || precoSeguro;
                 const vendaSeguro = {
                     ...formData,
                     id: Date.now() + 1,
@@ -419,7 +433,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                     produto: `SEGURO (${formData.seguroOption})`,
                     receita: precoSeguro,
                     comissao: precoSeguro,
-                    valorBruto: precoSeguro,
+                    valorBruto: brutoSeguro,
                     contrato: '-',
                     portabilidade: 'NÃO',
                     operadoraOrigem: '',
@@ -521,6 +535,9 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             const isItemComissionado = ['APARELHO', 'ACESSORIO', 'PELICULA'].includes(item.produtoBase || item.produto);
             const receitaFloat = parseCurrencyToFloat(item.receita);
             const valorComissao = isItemComissionado ? calcularComissaoDinamica(item.produtoBase || item.produto, itemAdicionais, receitaFloat, item.seguroOption) : receitaFloat;
+            const itemBrutoFinal = ((item.produtoBase || item.produto) === 'SEGURO' && SEGURO_TABELA[item.subOption])
+                ? SEGURO_TABELA[item.subOption].bruto
+                : receitaFloat;
 
             const cleanedAdicionais = (item.produtoBase || item.produto) === 'APARELHO' ? itemAdicionais.filter(a => a !== 'SEGURO') : itemAdicionais;
             const itemCelular = item.celular || comboGlobal.celular || '';
@@ -528,7 +545,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             novasVendas.push({
                 id: currentId++, vendedor: item.vendedor, data: convertToBRDate(item.data), qtda: item.qtda, portabilidade: item.portabilidade, operadoraOrigem: item.operadoraOrigem, combo: item.combo,
                 produtoBase: item.produtoBase || item.produto, subOption: item.subOption, produto: item.subOption ? `${item.produtoBase || item.produto} (${item.subOption})` : (item.produtoBase || item.produto),
-                receita: valorComissao, comissao: valorComissao, valorBruto: receitaFloat,
+                receita: valorComissao, comissao: valorComissao, valorBruto: itemBrutoFinal,
                 celular: !isItemResidential ? itemCelular : '',
                 cpf: '', contrato: isItemResidential ? comboGlobal.contrato : '-',
                 mplay: item.mplay, adicionais: cleanedAdicionais, tipoOperacao: item.tipoOperacao, seguroOption: item.seguroOption || '',
@@ -540,9 +557,10 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
 
             if ((item.produtoBase || item.produto) === 'APARELHO' && item.seguroOption) {
                 const precoSeguro = calculatePrice('SEGURO', 'SINGLE', item.seguroOption) || 0;
+                const brutoSeguro = SEGURO_TABELA[item.seguroOption]?.bruto || precoSeguro;
                 novasVendas.unshift({
                     id: currentId++, vendedor: item.vendedor, data: convertToBRDate(item.data), qtda: 1, portabilidade: 'NÃO', operadoraOrigem: '', combo: 'SINGLE', produtoBase: 'SEGURO',
-                    subOption: item.seguroOption, produto: `SEGURO (${item.seguroOption})`, receita: precoSeguro, comissao: precoSeguro, valorBruto: precoSeguro,
+                    subOption: item.seguroOption, produto: `SEGURO (${item.seguroOption})`, receita: precoSeguro, comissao: precoSeguro, valorBruto: brutoSeguro,
                     celular: itemCelular, cpf: '',
                     contrato: '-', mplay: 'NÃO', adicionais: [], tipoOperacao: ''
                 });
@@ -867,7 +885,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                         <div className="space-y-1.5 relative"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between"><span>Vendedor <span className="text-[#E3000F]">*</span></span>{isVendedor && <Lock size={12} className="text-[#E3000F]" />}</label><select name="vendedor" value={formData.vendedor} onChange={handleFormChange} disabled={isVendedor} className={`w-full border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium ${isVendedor ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-[#E3000F]' : 'bg-neutral-50 dark:bg-neutral-800/50'}`}><option className="bg-white dark:bg-neutral-900" value="">Selecione o vendedor</option>{safeVendedores.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)}</select></div>
                                         <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Data <span className="text-[#E3000F]">*</span></label><input type="date" name="data" max={getTodaySP()} value={formData.data} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" /></div>
                                         <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Produto Principal <span className="text-[#E3000F]">*</span></label><select name="produto" value={formData.produto} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium"><option className="bg-white dark:bg-neutral-900" value="">Selecione o produto</option>{(PRODUTOS_POR_CATEGORIA[formData.categoriaVenda || 'MÓVEL'] || safeProdutos).map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select></div>
-                                        {getSubOptions().length > 0 && (<div className="space-y-1.5 animate-fade-in bg-yellow-50/50 dark:bg-yellow-900/20 p-2 -m-2 rounded-lg border border-yellow-100 dark:border-yellow-800"><label className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1">Especificação <span className="text-[#E3000F]">*</span></label><select name="subOption" value={formData.subOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-[#E3000F]"><option className="bg-white dark:bg-neutral-900" value="">Selecione a opção</option>{getSubOptions().map(o => <option className="bg-white dark:bg-neutral-900" key={o.label} value={o.label}>{o.label}</option>)}</select></div>)}
+                                        {getSubOptions().length > 0 && (<div className="space-y-1.5 animate-fade-in bg-yellow-50/50 dark:bg-yellow-900/20 p-2 -m-2 rounded-lg border border-yellow-100 dark:border-yellow-800"><label className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1">Especificação <span className="text-[#E3000F]">*</span></label><select name="subOption" value={formData.subOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-[#E3000F]"><option className="bg-white dark:bg-neutral-900" value="">Selecione a opção</option>{getSubOptions().map(o => <option className="bg-white dark:bg-neutral-900" key={o.label} value={o.label}>{o.valorComissionavel !== undefined ? `${o.label} (Comiss.: ${applyCurrencyMask(o.valorComissionavel)})` : o.label}</option>)}</select></div>)}
                                         {isServico && (<div className="space-y-1.5 animate-fade-in bg-purple-50/50 dark:bg-purple-900/20 p-2 -m-2 rounded-lg border border-purple-100 dark:border-purple-800"><label className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">Tipo de Operação <span className="text-[#E3000F]">*</span></label><select name="tipoOperacao" value={formData.tipoOperacao} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-purple-700 dark:text-purple-400"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option><option className="bg-white dark:bg-neutral-900" value="ATIVAÇÃO">ATIVAÇÃO</option><option className="bg-white dark:bg-neutral-900" value="MIGRAÇÃO">MIGRAÇÃO</option></select></div>)}
                                         <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex items-center justify-between"><span>{isComissionado ? 'Valor Bruto (R$)' : 'Receita (R$)'} <span className="text-[#E3000F]">*</span></span>{formData.isReceitaReadonly && <span className="text-[10px] bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 px-1.5 py-0.5 rounded flex items-center gap-1"><Check size={10} /> Automático</span>}</label>{formData.isReceitaReadonly ? (<input type="text" readOnly value={formData.receita} className="w-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 px-3 py-2.5 rounded-lg outline-none text-sm font-bold cursor-not-allowed" />) : (<input type="text" name="receita" value={formData.receita} onChange={handleFormChange} placeholder="R$ 0,00" className="w-full bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] focus:border-[#E3000F] outline-none text-sm font-bold" />)}</div>
                                         {isComissionado && (
@@ -892,7 +910,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                 <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Seguro do Aparelho</label>
                                                 <select name="seguroOption" value={formData.seguroOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium text-blue-600 dark:text-blue-400">
                                                     <option className="bg-white dark:bg-neutral-900 text-neutral-500" value="">Sem Seguro</option>
-                                                    {safeSeguroOptions.map(o => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={o.label} value={o.label}>{o.label}</option>)}
+                                                    {safeSeguroOptions.map(o => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={o.label} value={o.label}>{o.valorComissionavel !== undefined ? `${o.label} (Comiss.: ${applyCurrencyMask(o.valorComissionavel)})` : o.label}</option>)}
                                                 </select>
                                             </div>
                                         )}
@@ -1014,7 +1032,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                 <div className="space-y-1.5 relative"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between"><span>Vendedor <span className="text-[#E3000F]">*</span></span>{isVendedor && <Lock size={12} className="text-[#E3000F]" />}</label><select name="vendedor" value={formData.vendedor} onChange={handleFormChange} disabled={isVendedor} className={`w-full border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium ${isVendedor ? 'bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed text-[#E3000F]' : 'bg-neutral-50 dark:bg-neutral-800/50'}`}><option className="bg-white dark:bg-neutral-900" value="">Selecione o vendedor</option>{safeVendedores.map(v => <option className="bg-white dark:bg-neutral-900" key={v} value={v}>{getFirstName(v)}</option>)}</select></div>
                                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Data <span className="text-[#E3000F]">*</span></label><input type="date" name="data" value={formData.data} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm" /></div>
                                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Produto <span className="text-[#E3000F]">*</span></label><select name="produto" value={formData.produto} onChange={handleFormChange} className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium"><option className="bg-white dark:bg-neutral-900" value="">Selecione o produto</option>{(PRODUTOS_POR_CATEGORIA[formData.categoriaVenda || 'MÓVEL'] || safeProdutos).map(p => <option className="bg-white dark:bg-neutral-900" key={p} value={p}>{p}</option>)}</select></div>
-                                                {getSubOptions().length > 0 && (<div className="space-y-1.5 animate-fade-in bg-yellow-50/50 dark:bg-yellow-900/20 p-2 -m-2 rounded-lg border border-yellow-100 dark:border-yellow-800"><label className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1">Especificação <span className="text-[#E3000F]">*</span></label><select name="subOption" value={formData.subOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-[#E3000F]"><option className="bg-white dark:bg-neutral-900" value="">Selecione a opção</option>{getSubOptions().map(o => <option className="bg-white dark:bg-neutral-900" key={o.label} value={o.label}>{o.label}</option>)}</select></div>)}
+                                                {getSubOptions().length > 0 && (<div className="space-y-1.5 animate-fade-in bg-yellow-50/50 dark:bg-yellow-900/20 p-2 -m-2 rounded-lg border border-yellow-100 dark:border-yellow-800"><label className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1">Especificação <span className="text-[#E3000F]">*</span></label><select name="subOption" value={formData.subOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-[#E3000F]"><option className="bg-white dark:bg-neutral-900" value="">Selecione a opção</option>{getSubOptions().map(o => <option className="bg-white dark:bg-neutral-900" key={o.label} value={o.label}>{o.valorComissionavel !== undefined ? `${o.label} (Comiss.: ${applyCurrencyMask(o.valorComissionavel)})` : o.label}</option>)}</select></div>)}
                                                 {isServico && (<div className="space-y-1.5 animate-fade-in bg-purple-50/50 dark:bg-purple-900/20 p-2 -m-2 rounded-lg border border-purple-100 dark:border-purple-800"><label className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">Tipo de Operação <span className="text-[#E3000F]">*</span></label><select name="tipoOperacao" value={formData.tipoOperacao} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-bold text-purple-700 dark:text-purple-400"><option className="bg-white dark:bg-neutral-900" value="">Selecione</option><option className="bg-white dark:bg-neutral-900" value="ATIVAÇÃO">ATIVAÇÃO</option><option className="bg-white dark:bg-neutral-900" value="MIGRAÇÃO">MIGRAÇÃO</option></select></div>)}
                                                 <div className="space-y-1.5"><label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex items-center justify-between"><span>{isComissionado ? 'Valor Bruto (R$)' : 'Receita (R$)'} <span className="text-[#E3000F]">*</span></span>{formData.isReceitaReadonly && <span className="text-[10px] bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 px-1.5 py-0.5 rounded flex items-center gap-1"><Check size={10} /> Automático</span>}</label>{formData.isReceitaReadonly ? (<input type="text" readOnly value={formData.receita} className="w-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 px-3 py-2.5 rounded-lg outline-none text-sm font-bold cursor-not-allowed" />) : (<input type="text" name="receita" value={formData.receita} onChange={handleFormChange} placeholder="R$ 0,00" className="w-full bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] focus:border-[#E3000F] outline-none text-sm font-bold" />)}</div>
                                                 {isComissionado && (
@@ -1039,7 +1057,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                                                         <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Seguro do Aparelho</label>
                                                         <select name="seguroOption" value={formData.seguroOption} onChange={handleFormChange} className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-2.5 rounded-lg focus:ring-1 focus:ring-[#E3000F] outline-none text-sm font-medium text-blue-600 dark:text-blue-400">
                                                             <option className="bg-white dark:bg-neutral-900 text-neutral-500" value="">Sem Seguro</option>
-                                                            {safeSeguroOptions.map(o => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={o.label} value={o.label}>{o.label}</option>)}
+                                                            {safeSeguroOptions.map(o => <option className="bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100" key={o.label} value={o.label}>{o.valorComissionavel !== undefined ? `${o.label} (Comiss.: ${applyCurrencyMask(o.valorComissionavel)})` : o.label}</option>)}
                                                         </select>
                                                     </div>
                                                 )}

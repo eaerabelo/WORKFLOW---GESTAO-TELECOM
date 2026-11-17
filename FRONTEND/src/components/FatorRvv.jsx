@@ -220,9 +220,11 @@ const calcularReceitaProdutoLocal = (sale, pctAtingimentoMplay = 0) => {
 
     if (pBase.includes('APARELHO')) {
         if (valorBruto <= 0 && receitaBase <= 0) return 0;
-        const temSeguro = adicionais.includes('SEGURO') || Boolean(sale.seguroOption);
+        // Aparelhos permanecem em 5% fixo (com ou sem seguro)
         if (valorBruto > 0 && Math.abs(receitaBase - valorBruto) < 0.01) {
-            receitaBase = valorBruto * (temSeguro ? 0.06 : 0.05);
+            receitaBase = valorBruto * 0.05;
+        } else if (valorBruto > 0 && Math.abs(receitaBase - (valorBruto * 0.06)) < 0.05) {
+            receitaBase = valorBruto * 0.05;
         }
         return Math.max(0, receitaBase);
     }

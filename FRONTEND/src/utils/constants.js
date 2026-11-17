@@ -33,16 +33,10 @@ export const HORARIOS_PADRAO = [
 ];
 
 export const DEFAULT_SEGURO_OPTIONS = [
-    { label: 'SEGURO R$ 14,00', prices: { UNICO: 14.00 } },
-    { label: 'SEGURO R$ 18,00', prices: { UNICO: 18.00 } },
-    { label: 'SEGURO R$ 22,00', prices: { UNICO: 22.00 } },
-    { label: 'SEGURO R$ 24,00', prices: { UNICO: 24.00 } },
-    { label: 'SEGURO R$ 29,00', prices: { UNICO: 29.00 } },
-    { label: 'SEGURO R$ 35,00', prices: { UNICO: 35.00 } },
-    { label: 'SEGURO R$ 45,00', prices: { UNICO: 45.00 } },
-    { label: 'SEGURO R$ 55,00', prices: { UNICO: 55.00 } },
-    { label: 'SEGURO R$ 60,00', prices: { UNICO: 60.00 } },
-    { label: 'SEGURO R$ 75,00', prices: { UNICO: 75.00 } },
+    { label: 'SEGURO R$ 60,00', valorBruto: 60.00, valorComissionavel: 24.00, prices: { UNICO: 24.00, BRUTO: 60.00 } },
+    { label: 'SEGURO R$ 55,00', valorBruto: 55.00, valorComissionavel: 22.00, prices: { UNICO: 22.00, BRUTO: 55.00 } },
+    { label: 'SEGURO R$ 45,00', valorBruto: 45.00, valorComissionavel: 18.00, prices: { UNICO: 18.00, BRUTO: 45.00 } },
+    { label: 'SEGURO R$ 35,00', valorBruto: 35.00, valorComissionavel: 14.00, prices: { UNICO: 14.00, BRUTO: 35.00 } }
 ];
 
 export const DEFAULT_DEPENDENTE_OPTIONS = [

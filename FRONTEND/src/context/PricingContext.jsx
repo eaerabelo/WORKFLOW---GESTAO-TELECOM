@@ -32,7 +32,7 @@ export const PricingProvider = ({ children }) => {
                         TV_BOX_OPTIONS: data.TV_BOX_OPTIONS || [],
                         FIXO_OPTIONS: data.FIXO_OPTIONS || [],
                         MESH_OPTIONS: data.MESH_OPTIONS || [],
-                        SEGURO_OPTIONS: (data.SEGURO_OPTIONS && data.SEGURO_OPTIONS.length > 0) ? data.SEGURO_OPTIONS : DEFAULT_SEGURO_OPTIONS,
+                        SEGURO_OPTIONS: DEFAULT_SEGURO_OPTIONS,
                         DEPENDENTE_OPTIONS: (data.DEPENDENTE_OPTIONS && data.DEPENDENTE_OPTIONS.length > 0) ? data.DEPENDENTE_OPTIONS : DEFAULT_DEPENDENTE_OPTIONS
                     });
                 }

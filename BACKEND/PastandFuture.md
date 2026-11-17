@@ -413,3 +413,19 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 ### 2. Seção `[VENDA]` (`FRONTEND/src/components/Venda.jsx`)
 - Ao selecionar uma venda de categoria/produto **RESIDENCIAL** (tanto em Venda Individual quanto em Venda Conjunta/Combo), exibe a caixa **"Data de Instalação (UR)"** para encaminhar a data já preenchida à seção `[UR-RESIDENCIAL]` (onde continua normalmente editável).
 - Exclusivamente quando o produto selecionado é **TV** (`TVBOX`, `TV-BOX`, `TV CABO`, `SOUNDBOX`, `PONTO ADICIONAL`), exibe o botão extra **"BAIXA IMEDIATA"** que preenche automaticamente a data e identifica o lançamento na `[UR]`.
+
+---
+
+## 16/11/2026 — Atualização de Produtos `[VENDA]` (Seguros & Aparelhos 5%) e Ajuste de Dimensões `[RETENÇÃO]`
+
+### 1. Produtos de Seguro e Aparelho na Seção `[VENDA]` (`constants.js`, `Venda.jsx`, `FatorRvv.jsx`, `sistemasController.js`, `rules.js`)
+- **Tabela de Seguro Atualizada:**
+  - `SEGURO R$ 60,00` → Valor Comissionável = `R$ 24,00`
+  - `SEGURO R$ 55,00` → Valor Comissionável = `R$ 22,00`
+  - `SEGURO R$ 45,00` → Valor Comissionável = `R$ 18,00`
+  - `SEGURO R$ 35,00` → Valor Comissionável = `R$ 14,00`
+- **Aparelhos (5% Fixo):** Removida a variação de 6% com seguro; aparelhos permanecem em **5%** fixo sobre o valor bruto com ou sem venda de seguro.
+
+### 2. Ajuste Responsivo e Correção de Vazamento de Dimensões em `[RETENÇÃO]` (`FRONTEND/src/components/Retencao.jsx`)
+- Removido o bloqueio vertical `h-full flex-col` com `overflow-hidden` que comprimia os blocos internos e causava vazamento de layout.
+- Ajustados todos os grids, espaçamentos e quebras de texto (`w-full max-w-full min-w-0`) para encaixe fluido em qualquer resolução de tela.

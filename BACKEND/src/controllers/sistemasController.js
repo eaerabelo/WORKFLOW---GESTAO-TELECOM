@@ -63,10 +63,10 @@ export const getPricing = async (req, res) => {
                 { id: 'm10', nome: 'Dependente Gratuito', valor: 0.00, valorMulti: 0.00, valorMulti3p: 0.00 },
                 { id: 'm11', nome: 'Dependente Pago', valor: 55.00, valorMulti: 55.00, valorMulti3p: 55.00 },
                 { id: 'm12', nome: 'Dependente BL', valor: 29.90, valorMulti: 29.90, valorMulti3p: 29.90 },
-                { id: 'm13', nome: 'Seguro R$ 14,00', valor: 14.00, valorMulti: 14.00, valorMulti3p: 14.00 },
-                { id: 'm14', nome: 'Seguro R$ 18,00', valor: 18.00, valorMulti: 18.00, valorMulti3p: 18.00 },
-                { id: 'm15', nome: 'Seguro R$ 22,00', valor: 22.00, valorMulti: 22.00, valorMulti3p: 22.00 },
-                { id: 'm16', nome: 'Seguro R$ 24,00', valor: 24.00, valorMulti: 24.00, valorMulti3p: 24.00 }
+                { id: 'm13', nome: 'Seguro R$ 60,00 (Comiss. R$ 24,00)', valor: 24.00, valorBruto: 60.00, valorMulti: 24.00, valorMulti3p: 24.00 },
+                { id: 'm14', nome: 'Seguro R$ 55,00 (Comiss. R$ 22,00)', valor: 22.00, valorBruto: 55.00, valorMulti: 22.00, valorMulti3p: 22.00 },
+                { id: 'm15', nome: 'Seguro R$ 45,00 (Comiss. R$ 18,00)', valor: 18.00, valorBruto: 45.00, valorMulti: 18.00, valorMulti3p: 18.00 },
+                { id: 'm16', nome: 'Seguro R$ 35,00 (Comiss. R$ 14,00)', valor: 14.00, valorBruto: 35.00, valorMulti: 14.00, valorMulti3p: 14.00 }
             ],
             residencial: [
                 { id: 'r1', nome: 'Fibra 350 Mega', valor: 99.90, valorMulti: 79.90, valorMulti3p: 59.90 },
@@ -156,16 +156,10 @@ export const getPricing = async (req, res) => {
         ];
 
         const SEGURO_OPTIONS = [
-            { label: 'SEGURO R$ 14,00', prices: { UNICO: 14.00 } },
-            { label: 'SEGURO R$ 18,00', prices: { UNICO: 18.00 } },
-            { label: 'SEGURO R$ 22,00', prices: { UNICO: 22.00 } },
-            { label: 'SEGURO R$ 24,00', prices: { UNICO: 24.00 } },
-            { label: 'SEGURO R$ 29,00', prices: { UNICO: 29.00 } },
-            { label: 'SEGURO R$ 35,00', prices: { UNICO: 35.00 } },
-            { label: 'SEGURO R$ 45,00', prices: { UNICO: 45.00 } },
-            { label: 'SEGURO R$ 55,00', prices: { UNICO: 55.00 } },
-            { label: 'SEGURO R$ 60,00', prices: { UNICO: 60.00 } },
-            { label: 'SEGURO R$ 75,00', prices: { UNICO: 75.00 } },
+            { label: 'SEGURO R$ 60,00', valorBruto: 60.00, valorComissionavel: 24.00, prices: { UNICO: 24.00, BRUTO: 60.00 } },
+            { label: 'SEGURO R$ 55,00', valorBruto: 55.00, valorComissionavel: 22.00, prices: { UNICO: 22.00, BRUTO: 55.00 } },
+            { label: 'SEGURO R$ 45,00', valorBruto: 45.00, valorComissionavel: 18.00, prices: { UNICO: 18.00, BRUTO: 45.00 } },
+            { label: 'SEGURO R$ 35,00', valorBruto: 35.00, valorComissionavel: 14.00, prices: { UNICO: 14.00, BRUTO: 35.00 } }
         ];
 
         const DEPENDENTE_OPTIONS = [

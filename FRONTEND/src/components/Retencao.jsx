@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import {
     ShieldCheck, Phone, User, Smartphone, Tv, Wifi, Zap, Plus, Search,
-    Sparkles, MessageCircle, Copy, Check, Trash2, Edit3, Filter,
-    ArrowUpRight, CheckCircle2, Clock, Flame, Layers, FileText, X
+    Sparkles, MessageCircle, Copy, Check, Trash2, Edit3,
+    CheckCircle2, Clock, Flame, Layers, FileText, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { applyPhoneMask } from '../utils/masks';
@@ -13,7 +13,7 @@ const SERVICOS_CATALOGO = [
         label: 'MÓVEL',
         sub: 'Pós / Controle',
         icon: Smartphone,
-        activeClass: 'bg-red-50 dark:bg-[#E3000F]/15 border-[#E3000F] text-[#E3000F] shadow-sm shadow-red-500/10',
+        activeClass: 'bg-red-50 dark:bg-[#E3000F]/15 border-[#E3000F] text-[#E3000F] shadow-sm',
         badgeClass: 'bg-red-500/10 text-[#E3000F] border-red-500/20'
     },
     {
@@ -21,7 +21,7 @@ const SERVICOS_CATALOGO = [
         label: 'TVBOX',
         sub: 'Claro TV+ / Box',
         icon: Tv,
-        activeClass: 'bg-purple-50 dark:bg-purple-500/15 border-purple-500 text-purple-600 dark:text-purple-400 shadow-sm shadow-purple-500/10',
+        activeClass: 'bg-purple-50 dark:bg-purple-500/15 border-purple-500 text-purple-600 dark:text-purple-400 shadow-sm',
         badgeClass: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
     },
     {
@@ -29,7 +29,7 @@ const SERVICOS_CATALOGO = [
         label: 'FIBRA',
         sub: 'Banda Larga Fixa',
         icon: Wifi,
-        activeClass: 'bg-blue-50 dark:bg-blue-500/15 border-blue-500 text-blue-600 dark:text-blue-400 shadow-sm shadow-blue-500/10',
+        activeClass: 'bg-blue-50 dark:bg-blue-500/15 border-blue-500 text-blue-600 dark:text-blue-400 shadow-sm',
         badgeClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
     },
     {
@@ -37,7 +37,7 @@ const SERVICOS_CATALOGO = [
         label: 'COMBO MULTI',
         sub: 'Convergente Multi',
         icon: Zap,
-        activeClass: 'bg-amber-50 dark:bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-sm shadow-amber-500/10',
+        activeClass: 'bg-amber-50 dark:bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-sm',
         badgeClass: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
     }
 ];
@@ -46,18 +46,21 @@ const STATUS_TRABALHO = {
     PARA_TRABALHAR: {
         id: 'PARA_TRABALHAR',
         label: 'Para Trabalhar',
+        shortLabel: 'Trabalhar',
         badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
         icon: Clock
     },
     EM_CONTATO: {
         id: 'EM_CONTATO',
         label: 'Em Negociação',
+        shortLabel: 'Negociando',
         badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
         icon: Flame
     },
     CONVERTIDO: {
         id: 'CONVERTIDO',
-        label: 'Oferta Convertida',
+        label: 'Convertido',
+        shortLabel: 'Convertido',
         badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
         icon: CheckCircle2
     }
@@ -80,7 +83,7 @@ const gerarSugestaoFutura = (servicos = []) => {
     if (faltantes.length === 0 || (hasMovel && hasFibra && hasTv)) {
         return {
             titulo: 'Cliente Completo • Ofertar Upgrade / Dependente / Aparelho',
-            descricao: 'Cliente já possui Móvel, Fibra e TVBox. Trabalhar linha dependente, troca de aparelho com seguro ou upgrade de velocidade.',
+            descricao: 'Cliente já possui Móvel, Fibra e TVBox. Trabalhar linha dependente, aparelho ou seguro.',
             destaque: 'UPGRADE & BLINDAGEM',
             faltantes: []
         };
@@ -89,7 +92,7 @@ const gerarSugestaoFutura = (servicos = []) => {
     if (hasMovel && !hasFibra && !hasTv) {
         return {
             titulo: 'Ofertar FIBRA + TVBOX (Migrar p/ Combo Multi)',
-            descricao: 'Cliente já tem linha Móvel fidelizada. Excelente oportunidade para ofertar Banda Larga Fibra e Claro TV Box com benefício Combo Multi.',
+            descricao: 'Cliente já tem linha Móvel. Oportunidade para ofertar Banda Larga Fibra e Claro TV Box.',
             destaque: 'OFERTAR FIBRA + TVBOX',
             faltantes
         };
@@ -98,7 +101,7 @@ const gerarSugestaoFutura = (servicos = []) => {
     if (hasFibra && !hasMovel) {
         return {
             titulo: 'Ofertar Linha MÓVEL Pós/Controle no Combo Multi',
-            descricao: 'Cliente já possui Fibra instalada. Trabalhar portabilidade ou ativação Móvel com dobro de internet no Combo Multi.',
+            descricao: 'Cliente já possui Fibra instalada. Trabalhar portabilidade ou ativação Móvel com bônus Multi.',
             destaque: 'OFERTAR MÓVEL MULTI',
             faltantes
         };
@@ -107,7 +110,7 @@ const gerarSugestaoFutura = (servicos = []) => {
     if (hasMovel && hasFibra && !hasTv) {
         return {
             titulo: 'Ofertar TVBOX / Claro TV+ e Blindar Combo Multi',
-            descricao: 'Cliente já possui Móvel e Fibra. Ofertar Claro TV Box / Soundbox para completar o portfólio residencial.',
+            descricao: 'Cliente já possui Móvel e Fibra. Ofertar Claro TV Box para completar a residência.',
             destaque: 'OFERTAR TVBOX',
             faltantes
         };
@@ -115,7 +118,7 @@ const gerarSugestaoFutura = (servicos = []) => {
 
     return {
         titulo: `Ofertar ${faltantes.join(' + ')} ${!hasMulti ? 'no Combo Multi' : ''}`,
-        descricao: `Trabalhar abordagem futura para inclusão de ${faltantes.join(' e ')} aproveitando o histórico de retenção.`,
+        descricao: `Trabalhar abordagem futura para inclusão de ${faltantes.join(' e ')}.`,
         destaque: `OFERTAR ${faltantes.join(' + ')}`,
         faltantes
     };
@@ -126,7 +129,6 @@ export function Retencao({
     setRetencaoData,
     globalUser,
     isGerente,
-    isVendedor,
     usersDB = {}
 }) {
     const loggedName = String(globalUser?.name || 'COLABORADOR').trim();
@@ -191,7 +193,7 @@ export function Retencao({
                 if (item.id !== editingId) return item;
                 return {
                     ...item,
-                    nome: nome.trim() || 'CLIENTE PÓS-VENDA',
+                    nome: nome.trim() ? nome.trim().toUpperCase() : 'CLIENTE PÓS-VENDA',
                     celular: celular.trim(),
                     tipoOperacao,
                     servicos: servicosAtuais,
@@ -232,7 +234,6 @@ export function Retencao({
         setTipoOperacao(item.tipoOperacao || 'SIMPLIFICA');
         setServicosAtuais(Array.isArray(item.servicos) && item.servicos.length > 0 ? item.servicos : ['MOVEL']);
         setObservacao(item.observacao || '');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDelete = (id) => {
@@ -341,57 +342,57 @@ export function Retencao({
     }, [retencaoData, filterVendedor]);
 
     return (
-        <div className="h-full flex flex-col space-y-6 animate-fade-in pb-8 font-sans">
+        <div className="w-full max-w-full min-w-0 space-y-4 sm:space-y-5 pb-6 animate-fade-in font-sans">
             {/* CABEÇALHO E KPIs DA CENTRAL DE RETENÇÃO */}
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 sm:p-6 shadow-sm">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="flex items-start sm:items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E3000F] to-red-700 text-white flex items-center justify-center shadow-lg shadow-red-600/20 shrink-0">
-                            <ShieldCheck size={25} />
+            <div className="w-full max-w-full bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 sm:p-5 shadow-sm">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-3 min-w-0">
+                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#E3000F] to-red-700 text-white flex items-center justify-center shadow-md shadow-red-600/20 shrink-0">
+                            <ShieldCheck size={22} />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2.5 flex-wrap">
-                                <h2 className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h2 className="text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
                                     Central de Retenção & Pós-Venda
                                 </h2>
-                                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold uppercase tracking-wider bg-[#E3000F]/10 text-[#E3000F] border border-[#E3000F]/20">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-[#E3000F]/10 text-[#E3000F] border border-[#E3000F]/20">
                                     Carteira de Oportunidades
                                 </span>
                             </div>
-                            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-0.5 leading-relaxed">
                                 Registre descontos de retenção pós-venda e construa sua carteira inteligente para ofertar novos serviços futuramente.
                             </p>
                         </div>
                     </div>
 
                     {/* MINI CARDS DE MÉTRICAS RÁPIDAS */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
-                        <div className="px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/70">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400 block">Carteira Total</span>
-                            <span className="text-lg font-black text-neutral-900 dark:text-white tabular-nums">{stats.total}</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full xl:w-auto shrink-0">
+                        <div className="px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/70 min-w-[105px]">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400 block truncate">Carteira Total</span>
+                            <span className="text-base sm:text-lg font-black text-neutral-900 dark:text-white tabular-nums">{stats.total}</span>
                         </div>
-                        <div className="px-3.5 py-2.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">P/ Trabalhar</span>
-                            <span className="text-lg font-black text-amber-700 dark:text-amber-300 tabular-nums">{stats.paraTrabalhar}</span>
+                        <div className="px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 min-w-[105px]">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 block truncate">P/ Trabalhar</span>
+                            <span className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-300 tabular-nums">{stats.paraTrabalhar}</span>
                         </div>
-                        <div className="px-3.5 py-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-800/40">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">Simplifica / Net</span>
-                            <span className="text-lg font-black text-blue-700 dark:text-blue-300 tabular-nums">{stats.simplifica} / {stats.netsales}</span>
+                        <div className="px-3 py-2 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-800/40 min-w-[105px]">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block truncate">Simplifica / Net</span>
+                            <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300 tabular-nums">{stats.simplifica} / {stats.netsales}</span>
                         </div>
-                        <div className="px-3.5 py-2.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/40">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">Convertidos</span>
-                            <span className="text-lg font-black text-emerald-700 dark:text-emerald-300 tabular-nums">{stats.convertidos}</span>
+                        <div className="px-3 py-2 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/40 min-w-[105px]">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block truncate">Convertidos</span>
+                            <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-300 tabular-nums">{stats.convertidos}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* BLOCO 1: FORMULÁRIO LÚDICO E ELEGANTE DE REGISTRO DE RETENÇÃO */}
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 bg-gradient-to-r from-neutral-50 via-red-50/30 to-neutral-50 dark:from-neutral-800/70 dark:via-[#E3000F]/10 dark:to-neutral-800/70 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                        <Sparkles size={18} className="text-[#E3000F]" />
-                        <h3 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white uppercase tracking-wider">
+            <div className="w-full max-w-full bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                <div className="px-4 sm:px-5 py-3.5 bg-gradient-to-r from-neutral-50 via-red-50/30 to-neutral-50 dark:from-neutral-800/70 dark:via-[#E3000F]/10 dark:to-neutral-800/70 border-b border-neutral-200 dark:border-neutral-800 rounded-t-2xl flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <Sparkles size={16} className="text-[#E3000F] shrink-0" />
+                        <h3 className="text-xs sm:text-sm font-extrabold text-neutral-900 dark:text-white uppercase tracking-wider truncate">
                             {editingId ? 'Editar Ficha de Retenção do Cliente' : '1. Novo Registro de Retenção Pós-Venda'}
                         </h3>
                     </div>
@@ -399,22 +400,22 @@ export function Retencao({
                         <button
                             type="button"
                             onClick={resetForm}
-                            className="text-xs font-bold text-neutral-500 hover:text-[#E3000F] flex items-center gap-1 cursor-pointer"
+                            className="text-xs font-bold text-neutral-500 hover:text-[#E3000F] flex items-center gap-1 cursor-pointer shrink-0"
                         >
-                            <X size={15} /> Cancelar Edição
+                            <X size={14} /> Cancelar Edição
                         </button>
                     )}
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {/* CAMPO 1: NOME (OPCIONAL) */}
-                        <div className="md:col-span-4 space-y-1.5">
-                            <label className="text-xs font-extrabold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 flex items-center justify-between">
-                                <span className="flex items-center gap-1.5">
-                                    <User size={14} className="text-[#E3000F]" /> Nome do Cliente
+                        <div className="min-w-0 space-y-1.5">
+                            <label className="text-xs font-extrabold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 flex items-center justify-between gap-1">
+                                <span className="flex items-center gap-1.5 truncate">
+                                    <User size={13} className="text-[#E3000F] shrink-0" /> Nome do Cliente
                                 </span>
-                                <span className="text-[10px] font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
+                                <span className="text-[9px] font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded shrink-0">
                                     OPCIONAL
                                 </span>
                             </label>
@@ -422,18 +423,18 @@ export function Retencao({
                                 type="text"
                                 value={nome}
                                 onChange={(e) => setNome(e.target.value)}
-                                placeholder="Ex: Maria Aparecida (ou deixe em branco)"
-                                className="w-full px-4 py-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-sm font-bold text-neutral-900 dark:text-white placeholder:font-normal placeholder:text-neutral-400 outline-none focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/15 transition-all uppercase"
+                                placeholder="Ex: Maria Aparecida (opcional)"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs sm:text-sm font-bold text-neutral-900 dark:text-white placeholder:font-normal placeholder:text-neutral-400 outline-none focus:border-[#E3000F] transition-all uppercase"
                             />
                         </div>
 
                         {/* CAMPO 2: CELULAR / LINHA TITULAR (OBRIGATÓRIO) */}
-                        <div className="md:col-span-4 space-y-1.5">
-                            <label className="text-xs font-extrabold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 flex items-center justify-between">
-                                <span className="flex items-center gap-1.5">
-                                    <Phone size={14} className="text-[#E3000F]" /> Celular (Linha Titular) <span className="text-[#E3000F]">*</span>
+                        <div className="min-w-0 space-y-1.5">
+                            <label className="text-xs font-extrabold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 flex items-center justify-between gap-1">
+                                <span className="flex items-center gap-1.5 truncate">
+                                    <Phone size={13} className="text-[#E3000F] shrink-0" /> Celular (Linha Titular)
                                 </span>
-                                <span className="text-[10px] font-extrabold text-[#E3000F] bg-red-50 dark:bg-[#E3000F]/15 px-2 py-0.5 rounded-md">
+                                <span className="text-[9px] font-extrabold text-[#E3000F] bg-red-50 dark:bg-[#E3000F]/15 px-1.5 py-0.5 rounded shrink-0">
                                     OBRIGATÓRIO
                                 </span>
                             </label>
@@ -444,16 +445,16 @@ export function Retencao({
                                 placeholder="(11) 99999-9999"
                                 maxLength={15}
                                 required
-                                className="w-full px-4 py-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-sm font-extrabold text-neutral-900 dark:text-white placeholder:font-normal placeholder:text-neutral-400 outline-none focus:border-[#E3000F] focus:ring-2 focus:ring-[#E3000F]/15 transition-all tabular-nums tracking-wide"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs sm:text-sm font-extrabold text-neutral-900 dark:text-white placeholder:font-normal placeholder:text-neutral-400 outline-none focus:border-[#E3000F] transition-all tabular-nums tracking-wide"
                             />
                         </div>
 
                         {/* CAMPO 3: TIPO DE OPERAÇÃO (SIMPLIFICA OU NETSALES) */}
-                        <div className="md:col-span-4 space-y-1.5">
+                        <div className="min-w-0 sm:col-span-2 lg:col-span-1 space-y-1.5">
                             <label className="text-xs font-extrabold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 flex items-center gap-1.5">
-                                <Layers size={14} className="text-[#E3000F]" /> Tipo de Operação <span className="text-[#E3000F]">*</span>
+                                <Layers size={13} className="text-[#E3000F] shrink-0" /> Tipo de Operação <span className="text-[#E3000F]">*</span>
                             </label>
-                            <div className="grid grid-cols-2 gap-2.5">
+                            <div className="grid grid-cols-2 gap-2">
                                 {['SIMPLIFICA', 'NETSALES'].map((op) => {
                                     const active = tipoOperacao === op;
                                     return (
@@ -461,14 +462,14 @@ export function Retencao({
                                             key={op}
                                             type="button"
                                             onClick={() => setTipoOperacao(op)}
-                                            className={`py-3 px-3 rounded-xl border-2 font-extrabold text-xs sm:text-sm tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                                            className={`py-2.5 px-2.5 rounded-xl border-2 font-extrabold text-xs tracking-wide transition-all cursor-pointer flex items-center justify-center gap-1.5 truncate ${
                                                 active
-                                                    ? 'bg-[#E3000F] text-white border-[#E3000F] shadow-md shadow-red-600/20 scale-[1.01]'
+                                                    ? 'bg-[#E3000F] text-white border-[#E3000F] shadow-sm'
                                                     : 'bg-neutral-50 dark:bg-neutral-800/60 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-[#E3000F]/50'
                                             }`}
                                         >
-                                            <span className={`w-2 h-2 rounded-full ${active ? 'bg-white' : 'bg-neutral-400'}`} />
-                                            <span>{op}</span>
+                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? 'bg-white' : 'bg-neutral-400'}`} />
+                                            <span className="truncate">{op}</span>
                                         </button>
                                     );
                                 })}
@@ -477,18 +478,18 @@ export function Retencao({
                     </div>
 
                     {/* CAMPO 4: SELEÇÃO LÚDICA DO QUE O CLIENTE POSSUI */}
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                            <label className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-200 flex items-center gap-2">
-                                <CheckCircle2 size={15} className="text-[#E3000F]" />
-                                O que o cliente já possui atualmente? (Selecione um ou mais)
+                            <label className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-200 flex items-center gap-1.5">
+                                <CheckCircle2 size={14} className="text-[#E3000F] shrink-0" />
+                                <span>O que o cliente já possui atualmente?</span>
                             </label>
-                            <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                                O sistema identificará automaticamente o que ofertar no futuro
+                            <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                                Selecione os produtos ativos do cliente
                             </span>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                             {SERVICOS_CATALOGO.map((serv) => {
                                 const IconComp = serv.icon;
                                 const isSelected = servicosAtuais.includes(serv.id);
@@ -497,31 +498,31 @@ export function Retencao({
                                         key={serv.id}
                                         type="button"
                                         onClick={() => toggleServico(serv.id)}
-                                        className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-center justify-between gap-3 group ${
+                                        className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center justify-between gap-2 min-w-0 ${
                                             isSelected
                                                 ? serv.activeClass
                                                 : 'bg-neutral-50/80 dark:bg-neutral-800/40 border-neutral-200 dark:border-neutral-700/80 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                                                 isSelected ? 'bg-white/90 dark:bg-neutral-900/80 shadow-sm' : 'bg-neutral-200/70 dark:bg-neutral-700/50'
                                             }`}>
-                                                <IconComp size={20} />
+                                                <IconComp size={16} />
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="text-xs sm:text-sm font-black uppercase tracking-wide truncate">
+                                                <div className="text-xs font-black uppercase tracking-wide truncate">
                                                     {serv.label}
                                                 </div>
-                                                <div className="text-[11px] font-medium opacity-80 truncate">
+                                                <div className="text-[10px] font-medium opacity-80 truncate">
                                                     {serv.sub}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                                            isSelected ? 'border-current bg-current text-white dark:text-neutral-950' : 'border-neutral-300 dark:border-neutral-600'
+                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                            isSelected ? 'border-current bg-current' : 'border-neutral-300 dark:border-neutral-600'
                                         }`}>
-                                            {isSelected && <Check size={12} strokeWidth={3} className="text-current invert" />}
+                                            {isSelected && <Check size={10} strokeWidth={3} className="text-white dark:text-neutral-950" />}
                                         </div>
                                     </button>
                                 );
@@ -530,39 +531,39 @@ export function Retencao({
                     </div>
 
                     {/* PREVIEW INTELIGENTE DE OPORTUNIDADE FUTURA + OBSERVAÇÃO OPCIONAL */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-                        <div className="lg:col-span-7 p-4 rounded-2xl bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-red-50/60 dark:from-amber-950/25 dark:via-neutral-800/60 dark:to-[#E3000F]/10 border border-amber-200/80 dark:border-amber-700/40 flex items-center gap-3.5">
-                            <div className="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
-                                <Sparkles size={22} />
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-center pt-1">
+                        <div className="xl:col-span-6 p-3 rounded-xl bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-red-50/60 dark:from-amber-950/25 dark:via-neutral-800/60 dark:to-[#E3000F]/10 border border-amber-200/80 dark:border-amber-700/40 flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                                <Sparkles size={18} />
                             </div>
-                            <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500 text-white">
-                                        Radar de Oferta Futura
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500 text-white shrink-0">
+                                        Oferta Futura
                                     </span>
-                                    <span className="text-xs sm:text-sm font-extrabold text-neutral-900 dark:text-white">
+                                    <span className="text-xs font-extrabold text-neutral-900 dark:text-white truncate">
                                         {previewSugestao.titulo}
                                     </span>
                                 </div>
-                                <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium mt-1 leading-relaxed">
+                                <p className="text-[11px] text-neutral-600 dark:text-neutral-300 font-medium mt-0.5 line-clamp-1">
                                     {previewSugestao.descricao}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="lg:col-span-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div className="xl:col-span-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 min-w-0">
                             <input
                                 type="text"
                                 value={observacao}
                                 onChange={(e) => setObservacao(e.target.value)}
                                 placeholder="Detalhe opcional (ex: Desc. R$ 20 aplicado)..."
-                                className="flex-1 px-4 py-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-100 placeholder:font-normal outline-none focus:border-[#E3000F]"
+                                className="flex-1 min-w-0 px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-100 placeholder:font-normal outline-none focus:border-[#E3000F]"
                             />
                             <button
                                 type="submit"
-                                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-red-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shrink-0"
+                                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-red-600/20 flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
                             >
-                                <Plus size={18} />
+                                <Plus size={16} />
                                 <span>{editingId ? 'Salvar Alterações' : 'Criar Espaço do Cliente'}</span>
                             </button>
                         </div>
@@ -571,38 +572,38 @@ export function Retencao({
             </div>
 
             {/* BLOCO 2: ESPAÇO DOS CLIENTES PARA TRABALHAR FUTURAMENTE */}
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 sm:p-6 shadow-sm space-y-5">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
-                    <div>
-                        <h3 className="text-base sm:text-lg font-extrabold text-neutral-900 dark:text-white flex items-center gap-2">
-                            <Flame size={20} className="text-[#E3000F]" />
-                            <span>2. Espaço do Cliente — Carteira para Abordagem & Oferta Futura</span>
-                            <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+            <div className="w-full max-w-full bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 sm:p-5 shadow-sm space-y-4">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-3.5 border-b border-neutral-100 dark:border-neutral-800">
+                    <div className="min-w-0">
+                        <h3 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white flex items-center gap-2 flex-wrap">
+                            <Flame size={18} className="text-[#E3000F] shrink-0" />
+                            <span>2. Espaço do Cliente — Carteira Pós-Venda & Oferta Futura</span>
+                            <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                                 {filteredList.length}
                             </span>
                         </h3>
-                        <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">
-                            Clientes que passaram por retenção pós-venda prontos para relacionamento e oferta de novos produtos.
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">
+                            Clientes fidelizados na retenção prontos para relacionamento e oferta futura.
                         </p>
                     </div>
 
-                    {/* BARRA DE BUSCA E FILTROS */}
-                    <div className="flex flex-wrap items-center gap-2.5">
-                        <div className="relative flex-1 sm:flex-initial sm:min-w-[230px]">
-                            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                    {/* BARRA DE BUSCA E FILTROS RESPONSIVA */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 w-full xl:w-auto">
+                        <div className="relative sm:col-span-2 lg:w-52">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Buscar nome ou celular..."
-                                className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
+                                className="w-full pl-8 pr-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-semibold text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
                             />
                         </div>
 
                         <select
                             value={filterOperacao}
                             onChange={(e) => setFilterOperacao(e.target.value)}
-                            className="px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 outline-none cursor-pointer"
+                            className="w-full lg:w-auto px-2.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 outline-none cursor-pointer"
                         >
                             <option value="TODOS">Operação: Todas</option>
                             <option value="SIMPLIFICA">SIMPLIFICA</option>
@@ -612,33 +613,33 @@ export function Retencao({
                         <select
                             value={filterOportunidade}
                             onChange={(e) => setFilterOportunidade(e.target.value)}
-                            className="px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 outline-none cursor-pointer"
+                            className="w-full lg:w-auto px-2.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 outline-none cursor-pointer"
                         >
                             <option value="TODAS">Oportunidade: Todas</option>
-                            <option value="FALTA_FIBRA">Ofertar FIBRA (Não possui)</option>
-                            <option value="FALTA_MOVEL">Ofertar MÓVEL (Não possui)</option>
-                            <option value="FALTA_TVBOX">Ofertar TVBOX (Não possui)</option>
-                            <option value="JA_MULTI">Clientes Combo Multi</option>
+                            <option value="FALTA_FIBRA">Ofertar FIBRA</option>
+                            <option value="FALTA_MOVEL">Ofertar MÓVEL</option>
+                            <option value="FALTA_TVBOX">Ofertar TVBOX</option>
+                            <option value="JA_MULTI">Clientes Multi</option>
                         </select>
 
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 outline-none cursor-pointer"
+                            className="w-full lg:w-auto px-2.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 outline-none cursor-pointer"
                         >
                             <option value="TODOS">Status: Todos</option>
                             <option value="PARA_TRABALHAR">Para Trabalhar</option>
                             <option value="EM_CONTATO">Em Negociação</option>
-                            <option value="CONVERTIDO">Oferta Convertida</option>
+                            <option value="CONVERTIDO">Convertido</option>
                         </select>
 
                         {canViewAll && (
                             <select
                                 value={filterVendedor}
                                 onChange={(e) => setFilterVendedor(e.target.value)}
-                                className="px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 outline-none cursor-pointer"
+                                className="w-full lg:w-auto px-2.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 outline-none cursor-pointer"
                             >
-                                <option value="TODOS">Consultor: Todos da Loja</option>
+                                <option value="TODOS">Consultor: Todos</option>
                                 {listaVendedores.map(v => (
                                     <option key={v} value={v}>{v}</option>
                                 ))}
@@ -649,19 +650,19 @@ export function Retencao({
 
                 {/* GRADE DE ESPAÇOS DOS CLIENTES */}
                 {filteredList.length === 0 ? (
-                    <div className="py-16 px-4 text-center rounded-2xl border-2 border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/30">
-                        <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] flex items-center justify-center mx-auto mb-3">
-                            <ShieldCheck size={28} />
+                    <div className="py-12 px-4 text-center rounded-2xl border-2 border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/30">
+                        <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] flex items-center justify-center mx-auto mb-2.5">
+                            <ShieldCheck size={24} />
                         </div>
-                        <h4 className="text-base font-extrabold text-neutral-800 dark:text-neutral-100">
+                        <h4 className="text-sm sm:text-base font-extrabold text-neutral-800 dark:text-neutral-100">
                             Nenhum cliente na carteira com este filtro
                         </h4>
-                        <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-md mx-auto mt-1">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-md mx-auto mt-1">
                             Utilize o painel acima para registrar um atendimento de retenção pós-venda e criar automaticamente o espaço futuro do cliente.
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
                         {filteredList.map((item) => {
                             const servicos = Array.isArray(item.servicos) ? item.servicos : [];
                             const sugestao = gerarSugestaoFutura(servicos);
@@ -672,50 +673,50 @@ export function Retencao({
                             return (
                                 <div
                                     key={item.id}
-                                    className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/40 dark:bg-neutral-950/40 hover:border-[#E3000F]/40 transition-all shadow-sm hover:shadow-md flex flex-col justify-between overflow-hidden"
+                                    className="min-w-0 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/40 dark:bg-neutral-950/40 hover:border-[#E3000F]/40 transition-all shadow-sm flex flex-col justify-between overflow-hidden"
                                 >
                                     {/* TOPO DO CARD DO CLIENTE */}
-                                    <div className="p-4 sm:p-5 space-y-3.5">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                                    <div className="p-4 space-y-3 min-w-0">
+                                        <div className="flex items-start justify-between gap-2 min-w-0">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
                                                         item.tipoOperacao === 'NETSALES'
                                                             ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25'
                                                             : 'bg-[#E3000F]/15 text-[#E3000F] border border-[#E3000F]/25'
                                                     }`}>
                                                         {item.tipoOperacao || 'SIMPLIFICA'}
                                                     </span>
-                                                    <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider border inline-flex items-center gap-1 ${stObj.badge}`}>
-                                                        <StatusIcon size={11} />
+                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider border inline-flex items-center gap-1 ${stObj.badge}`}>
+                                                        <StatusIcon size={10} />
                                                         {stObj.label}
                                                     </span>
                                                 </div>
 
-                                                <h4 className="text-base font-extrabold text-neutral-900 dark:text-white mt-2 truncate" title={item.nome}>
+                                                <h4 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white mt-1.5 truncate" title={item.nome}>
                                                     {item.nome || 'CLIENTE PÓS-VENDA'}
                                                 </h4>
 
                                                 {/* LINHA TITULAR COM COPIAR E WHATSAPP */}
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-sm font-black text-[#E3000F] tabular-nums tracking-wide">
+                                                <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                                    <span className="text-xs sm:text-sm font-black text-[#E3000F] tabular-nums tracking-wide">
                                                         {item.celular}
                                                     </span>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleCopyPhone(item.id, item.celular)}
-                                                        className="p-1 rounded-lg bg-neutral-200/70 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
+                                                        className="p-1 rounded-md bg-neutral-200/70 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
                                                         title="Copiar Linha Titular"
                                                     >
-                                                        {copiedId === item.id ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                                                        {copiedId === item.id ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleOpenWhatsApp(item)}
-                                                        className="px-2 py-0.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-700 dark:text-emerald-300 hover:text-white text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer"
+                                                        className="px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500 text-emerald-700 dark:text-emerald-300 hover:text-white text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer"
                                                         title="Chamar cliente no WhatsApp"
                                                     >
-                                                        <MessageCircle size={12} />
+                                                        <MessageCircle size={11} />
                                                         <span>WhatsApp</span>
                                                     </button>
                                                 </div>
@@ -729,7 +730,7 @@ export function Retencao({
                                                     className="p-1.5 rounded-lg text-neutral-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer"
                                                     title="Editar dados do cliente"
                                                 >
-                                                    <Edit3 size={15} />
+                                                    <Edit3 size={14} />
                                                 </button>
                                                 <button
                                                     type="button"
@@ -737,14 +738,14 @@ export function Retencao({
                                                     className="p-1.5 rounded-lg text-neutral-400 hover:text-[#E3000F] hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
                                                     title="Remover da carteira"
                                                 >
-                                                    <Trash2 size={15} />
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </div>
                                         </div>
 
                                         {/* SERVIÇOS QUE O CLIENTE JÁ POSSUI */}
                                         <div>
-                                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400 block mb-1.5">
+                                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400 block mb-1">
                                                 O que o cliente possui:
                                             </span>
                                             <div className="flex flex-wrap gap-1.5">
@@ -754,9 +755,9 @@ export function Retencao({
                                                     return (
                                                         <span
                                                             key={sc.id}
-                                                            className={`px-2.5 py-1 rounded-lg text-xs font-extrabold border inline-flex items-center gap-1.5 ${sc.badgeClass}`}
+                                                            className={`px-2 py-0.5 rounded-lg text-[11px] font-extrabold border inline-flex items-center gap-1 ${sc.badgeClass}`}
                                                         >
-                                                            <SIcon size={13} />
+                                                            <SIcon size={12} />
                                                             {sc.label}
                                                         </span>
                                                     );
@@ -765,52 +766,52 @@ export function Retencao({
                                         </div>
 
                                         {/* RADAR DE TRABALHO FUTURO DO CLIENTE */}
-                                        <div className="p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 space-y-1.5">
-                                            <div className="flex items-center justify-between gap-2">
+                                        <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 space-y-1">
+                                            <div className="flex items-center justify-between gap-2 flex-wrap">
                                                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                                                    <Sparkles size={12} /> Próxima Oferta Sugerida
+                                                    <Sparkles size={11} /> Próxima Oferta
                                                 </span>
-                                                <span className="text-[10px] font-extrabold text-[#E3000F]">
+                                                <span className="text-[10px] font-extrabold text-[#E3000F] truncate">
                                                     {sugestao.destaque}
                                                 </span>
                                             </div>
-                                            <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 leading-snug">
+                                            <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 leading-snug break-words">
                                                 {sugestao.titulo}
                                             </p>
 
                                             {item.observacao && (
-                                                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
+                                                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800 break-words">
                                                     <strong>Retenção:</strong> {item.observacao}
                                                 </p>
                                             )}
 
                                             {item.notaFutura && activeNoteId !== item.id && (
-                                                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
+                                                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 pt-1 border-t border-neutral-100 dark:border-neutral-800 break-words">
                                                     <strong>Acompanhamento:</strong> {item.notaFutura}
                                                 </p>
                                             )}
 
                                             {activeNoteId === item.id ? (
-                                                <div className="pt-2 space-y-2">
+                                                <div className="pt-1.5 space-y-1.5">
                                                     <input
                                                         type="text"
                                                         value={noteDraft}
                                                         onChange={(e) => setNoteDraft(e.target.value)}
-                                                        placeholder="Ex: Ligar dia 10 p/ ofertar Fibra 500MB..."
+                                                        placeholder="Ex: Ligar dia 10 p/ ofertar Fibra..."
                                                         className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-xs font-semibold text-neutral-900 dark:text-white outline-none focus:border-[#E3000F]"
                                                     />
                                                     <div className="flex justify-end gap-1.5">
                                                         <button
                                                             type="button"
                                                             onClick={() => { setActiveNoteId(null); setNoteDraft(''); }}
-                                                            className="px-2.5 py-1 rounded-md text-[11px] font-bold text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                                                            className="px-2 py-1 rounded-md text-[10px] font-bold text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                                         >
                                                             Cancelar
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleSaveFollowUpNote(item.id)}
-                                                            className="px-3 py-1 rounded-md bg-[#E3000F] text-white text-[11px] font-bold"
+                                                            className="px-2.5 py-1 rounded-md bg-[#E3000F] text-white text-[10px] font-bold"
                                                         >
                                                             Salvar Nota
                                                         </button>
@@ -823,7 +824,7 @@ export function Retencao({
                                                         setActiveNoteId(item.id);
                                                         setNoteDraft(item.notaFutura || '');
                                                     }}
-                                                    className="text-[11px] font-bold text-[#E3000F] hover:underline flex items-center gap-1 pt-1 cursor-pointer"
+                                                    className="text-[11px] font-bold text-[#E3000F] hover:underline flex items-center gap-1 pt-0.5 cursor-pointer"
                                                 >
                                                     <FileText size={11} />
                                                     <span>{item.notaFutura ? 'Editar anotação futura' : '+ Anotar abordagem futura'}</span>
@@ -833,8 +834,8 @@ export function Retencao({
                                     </div>
 
                                     {/* RODAPÉ DO CARD: CONTROLE DE ESTÁGIO E METADADOS */}
-                                    <div className="px-4 py-3 bg-neutral-100/70 dark:bg-neutral-900/90 border-t border-neutral-200/70 dark:border-neutral-800 flex flex-col gap-2">
-                                        <div className="grid grid-cols-3 gap-1.5">
+                                    <div className="px-4 py-2.5 bg-neutral-100/70 dark:bg-neutral-900/90 border-t border-neutral-200/70 dark:border-neutral-800 flex flex-col gap-1.5">
+                                        <div className="grid grid-cols-3 gap-1">
                                             {Object.values(STATUS_TRABALHO).map((st) => {
                                                 const isCurrent = stKey === st.id;
                                                 return (
@@ -842,18 +843,18 @@ export function Retencao({
                                                         key={st.id}
                                                         type="button"
                                                         onClick={() => handleChangeStatus(item.id, st.id)}
-                                                        className={`py-1.5 px-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition-all cursor-pointer truncate ${
+                                                        className={`py-1 px-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wide transition-all cursor-pointer truncate ${
                                                             isCurrent
                                                                 ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-sm'
                                                                 : 'bg-white/80 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                                                         }`}
                                                     >
-                                                        {st.label}
+                                                        {st.shortLabel}
                                                     </button>
                                                 );
                                             })}
                                         </div>
-                                        <div className="flex items-center justify-between text-[10px] font-bold text-neutral-400 uppercase tracking-wider pt-0.5">
+                                        <div className="flex items-center justify-between text-[10px] font-bold text-neutral-400 uppercase tracking-wider pt-0.5 gap-2">
                                             <span className="truncate">Consultor: {item.vendedor || loggedName}</span>
                                             <span className="shrink-0">{item.dataCadastro || ''}</span>
                                         </div>
