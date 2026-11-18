@@ -167,7 +167,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
         SAMSUNG: [
             {
                 id: 'ssg-buds-core',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL BUDS CORE',
                 leveCodigos: '62831;62832',
                 porPreco: 'R$ 119,00',
@@ -190,7 +190,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-fit3',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'GALAXY FIT3 SAMSUNG',
                 leveCodigos: '62529;62856',
                 porPreco: 'R$ 129,00',
@@ -212,7 +212,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-buds3-fe',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL BUDS 3 FE',
                 leveCodigos: '62833;62834',
                 porPreco: 'R$ 399,00',
@@ -233,7 +233,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-buds4',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL BUDS4',
                 leveCodigos: '62929;62930',
                 porPreco: 'R$ 599,00',
@@ -274,7 +274,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-buds4-pro',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL BUDS 4 PRO',
                 leveCodigos: '62931;62932',
                 porPreco: 'R$ 799,00',
@@ -315,7 +315,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-watch8-40',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL WATCH 8 40MM LTE',
                 leveCodigos: '19267;19274',
                 porPreco: 'R$ 899,00',
@@ -358,7 +358,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-watch8-44',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL WATCH 8 44MM LTE',
                 leveCodigos: '19266;19273',
                 porPreco: 'R$ 899,00',
@@ -401,7 +401,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-watch9-40',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL WATCH 9 40MM LTE',
                 leveCodigos: '19608;19609',
                 porPreco: 'R$ 1.099,00',
@@ -442,7 +442,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-watch9-44',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL WATCH 9 44MM LTE',
                 leveCodigos: '19620;19598',
                 porPreco: 'R$ 1.099,00',
@@ -483,7 +483,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-watch8-classic',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL WATCH 8 CLASSIC 46MM LTE',
                 leveCodigos: '19268',
                 porPreco: 'R$ 1.199,00',
@@ -514,7 +514,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-watch-ultra-47',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL WATCH ULTRA 47MM LTE (2025)',
                 leveCodigos: '18959;18960;18961;19270;19269',
                 porPreco: 'R$ 1.599,00',
@@ -544,7 +544,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'ssg-watch-ultra2-47',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'SSG GAL WATCH ULTRA2 47MM LTE',
                 leveCodigos: '19599;19618',
                 porPreco: 'R$ 1.699,00',
@@ -621,7 +621,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
         MOTOROLA: [
             {
                 id: 'moto-buds-swarovski',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'MOTO BUDS LOOP CRYSTALS BY SWAROVSKI',
                 leveCodigos: '62828',
                 porPreco: 'R$ 99,00',
@@ -637,7 +637,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'moto-buds-bass',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'MOTO BUDS BASS',
                 leveCodigos: '62891;62889;62890',
                 porPreco: 'R$ 199,00',
@@ -655,7 +655,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'moto-buds-2-plus',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'MOTO BUDS 2+',
                 leveCodigos: '63007;62995',
                 porPreco: 'R$ 499,00',
@@ -674,7 +674,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
         APPLE: [
             {
                 id: 'apple-airpods-4-anc',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'AIRPODS 4 ANC',
                 leveCodigos: '62704',
                 porPreco: 'R$ 1.599,00',
@@ -691,7 +691,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'apple-airpods-pro-2',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'AIRPODS PRO 2ª GERAÇÃO',
                 leveCodigos: '62484',
                 porPreco: 'R$ 1.999,00',
@@ -708,7 +708,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
             },
             {
                 id: 'apple-airpods-pro-3',
-                tipo: 'WEARABLES & ÁUDIO',
+                tipo: 'RELOGIOS & FONES',
                 leveModelo: 'AIRPODS PRO 3',
                 leveCodigos: '62861',
                 porPreco: 'R$ 2.199,00',
@@ -1388,22 +1388,25 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                 </div>
 
                 {/* SEÇÃO BUNDLES — OFERTAS CONJUNTAS (SAMSUNG, MOTOROLA, APPLE) */}
-                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-5">
+                <div
+                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 md:p-6 shadow-sm space-y-5 antialiased"
+                    style={{ fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+                >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
                         <div className="flex items-center gap-3">
-                            <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-200/60 dark:border-purple-500/20">
-                                <Layers size={20} />
+                            <div className="w-10 h-10 rounded-xl bg-[#E3000F]/10 flex items-center justify-center text-[#E3000F] shrink-0">
+                                <Layers size={22} />
                             </div>
                             <div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <h3 className="text-sm sm:text-base font-black text-neutral-800 dark:text-neutral-100 uppercase tracking-wider">
-                                        BUNDLES — Ofertas Conjuntas Oficial (Campanha BUD)
+                                <div className="flex items-center gap-2.5 flex-wrap">
+                                    <h3 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">
+                                        Bundles — Ofertas Conjuntas de Aparelhos
                                     </h3>
-                                    <span className="bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+                                    <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 px-2.5 py-0.5 rounded-full text-xs font-medium">
                                         Single & Combo Multi • Loja Própria
                                     </span>
                                 </div>
-                                <p className="text-xs text-neutral-400 font-medium mt-0.5">
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">
                                     Consulte aparelhos elegíveis (COMPRE), acessórios do bundle (LEVE), códigos SAP e preços promocionais.
                                 </p>
                             </div>
@@ -1419,15 +1422,15 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                         key={marca}
                                         type="button"
                                         onClick={() => setSelectedBundleBrand(marca)}
-                                        className={`px-3.5 py-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                                             isActive
                                                 ? 'bg-[#E3000F] text-white shadow-sm'
-                                                : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
+                                                : 'text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
                                         }`}
                                     >
                                         <span>{marca}</span>
-                                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${
-                                            isActive ? 'bg-black/25 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                            isActive ? 'bg-black/25 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300'
                                         }`}>
                                             {count}
                                         </span>
@@ -1440,13 +1443,13 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                     {/* BARRA DE BUSCA POR MODELO / CÓDIGO SAP + FILTRO DE CATEGORIA */}
                     <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                         <div className="relative flex-1">
-                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
                             <input
                                 type="text"
                                 value={bundleSearch}
                                 onChange={(e) => setBundleSearch(e.target.value)}
                                 placeholder="Buscar por modelo de aparelho (ex: S26 Ultra, A57, iPhone 18, Razr) ou Código SAP (ex: 19329, 62861)..."
-                                className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 text-xs font-semibold text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:border-[#E3000F]"
+                                className="w-full pl-10 pr-9 py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] transition-all"
                             />
                             {bundleSearch && (
                                 <button
@@ -1455,15 +1458,15 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
                                     title="Limpar busca"
                                 >
-                                    <X size={14} />
+                                    <X size={15} />
                                 </button>
                             )}
                         </div>
 
-                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
                             {[
                                 { id: 'TODOS', label: 'Todos os Bundles' },
-                                { id: 'WEARABLES & ÁUDIO', label: 'Fones & Relógios' },
+                                { id: 'RELOGIOS & FONES', label: 'RELOGIOS & FONES' },
                                 { id: 'CAPAS CUSTOMIC & LAUT', label: 'Capas MagSafe' },
                                 { id: 'MULTI_FRIDAY', label: 'Lâmina Multi Friday (Avulso)' }
                             ].map((tab) => (
@@ -1471,10 +1474,10 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                     key={tab.id}
                                     type="button"
                                     onClick={() => setBundleSubFilter(tab.id)}
-                                    className={`px-3 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer border ${
+                                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border ${
                                         bundleSubFilter === tab.id
                                             ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-sm'
-                                            : 'bg-neutral-50 dark:bg-neutral-800/60 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400'
+                                            : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                                     }`}
                                 >
                                     {tab.label}
@@ -1484,7 +1487,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                     </div>
 
                     {/* CARDS RESUMO DAS 3 MARCAS */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                         {[
                             { marca: 'SAMSUNG', desc: 'Buds Core, Fit3, Buds 3 FE, Buds4/4 Pro, Watch 8/Classic, Watch 9, Watch Ultra/Ultra2 + Capas S26' },
                             { marca: 'MOTOROLA', desc: 'Moto Buds Loop Swarovski (R$ 99), Moto Buds Bass (R$ 199) e Moto Buds 2+ (R$ 499)' },
@@ -1496,7 +1499,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                 <div
                                     key={marca}
                                     onClick={() => setSelectedBundleBrand(marca)}
-                                    className={`rounded-xl border-2 p-3.5 transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                                    className={`rounded-xl border p-4 transition-all cursor-pointer flex flex-col justify-between gap-2 ${
                                         isSelected
                                             ? 'border-[#E3000F] bg-red-50/20 dark:bg-[#E3000F]/10 shadow-sm'
                                             : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/40 hover:border-neutral-300 dark:hover:border-neutral-700'
@@ -1505,17 +1508,17 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2">
                                             <span className={`w-2.5 h-2.5 rounded-full ${isSelected ? 'bg-[#E3000F]' : 'bg-neutral-400'}`} />
-                                            <h4 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
-                                                BUNDLES {marca}
+                                            <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-100">
+                                                Bundles {marca}
                                             </h4>
                                         </div>
-                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                                             isSelected ? 'bg-[#E3000F] text-white' : 'bg-neutral-200/70 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300'
                                         }`}>
                                             {listaModelos.length} {listaModelos.length === 1 ? 'oferta' : 'ofertas'}
                                         </span>
                                     </div>
-                                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium leading-snug">
+                                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed">
                                         {desc}
                                     </p>
                                 </div>
@@ -1525,39 +1528,39 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
 
                     {/* LISTAGEM DETALHADA DOS BUNDLES DA MARCA SELECIONADA */}
                     {bundleSubFilter === 'MULTI_FRIDAY' ? (
-                        <div className="space-y-3 pt-1">
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-black uppercase tracking-wider text-neutral-700 dark:text-neutral-200 flex items-center gap-2">
-                                    <Tag size={15} className="text-[#E3000F]" />
+                        <div className="space-y-3.5 pt-1">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                                    <Tag size={16} className="text-[#E3000F]" />
                                     Ofertas Avulsas Multi Friday — {selectedBundleBrand} (Válido 12/11 até 30/11)
                                 </h4>
-                                <span className="text-[11px] text-neutral-400 font-semibold">
+                                <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">
                                     Parcelamento em até 21x sem juros
                                 </span>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                                 {(MULTI_FRIDAY_POR_MARCA[selectedBundleBrand] || [])
                                     .filter(item => !bundleSearch.trim() || item.item.toLowerCase().includes(bundleSearch.trim().toLowerCase()))
                                     .map((mf, i) => (
-                                        <div key={i} className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between gap-2">
+                                        <div key={i} className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between gap-2.5">
                                             <div>
-                                                <span className="text-[10px] font-black uppercase tracking-wider text-[#E3000F] bg-red-50 dark:bg-[#E3000F]/10 px-2 py-0.5 rounded">
-                                                    MULTI FRIDAY • {mf.vigencia}
+                                                <span className="text-xs font-semibold text-[#E3000F] bg-red-50 dark:bg-[#E3000F]/10 px-2.5 py-0.5 rounded-md inline-block">
+                                                    Multi Friday • {mf.vigencia}
                                                 </span>
-                                                <h5 className="text-xs font-black text-neutral-900 dark:text-white mt-2 uppercase">
+                                                <h5 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 mt-2">
                                                     {mf.item}
                                                 </h5>
                                             </div>
-                                            <div className="flex items-end justify-between pt-2 border-t border-neutral-200/60 dark:border-neutral-800">
+                                            <div className="flex items-end justify-between pt-2.5 border-t border-neutral-200/70 dark:border-neutral-800">
                                                 <div>
-                                                    <span className="block text-[10px] text-neutral-400 line-through font-bold">
-                                                        DE: {mf.de}
+                                                    <span className="block text-xs text-neutral-400 line-through font-medium">
+                                                        De: {mf.de}
                                                     </span>
-                                                    <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                                                        POR: {mf.por}
+                                                    <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                                                        Por: {mf.por}
                                                     </span>
                                                 </div>
-                                                <span className="text-[11px] font-extrabold text-neutral-700 dark:text-neutral-300 bg-neutral-200/60 dark:bg-neutral-800 px-2 py-1 rounded-lg">
+                                                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 bg-neutral-200/60 dark:bg-neutral-800 px-2.5 py-1 rounded-lg">
                                                     {mf.parcelas}
                                                 </span>
                                             </div>
@@ -1588,10 +1591,10 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                             if (filteredBundles.length === 0) {
                                 return (
                                     <div className="py-10 text-center rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-800">
-                                        <p className="text-xs font-extrabold text-neutral-600 dark:text-neutral-300 uppercase">
+                                        <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                                             Nenhuma oferta encontrada em {selectedBundleBrand} para "{bundleSearch}"
                                         </p>
-                                        <p className="text-[11px] text-neutral-400 mt-1">
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                                             Tente buscar outro modelo, código SAP ou troque a aba da fabricante acima.
                                         </p>
                                     </div>
@@ -1608,30 +1611,30 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                         return (
                                             <div
                                                 key={bundle.id}
-                                                className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-950/60 p-4 flex flex-col justify-between gap-3.5 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all shadow-sm"
+                                                className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 md:p-5 flex flex-col justify-between gap-4 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all shadow-sm"
                                             >
                                                 {/* Topo do Card: Tipo + Vigência + Preço do Bundle */}
-                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-neutral-200/80 dark:border-neutral-800">
-                                                    <div className="space-y-1.5">
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3.5 border-b border-neutral-100 dark:border-neutral-800">
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 ${
                                                                 bundle.tipo.includes('CAPAS')
-                                                                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
-                                                                    : 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'
+                                                                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-500/30'
+                                                                    : 'bg-purple-50 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300 border border-purple-200/60 dark:border-purple-500/30'
                                                             }`}>
-                                                                {bundle.tipo.includes('CAPAS') ? <Shield size={11} /> : <Watch size={11} />}
+                                                                {bundle.tipo.includes('CAPAS') ? <Shield size={13} /> : <Watch size={13} />}
                                                                 {bundle.tipo}
                                                             </span>
-                                                            <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-neutral-200/80 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                                                            <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
                                                                 Vigência: {bundle.vigencia}
                                                             </span>
                                                         </div>
 
                                                         <div>
-                                                            <span className="text-[10px] font-black uppercase tracking-wider text-[#E3000F] block">
-                                                                LEVE NO BUNDLE:
+                                                            <span className="text-xs font-semibold text-[#E3000F] block">
+                                                                Leve no Bundle:
                                                             </span>
-                                                            <h5 className="text-sm font-black text-neutral-900 dark:text-white leading-snug">
+                                                            <h5 className="text-base font-bold text-neutral-800 dark:text-neutral-100 leading-snug mt-0.5">
                                                                 {bundle.leveModelo}
                                                             </h5>
                                                         </div>
@@ -1640,48 +1643,48 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleCopySap(bundle.leveCodigos)}
-                                                                className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-[#E3000F] flex items-center gap-1 cursor-pointer transition-colors"
+                                                                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-[#E3000F] flex items-center gap-1.5 cursor-pointer transition-colors"
                                                                 title="Clique para copiar o(s) código(s) SAP do acessório"
                                                             >
                                                                 <span>Cód. SAP: {bundle.leveCodigos}</span>
                                                                 {copiedCode === String(bundle.leveCodigos) ? (
-                                                                    <Check size={11} className="text-emerald-500" />
+                                                                    <Check size={13} className="text-emerald-500" />
                                                                 ) : (
-                                                                    <Copy size={11} className="text-neutral-400" />
+                                                                    <Copy size={13} className="text-neutral-400" />
                                                                 )}
                                                             </button>
                                                         </div>
                                                     </div>
 
                                                     {/* Bloco de Preço POR */}
-                                                    <div className="sm:text-right shrink-0 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl px-3.5 py-2">
-                                                        <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
-                                                            PREÇO BUNDLE (POR)
+                                                    <div className="sm:text-right shrink-0 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl px-4 py-2.5">
+                                                        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 block">
+                                                            Preço Bundle (Por)
                                                         </span>
-                                                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                                                        <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                                                             {bundle.porPreco}
                                                         </span>
                                                         {bundle.multiFridayAvulso && (
-                                                            <span className="block text-[9px] font-bold text-neutral-500 dark:text-neutral-400 mt-0.5">
-                                                                Avulso Multi Friday: {bundle.multiFridayAvulso}
+                                                            <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                                                Avulso: {bundle.multiFridayAvulso}
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
                                                 {/* Lista de Aparelhos Elegíveis (COMPRE) */}
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <span className="text-[10px] font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-300 flex items-center gap-1">
-                                                            <Smartphone size={12} className="text-[#E3000F]" />
-                                                            COMPRE ({bundle.compreLista.length} {bundle.compreLista.length === 1 ? 'família/modelo elegível' : 'modelos elegíveis'}):
+                                                <div className="space-y-2.5">
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                        <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+                                                            <Smartphone size={14} className="text-[#E3000F]" />
+                                                            Compre ({bundle.compreLista.length} {bundle.compreLista.length === 1 ? 'família/modelo elegível' : 'modelos elegíveis'}):
                                                         </span>
-                                                        <span className="text-[10px] font-bold text-neutral-400">
-                                                            {bundle.observacoes}
+                                                        <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                                                            Single e Combo Multi
                                                         </span>
                                                     </div>
 
-                                                    <p className="text-[11px] font-bold text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-200/70 dark:border-neutral-800">
+                                                    <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/70 px-3 py-2 rounded-lg border border-neutral-200/80 dark:border-neutral-800 leading-relaxed">
                                                         {bundle.resumoCompre}
                                                     </p>
 
@@ -1694,27 +1697,27 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                                             return (
                                                                 <div
                                                                     key={idx}
-                                                                    className={`px-2.5 py-1.5 rounded-lg border text-[11px] flex flex-col sm:flex-row sm:items-center justify-between gap-1 transition-colors ${
+                                                                    className={`px-3 py-2 rounded-lg border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 transition-colors ${
                                                                         isMatch
                                                                             ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700'
-                                                                            : 'bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800'
+                                                                            : 'bg-neutral-50/60 dark:bg-neutral-800/40 border-neutral-200/80 dark:border-neutral-800'
                                                                     }`}
                                                                 >
-                                                                    <span className="font-extrabold text-neutral-800 dark:text-neutral-100">
+                                                                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 leading-snug">
                                                                         {c.modelo}
                                                                     </span>
                                                                     {c.codigos && c.codigos !== '-' && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleCopySap(c.codigos)}
-                                                                            className="self-start sm:self-auto px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-[10px] font-mono font-semibold text-neutral-600 dark:text-neutral-300 flex items-center gap-1 shrink-0 cursor-pointer"
+                                                                            className="self-start sm:self-auto px-2.5 py-1 rounded-md bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 shrink-0 cursor-pointer"
                                                                             title="Copiar códigos SAP deste modelo"
                                                                         >
-                                                                            <span className="truncate max-w-[210px]">SAP: {c.codigos}</span>
+                                                                            <span className="truncate max-w-[220px]">SAP: {c.codigos}</span>
                                                                             {copiedCode === String(c.codigos) ? (
-                                                                                <Check size={10} className="text-emerald-500 shrink-0" />
+                                                                                <Check size={12} className="text-emerald-500 shrink-0" />
                                                                             ) : (
-                                                                                <Copy size={10} className="text-neutral-400 shrink-0" />
+                                                                                <Copy size={12} className="text-neutral-400 shrink-0" />
                                                                             )}
                                                                         </button>
                                                                     )}
@@ -1727,15 +1730,15 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleExpandBundle(bundle.id)}
-                                                            className="w-full py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 hover:bg-neutral-200 dark:hover:bg-neutral-800 text-[11px] font-extrabold text-neutral-700 dark:text-neutral-300 flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                                            className="w-full py-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                                                         >
                                                             {isExpanded ? (
                                                                 <>
-                                                                    <ChevronUp size={14} /> Recolher lista de modelos
+                                                                    <ChevronUp size={15} /> Recolher lista de modelos
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <ChevronDown size={14} /> Ver todos os {bundle.compreLista.length} modelos e códigos SAP (+{hiddenCount})
+                                                                    <ChevronDown size={15} /> Ver todos os {bundle.compreLista.length} modelos e códigos SAP (+{hiddenCount})
                                                                 </>
                                                             )}
                                                         </button>
