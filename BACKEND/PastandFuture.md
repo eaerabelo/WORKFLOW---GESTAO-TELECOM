@@ -444,3 +444,46 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 
 ### 3. Seção `[GEEK]` — Área `BUNDLES` (`FRONTEND/src/components/Geek.jsx`)
 - Criada a seção **BUNDLES — Ofertas Conjuntas de Aparelhos** com abas e áreas reservadas para **SAMSUNG**, **MOTOROLA** e **APPLE**, aguardando o envio dos modelos/ofertas para preenchimento.
+
+---
+
+## 16/11/2026 — Atualização de Produtos `[VENDA]` (Seguros & Aparelhos 5%) e Ajuste de Dimensões `[RETENÇÃO]`
+
+### 1. Produtos de Seguro e Aparelho na Seção `[VENDA]` (`constants.js`, `Venda.jsx`, `FatorRvv.jsx`, `sistemasController.js`, `rules.js`)
+- **Tabela de Seguro Atualizada:**
+  - `SEGURO R$ 60,00` → Valor Comissionável = `R$ 24,00`
+  - `SEGURO R$ 55,00` → Valor Comissionável = `R$ 22,00`
+  - `SEGURO R$ 45,00` → Valor Comissionável = `R$ 18,00`
+  - `SEGURO R$ 35,00` → Valor Comissionável = `R$ 14,00`
+- **Aparelhos (5% Fixo):** Removida a variação de 6% com seguro; aparelhos permanecem em **5%** fixo sobre o valor bruto com ou sem venda de seguro.
+
+### 2. Ajuste Responsivo e Correção de Vazamento de Dimensões em `[RETENÇÃO]` (`FRONTEND/src/components/Retencao.jsx`)
+- Removido o bloqueio vertical `h-full flex-col` com `overflow-hidden` que comprimia os blocos internos e causava vazamento de layout.
+- Ajustados todos os grids, espaçamentos e quebras de texto (`w-full max-w-full min-w-0`) para encaixe fluido em qualquer resolução de tela.
+
+---
+
+## 16/11/2026 — Ajustes em `[VENDA]`, `[UR]` (Botão Compartilhar WhatsApp em Destaque) e Área `BUNDLES` em `[GEEK]`
+
+### 1. Seção `[VENDA]` (`FRONTEND/src/components/Venda.jsx`)
+- **Data de Instalação Obrigatória:** Para vendas de produtos residenciais (tanto Individual quanto Conjunta/Combo), o preenchimento da **Data de Instalação (UR)** agora é obrigatório (`*`).
+- **Baixa Imediata Exclusiva para Venda Individual de TV (`statusUr: 'CONECTADO'`):** O botão **BAIXA IMEDIATA** aparece exclusivamente na aba de **Venda Individual** quando o produto selecionado é TV (`TVBOX`, `TV-BOX`, `TV CABO`, `SOUNDBOX`, `PONTO ADICIONAL`), subindo o contrato diretamente com status **`CONECTADO`** na seção `[UR-RESIDENCIAL]`.
+
+### 2. Seção `[UR-RESIDENCIAL]` (`FRONTEND/src/components/UrResidencial.jsx`)
+- **Botão de Compartilhamento WhatsApp em Destaque:** Adicionada coluna dedicada logo na **1ª coluna da tabela** (`WhatsApp -> Compartilhar`), além do botão no cabeçalho superior e na coluna de ações à direita (visível para todos os cargos, exceto `VENDEDOR`).
+- **Modal Renderizado via Portal (`createPortal`):** Garante abertura limpa em tela cheia com busca automática de endereço via API de CEP (`ViaCEP`) e disparo imediato para o WhatsApp.
+
+### 3. Seção `[GEEK]` — Área `BUNDLES` (`FRONTEND/src/components/Geek.jsx`)
+- Criada a seção **BUNDLES — Ofertas Conjuntas de Aparelhos** com abas e áreas reservadas para **SAMSUNG**, **MOTOROLA** e **APPLE**, aguardando o envio dos modelos/ofertas para preenchimento.
+
+---
+
+## 18/11/2026 — Modo App Nativo (PWA Standalone / Window Controls Overlay) e Espelhamento de Notificações no PC & Celular
+
+### 1. Manifesto PWA e Barra Superior Estilo App (`FRONTEND/public/manifest.json` & `index.html`)
+- Configurado `display: "standalone"` com `display_override: ["window-controls-overlay", "standalone", "minimal-ui"]` e sincronização dinâmica de `theme-color` (`#E3000F` / `#171717`), para que na instalação via Google Chrome / Edge no PC ou no Celular (Android/iOS) o sistema abra como aplicativo nativo, sem barra de URL do navegador.
+- Adicionado suporte ao evento `beforeinstallprompt` com botão **"Instalar App"** no cabeçalho.
+
+### 2. Service Worker e Permissão de Notificações Nativas (`FRONTEND/public/sw.js` & `src/utils/pwaNotifications.js`)
+- Criado o Service Worker (`/sw.js`) com suporte a `registration.showNotification` e foco automático na janela do App ao clicar no alerta do sistema operacional.
+- Implementada a solicitação automática de permissão (`Notification.requestPermission()`) após o login, além do painel de controle e botão **"Testar"** dentro do menu do Sininho, espelhando todas as notificações internas da plataforma (Parciais, Campanhas, Ganhadores, Metas, Tabela de Preços e Lembretes UR) diretamente no **Windows/Mac** e no **Celular**.

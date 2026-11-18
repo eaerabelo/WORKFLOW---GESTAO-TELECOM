@@ -63,6 +63,12 @@ import {
   logoutAPI
 } from './services/api.js';
 import { getCurrentStoreName, getCurrentStoreCode } from './utils/stores.js';
+import {
+  registerWorkflowServiceWorker,
+  getNativeNotificationPermission,
+  requestNativeNotificationPermission,
+  dispatchNativeNotification
+} from './utils/pwaNotifications.js';
 
 // Multi-Tenant: Identificador dinâmico da loja
 const STORE_ID = (typeof window !== 'undefined' ? localStorage.getItem('storeId') : null) || 'uniao_osasco';
@@ -93,12 +99,17 @@ export default function App() {
     return 'light';
   });
 
-  // Aplica as classes do Tailwind no root do HTML toda vez que o tema mudar
+  // Aplica as classes do Tailwind no root do HTML toda vez que o tema mudar e sincroniza a barra superior do App (PWA)
   useEffect(() => {
     const root = window.document.documentElement;
     if (theme === 'dark') root.classList.add('dark');
     else root.classList.remove('dark');
     localStorage.setItem('theme-preference', theme);
+
+    const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
+    themeMetas.forEach((m) => {
+      m.setAttribute('content', theme === 'dark' ? '#171717' : '#E3000F');
+    });
   }, [theme]);
 
   // Função simples para alternar entre Dark / Light
@@ -179,14 +190,84 @@ export default function App() {
   // Conta notificações não lidas
   const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
 
+  // Estados de PWA (Instalação App Chrome/Mobile) e Permissão de Notificação Nativa (PC & Celular)
+  const [nativeNotifPermission, setNativeNotifPermission] = useState(() => getNativeNotificationPermission());
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+
+  useEffect(() => {
+    registerWorkflowServiceWorker();
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  // Solicita permissão de notificação ao navegador/PC/Celular após o login na primeira interação
+  useEffect(() => {
+    if (!globalUser) return;
+    const currentPerm = getNativeNotificationPermission();
+    setNativeNotifPermission(currentPerm);
+
+    if (currentPerm === 'default') {
+      const requestOnFirstClick = async () => {
+        const res = await requestNativeNotificationPermission();
+        setNativeNotifPermission(res);
+        if (res === 'granted') {
+          dispatchNativeNotification({
+            id: `welcome-notif-${Date.now()}`,
+            title: 'Notificações Ativadas!',
+            desc: 'Você receberá os alertas de campanhas, metas e parciais diretamente no seu dispositivo.'
+          }, true);
+        }
+        window.removeEventListener('click', requestOnFirstClick);
+      };
+      window.addEventListener('click', requestOnFirstClick, { once: true });
+      return () => window.removeEventListener('click', requestOnFirstClick);
+    }
+  }, [globalUser]);
+
+  const handleEnableNativeNotifications = async () => {
+    const res = await requestNativeNotificationPermission();
+    setNativeNotifPermission(res);
+    if (res === 'granted') {
+      toast.success('Notificações do sistema ativadas no seu dispositivo!');
+      await dispatchNativeNotification({
+        id: `test-notif-${Date.now()}`,
+        title: 'Alertas Sincronizados!',
+        desc: 'As notificações da plataforma agora aparecem no seu PC e Celular.'
+      }, true);
+    } else if (res === 'denied') {
+      toast.error('Permissão bloqueada no navegador. Clique no cadeado ao lado da URL para permitir notificações.');
+    }
+  };
+
+  const handleInstallPwaApp = async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredInstallPrompt(null);
+      toast.success('Instalando aplicativo WorkFlow...');
+    }
+  };
+
   // Estado do Modal de Wi-Fi
   const [isWifiModalOpen, setIsWifiModalOpen] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [isUrReminderModalOpen, setIsUrReminderModalOpen] = useState(false);
 
-  // Persiste as notificações localmente a cada atualização
+  // Persiste as notificações localmente e espelha automaticamente para a Notificação Nativa do PC / Celular
   useEffect(() => {
     localStorage.setItem('user_notifications', JSON.stringify(notifications));
+    if (Array.isArray(notifications) && notifications.length > 0 && getNativeNotificationPermission() === 'granted') {
+      const unreadList = notifications.filter(n => n && !n.read);
+      unreadList.slice(0, 3).forEach(notif => {
+        dispatchNativeNotification(notif);
+      });
+    }
   }, [notifications]);
 
   // Marca tudo como lido quando o usuário abre o popover de notificações
@@ -1258,6 +1339,18 @@ export default function App() {
               <BookOpen size={16} /> <span className="hidden lg:inline">Tutorial</span>
             </button>
 
+            {deferredInstallPrompt && (
+              <button
+                type="button"
+                onClick={handleInstallPwaApp}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E3000F] hover:bg-red-700 text-white rounded-lg text-xs font-extrabold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                title="Instalar WorkFlow como Aplicativo no Dispositivo"
+              >
+                <Zap size={14} />
+                <span className="hidden md:inline">Instalar App</span>
+              </button>
+            )}
+
             
 
             {/* Botão Wi-Fi para Clientes */}
@@ -1297,6 +1390,38 @@ export default function App() {
                     <h3 className="font-bold text-neutral-800 dark:text-neutral-100">Notificações</h3>
                     {notifications.length > 0 && (
                       <button onClick={() => setNotifications([])} className="text-[10px] font-bold text-neutral-500 hover:text-[#E3000F] uppercase tracking-wider">Limpar tudo</button>
+                    )}
+                  </div>
+
+                  {/* CONTROLE DE PERMISSÃO DE NOTIFICAÇÃO NATIVA (PC & CELULAR) */}
+                  <div className="px-4 py-2.5 bg-neutral-100/70 dark:bg-neutral-800/80 border-b border-neutral-200/70 dark:border-neutral-700/70 flex items-center justify-between gap-2">
+                    {nativeNotifPermission === 'granted' ? (
+                      <>
+                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                          Alertas Ativos (PC/Celular)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => dispatchNativeNotification({
+                            id: `manual-test-${Date.now()}`,
+                            title: 'Teste de Alerta WorkFlow',
+                            desc: 'Notificação sincronizada no seu PC e Celular com sucesso!'
+                          }, true)}
+                          className="px-2.5 py-1 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-[10px] font-extrabold text-neutral-700 dark:text-neutral-200 hover:text-[#E3000F] transition-colors cursor-pointer"
+                        >
+                          Testar
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleEnableNativeNotifications}
+                        className="w-full py-1.5 px-3 rounded-xl bg-[#E3000F] hover:bg-red-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                      >
+                        <Bell size={13} />
+                        <span>Ativar Notificações no PC / Celular</span>
+                      </button>
                     )}
                   </div>
                   <div className="max-h-[60vh] sm:max-h-[350px] overflow-y-auto scrollbar-thin">
