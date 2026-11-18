@@ -487,3 +487,11 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 ### 2. Service Worker e Permissão de Notificações Nativas (`FRONTEND/public/sw.js` & `src/utils/pwaNotifications.js`)
 - Criado o Service Worker (`/sw.js`) com suporte a `registration.showNotification` e foco automático na janela do App ao clicar no alerta do sistema operacional.
 - Implementada a solicitação automática de permissão (`Notification.requestPermission()`) após o login, além do painel de controle e botão **"Testar"** dentro do menu do Sininho, espelhando todas as notificações internas da plataforma (Parciais, Campanhas, Ganhadores, Metas, Tabela de Preços e Lembretes UR) diretamente no **Windows/Mac** e no **Celular**.
+
+---
+
+## 18/11/2026 — Preenchimento Oficial de `BUNDLES` e Lâmina `MULTI FRIDAY` na Seção `[GEEK]` (`FRONTEND/src/components/Geek.jsx`)
+
+- Extraídos 100% dos dados da planilha oficial `Bundles 12.11.2026_8806.xlsx` (abas `SAMSUNG`, `MOTOROLA`, `APPLE`, `CAPAS CUSTOMIC E LAUT`) e da lâmina `LAMINA_OFERTAS_BLACK_FRIDAY_2026_(1).pdf` (`Multi Friday`).
+- Adicionadas todas as ofertas conjuntas por marca (`SAMSUNG`: 14 grupos de ofertas incluindo Fit3, Buds Core, Buds 3 FE, Buds4, Buds 4 Pro, Watch 8 40/44/Classic, Watch 9 40/44, Watch Ultra/Ultra2 e Capas MagSafe S26/S26+/S26 Ultra; `MOTOROLA`: Moto Buds Loop Swarovski, Moto Buds Bass e Moto Buds 2+; `APPLE`: AirPods 4 ANC, AirPods Pro 2ª Geração, AirPods Pro 3 e 7 famílias de Capas Customic & Laut + Película para iPhone 17e/17/17 Pro/17 Pro Max/18 Pro/18 Pro Max/Duo).
+- Adicionada barra de busca instantânea por modelo ou Código SAP, botão de cópia rápida de Código SAP com 1 clique e filtro para a tabela avulsa **Multi Friday**.

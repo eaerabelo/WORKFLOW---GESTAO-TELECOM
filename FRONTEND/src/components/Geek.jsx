@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Cpu, Plus, FileText, Trash2, ExternalLink, X, BookOpen, Layers,
     Tag, Archive, FolderPlus, Edit3, ChevronLeft, ChevronRight,
-    Image as ImageIcon, Sparkles, Maximize2, Upload, Megaphone
+    Image as ImageIcon, Sparkles, Maximize2, Upload, Megaphone,
+    Search, Copy, Check, ChevronDown, ChevronUp, Smartphone, Watch, Shield
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -139,13 +140,746 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
     });
     const [previewFlyer, setPreviewFlyer] = useState(null);
     const [selectedBundleBrand, setSelectedBundleBrand] = useState('SAMSUNG');
+    const [bundleSearch, setBundleSearch] = useState('');
+    const [bundleSubFilter, setBundleSubFilter] = useState('TODOS');
+    const [expandedBundleIds, setExpandedBundleIds] = useState({});
+    const [copiedCode, setCopiedCode] = useState('');
     const carouselRef = useRef(null);
 
-    // Estrutura de BUNDLES (Ofertas Conjuntas) por marca — pronta para preenchimento dos modelos
+    const handleCopySap = (codeStr) => {
+        if (!codeStr || codeStr === '-') return;
+        try {
+            navigator.clipboard.writeText(String(codeStr));
+            setCopiedCode(String(codeStr));
+            toast.success(`Código(s) copiado(s): ${codeStr}`);
+            setTimeout(() => setCopiedCode(''), 2000);
+        } catch {
+            toast.error('Não foi possível copiar o código.');
+        }
+    };
+
+    const toggleExpandBundle = (id) => {
+        setExpandedBundleIds(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    // Estrutura Oficial de BUNDLES (Planilha Bundles 12.11.2026_8806.xlsx + Lâmina Multi Friday 2026)
     const BUNDLES_POR_MARCA = {
-        SAMSUNG: [],
-        MOTOROLA: [],
-        APPLE: []
+        SAMSUNG: [
+            {
+                id: 'ssg-buds-core',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL BUDS CORE',
+                leveCodigos: '62831;62832',
+                porPreco: 'R$ 119,00',
+                multiFridayAvulso: 'De R$ 349 por R$ 289 (21x R$ 14)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Galaxy A17, A26, A27, A36, A37, A56, A57 5G e Tab S10 Lite',
+                compreLista: [
+                    { modelo: 'SSG GAL A17 5G 128GB', codigos: '19280;19281;19282;19283;19386;19387' },
+                    { modelo: 'SSG GAL A26 5G 256GB', codigos: '19189;19190;19191;19192;19197;19193' },
+                    { modelo: 'SSG GAL A27 5G 256GB', codigos: '19600;19610;19619;19632;19631;19630' },
+                    { modelo: 'SSG GAL A36 5G 256GB', codigos: '19177;19178;19179;19182;19183;19184;19185;19186' },
+                    { modelo: 'SSG GAL A37 5G 256GB', codigos: '19480;19483;19485;19482;19491;19484;19486;19481' },
+                    { modelo: 'SSG GAL A56 5G 256GB', codigos: '19169;19170;19171;19172;19173;19174;19175;19176' },
+                    { modelo: 'SSG GAL A57 5G 256GB', codigos: '19498;19499;19500;19501;19502;19503;19504;19505' },
+                    { modelo: 'SSG GALAXY TAB S10 LITE 128GB (WIFI)', codigos: '90020' }
+                ]
+            },
+            {
+                id: 'ssg-fit3',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'GALAXY FIT3 SAMSUNG',
+                leveCodigos: '62529;62856',
+                porPreco: 'R$ 129,00',
+                multiFridayAvulso: 'De R$ 429 por R$ 349 (21x R$ 17)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Galaxy A26, A27, A36, A37, A56, A57 5G e Tab S10 Lite',
+                compreLista: [
+                    { modelo: 'SSG GAL A26 5G 256GB', codigos: '19189;19190;19191;19192;19197;19193' },
+                    { modelo: 'SSG GAL A27 5G 256GB', codigos: '19600;19610;19619;19632;19631;19630' },
+                    { modelo: 'SSG GAL A36 5G 256GB', codigos: '19177;19178;19179;19182;19183;19184;19185;19186' },
+                    { modelo: 'SSG GAL A37 5G 256GB', codigos: '19480;19483;19485;19482;19491;19484;19486;19481' },
+                    { modelo: 'SSG GAL A56 5G 256GB', codigos: '19169;19170;19171;19172;19173;19174;19175;19176' },
+                    { modelo: 'SSG GAL A57 5G 256GB', codigos: '19498;19499;19500;19501;19502;19503;19504;19505' },
+                    { modelo: 'SSG GALAXY TAB S10 LITE 128GB (WIFI)', codigos: '90020' }
+                ]
+            },
+            {
+                id: 'ssg-buds3-fe',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL BUDS 3 FE',
+                leveCodigos: '62833;62834',
+                porPreco: 'R$ 399,00',
+                multiFridayAvulso: 'De R$ 999 por R$ 799 (21x R$ 39)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Galaxy A37, A56, A57, S25 FE, S26 FE e Z Flip7 FE',
+                compreLista: [
+                    { modelo: 'SSG GAL A37 5G 256GB', codigos: '19480;19483;19485;19482;19491;19484;19486;19481' },
+                    { modelo: 'SSG GAL A56 5G 256GB', codigos: '19169;19170;19171;19172;19173;19174;19175;19176' },
+                    { modelo: 'SSG GAL A57 5G 256GB', codigos: '19498;19499;19500;19501;19502;19503;19504;19505' },
+                    { modelo: 'SSG GAL S25 FE 5G 256GB', codigos: '19288;19275;19276;19277;19278;19279' },
+                    { modelo: 'SSG GAL S26 FE 5G 256GB', codigos: '19715;19706;19730;19718;19707;19719' },
+                    { modelo: 'SSG GAL Z FLIP7 FE 256GB', codigos: '19260;19259' }
+                ]
+            },
+            {
+                id: 'ssg-buds4',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL BUDS4',
+                leveCodigos: '62929;62930',
+                porPreco: 'R$ 599,00',
+                multiFridayAvulso: 'De R$ 1.499 por R$ 1.299 (21x R$ 62)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Família S25 (FE/S25/+/Edge/Ultra), Família S26 (FE/S26/+/Ultra) e Linha Z Flip7/8 & Fold7/8',
+                compreLista: [
+                    { modelo: 'SSG GAL S26 FE 5G 256GB', codigos: '19715;19706;19730;19718;19707;19719' },
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 256GB', codigos: '19315;19318;19320;19322;19323;19325;19326;19328' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 512GB', codigos: '19329;19331;19333;19357;19358;19359;19360;19361' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL S25 FE 5G 256GB', codigos: '19288;19275;19276;19277;19278;19279' },
+                    { modelo: 'SSG GAL S25 5G 256GB', codigos: '19098;19096;19097;19099;19100;19101;19102;19103' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 256GB', codigos: '19117;19118;19119;19120;19121;19122;19123;19124' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 512GB', codigos: '19125;19126;19127;19128;19129;19130;19156;19131' },
+                    { modelo: 'SSG GAL S25 EDGE 5G 512GB', codigos: '19211;19210;19209' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 256GB', codigos: '19138;19139;19137;19136;19135;19134;19133;19155' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 512GB', codigos: '19141;19142;19143;19144;19145;19146;19147;19148' },
+                    { modelo: 'SSG GAL Z FLIP7 FE 256GB', codigos: '19260;19259' },
+                    { modelo: 'SSG GAL Z FLIP7 256GB', codigos: '19258;19257' },
+                    { modelo: 'SSG GAL Z FLIP7 512GB', codigos: '19256;19255' },
+                    { modelo: 'SSG GAL Z FLIP 8 256GB', codigos: '19592;19561;19582' },
+                    { modelo: 'SSG GAL Z FLIP 8 512GB', codigos: '19593;19583;19562' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 256GB', codigos: '19572;19584;19563' },
+                    { modelo: 'SSG GAL Z FOLD 8 512GB', codigos: '19573;19585;19594' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 256GB', codigos: '19564;19565;19595' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-buds4-pro',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL BUDS 4 PRO',
+                leveCodigos: '62931;62932',
+                porPreco: 'R$ 799,00',
+                multiFridayAvulso: 'De R$ 1.799 por R$ 1.499 (21x R$ 72)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Família S25 (FE/S25/+/Ultra), Família S26 (FE/S26/+/Ultra) e Linha Z Flip7/8 & Fold7/8',
+                compreLista: [
+                    { modelo: 'SSG GAL S26 FE 5G 256GB', codigos: '19715;19706;19730;19718;19707;19719' },
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 256GB', codigos: '19315;19318;19320;19322;19323;19325;19326;19328' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 512GB', codigos: '19329;19331;19333;19357;19358;19359;19360;19361' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL S25 FE 5G 256GB', codigos: '19288;19275;19276;19277;19278;19279' },
+                    { modelo: 'SSG GAL S25 5G 256GB', codigos: '19098;19096;19097;19099;19100;19101;19102;19103' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 256GB', codigos: '19117;19118;19119;19120;19121;19122;19123;19124' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 512GB', codigos: '19125;19126;19127;19128;19129;19130;19156;19131' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 256GB', codigos: '19138;19139;19137;19136;19135;19134;19133;19155' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 512GB', codigos: '19141;19142;19143;19144;19145;19146;19147;19148' },
+                    { modelo: 'SSG GAL Z FLIP7 FE 256GB', codigos: '19260;19259' },
+                    { modelo: 'SSG GAL Z FLIP7 256GB', codigos: '19258;19257' },
+                    { modelo: 'SSG GAL Z FLIP7 512GB', codigos: '19256;19255' },
+                    { modelo: 'SSG GAL Z FLIP 8 256GB', codigos: '19592;19561;19582' },
+                    { modelo: 'SSG GAL Z FLIP 8 512GB', codigos: '19593;19583;19562' },
+                    { modelo: 'SSG GAL Z FOLD7 512GB', codigos: '19254;19253;19252' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 256GB', codigos: '19572;19584;19563' },
+                    { modelo: 'SSG GAL Z FOLD 8 512GB', codigos: '19573;19585;19594' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 256GB', codigos: '19564;19565;19595' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-watch8-40',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL WATCH 8 40MM LTE',
+                leveCodigos: '19267;19274',
+                porPreco: 'R$ 899,00',
+                multiFridayAvulso: 'De R$ 1.799 por R$ 1.599 (21x R$ 77)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Galaxy A37, A57, Família S25, Família S26 e Linha Z Flip7/8 & Fold7/8',
+                compreLista: [
+                    { modelo: 'SSG GAL A37 5G 256GB', codigos: '19480;19483;19485;19482;19491;19484;19486;19481' },
+                    { modelo: 'SSG GAL A57 5G 256GB', codigos: '19498;19499;19500;19501;19502;19503;19504;19505' },
+                    { modelo: 'SSG GAL S26 FE 5G 256GB', codigos: '19715;19706;19730;19718;19707;19719' },
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 256GB', codigos: '19315;19318;19320;19322;19323;19325;19326;19328' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 512GB', codigos: '19329;19331;19333;19357;19358;19359;19360;19361' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL S25 FE 5G 256GB', codigos: '19288;19275;19276;19277;19278;19279' },
+                    { modelo: 'SSG GAL S25 5G 256GB', codigos: '19098;19096;19097;19099;19100;19101;19102;19103' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 256GB', codigos: '19117;19118;19119;19120;19121;19122;19123;19124' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 512GB', codigos: '19125;19126;19127;19128;19129;19130;19156;19131' },
+                    { modelo: 'SSG GAL S25 EDGE 5G 512GB', codigos: '19211;19210;19209' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 256GB', codigos: '19138;19139;19137;19136;19135;19134;19133;19155' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 512GB', codigos: '19141;19142;19143;19144;19145;19146;19147;19148' },
+                    { modelo: 'SSG GAL Z FLIP7 FE 256GB', codigos: '19260;19259' },
+                    { modelo: 'SSG GAL Z FLIP7 256GB', codigos: '19258;19257' },
+                    { modelo: 'SSG GAL Z FLIP7 512GB', codigos: '19256;19255' },
+                    { modelo: 'SSG GAL Z FLIP 8 256GB', codigos: '19592;19561;19582' },
+                    { modelo: 'SSG GAL Z FLIP 8 512GB', codigos: '19593;19583;19562' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 256GB', codigos: '19572;19584;19563' },
+                    { modelo: 'SSG GAL Z FOLD 8 512GB', codigos: '19573;19585;19594' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 256GB', codigos: '19564;19565;19595' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-watch8-44',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL WATCH 8 44MM LTE',
+                leveCodigos: '19266;19273',
+                porPreco: 'R$ 899,00',
+                multiFridayAvulso: 'De R$ 1.999 por R$ 1.699 (21x R$ 81)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Galaxy A37, A57, Família S25, Família S26 e Linha Z Flip7/8 & Fold7/8',
+                compreLista: [
+                    { modelo: 'SSG GAL A37 5G 256GB', codigos: '19480;19483;19485;19482;19491;19484;19486;19481' },
+                    { modelo: 'SSG GAL A57 5G 256GB', codigos: '19498;19499;19500;19501;19502;19503;19504;19505' },
+                    { modelo: 'SSG GAL S26 FE 5G 256GB', codigos: '19715;19706;19730;19718;19707;19719' },
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 256GB', codigos: '19315;19318;19320;19322;19323;19325;19326;19328' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 512GB', codigos: '19329;19331;19333;19357;19358;19359;19360;19361' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL S25 FE 5G 256GB', codigos: '19288;19275;19276;19277;19278;19279' },
+                    { modelo: 'SSG GAL S25 5G 256GB', codigos: '19098;19096;19097;19099;19100;19101;19102;19103' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 256GB', codigos: '19117;19118;19119;19120;19121;19122;19123;19124' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 512GB', codigos: '19125;19126;19127;19128;19129;19130;19156;19131' },
+                    { modelo: 'SSG GAL S25 EDGE 5G 512GB', codigos: '19211;19210;19209' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 256GB', codigos: '19138;19139;19137;19136;19135;19134;19133;19155' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 512GB', codigos: '19141;19142;19143;19144;19145;19146;19147;19148' },
+                    { modelo: 'SSG GAL Z FLIP7 FE 256GB', codigos: '19260;19259' },
+                    { modelo: 'SSG GAL Z FLIP7 256GB', codigos: '19258;19257' },
+                    { modelo: 'SSG GAL Z FLIP7 512GB', codigos: '19256;19255' },
+                    { modelo: 'SSG GAL Z FLIP 8 256GB', codigos: '19592;19561;19582' },
+                    { modelo: 'SSG GAL Z FLIP 8 512GB', codigos: '19593;19583;19562' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 256GB', codigos: '19572;19584;19563' },
+                    { modelo: 'SSG GAL Z FOLD 8 512GB', codigos: '19573;19585;19594' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 256GB', codigos: '19564;19565;19595' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-watch9-40',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL WATCH 9 40MM LTE',
+                leveCodigos: '19608;19609',
+                porPreco: 'R$ 1.099,00',
+                multiFridayAvulso: 'De R$ 2.499 por R$ 2.299 (21x R$ 110)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Galaxy A37, A57, Família S25, Família S26 e Linha Z Flip7/8 & Fold7/8 Ultra',
+                compreLista: [
+                    { modelo: 'SSG GAL A37 5G 256GB', codigos: '19480;19483;19485;19482;19491;19484;19486;19481' },
+                    { modelo: 'SSG GAL A57 5G 256GB', codigos: '19498;19499;19500;19501;19502;19503;19504;19505' },
+                    { modelo: 'SSG GAL S26 FE 5G 256GB', codigos: '19715;19706;19730;19718;19707;19719' },
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 256GB', codigos: '19315;19318;19320;19322;19323;19325;19326;19328' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 512GB', codigos: '19329;19331;19333;19357;19358;19359;19360;19361' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL S25 FE 5G 256GB', codigos: '19288;19275;19276;19277;19278;19279' },
+                    { modelo: 'SSG GAL S25 5G 256GB', codigos: '19098;19096;19097;19099;19100;19101;19102;19103' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 256GB', codigos: '19117;19118;19119;19120;19121;19122;19123;19124' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 512GB', codigos: '19125;19126;19127;19128;19129;19130;19156;19131' },
+                    { modelo: 'SSG GAL S25 EDGE 5G 512GB', codigos: '19211;19210;19209' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 256GB', codigos: '19138;19139;19137;19136;19135;19134;19133;19155' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 512GB', codigos: '19141;19142;19143;19144;19145;19146;19147;19148' },
+                    { modelo: 'SSG GAL Z FLIP7 FE 256GB', codigos: '19260;19259' },
+                    { modelo: 'SSG GAL Z FLIP7 256GB', codigos: '19258;19257' },
+                    { modelo: 'SSG GAL Z FLIP7 512GB', codigos: '19256;19255' },
+                    { modelo: 'SSG GAL Z FLIP 8 256GB', codigos: '19592;19561;19582' },
+                    { modelo: 'SSG GAL Z FLIP 8 512GB', codigos: '19593;19583;19562' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 256GB', codigos: '19564;19565;19595' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-watch9-44',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL WATCH 9 44MM LTE',
+                leveCodigos: '19620;19598',
+                porPreco: 'R$ 1.099,00',
+                multiFridayAvulso: 'De R$ 2.699 por R$ 2.499 (21x R$ 119)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Galaxy A37, A57, Família S25, Família S26 e Linha Z Flip7/8 & Fold7/8 Ultra',
+                compreLista: [
+                    { modelo: 'SSG GAL A37 5G 256GB', codigos: '19480;19483;19485;19482;19491;19484;19486;19481' },
+                    { modelo: 'SSG GAL A57 5G 256GB', codigos: '19498;19499;19500;19501;19502;19503;19504;19505' },
+                    { modelo: 'SSG GAL S26 FE 5G 256GB', codigos: '19715;19706;19730;19718;19707;19719' },
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 256GB', codigos: '19315;19318;19320;19322;19323;19325;19326;19328' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 512GB', codigos: '19329;19331;19333;19357;19358;19359;19360;19361' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL S25 FE 5G 256GB', codigos: '19288;19275;19276;19277;19278;19279' },
+                    { modelo: 'SSG GAL S25 5G 256GB', codigos: '19098;19096;19097;19099;19100;19101;19102;19103' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 256GB', codigos: '19117;19118;19119;19120;19121;19122;19123;19124' },
+                    { modelo: 'SSG GAL S25 PLUS 5G 512GB', codigos: '19125;19126;19127;19128;19129;19130;19156;19131' },
+                    { modelo: 'SSG GAL S25 EDGE 5G 512GB', codigos: '19211;19210;19209' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 256GB', codigos: '19138;19139;19137;19136;19135;19134;19133;19155' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 512GB', codigos: '19141;19142;19143;19144;19145;19146;19147;19148' },
+                    { modelo: 'SSG GAL Z FLIP7 FE 256GB', codigos: '19260;19259' },
+                    { modelo: 'SSG GAL Z FLIP7 256GB', codigos: '19258;19257' },
+                    { modelo: 'SSG GAL Z FLIP7 512GB', codigos: '19256;19255' },
+                    { modelo: 'SSG GAL Z FLIP 8 256GB', codigos: '19592;19561;19582' },
+                    { modelo: 'SSG GAL Z FLIP 8 512GB', codigos: '19593;19583;19562' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 256GB', codigos: '19564;19565;19595' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-watch8-classic',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL WATCH 8 CLASSIC 46MM LTE',
+                leveCodigos: '19268',
+                porPreco: 'R$ 1.199,00',
+                multiFridayAvulso: 'De R$ 3.699 por R$ 1.999 (21x R$ 96)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'S25 Ultra, Família S26 (S26/+/Ultra) e Linha Z Fold7 & Z Fold 8 / Ultra',
+                compreLista: [
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 256GB', codigos: '19315;19318;19320;19322;19323;19325;19326;19328' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 512GB', codigos: '19329;19331;19333;19357;19358;19359;19360;19361' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 256GB', codigos: '19138;19139;19137;19136;19135;19134;19133;19155' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 512GB', codigos: '19141;19142;19143;19144;19145;19146;19147;19148' },
+                    { modelo: 'SSG GAL Z FOLD7 512GB', codigos: '19254;19253;19252' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 256GB', codigos: '19572;19584;19563' },
+                    { modelo: 'SSG GAL Z FOLD 8 512GB', codigos: '19573;19585;19594' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 256GB', codigos: '19564;19565;19595' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-watch-ultra-47',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL WATCH ULTRA 47MM LTE (2025)',
+                leveCodigos: '18959;18960;18961;19270;19269',
+                porPreco: 'R$ 1.599,00',
+                multiFridayAvulso: 'De R$ 2.999 por R$ 1.999 (21x R$ 96)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'S25 Ultra, S26, S26+, S26 Ultra (512GB/1TB) e Linha Z Fold7 & Z Fold 8 / Ultra',
+                compreLista: [
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 512GB', codigos: '19329;19331;19333;19357;19358;19359;19360;19361' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 256GB', codigos: '19138;19139;19137;19136;19135;19134;19133;19155' },
+                    { modelo: 'SSG GAL S25 ULTRA 5G 512GB', codigos: '19141;19142;19143;19144;19145;19146;19147;19148' },
+                    { modelo: 'SSG GAL Z FOLD7 512GB', codigos: '19254;19253;19252' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 256GB', codigos: '19572;19584;19563' },
+                    { modelo: 'SSG GAL Z FOLD 8 512GB', codigos: '19573;19585;19594' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 256GB', codigos: '19564;19565;19595' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-watch-ultra2-47',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'SSG GAL WATCH ULTRA2 47MM LTE',
+                leveCodigos: '19599;19618',
+                porPreco: 'R$ 1.699,00',
+                multiFridayAvulso: 'De R$ 3.999 por R$ 2.999 (21x R$ 143)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '12.11.2026 a 06.12.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'S26, S26+, S26 Ultra (256GB/1TB) e Linha Z Fold7 & Z Fold 8 / Ultra (512GB/1TB)',
+                compreLista: [
+                    { modelo: 'SSG GAL S26 5G 256GB', codigos: '19435;19404;19405;19406;19407;19408;19409;19410' },
+                    { modelo: 'SSG GAL S26 5G 512GB', codigos: '19411;19412;19413;19414;19415;19416;19417;19418' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 256GB', codigos: '19419;19420;19421;19422;19423;19424;19425;19426' },
+                    { modelo: 'SSG GAL S26 PLUS 5G 512GB', codigos: '19427;19428;19429;19430;19431;19432;19433;19434' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 256GB', codigos: '19315;19318;19320;19322;19323;19325;19326;19328' },
+                    { modelo: 'SSG GAL S26 ULTRA 5G 1TB', codigos: '19362;19363;19368;19369;19370;19371;19372;19373' },
+                    { modelo: 'SSG GAL Z FOLD7 512GB', codigos: '19254;19253;19252' },
+                    { modelo: 'SSG GAL Z FOLD7 1TB', codigos: '19251;19250' },
+                    { modelo: 'SSG GAL Z FOLD 8 256GB', codigos: '19572;19584;19563' },
+                    { modelo: 'SSG GAL Z FOLD 8 512GB', codigos: '19573;19585;19594' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 512GB', codigos: '19566;19586;19567' },
+                    { modelo: 'SSG GAL Z FOLD 8 ULTRA 1TB', codigos: '19629;19601;19628' }
+                ]
+            },
+            {
+                id: 'ssg-capas-s26',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMÍLIA GALAXY S26',
+                leveCodigos: '62954;62955;62956;62980;62981',
+                porPreco: 'A partir de R$ 132,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMÍLIA GALAXY S26 e leve Capa MagSafe Customic ou Laut',
+                compreLista: [
+                    { modelo: 'COMPRE: FAMÍLIA GALAXY S26 -> LEVE: CAPA CUSTOMIC SSG GAL S26 LIQUID SILICONE MAGSAFE (R$ 132,30)', codigos: '62954;62955;62956' },
+                    { modelo: 'COMPRE: FAMÍLIA GALAXY S26 -> LEVE: CAPA LAUT SSG GAL S26 SHIELD MAGSAFE (R$ 139,30)', codigos: '62981' },
+                    { modelo: 'COMPRE: FAMÍLIA GALAXY S26 -> LEVE: CAPA LAUT SSG GAL S26 HOLOGRAFICA MAGSAFE (R$ 160,30)', codigos: '62980' }
+                ]
+            },
+            {
+                id: 'ssg-capas-s26-plus',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMÍLIA GALAXY S26 PLUS',
+                leveCodigos: '62957;62958;62959;62979',
+                porPreco: 'A partir de R$ 132,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMÍLIA GALAXY S26 PLUS e leve Capa MagSafe Customic ou Laut',
+                compreLista: [
+                    { modelo: 'COMPRE: FAMÍLIA GALAXY S26 PLUS -> LEVE: CAPA CUSTOMIC SSG GAL S26 PLUS LIQUID SILICONE MAGSAFE (R$ 132,30)', codigos: '62957;62958;62959' },
+                    { modelo: 'COMPRE: FAMÍLIA GALAXY S26 PLUS -> LEVE: CAPA LAUT SSG GAL S26 PLUS HOLOGRAFICA MAGSAFE (R$ 160,30)', codigos: '62979' }
+                ]
+            },
+            {
+                id: 'ssg-capas-s26-ultra',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPA CUSTOMIC SSG GAL S26 ULTRA LIQUID SILICONE MAGSAFE',
+                leveCodigos: '62960;62961;62962',
+                porPreco: 'R$ 132,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMÍLIA GALAXY S26 ULTRA e leve Capa Customic Liquid Silicone MagSafe',
+                compreLista: [
+                    { modelo: 'COMPRE: FAMÍLIA GALAXY S26 ULTRA -> LEVE: CAPA CUSTOMIC SSG GAL S26 ULTRA LIQUID SILICONE MAGSAFE (R$ 132,30)', codigos: '62960;62961;62962' }
+                ]
+            }
+        ],
+        MOTOROLA: [
+            {
+                id: 'moto-buds-swarovski',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'MOTO BUDS LOOP CRYSTALS BY SWAROVSKI',
+                leveCodigos: '62828',
+                porPreco: 'R$ 99,00',
+                multiFridayAvulso: 'De R$ 1.299 por R$ 499 (21x R$ 24)',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '10.09.2026 até o final dos estoques',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre MOTO RAZR 60 CRYSTALS BY SWAROVSKI (Cód. 19271)',
+                compreLista: [
+                    { modelo: 'MOTO RAZR 60 CRYSTALS BY SWAROVSKI', codigos: '19271' }
+                ]
+            },
+            {
+                id: 'moto-buds-bass',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'MOTO BUDS BASS',
+                leveCodigos: '62891;62889;62890',
+                porPreco: 'R$ 199,00',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre Moto G37 5G, Moto G47 5G, Moto G67 5G ou Moto G77 5G',
+                compreLista: [
+                    { modelo: 'MOTO G37 5G 128GB', codigos: '19741;19721;19731;19722' },
+                    { modelo: 'MOTO G47 5G 128GB', codigos: '19508;19518;19519;19528' },
+                    { modelo: 'MOTO G67 5G 256GB', codigos: '19392;19393' },
+                    { modelo: 'MOTO G77 5G 256GB', codigos: '19394;19395' }
+                ]
+            },
+            {
+                id: 'moto-buds-2-plus',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'MOTO BUDS 2+',
+                leveCodigos: '63007;62995',
+                porPreco: 'R$ 499,00',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre Família Edge, Família Razr ou Moto Signature 5G 512GB',
+                compreLista: [
+                    { modelo: 'FAMILIA EDGE', codigos: '-' },
+                    { modelo: 'FAMILIA RAZR', codigos: '-' },
+                    { modelo: 'MOTO SIGNATURE 5G 512GB', codigos: '19397;19398' }
+                ]
+            }
+        ],
+        APPLE: [
+            {
+                id: 'apple-airpods-4-anc',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'AIRPODS 4 ANC',
+                leveCodigos: '62704',
+                porPreco: 'R$ 1.599,00',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '24.09.2026 a 30.11.2026 (iPhone Duo: início 24.10.2026)',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre Família iPhone 17, Família iPhone 18 ou Família iPhone Duo',
+                compreLista: [
+                    { modelo: 'FAMILIA IPHONE 17 (Vigência 24.09.2026 a 30.11.2026)', codigos: '-' },
+                    { modelo: 'FAMILIA IPHONE 18 (Vigência 24.09.2026 a 30.11.2026)', codigos: '-' },
+                    { modelo: 'FAMÍLIA IPHONE DUO (Vigência 24.10.2026 a 30.11.2026)', codigos: '-' }
+                ]
+            },
+            {
+                id: 'apple-airpods-pro-2',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'AIRPODS PRO 2ª GERAÇÃO',
+                leveCodigos: '62484',
+                porPreco: 'R$ 1.999,00',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '24.09.2026 a 30.11.2026 (iPhone Duo: início 24.10.2026)',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre Família iPhone 17, Família iPhone 18 ou Família iPhone Duo',
+                compreLista: [
+                    { modelo: 'FAMILIA IPHONE 17 (Vigência 24.09.2026 a 30.11.2026)', codigos: '-' },
+                    { modelo: 'FAMILIA IPHONE 18 (Vigência 24.09.2026 a 30.11.2026)', codigos: '-' },
+                    { modelo: 'FAMÍLIA IPHONE DUO (Vigência 24.10.2026 a 30.11.2026)', codigos: '-' }
+                ]
+            },
+            {
+                id: 'apple-airpods-pro-3',
+                tipo: 'WEARABLES & ÁUDIO',
+                leveModelo: 'AIRPODS PRO 3',
+                leveCodigos: '62861',
+                porPreco: 'R$ 2.199,00',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '24.09.2026 a 30.11.2026 (iPhone Duo: início 24.10.2026)',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre Família iPhone 17, Família iPhone 18 ou Família iPhone Duo',
+                compreLista: [
+                    { modelo: 'FAMILIA IPHONE 17 (Vigência 24.09.2026 a 30.11.2026)', codigos: '-' },
+                    { modelo: 'FAMILIA IPHONE 18 (Vigência 24.09.2026 a 30.11.2026)', codigos: '-' },
+                    { modelo: 'FAMÍLIA IPHONE DUO (Vigência 24.10.2026 a 30.11.2026)', codigos: '-' }
+                ]
+            },
+            {
+                id: 'apple-capas-17e',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMILIA IPHONE 17E + PELÍCULA',
+                leveCodigos: '62990;62992;62991;62983',
+                porPreco: 'R$ 132,30 a R$ 160,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMILIA IPHONE 17E + PELÍCULA',
+                compreLista: [
+                    { modelo: 'LEVE: CAPA CUSTOMIC APPLE IPHONE 17E LIQUID SILICONE MAGSAFE — POR R$ 132,30', codigos: '62990;62992;62991' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 17E HOLOGRAFICA MAGSAFE — POR R$ 160,30', codigos: '62983' }
+                ]
+            },
+            {
+                id: 'apple-capas-17',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMILIA IPHONE 17 + PELÍCULA',
+                leveCodigos: '62937;62938;62939;62940;62984',
+                porPreco: 'R$ 132,30 a R$ 160,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMILIA IPHONE 17 + PELÍCULA',
+                compreLista: [
+                    { modelo: 'LEVE: CAPA CUSTOMIC IPHONE 17 LIQUID SILICONE MAGSAFE — POR R$ 132,30', codigos: '62937;62938;62939;62940' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 17 HOLOGRAFICA MAGSAFE — POR R$ 160,30', codigos: '62984' }
+                ]
+            },
+            {
+                id: 'apple-capas-17-pro',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMILIA IPHONE 17 PRO + PELÍCULA',
+                leveCodigos: '62941;62942;62945;62947;62948;62874;62985;62973;62975',
+                porPreco: 'R$ 132,30 a R$ 188,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMILIA IPHONE 17 PRO + PELÍCULA',
+                compreLista: [
+                    { modelo: 'LEVE: CAPA CUSTOMIC IPHONE 17 PRO LIQUID SILICONE MAGSAFE — POR R$ 132,30', codigos: '62941;62942;62945;62947;62948;62874' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 17 PRO HOLOGRAFICA MAGSAFE — POR R$ 160,30', codigos: '62985' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 17 PRO CRISTAL FLURO MAGSAFE — POR R$ 188,30', codigos: '62973;62975' }
+                ]
+            },
+            {
+                id: 'apple-capas-17-promax',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMILIA IPHONE 17 PRO MAX + PELÍCULA',
+                leveCodigos: '62949;62950;62951;62952;62953;62875;62986;62972;62974',
+                porPreco: 'R$ 132,30 a R$ 188,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMILIA IPHONE 17 PRO MAX + PELÍCULA',
+                compreLista: [
+                    { modelo: 'LEVE: CAPA CUSTOMIC APPLE IPHONE 17 PRO MAX LIQUID SILICONE MAGSAFE — POR R$ 132,30', codigos: '62949;62950;62951;62952;62953;62875' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 17 PRO MAX HOLOGRAFICA MAGSAFE — POR R$ 160,30', codigos: '62986' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 17 PRO MAX CRISTAL FLURO MAGSAFE — POR R$ 188,30', codigos: '62972;62974' }
+                ]
+            },
+            {
+                id: 'apple-capas-18-pro',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMILIA IPHONE 18 PRO + PELÍCULA',
+                leveCodigos: '63074;63127;63126;63103;63115;63097;63045;63092;63077',
+                porPreco: 'R$ 132,30 a R$ 188,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMILIA IPHONE 18 PRO + PELÍCULA',
+                compreLista: [
+                    { modelo: 'LEVE: CAPA CUSTOMIC APPLE IPHONE 18 PRO LIQUID SILICONE MAGSAFE — POR R$ 132,30', codigos: '63074;63127;63126;63103' },
+                    { modelo: 'LEVE: CAPA CUSTOMIC APPLE IPHONE 18 PRO IMPACTOR ORBIT MAGSAFE — POR R$ 139,30', codigos: '63115' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 18 PRO HOLOGRAFICA MAGSAFE — POR R$ 160,30', codigos: '63097' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 18 PRO CRISTAL FLURO MAGSAFE — POR R$ 188,30', codigos: '63045;63092;63077' }
+                ]
+            },
+            {
+                id: 'apple-capas-18-promax',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMILIA IPHONE 18 PRO MAX + PELÍCULA',
+                leveCodigos: '63082;63094;63125;63102;63114;63090;63093;63118;63098',
+                porPreco: 'R$ 132,30 a R$ 188,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMILIA IPHONE 18 PRO MAX + PELÍCULA',
+                compreLista: [
+                    { modelo: 'LEVE: CAPA CUSTOMIC APPLE IPHONE 18 PRO MAX LIQUID SILICONE MAGSAFE — POR R$ 132,30', codigos: '63082;63094;63125;63102' },
+                    { modelo: 'LEVE: CAPA CUSTOMIC APPLE IPHONE 18 PRO MAX IMPACTOR ORBIT MAGSAFE — POR R$ 139,30', codigos: '63114' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 18 PRO MAX HOLOGRAFICA MAGSAFE — POR R$ 160,30', codigos: '63090' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE 18 PRO MAX CRISTAL FLURO MAGSAFE — POR R$ 188,30', codigos: '63093;63118;63098' }
+                ]
+            },
+            {
+                id: 'apple-capas-duo',
+                tipo: 'CAPAS CUSTOMIC & LAUT',
+                leveModelo: 'CAPAS MAGSAFE — FAMILIA IPHONE DUO + PELÍCULA',
+                leveCodigos: '63117;63081;63080;63079;63128;63091;63129;63096;63104',
+                porPreco: 'R$ 132,30 a R$ 279,30',
+                campanha: 'BUD',
+                canais: 'LOJA PRÓPRIA',
+                vigencia: '04.11.2026 a 30.11.2026',
+                observacoes: 'VÁLIDO PARA VENDAS NO SINGLE E COMBO MULTI',
+                resumoCompre: 'Compre FAMILIA IPHONE DUO + PELÍCULA',
+                compreLista: [
+                    { modelo: 'LEVE: CAPA CUSTOMIC APPLE IPHONE DUO LIQUID SILICONE MAGSAFE — POR R$ 132,30', codigos: '63117;63081;63080;63079' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE DUO CRISTAL FLURO MAGSAFE — POR R$ 188,30', codigos: '63128;63091;63129' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE DUO LUXEDGE MAGSAFE — POR R$ 279,30', codigos: '63096' },
+                    { modelo: 'LEVE: CAPA LAUT APPLE IPHONE DUO KEV PROTECT MAGSAFE — POR R$ 279,30', codigos: '63104' }
+                ]
+            }
+        ]
+    };
+
+    // Destaques Avulsos da Lâmina MULTI FRIDAY (12/11 a 30/11) e Produtos Amazon (19/11 a 30/11)
+    const MULTI_FRIDAY_POR_MARCA = {
+        SAMSUNG: [
+            { item: 'GALAXY FIT3', de: 'R$ 429', por: 'R$ 349', parcelas: '21x R$ 17 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL BUDS CORE', de: 'R$ 349', por: 'R$ 289', parcelas: '21x R$ 14 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL BUDS FE', de: 'R$ 499', por: 'R$ 399', parcelas: '21x R$ 19 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL BUDS 3 FE', de: 'R$ 999', por: 'R$ 799', parcelas: '21x R$ 39 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'FONE TWS GAL BUDS4', de: 'R$ 1.499', por: 'R$ 1.299', parcelas: '21x R$ 62 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL BUDS3', de: 'R$ 1.699', por: 'R$ 1.399', parcelas: '21x R$ 67 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'FONE TWS GAL BUDS4 PRO', de: 'R$ 1.799', por: 'R$ 1.499', parcelas: '21x R$ 72 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL BUDS3 PRO', de: 'R$ 2.199', por: 'R$ 1.899', parcelas: '21x R$ 91 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL TAB A11 PLUS 128GB (WIFI)', de: 'R$ 2.149', por: 'R$ 1.399', parcelas: '21x R$ 67 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH 8 40MM LTE', de: 'R$ 1.799', por: 'R$ 1.599', parcelas: '21x R$ 77 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH 8 44MM LTE', de: 'R$ 1.999', por: 'R$ 1.699', parcelas: '21x R$ 81 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH 7 40MM LTE', de: 'R$ 2.799', por: 'R$ 1.899', parcelas: '21x R$ 91 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH 8 CLASSIC 46MM LTE', de: 'R$ 3.699', por: 'R$ 1.999', parcelas: '21x R$ 96 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH ULTRA 2025 47MM LTE', de: 'R$ 2.999', por: 'R$ 1.999', parcelas: '21x R$ 96 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH 7 44MM LTE', de: 'R$ 2.999', por: 'R$ 2.099', parcelas: '21x R$ 100 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH 9 40MM LTE', de: 'R$ 2.499', por: 'R$ 2.299', parcelas: '21x R$ 110 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH 9 44MM LTE', de: 'R$ 2.699', por: 'R$ 2.499', parcelas: '21x R$ 119 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'GAL WATCH ULTRA2 47MM LTE', de: 'R$ 3.999', por: 'R$ 2.999', parcelas: '21x R$ 143 s/ juros', vigencia: '12/11 até 30/11' }
+        ],
+        MOTOROLA: [
+            { item: 'MOTO WATCH FIT', de: 'R$ 999', por: 'R$ 399', parcelas: '21x R$ 19 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'MOTO BUDS LOOP', de: 'R$ 999', por: 'R$ 499', parcelas: '21x R$ 24 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'MOTO BUDS LOOP SWAROVSKI', de: 'R$ 1.299', por: 'R$ 499', parcelas: '21x R$ 24 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'MOTO WATCH BY POLAR', de: 'R$ 1.499', por: 'R$ 699', parcelas: '21x R$ 34 s/ juros', vigencia: '12/11 até 30/11' }
+        ],
+        APPLE: [
+            { item: 'CARTEIRA SUPORTE MAGSAFE CUSTOMIC', de: 'R$ 149', por: 'R$ 99', parcelas: '12x R$ 9 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'BATERIA EXTERNA SLIM MAGSAFE GEONAV USBC 5000MAH', de: 'R$ 199', por: 'R$ 149', parcelas: '12x R$ 13 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'ALÇA CABO USBC USBC 60W CUSTOMIC', de: 'R$ 149', por: 'R$ 99', parcelas: '12x R$ 9 s/ juros', vigencia: '12/11 até 30/11' },
+            { item: 'ALÇA CUSTOMIC CROSSBODY CORRENTE / 6MM', de: 'R$ 149', por: 'R$ 99', parcelas: '12x R$ 9 s/ juros', vigencia: '12/11 até 30/11' }
+        ]
     };
 
     // Sincronizar com documento de flyers na nuvem (Oracle / GEEK_DOCS)
@@ -655,7 +1389,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
 
                 {/* SEÇÃO BUNDLES — OFERTAS CONJUNTAS (SAMSUNG, MOTOROLA, APPLE) */}
                 <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
                         <div className="flex items-center gap-3">
                             <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-200/60 dark:border-purple-500/20">
                                 <Layers size={20} />
@@ -663,91 +1397,357 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                             <div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <h3 className="text-sm sm:text-base font-black text-neutral-800 dark:text-neutral-100 uppercase tracking-wider">
-                                        BUNDLES — Ofertas Conjuntas de Aparelhos
+                                        BUNDLES — Ofertas Conjuntas Oficial (Campanha BUD)
                                     </h3>
                                     <span className="bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
-                                        Samsung • Motorola • Apple
+                                        Single & Combo Multi • Loja Própria
                                     </span>
                                 </div>
                                 <p className="text-xs text-neutral-400 font-medium mt-0.5">
-                                    Ofertas conjuntas exclusivas para modelos selecionados por fabricante.
+                                    Consulte aparelhos elegíveis (COMPRE), acessórios do bundle (LEVE), códigos SAP e preços promocionais.
                                 </p>
                             </div>
                         </div>
 
                         {/* SELETOR DE MARCAS (SAMSUNG | MOTOROLA | APPLE) */}
-                        <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                        <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700 self-start lg:self-auto">
                             {['SAMSUNG', 'MOTOROLA', 'APPLE'].map((marca) => {
                                 const isActive = selectedBundleBrand === marca;
+                                const count = (BUNDLES_POR_MARCA[marca] || []).length;
                                 return (
                                     <button
                                         key={marca}
                                         type="button"
                                         onClick={() => setSelectedBundleBrand(marca)}
-                                        className={`px-4 py-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                                        className={`px-3.5 py-2 rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
                                             isActive
                                                 ? 'bg-[#E3000F] text-white shadow-sm'
                                                 : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
                                         }`}
                                     >
-                                        {marca}
+                                        <span>{marca}</span>
+                                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${
+                                            isActive ? 'bg-black/25 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
+                                        }`}>
+                                            {count}
+                                        </span>
                                     </button>
                                 );
                             })}
                         </div>
                     </div>
 
-                    {/* ÁREA DE EXIBIÇÃO DOS BUNDLES DA MARCA SELECIONADA */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {['SAMSUNG', 'MOTOROLA', 'APPLE'].map((marca) => {
+                    {/* BARRA DE BUSCA POR MODELO / CÓDIGO SAP + FILTRO DE CATEGORIA */}
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                        <div className="relative flex-1">
+                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                            <input
+                                type="text"
+                                value={bundleSearch}
+                                onChange={(e) => setBundleSearch(e.target.value)}
+                                placeholder="Buscar por modelo de aparelho (ex: S26 Ultra, A57, iPhone 18, Razr) ou Código SAP (ex: 19329, 62861)..."
+                                className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 text-xs font-semibold text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:border-[#E3000F]"
+                            />
+                            {bundleSearch && (
+                                <button
+                                    type="button"
+                                    onClick={() => setBundleSearch('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+                                    title="Limpar busca"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+                            {[
+                                { id: 'TODOS', label: 'Todos os Bundles' },
+                                { id: 'WEARABLES & ÁUDIO', label: 'Fones & Relógios' },
+                                { id: 'CAPAS CUSTOMIC & LAUT', label: 'Capas MagSafe' },
+                                { id: 'MULTI_FRIDAY', label: 'Lâmina Multi Friday (Avulso)' }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setBundleSubFilter(tab.id)}
+                                    className={`px-3 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer border ${
+                                        bundleSubFilter === tab.id
+                                            ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-sm'
+                                            : 'bg-neutral-50 dark:bg-neutral-800/60 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* CARDS RESUMO DAS 3 MARCAS */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {[
+                            { marca: 'SAMSUNG', desc: 'Buds Core, Fit3, Buds 3 FE, Buds4/4 Pro, Watch 8/Classic, Watch 9, Watch Ultra/Ultra2 + Capas S26' },
+                            { marca: 'MOTOROLA', desc: 'Moto Buds Loop Swarovski (R$ 99), Moto Buds Bass (R$ 199) e Moto Buds 2+ (R$ 499)' },
+                            { marca: 'APPLE', desc: 'AirPods 4 ANC, AirPods Pro 2ª Ger, AirPods Pro 3 + Capas Customic & Laut MagSafe (iPhone 17/18/Duo)' }
+                        ].map(({ marca, desc }) => {
                             const listaModelos = BUNDLES_POR_MARCA[marca] || [];
                             const isSelected = selectedBundleBrand === marca;
                             return (
                                 <div
                                     key={marca}
                                     onClick={() => setSelectedBundleBrand(marca)}
-                                    className={`rounded-2xl border-2 p-5 transition-all cursor-pointer flex flex-col justify-between ${
+                                    className={`rounded-xl border-2 p-3.5 transition-all cursor-pointer flex flex-col justify-between gap-2 ${
                                         isSelected
-                                            ? 'border-[#E3000F] bg-red-50/20 dark:bg-[#E3000F]/5 shadow-sm'
+                                            ? 'border-[#E3000F] bg-red-50/20 dark:bg-[#E3000F]/10 shadow-sm'
                                             : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/40 hover:border-neutral-300 dark:hover:border-neutral-700'
                                     }`}
                                 >
-                                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-neutral-200/70 dark:border-neutral-800">
+                                    <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2">
                                             <span className={`w-2.5 h-2.5 rounded-full ${isSelected ? 'bg-[#E3000F]' : 'bg-neutral-400'}`} />
-                                            <h4 className="text-sm font-black uppercase tracking-wider text-neutral-900 dark:text-white">
+                                            <h4 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
                                                 BUNDLES {marca}
                                             </h4>
                                         </div>
-                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-neutral-200/70 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                                            isSelected ? 'bg-[#E3000F] text-white' : 'bg-neutral-200/70 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300'
+                                        }`}>
                                             {listaModelos.length} {listaModelos.length === 1 ? 'oferta' : 'ofertas'}
                                         </span>
                                     </div>
-
-                                    {listaModelos.length === 0 ? (
-                                        <div className="py-8 text-center space-y-1.5">
-                                            <Layers size={24} className="mx-auto text-neutral-400 dark:text-neutral-500 opacity-60" />
-                                            <p className="text-xs font-extrabold text-neutral-600 dark:text-neutral-300 uppercase tracking-wide">
-                                                Espaço Reservado — {marca}
-                                            </p>
-                                            <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
-                                                Aguardando cadastro das ofertas conjuntas dos modelos {marca}.
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2.5 pt-3">
-                                            {listaModelos.map((item, idx) => (
-                                                <div key={idx} className="p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                                                    <div className="text-xs font-extrabold text-neutral-900 dark:text-white">{item.modelo}</div>
-                                                    <div className="text-[11px] text-neutral-500 dark:text-neutral-400">{item.oferta}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium leading-snug">
+                                        {desc}
+                                    </p>
                                 </div>
                             );
                         })}
                     </div>
+
+                    {/* LISTAGEM DETALHADA DOS BUNDLES DA MARCA SELECIONADA */}
+                    {bundleSubFilter === 'MULTI_FRIDAY' ? (
+                        <div className="space-y-3 pt-1">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs font-black uppercase tracking-wider text-neutral-700 dark:text-neutral-200 flex items-center gap-2">
+                                    <Tag size={15} className="text-[#E3000F]" />
+                                    Ofertas Avulsas Multi Friday — {selectedBundleBrand} (Válido 12/11 até 30/11)
+                                </h4>
+                                <span className="text-[11px] text-neutral-400 font-semibold">
+                                    Parcelamento em até 21x sem juros
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {(MULTI_FRIDAY_POR_MARCA[selectedBundleBrand] || [])
+                                    .filter(item => !bundleSearch.trim() || item.item.toLowerCase().includes(bundleSearch.trim().toLowerCase()))
+                                    .map((mf, i) => (
+                                        <div key={i} className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between gap-2">
+                                            <div>
+                                                <span className="text-[10px] font-black uppercase tracking-wider text-[#E3000F] bg-red-50 dark:bg-[#E3000F]/10 px-2 py-0.5 rounded">
+                                                    MULTI FRIDAY • {mf.vigencia}
+                                                </span>
+                                                <h5 className="text-xs font-black text-neutral-900 dark:text-white mt-2 uppercase">
+                                                    {mf.item}
+                                                </h5>
+                                            </div>
+                                            <div className="flex items-end justify-between pt-2 border-t border-neutral-200/60 dark:border-neutral-800">
+                                                <div>
+                                                    <span className="block text-[10px] text-neutral-400 line-through font-bold">
+                                                        DE: {mf.de}
+                                                    </span>
+                                                    <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                                                        POR: {mf.por}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[11px] font-extrabold text-neutral-700 dark:text-neutral-300 bg-neutral-200/60 dark:bg-neutral-800 px-2 py-1 rounded-lg">
+                                                    {mf.parcelas}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    ) : (
+                        (() => {
+                            const query = bundleSearch.trim().toLowerCase();
+                            const sourceList = BUNDLES_POR_MARCA[selectedBundleBrand] || [];
+                            const filteredBundles = sourceList.filter((b) => {
+                                if (bundleSubFilter !== 'TODOS' && b.tipo !== bundleSubFilter) return false;
+                                if (!query) return true;
+                                const inHeader =
+                                    b.leveModelo.toLowerCase().includes(query) ||
+                                    b.leveCodigos.toLowerCase().includes(query) ||
+                                    b.porPreco.toLowerCase().includes(query) ||
+                                    b.resumoCompre.toLowerCase().includes(query);
+                                const inCompre = (b.compreLista || []).some(
+                                    (c) =>
+                                        c.modelo.toLowerCase().includes(query) ||
+                                        String(c.codigos).toLowerCase().includes(query)
+                                );
+                                return inHeader || inCompre;
+                            });
+
+                            if (filteredBundles.length === 0) {
+                                return (
+                                    <div className="py-10 text-center rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-800">
+                                        <p className="text-xs font-extrabold text-neutral-600 dark:text-neutral-300 uppercase">
+                                            Nenhuma oferta encontrada em {selectedBundleBrand} para "{bundleSearch}"
+                                        </p>
+                                        <p className="text-[11px] text-neutral-400 mt-1">
+                                            Tente buscar outro modelo, código SAP ou troque a aba da fabricante acima.
+                                        </p>
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {filteredBundles.map((bundle) => {
+                                        const isExpanded = !!expandedBundleIds[bundle.id] || query.length > 0;
+                                        const compreToShow = isExpanded ? bundle.compreLista : bundle.compreLista.slice(0, 4);
+                                        const hiddenCount = Math.max(0, bundle.compreLista.length - 4);
+
+                                        return (
+                                            <div
+                                                key={bundle.id}
+                                                className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-950/60 p-4 flex flex-col justify-between gap-3.5 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all shadow-sm"
+                                            >
+                                                {/* Topo do Card: Tipo + Vigência + Preço do Bundle */}
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-neutral-200/80 dark:border-neutral-800">
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                                                                bundle.tipo.includes('CAPAS')
+                                                                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
+                                                                    : 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'
+                                                            }`}>
+                                                                {bundle.tipo.includes('CAPAS') ? <Shield size={11} /> : <Watch size={11} />}
+                                                                {bundle.tipo}
+                                                            </span>
+                                                            <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-neutral-200/80 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                                                                Vigência: {bundle.vigencia}
+                                                            </span>
+                                                        </div>
+
+                                                        <div>
+                                                            <span className="text-[10px] font-black uppercase tracking-wider text-[#E3000F] block">
+                                                                LEVE NO BUNDLE:
+                                                            </span>
+                                                            <h5 className="text-sm font-black text-neutral-900 dark:text-white leading-snug">
+                                                                {bundle.leveModelo}
+                                                            </h5>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleCopySap(bundle.leveCodigos)}
+                                                                className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-[#E3000F] flex items-center gap-1 cursor-pointer transition-colors"
+                                                                title="Clique para copiar o(s) código(s) SAP do acessório"
+                                                            >
+                                                                <span>Cód. SAP: {bundle.leveCodigos}</span>
+                                                                {copiedCode === String(bundle.leveCodigos) ? (
+                                                                    <Check size={11} className="text-emerald-500" />
+                                                                ) : (
+                                                                    <Copy size={11} className="text-neutral-400" />
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Bloco de Preço POR */}
+                                                    <div className="sm:text-right shrink-0 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl px-3.5 py-2">
+                                                        <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
+                                                            PREÇO BUNDLE (POR)
+                                                        </span>
+                                                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                                                            {bundle.porPreco}
+                                                        </span>
+                                                        {bundle.multiFridayAvulso && (
+                                                            <span className="block text-[9px] font-bold text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                                                Avulso Multi Friday: {bundle.multiFridayAvulso}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Lista de Aparelhos Elegíveis (COMPRE) */}
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="text-[10px] font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-300 flex items-center gap-1">
+                                                            <Smartphone size={12} className="text-[#E3000F]" />
+                                                            COMPRE ({bundle.compreLista.length} {bundle.compreLista.length === 1 ? 'família/modelo elegível' : 'modelos elegíveis'}):
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-neutral-400">
+                                                            {bundle.observacoes}
+                                                        </span>
+                                                    </div>
+
+                                                    <p className="text-[11px] font-bold text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-200/70 dark:border-neutral-800">
+                                                        {bundle.resumoCompre}
+                                                    </p>
+
+                                                    <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                                                        {compreToShow.map((c, idx) => {
+                                                            const isMatch =
+                                                                query &&
+                                                                (c.modelo.toLowerCase().includes(query) ||
+                                                                    String(c.codigos).toLowerCase().includes(query));
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    className={`px-2.5 py-1.5 rounded-lg border text-[11px] flex flex-col sm:flex-row sm:items-center justify-between gap-1 transition-colors ${
+                                                                        isMatch
+                                                                            ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700'
+                                                                            : 'bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800'
+                                                                    }`}
+                                                                >
+                                                                    <span className="font-extrabold text-neutral-800 dark:text-neutral-100">
+                                                                        {c.modelo}
+                                                                    </span>
+                                                                    {c.codigos && c.codigos !== '-' && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleCopySap(c.codigos)}
+                                                                            className="self-start sm:self-auto px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-[10px] font-mono font-semibold text-neutral-600 dark:text-neutral-300 flex items-center gap-1 shrink-0 cursor-pointer"
+                                                                            title="Copiar códigos SAP deste modelo"
+                                                                        >
+                                                                            <span className="truncate max-w-[210px]">SAP: {c.codigos}</span>
+                                                                            {copiedCode === String(c.codigos) ? (
+                                                                                <Check size={10} className="text-emerald-500 shrink-0" />
+                                                                            ) : (
+                                                                                <Copy size={10} className="text-neutral-400 shrink-0" />
+                                                                            )}
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    {bundle.compreLista.length > 4 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleExpandBundle(bundle.id)}
+                                                            className="w-full py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 hover:bg-neutral-200 dark:hover:bg-neutral-800 text-[11px] font-extrabold text-neutral-700 dark:text-neutral-300 flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                                        >
+                                                            {isExpanded ? (
+                                                                <>
+                                                                    <ChevronUp size={14} /> Recolher lista de modelos
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <ChevronDown size={14} /> Ver todos os {bundle.compreLista.length} modelos e códigos SAP (+{hiddenCount})
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()
+                    )}
                 </div>
 
                 {/* SEÇÃO DE DOCUMENTOS GEEK PADRÃO */}
