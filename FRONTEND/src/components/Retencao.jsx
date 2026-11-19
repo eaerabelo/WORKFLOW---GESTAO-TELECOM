@@ -35,12 +35,26 @@ const SERVICOS_CATALOGO = [
     {
         id: 'COMBO_MULTI',
         label: 'COMBO MULTI',
-        sub: 'Convergente Multi',
+        sub: 'Móvel + TVBox + Fibra',
         icon: Zap,
         activeClass: 'bg-amber-50 dark:bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-sm',
         badgeClass: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
     }
 ];
+
+const BASE_SERVICOS_IDS = ['MOVEL', 'TVBOX', 'FIBRA'];
+
+/**
+ * Normaliza a lista de serviços garantindo que COMBO_MULTI seja sempre a soma dos 3 outros (MOVEL + TVBOX + FIBRA)
+ */
+const normalizeServicosList = (servicos = []) => {
+    const list = Array.isArray(servicos) ? servicos : [];
+    const hasAllThree = BASE_SERVICOS_IDS.every(id => list.includes(id));
+    if (list.includes('COMBO_MULTI') || hasAllThree) {
+        return ['MOVEL', 'TVBOX', 'FIBRA', 'COMBO_MULTI'];
+    }
+    return list.filter(id => BASE_SERVICOS_IDS.includes(id));
+};
 
 const STATUS_TRABALHO = {
     PARA_TRABALHAR: {
@@ -70,21 +84,22 @@ const STATUS_TRABALHO = {
  * Calcula automaticamente a recomendação de oferta futura com base no que o cliente já possui
  */
 const gerarSugestaoFutura = (servicos = []) => {
-    const hasMovel = servicos.includes('MOVEL');
-    const hasFibra = servicos.includes('FIBRA');
-    const hasTv = servicos.includes('TVBOX');
-    const hasMulti = servicos.includes('COMBO_MULTI');
+    const normalized = normalizeServicosList(servicos);
+    const hasMovel = normalized.includes('MOVEL');
+    const hasFibra = normalized.includes('FIBRA');
+    const hasTv = normalized.includes('TVBOX');
+    const hasMulti = normalized.includes('COMBO_MULTI');
 
     const faltantes = [];
     if (!hasMovel) faltantes.push('MÓVEL');
     if (!hasFibra) faltantes.push('FIBRA');
     if (!hasTv) faltantes.push('TVBOX');
 
-    if (faltantes.length === 0 || (hasMovel && hasFibra && hasTv)) {
+    if (hasMulti || faltantes.length === 0 || (hasMovel && hasFibra && hasTv)) {
         return {
-            titulo: 'Cliente Completo • Ofertar Upgrade / Dependente / Aparelho',
-            descricao: 'Cliente já possui Móvel, Fibra e TVBox. Trabalhar linha dependente, aparelho ou seguro.',
-            destaque: 'UPGRADE & BLINDAGEM',
+            titulo: 'Cliente Combo Multi Completo (Móvel + TVBox + Fibra) • Ofertar Upgrade / Dependente / Aparelho',
+            descricao: 'Cliente já possui a soma dos 3 produtos (Móvel, TVBox e Fibra). Trabalhar linha dependente, aparelho ou seguro.',
+            destaque: 'COMBO MULTI COMPLETO • UPGRADE',
             faltantes: []
         };
     }
@@ -155,10 +170,30 @@ export function Retencao({
 
     const toggleServico = (servicoId) => {
         setServicosAtuais(prev => {
-            if (prev.includes(servicoId)) {
-                return prev.filter(s => s !== servicoId);
+            const currentBase = (prev || []).filter(s => BASE_SERVICOS_IDS.includes(s));
+            const isCurrentlyMulti = (prev || []).includes('COMBO_MULTI') || BASE_SERVICOS_IDS.every(id => currentBase.includes(id));
+
+            // Se clicar em COMBO_MULTI, seleciona a soma dos 3 produtos (MOVEL + TVBOX + FIBRA) ou limpa se já estiver ativo
+            if (servicoId === 'COMBO_MULTI') {
+                if (isCurrentlyMulti) {
+                    return [];
+                }
+                return ['MOVEL', 'TVBOX', 'FIBRA', 'COMBO_MULTI'];
             }
-            return [...prev, servicoId];
+
+            // Se clicar em um dos 3 produtos individuais, atualiza a lista e ativa/desativa COMBO_MULTI automaticamente quando tiver os 3
+            let nextBase;
+            if (currentBase.includes(servicoId)) {
+                nextBase = currentBase.filter(s => s !== servicoId);
+            } else {
+                nextBase = [...currentBase, servicoId];
+            }
+
+            const hasAllThreeNow = BASE_SERVICOS_IDS.every(id => nextBase.includes(id));
+            if (hasAllThreeNow) {
+                return ['MOVEL', 'TVBOX', 'FIBRA', 'COMBO_MULTI'];
+            }
+            return nextBase;
         });
     };
 
@@ -185,7 +220,8 @@ export function Retencao({
             return;
         }
 
-        const sugestao = gerarSugestaoFutura(servicosAtuais);
+        const normalizedServicos = normalizeServicosList(servicosAtuais);
+        const sugestao = gerarSugestaoFutura(normalizedServicos);
         const nowFormatted = new Date().toLocaleDateString('pt-BR');
 
         if (editingId) {
@@ -196,7 +232,7 @@ export function Retencao({
                     nome: nome.trim() ? nome.trim().toUpperCase() : 'CLIENTE PÓS-VENDA',
                     celular: celular.trim(),
                     tipoOperacao,
-                    servicos: servicosAtuais,
+                    servicos: normalizedServicos,
                     observacao: observacao.trim(),
                     sugestaoFutura: sugestao.destaque,
                     updatedAt: Date.now()
@@ -209,7 +245,7 @@ export function Retencao({
                 nome: nome.trim() ? nome.trim().toUpperCase() : 'CLIENTE PÓS-VENDA',
                 celular: celular.trim(),
                 tipoOperacao,
-                servicos: servicosAtuais,
+                servicos: normalizedServicos,
                 observacao: observacao.trim(),
                 sugestaoFutura: sugestao.destaque,
                 statusTrabalho: 'PARA_TRABALHAR',
@@ -232,7 +268,7 @@ export function Retencao({
         setNome(item.nome === 'CLIENTE PÓS-VENDA' ? '' : (item.nome || ''));
         setCelular(item.celular || '');
         setTipoOperacao(item.tipoOperacao || 'SIMPLIFICA');
-        setServicosAtuais(Array.isArray(item.servicos) && item.servicos.length > 0 ? item.servicos : ['MOVEL']);
+        setServicosAtuais(Array.isArray(item.servicos) && item.servicos.length > 0 ? normalizeServicosList(item.servicos) : ['MOVEL']);
         setObservacao(item.observacao || '');
     };
 
@@ -308,7 +344,7 @@ export function Retencao({
                 return false;
             }
             if (filterOportunidade !== 'TODAS') {
-                const servs = Array.isArray(item.servicos) ? item.servicos : [];
+                const servs = normalizeServicosList(item.servicos);
                 if (filterOportunidade === 'FALTA_FIBRA' && servs.includes('FIBRA')) return false;
                 if (filterOportunidade === 'FALTA_MOVEL' && servs.includes('MOVEL')) return false;
                 if (filterOportunidade === 'FALTA_TVBOX' && servs.includes('TVBOX')) return false;
@@ -664,7 +700,7 @@ export function Retencao({
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
                         {filteredList.map((item) => {
-                            const servicos = Array.isArray(item.servicos) ? item.servicos : [];
+                            const servicos = normalizeServicosList(item.servicos);
                             const sugestao = gerarSugestaoFutura(servicos);
                             const stKey = item.statusTrabalho || 'PARA_TRABALHAR';
                             const stObj = STATUS_TRABALHO[stKey] || STATUS_TRABALHO.PARA_TRABALHAR;

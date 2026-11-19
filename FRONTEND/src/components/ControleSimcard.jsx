@@ -312,9 +312,18 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isBatchModalOpen, sealRemovalModal.isOpen, selectedCardId, simcardsData, currentTab, globalUser]);
 
+    // Trava cada linha do lote de ICCID em no máximo 20 dígitos numéricos (sem espaços ou caracteres extras por linha)
+    const sanitizeBatchIccidText = (rawText) => {
+        if (!rawText) return '';
+        return String(rawText)
+            .split(/\r?\n/)
+            .map(line => line.replace(/\D/g, '').slice(0, 20))
+            .join('\n');
+    };
+
     const handleBatchSubmit = (e) => {
         e.preventDefault();
-        const linhasCaid = (batchData.caids || '').split('\n').map(l => l.trim().toUpperCase()).filter(Boolean);
+        const linhasCaid = (batchData.caids || '').split(/\r?\n/).map(l => l.trim().toUpperCase()).filter(Boolean);
 
         if (currentTab === 'ESTOQUE TVBOX') {
             if (linhasCaid.length === 0) {
@@ -322,27 +331,27 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                 return;
             }
         } else {
-            const rawFisicos = (batchData.fisicos || '').split('\n').map(l => l.trim()).filter(Boolean);
-            const rawEsims = (batchData.esims || '').split('\n').map(l => l.trim()).filter(Boolean);
+            const rawFisicos = (batchData.fisicos || '').split(/\r?\n/).map(l => l.replace(/\D/g, '').slice(0, 20)).filter(Boolean);
+            const rawEsims = (batchData.esims || '').split(/\r?\n/).map(l => l.replace(/\D/g, '').slice(0, 20)).filter(Boolean);
 
             if (rawFisicos.length === 0 && rawEsims.length === 0) {
                 toast.error('Insira ao menos um código ICCID (Físico ou E-SIM).');
                 return;
             }
 
-            // Validação estrita: cada ICCID deve ter obrigatoriamente mínimo e máximo de 20 dígitos numéricos
-            const invalidFisicos = rawFisicos.filter(l => l.replace(/\D/g, '').length !== 20);
-            const invalidEsims = rawEsims.filter(l => l.replace(/\D/g, '').length !== 20);
+            // Validação estrita: cada linha preenchida deve ter 20 dígitos (já travada no máximo de 20 por linha)
+            const invalidFisicos = rawFisicos.filter(l => l.length !== 20);
+            const invalidEsims = rawEsims.filter(l => l.length !== 20);
 
             if (invalidFisicos.length > 0 || invalidEsims.length > 0) {
                 const totalInvalido = invalidFisicos.length + invalidEsims.length;
-                toast.error(`Erro no lote: ${totalInvalido} linha(s) de ICCID não contêm exatamente 20 dígitos numéricos! O ICCID deve ter mínimo e máximo de 20 dígitos.`);
+                toast.error(`Erro no lote: ${totalInvalido} linha(s) estão incompletas (menos de 20 dígitos). Cada linha deve ter 20 dígitos.`);
                 return;
             }
         }
 
-        const linhasFisico = (batchData.fisicos || '').split('\n').map(l => l.trim().replace(/\D/g, '')).filter(l => l.length === 20);
-        const linhasEsim = (batchData.esims || '').split('\n').map(l => l.trim().replace(/\D/g, '')).filter(l => l.length === 20);
+        const linhasFisico = (batchData.fisicos || '').split(/\r?\n/).map(l => l.replace(/\D/g, '').slice(0, 20)).filter(l => l.length === 20);
+        const linhasEsim = (batchData.esims || '').split(/\r?\n/).map(l => l.replace(/\D/g, '').slice(0, 20)).filter(l => l.length === 20);
 
         if (currentTab === 'ESTOQUE TVBOX') {
             if (linhasCaid.length === 0) return;
@@ -1209,13 +1218,17 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                         <div className="md:pr-3">
                                             <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1">
                                                 <span>Lote Físico (ICCID)</span>
-                                                <span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span>
+                                                <span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-500 dark:text-neutral-400">
+                                                    Máx. 20 dígitos/linha ({(batchData.fisicos || '').split(/\r?\n/).filter(l => l.replace(/\D/g, '').length === 20).length} válido(s))
+                                                </span>
                                             </label>
                                             <textarea
                                                 value={batchData.fisicos}
-                                                onChange={e => setBatchData({ ...batchData, fisicos: e.target.value })}
+                                                onChange={e => setBatchData({ ...batchData, fisicos: sanitizeBatchIccidText(e.target.value) })}
                                                 rows={8}
-                                                className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none"
+                                                wrap="off"
+                                                spellCheck={false}
+                                                className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none whitespace-pre overflow-x-auto"
                                                 placeholder="Ex:&#10;89550532010074916929&#10;89550532010074916930"
                                             />
                                         </div>
@@ -1231,7 +1244,9 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                                 value={batchData.caids || ''}
                                                 onChange={e => setBatchData({ ...batchData, caids: e.target.value })}
                                                 rows={8}
-                                                className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none"
+                                                wrap="off"
+                                                spellCheck={false}
+                                                className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none whitespace-pre overflow-x-auto"
                                                 placeholder="Ex:&#10;001234567890&#10;001234567891"
                                             />
                                         </div>
@@ -1239,13 +1254,17 @@ export const ControleSimcard = ({ simcardsData, setSimcardsData, canModifySimcar
                                         <div className="md:pl-3 pt-6 md:pt-0 border-t border-neutral-200 dark:border-neutral-700 md:border-0">
                                             <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex justify-between items-end mb-1">
                                                 <span>Lote Virtual (E-SIM)</span>
-                                                <span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-400 dark:text-neutral-500">Um por linha</span>
+                                                <span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-500 dark:text-neutral-400">
+                                                    Máx. 20 dígitos/linha ({(batchData.esims || '').split(/\r?\n/).filter(l => l.replace(/\D/g, '').length === 20).length} válido(s))
+                                                </span>
                                             </label>
                                             <textarea
                                                 value={batchData.esims}
-                                                onChange={e => setBatchData({ ...batchData, esims: e.target.value })}
+                                                onChange={e => setBatchData({ ...batchData, esims: sanitizeBatchIccidText(e.target.value) })}
                                                 rows={8}
-                                                className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none"
+                                                wrap="off"
+                                                spellCheck={false}
+                                                className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-3 py-3 rounded-lg outline-none focus:ring-1 focus:ring-[#E3000F] font-mono text-sm resize-none whitespace-pre overflow-x-auto"
                                                 placeholder="Ex:&#10;89550532010074916929&#10;89550532010074916930"
                                             />
                                         </div>

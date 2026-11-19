@@ -1045,7 +1045,7 @@ export default function App() {
 
   // --- REGRAS DE HIERARQUIA DERIVADAS DO LOGIN ---
   // Determina através de variáveis booleanas as permissões de acordo com os cargos
-  const userRoleUpper = String(globalUser?.role || '').toUpperCase();
+  const userRoleUpper = String(globalUser?.role || 'VENDEDOR').trim().toUpperCase();
   const isGerente = ['GERENTE', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   const isSeniorEquivalent = ['SENIOR', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'ADM', 'JOVEM APRENDIZ', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   
@@ -1056,7 +1056,7 @@ export default function App() {
   const canEditMeta = ['GERENTE', 'SENIOR', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'ADM', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   const hasAreaLojasAccess = ['GERENTE', 'SENIOR', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
-  const isVendedor = userRoleUpper === 'VENDEDOR';
+  const isVendedor = !userRoleUpper || userRoleUpper === 'VENDEDOR' || userRoleUpper.includes('VENDEDOR');
   const hasResultadoAccess = !isVendedor;
   const [standaloneView, setStandaloneView] = useState(null); // null | 'PROFILE' | 'HELP'
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -1134,6 +1134,7 @@ export default function App() {
       if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'PARCIAL & FECHAMENTO' && !['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'ÁREA - LOJAS' && !['GERENTE', 'SENIOR', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
+      if (activeTab === 'RESULTADO' && (!userMatched.role || String(userMatched.role).trim().toUpperCase().includes('VENDEDOR'))) setActiveTab('VENDA');
     } else {
       setAuthError('Usuário ou senha incorretos. Acesso negado.');
     }
@@ -1250,7 +1251,7 @@ export default function App() {
               if (section.name === 'GESTÃO' && !hasMetaAccess) return null;
               if (section.name === 'ESCALA DE TRABALHO' && !hasScheduleAccess) return null;
               if (section.name === 'PARCIAL & FECHAMENTO' && !hasParcialAccess) return null;
-              if (section.name === 'RESULTADO' && isVendedor) return null;
+              if (section.name === 'RESULTADO' && !hasResultadoAccess) return null;
               // if (section.name === 'ÁREA - LOJAS' && !hasAreaLojasAccess) return null; // Já oculto no array
 
 

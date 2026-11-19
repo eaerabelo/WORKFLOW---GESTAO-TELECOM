@@ -1577,101 +1577,170 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                             </div>
                         </div>
 
-                        {/* DUAS ÁREAS ESTRATÉGICAS: GAP DE META DO DIA ANTERIOR & ANÁLISE DIA A DIA */}
+                        {/* DUAS ÁREAS ESTRATÉGICAS: GAP DE META DO DIA ANTERIOR (TODOS OS INDICADORES) & ANÁLISE DIA A DIA */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-3 border-t border-neutral-100 dark:border-neutral-800">
 
-                            {/* PARTE EXCLUSIVA: MONITOR DE GAP DE META DEIXADA DO DIA ANTERIOR */}
-                            <div className="bg-gradient-to-br from-neutral-50 to-neutral-100/60 dark:from-neutral-850 dark:to-neutral-900/80 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-neutral-200/60 dark:border-neutral-750">
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-2 bg-red-100 dark:bg-[#E3000F]/20 text-[#E3000F] rounded-xl">
+                            {/* PARTE EXCLUSIVA: MONITOR DE GAP DE META DEIXADA DO DIA ANTERIOR (TODOS OS INDICADORES) */}
+                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between min-w-0">
+                                <div className="space-y-3.5">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-neutral-100 dark:border-neutral-800">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="p-2 bg-red-50 dark:bg-[#E3000F]/15 text-[#E3000F] rounded-xl shrink-0">
                                                 <Target size={18} />
                                             </div>
-                                            <div>
-                                                <h4 className="font-black text-sm text-neutral-900 dark:text-white uppercase tracking-wide">
-                                                    Gap de Meta do Dia Anterior
+                                            <div className="min-w-0">
+                                                <h4 className="font-black text-sm text-neutral-900 dark:text-white uppercase tracking-wide truncate">
+                                                    Gap de Meta do Dia Anterior (Todos os Indicadores)
                                                 </h4>
-                                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                                                    Carry-Over de Meta e Saldo Deixado para o Dia Atual
+                                                <span className="text-[11px] text-neutral-500 dark:text-neutral-400 block">
+                                                    Carry-Over de Meta, Saldo Deixado Ontem e Meta Rebalanceada de Hoje por Indicador
                                                 </span>
                                             </div>
                                         </div>
                                         {hasPrevDay ? (
-                                            <span className="text-[10px] font-bold bg-white dark:bg-neutral-800 px-2 py-0.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300">
-                                                Dia Anterior: {prevDayRow.data}
+                                            <span className="text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 shrink-0 self-start sm:self-auto">
+                                                Ontem: Dia {prevDayRow.data} ➔ Hoje: Dia {currentDayRow.data}
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] text-neutral-400 font-bold">1º Dia do Mês</span>
+                                            <span className="text-[10px] text-neutral-400 font-bold shrink-0">1º Dia do Mês</span>
                                         )}
                                     </div>
 
                                     {hasPrevDay ? (
                                         <div className="space-y-3">
-                                            {/* METAS E REALIZADO DE ONTEM */}
-                                            <div className="grid grid-cols-3 gap-2 text-center">
-                                                <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-neutral-200/80 dark:border-neutral-700">
-                                                    <span className="text-[9.5px] uppercase font-bold text-neutral-400 block">Meta de Ontem</span>
-                                                    <span className="text-base font-black text-neutral-800 dark:text-neutral-100">{metaOntem} un</span>
-                                                </div>
-                                                <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-neutral-200/80 dark:border-neutral-700">
-                                                    <span className="text-[9.5px] uppercase font-bold text-neutral-400 block">Realizado Ontem</span>
-                                                    <span className="text-base font-black text-neutral-800 dark:text-neutral-100">{realOntem} un</span>
-                                                </div>
-                                                <div className={`p-2.5 rounded-xl border ${gapOntem > 0
-                                                    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/60'
-                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/60'
-                                                    }`}>
-                                                    <span className="text-[9.5px] uppercase font-bold block opacity-75">
-                                                        {gapOntem > 0 ? 'Déficit Deixado' : 'Superávit'}
-                                                    </span>
-                                                    <span className="text-base font-black flex items-center justify-center gap-1">
-                                                        {gapOntem > 0 ? `-${gapOntem} un` : `+${Math.abs(gapOntem)} un`}
-                                                    </span>
-                                                </div>
+                                            {/* FILTRO RÁPIDO POR GRUPO DE INDICADORES */}
+                                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                                                {[
+                                                    { id: 'TODOS', label: 'Todos' },
+                                                    { id: 'Móvel', label: 'Móvel' },
+                                                    { id: 'Residencial', label: 'Residencial' },
+                                                    { id: 'Anexação', label: 'Aparelhos & Anexação' },
+                                                    { id: 'Financeiro', label: 'Financeiro' }
+                                                ].map((cat) => (
+                                                    <button
+                                                        key={cat.id}
+                                                        type="button"
+                                                        onClick={() => setGapCategoryFilter(cat.id)}
+                                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                                                            gapCategoryFilter === cat.id
+                                                                ? 'bg-[#E3000F] text-white border-[#E3000F] shadow-sm'
+                                                                : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-700'
+                                                        }`}
+                                                    >
+                                                        {cat.label}
+                                                    </button>
+                                                ))}
                                             </div>
 
-                                            {/* RESUMO DO IMPACTO NO DIA ATUAL */}
-                                            <div className="bg-white dark:bg-neutral-800/80 p-3 rounded-xl border border-neutral-200/80 dark:border-neutral-700 space-y-2">
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span className="text-neutral-500 font-semibold">Meta Normal de Hoje (Dia {currentDayRow.data}):</span>
-                                                    <strong className="text-neutral-800 dark:text-neutral-200">{metaHojeNormal} un</strong>
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span className="text-neutral-500 font-semibold">Gap Herdeiro de Ontem:</span>
-                                                    <strong className={gapOntem > 0 ? 'text-[#E3000F]' : 'text-emerald-600'}>
-                                                        {gapOntem > 0 ? `+${gapOntem} un a recuperar` : '0 un (Zerado)'}
-                                                    </strong>
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs pt-1 border-t border-neutral-100 dark:border-neutral-700 font-black">
-                                                    <span className="text-neutral-700 dark:text-neutral-300">Meta Rebalanceada para Hoje:</span>
-                                                    <span className="text-sm text-[#E3000F] bg-red-50 dark:bg-[#E3000F]/10 px-2 py-0.5 rounded border border-red-100 dark:border-red-900/40">
-                                                        {metaHojeAjustada} un
-                                                    </span>
-                                                </div>
-                                            </div>
+                                            {/* LISTA COMPLETA DE GAP POR INDICADOR */}
+                                            <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
+                                                {allIndicatorsGapList
+                                                    .filter((ind) => {
+                                                        if (gapCategoryFilter === 'TODOS') return true;
+                                                        if (gapCategoryFilter === 'Anexação') {
+                                                            return ['Anexação', 'Aparelhos', 'Serviços'].includes(ind.group);
+                                                        }
+                                                        return ind.group === gapCategoryFilter;
+                                                    })
+                                                    .map((ind) => {
+                                                        const IconInd = ind.icon || Target;
+                                                        const fmt = (v) => ind.isCurrency ? applyCurrencyMask(v) : `${Number.isInteger(v) ? v : Number(v).toFixed(1)} ${ind.unit || ''}`;
+                                                        const isDeficit = ind.hasMeta && ind.gapOntem > 0;
+                                                        const isSuperavit = ind.hasMeta && ind.gapOntem <= 0;
 
-                                            {/* BARRA DE PROGRESSO DO DIA ATUAL FRENTE À META AJUSTADA */}
-                                            <div>
-                                                <div className="flex justify-between text-xs font-bold mb-1">
-                                                    <span className="text-neutral-600 dark:text-neutral-300">Progresso de Hoje com Gap Compensado:</span>
-                                                    <span className="text-neutral-900 dark:text-white">{realHoje} / {metaHojeAjustada} ({pctHojeMetaAjustada}%)</span>
-                                                </div>
-                                                <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2 overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-700 ${pctHojeMetaAjustada >= 100 ? 'bg-emerald-500' : 'bg-[#E3000F]'}`}
-                                                        style={{ width: `${Math.min(100, pctHojeMetaAjustada)}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-[10px] text-neutral-400 mt-1 block">
-                                                    {gapAcumuladoAteOntem > 0
-                                                        ? `⚠️ Saldo Acumulado até ontem: -${gapAcumuladoAteOntem} un no acumulado do mês.`
-                                                        : `✅ Saldo Acumulado até ontem: +${Math.abs(gapAcumuladoAteOntem)} un acima da meta.`}
-                                                </span>
+                                                        return (
+                                                            <div
+                                                                key={ind.key}
+                                                                className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/70 border border-neutral-200/80 dark:border-neutral-700/80 space-y-2 transition-colors"
+                                                            >
+                                                                {/* Cabeçalho do Indicador */}
+                                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                                    <div className="flex items-center gap-2 min-w-0">
+                                                                        <div className="p-1.5 rounded-lg bg-white dark:bg-neutral-900 text-[#E3000F] border border-neutral-200/70 dark:border-neutral-700 shrink-0">
+                                                                            <IconInd size={14} />
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100 block truncate">
+                                                                                {ind.label}
+                                                                            </span>
+                                                                            <span className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-400 uppercase">
+                                                                                {ind.group} {ind.metaMonthly > 0 ? `• Meta Mês: ${fmt(ind.metaMonthly)}` : '• Acompanhamento de Volume'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Badge de Déficit / Superávit de Ontem */}
+                                                                    {ind.hasMeta ? (
+                                                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase border shrink-0 ${
+                                                                            isDeficit
+                                                                                ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-800/60'
+                                                                                : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800/60'
+                                                                        }`}>
+                                                                            {isDeficit
+                                                                                ? `Gap Ontem: -${fmt(ind.gapOntem)}`
+                                                                                : `Ontem: +${fmt(Math.abs(ind.gapOntem))} (Batida)`}
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 shrink-0">
+                                                                            Ontem: {fmt(ind.prevReal)} ➔ Hoje: {fmt(ind.todayReal)}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Grade: Meta Ontem | Real Ontem | Meta Hoje c/ Gap | Real Hoje */}
+                                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-center">
+                                                                    <div className="bg-white dark:bg-neutral-900/90 p-2 rounded-lg border border-neutral-200/70 dark:border-neutral-700/70">
+                                                                        <span className="text-[9.5px] font-semibold text-neutral-400 block uppercase">Meta Ontem</span>
+                                                                        <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                                                                            {ind.hasMeta ? fmt(ind.prevMeta) : '-'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="bg-white dark:bg-neutral-900/90 p-2 rounded-lg border border-neutral-200/70 dark:border-neutral-700/70">
+                                                                        <span className="text-[9.5px] font-semibold text-neutral-400 block uppercase">Real Ontem</span>
+                                                                        <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                                                                            {fmt(ind.prevReal)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="bg-white dark:bg-neutral-900/90 p-2 rounded-lg border border-neutral-200/70 dark:border-neutral-700/70">
+                                                                        <span className="text-[9.5px] font-semibold text-neutral-400 block uppercase">Meta Hoje c/ Gap</span>
+                                                                        <span className={`text-xs font-black ${isDeficit ? 'text-[#E3000F] dark:text-red-400' : 'text-neutral-800 dark:text-neutral-200'}`}>
+                                                                            {ind.hasMeta ? fmt(ind.metaHojeAjustada) : '-'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="bg-white dark:bg-neutral-900/90 p-2 rounded-lg border border-neutral-200/70 dark:border-neutral-700/70">
+                                                                        <span className="text-[9.5px] font-semibold text-neutral-400 block uppercase">Realizado Hoje</span>
+                                                                        <span className={`text-xs font-black ${isSuperavit || (ind.hasMeta && ind.todayReal >= ind.metaHojeAjustada) ? 'text-emerald-600 dark:text-emerald-400' : 'text-neutral-900 dark:text-white'}`}>
+                                                                            {fmt(ind.todayReal)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Barra de Progresso de Hoje frente à Meta Rebalanceada */}
+                                                                {ind.hasMeta && ind.metaHojeAjustada > 0 && (
+                                                                    <div>
+                                                                        <div className="flex items-center justify-between text-[11px] font-semibold mb-1">
+                                                                            <span className="text-neutral-500 dark:text-neutral-400">
+                                                                                Meta Base Hoje ({fmt(ind.todayMeta)}) {isDeficit ? `+ Gap Ontem (${fmt(ind.gapOntem)})` : '(Sem déficit anterior)'}
+                                                                            </span>
+                                                                            <span className={`font-bold ${ind.pctRecuperacaoHoje >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-neutral-700 dark:text-neutral-200'}`}>
+                                                                                {ind.pctRecuperacaoHoje}%
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-1.5 overflow-hidden">
+                                                                            <div
+                                                                                className={`h-full rounded-full transition-all duration-500 ${ind.pctRecuperacaoHoje >= 100 ? 'bg-emerald-500' : 'bg-[#E3000F]'}`}
+                                                                                style={{ width: `${Math.min(100, ind.pctRecuperacaoHoje)}%` }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-center py-6 text-neutral-400 text-xs">
+                                        <div className="text-center py-6 text-neutral-400 dark:text-neutral-500 text-xs">
                                             Primeiro dia do mês selecionado. Não há histórico de dia anterior nesta data.
                                         </div>
                                     )}
@@ -1679,59 +1748,63 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                             </div>
 
                             {/* ANÁLISE DIA CONTRA DIA (DOD - HOJE VS ONTEM: O QUE MELHOROU E O QUE CAIU) */}
-                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between">
+                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm flex flex-col justify-between min-w-0">
                                 <div>
-                                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-neutral-100 dark:border-neutral-800">
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                                    <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-neutral-100 dark:border-neutral-800 gap-2 flex-wrap">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
                                                 <Activity size={18} />
                                             </div>
                                             <div>
                                                 <h4 className="font-black text-sm text-neutral-900 dark:text-white uppercase tracking-wide">
                                                     Análise Dia a Dia (D vs D-1)
                                                 </h4>
-                                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                                                    Diagnóstico de oscilação: O que melhoramos e pontos de atenção
+                                                <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                                                    Diagnóstico de oscilação em todos os indicadores: O que melhoramos e pontos de atenção
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <span className={`text-xs font-black flex items-center justify-end gap-1 ${dodGrossDiff >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            <span className={`text-xs font-black flex items-center justify-end gap-1 ${dodGrossDiff >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                                 {dodGrossDiff >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                                                 {dodGrossDiff >= 0 ? `+${dodGrossDiff}` : dodGrossDiff} Gross ({dodGrossPct >= 0 ? `+${dodGrossPct}%` : `${dodGrossPct}%`})
                                             </span>
-                                            <span className="text-[9.5px] text-neutral-400 block">
+                                            <span className="text-[10px] text-neutral-400 block">
                                                 Receita: {dodRecDiff >= 0 ? `+${applyCurrencyMask(dodRecDiff)}` : `-${applyCurrencyMask(Math.abs(dodRecDiff))}`}
                                             </span>
                                         </div>
                                     </div>
 
                                     {hasPrevDay ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[415px] overflow-y-auto pr-1 custom-scrollbar">
 
                                             {/* COLUNA 1: NO QUE MELHORAMOS */}
                                             <div className="bg-emerald-50/40 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40">
                                                 <div className="flex items-center gap-1.5 text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                                                     <TrendingUp size={14} />
-                                                    <span>No que Melhoramos</span>
+                                                    <span>No que Melhoramos ({improvedProducts.length})</span>
                                                 </div>
                                                 {improvedProducts.length > 0 ? (
                                                     <div className="space-y-1.5">
-                                                        {improvedProducts.map((p, pIdx) => (
-                                                            <div key={pIdx} className="flex items-center justify-between text-xs bg-white dark:bg-neutral-900/80 p-1.5 rounded-lg border border-emerald-100 dark:border-emerald-900/40">
-                                                                <span className="font-bold text-neutral-700 dark:text-neutral-300">{p.label}</span>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <span className="text-[10px] text-neutral-400">{p.prev} ➔ {p.today}</span>
-                                                                    <span className="px-1.5 py-0.2 rounded font-black text-[10.5px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                                                                        +{p.diff} {p.unit}
-                                                                    </span>
+                                                        {improvedProducts.map((p, pIdx) => {
+                                                            const fmtVal = (v) => p.isCurrency ? applyCurrencyMask(v) : v;
+                                                            const fmtDiff = p.isCurrency ? applyCurrencyMask(Math.abs(p.diffDOD)) : `${Math.abs(p.diffDOD)} ${p.unit || ''}`;
+                                                            return (
+                                                                <div key={pIdx} className="flex items-center justify-between gap-2 text-xs bg-white dark:bg-neutral-900/90 p-2 rounded-lg border border-emerald-100 dark:border-emerald-900/40">
+                                                                    <span className="font-bold text-neutral-700 dark:text-neutral-200 truncate">{p.label}</span>
+                                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                                        <span className="text-[10px] text-neutral-400">{fmtVal(p.prevReal)} ➔ {fmtVal(p.todayReal)}</span>
+                                                                        <span className="px-1.5 py-0.5 rounded font-black text-[10.5px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900/70 dark:text-emerald-200">
+                                                                            +{fmtDiff}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-neutral-500 dark:text-neutral-400 italic block py-2">
-                                                        Nenhum produto teve ganho de volume vs o dia anterior.
+                                                        Nenhum indicador teve ganho de volume vs o dia anterior.
                                                     </span>
                                                 )}
                                             </div>
@@ -1740,32 +1813,36 @@ export function Resultado({ salesData, goalsDB, usersDB = {}, globalMonth, setGl
                                             <div className="bg-rose-50/40 dark:bg-rose-950/20 p-3 rounded-xl border border-rose-200/60 dark:border-rose-900/40">
                                                 <div className="flex items-center gap-1.5 text-xs font-black text-rose-700 dark:text-rose-400 uppercase tracking-wider mb-2">
                                                     <TrendingDown size={14} />
-                                                    <span>Onde Houve Queda (Atenção)</span>
+                                                    <span>Onde Houve Queda ({declinedProducts.length})</span>
                                                 </div>
                                                 {declinedProducts.length > 0 ? (
                                                     <div className="space-y-1.5">
-                                                        {declinedProducts.map((p, pIdx) => (
-                                                            <div key={pIdx} className="flex items-center justify-between text-xs bg-white dark:bg-neutral-900/80 p-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40">
-                                                                <span className="font-bold text-neutral-700 dark:text-neutral-300">{p.label}</span>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <span className="text-[10px] text-neutral-400">{p.prev} ➔ {p.today}</span>
-                                                                    <span className="px-1.5 py-0.2 rounded font-black text-[10.5px] bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200">
-                                                                        -{p.diff} {p.unit}
-                                                                    </span>
+                                                        {declinedProducts.map((p, pIdx) => {
+                                                            const fmtVal = (v) => p.isCurrency ? applyCurrencyMask(v) : v;
+                                                            const fmtDiff = p.isCurrency ? applyCurrencyMask(Math.abs(p.diffDOD)) : `${Math.abs(p.diffDOD)} ${p.unit || ''}`;
+                                                            return (
+                                                                <div key={pIdx} className="flex items-center justify-between gap-2 text-xs bg-white dark:bg-neutral-900/90 p-2 rounded-lg border border-rose-100 dark:border-rose-900/40">
+                                                                    <span className="font-bold text-neutral-700 dark:text-neutral-200 truncate">{p.label}</span>
+                                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                                        <span className="text-[10px] text-neutral-400">{fmtVal(p.prevReal)} ➔ {fmtVal(p.todayReal)}</span>
+                                                                        <span className="px-1.5 py-0.5 rounded font-black text-[10.5px] bg-rose-100 text-rose-800 dark:bg-rose-900/70 dark:text-rose-200">
+                                                                            -{fmtDiff}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold block py-2">
-                                                        ✨ Nenhuma queda registrada! Todos os produtos mantiveram ou superaram o dia anterior.
+                                                        ✨ Nenhuma queda registrada! Todos os indicadores mantiveram ou superaram o dia anterior.
                                                     </span>
                                                 )}
                                             </div>
 
                                         </div>
                                     ) : (
-                                        <div className="text-center py-6 text-neutral-400 text-xs">
+                                        <div className="text-center py-6 text-neutral-400 dark:text-neutral-500 text-xs">
                                             Selecione um dia a partir do dia 2 para comparar com o dia imediatamente anterior.
                                         </div>
                                     )}
