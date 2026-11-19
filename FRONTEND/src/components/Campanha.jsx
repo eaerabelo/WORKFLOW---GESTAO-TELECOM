@@ -541,35 +541,35 @@ export function Campanha({
   }, [activeCampanhaForStatus, salesData, safeVendedores]);
 
   return (
-    <div className="campanha-container p-4 sm:p-6 lg:p-8 space-y-6 w-full max-w-7xl mx-auto">
+    <div className="campanha-container p-3 sm:p-5 lg:p-6 space-y-6 w-full max-w-7xl mx-auto min-w-0 overflow-x-hidden box-border">
       {/* CABEÇALHO ELEGANTE E TECNOLÓGICO */}
-      <div className="w-full bg-gradient-to-r from-neutral-900 via-neutral-900 to-black rounded-3xl p-6 sm:p-8 border border-neutral-800 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-6 justify-between items-start md:items-center shrink-0">
+      <div className="w-full max-w-full min-w-0 bg-gradient-to-r from-neutral-900 via-neutral-900 to-black rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-neutral-800 shadow-xl relative overflow-hidden flex flex-col md:flex-row gap-4 sm:gap-6 justify-between items-start md:items-center box-border">
         <div className="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-orange-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#E3000F] to-orange-500 p-0.5 shadow-lg shadow-red-500/30 shrink-0">
+        <div className="relative z-10 flex items-center gap-3.5 sm:gap-4 min-w-0 max-w-full">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#E3000F] to-orange-500 p-0.5 shadow-lg shadow-red-500/30 shrink-0">
             <div className="w-full h-full bg-black/60 backdrop-blur-md rounded-[14px] flex items-center justify-center text-white">
-              <Megaphone size={26} className="animate-pulse" />
+              <Megaphone size={24} className="animate-pulse" />
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide uppercase">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg sm:text-2xl font-black text-white tracking-wide uppercase break-words">
                 Painel de Campanhas & Incentivos
               </h2>
               {hasNews ? (
-                <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-[#E3000F] text-[10px] font-black uppercase tracking-wider animate-pulse flex items-center gap-1.5">
+                <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-[#E3000F] text-[10px] font-black uppercase tracking-wider animate-pulse flex items-center gap-1.5 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#E3000F]"></span>
                   Novidades
                 </span>
               ) : (
-                <span className="px-2.5 py-0.5 rounded-full bg-neutral-800 text-neutral-400 text-[10px] font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 rounded-full bg-neutral-800 text-neutral-400 text-[10px] font-bold uppercase tracking-wider shrink-0">
                   Atualizado
                 </span>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-neutral-400 font-medium mt-1">
+            <p className="text-xs sm:text-sm text-neutral-400 font-medium mt-1 break-words">
               Competições oficiais, regras de pontuação por indicador com apuração automática em tempo real.
             </p>
           </div>
@@ -578,7 +578,7 @@ export function Campanha({
         {canEdit && (
           <button
             onClick={handleOpenModal}
-            className="relative z-10 w-full sm:w-auto justify-center px-6 py-3.5 bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-red-600/30 flex items-center gap-2.5 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+            className="relative z-10 w-full md:w-auto justify-center px-5 py-3 bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-red-600/30 flex items-center gap-2.5 transition-all duration-300 active:scale-95 cursor-pointer shrink-0"
           >
             <Plus size={18} className="shrink-0" />
             <span>Lançar Nova Campanha</span>
@@ -587,11 +587,11 @@ export function Campanha({
       </div>
 
       {/* CORPO / GRID DE CARDS DAS CAMPANHAS */}
-      <div className="w-full max-w-full">
+      <div className="w-full max-w-full min-w-0">
         {(campanhasData || []).length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-neutral-900 border border-dashed border-neutral-300 dark:border-neutral-800 rounded-3xl p-8 text-center shadow-sm">
-            <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400 mb-4">
-              <Trophy size={32} />
+          <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-neutral-900 border border-dashed border-neutral-300 dark:border-neutral-800 rounded-2xl sm:rounded-3xl p-6 text-center shadow-sm w-full max-w-full box-border">
+            <div className="w-14 h-14 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400 mb-4">
+              <Trophy size={28} />
             </div>
             <h3 className="text-base font-extrabold text-neutral-800 dark:text-neutral-100 uppercase tracking-wide">
               Nenhuma campanha ativa no momento
@@ -601,7 +601,7 @@ export function Campanha({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 w-full max-w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 w-full max-w-full min-w-0">
             {(campanhasData || []).map((camp) => {
               const estilo = ESTILOS_CAMPANHA.find(e => e.id === camp.tipoCampanha) || ESTILOS_CAMPANHA[0];
               const IconeEstilo = estilo.icon;
@@ -613,13 +613,13 @@ export function Campanha({
                   key={camp.id}
                   onMouseEnter={() => markAsViewed(camp)}
                   onClick={() => setSelectedCampIdForStatus(camp.id)}
-                  className={`relative rounded-3xl p-4 sm:p-6 transition-all duration-300 border flex flex-col justify-between group shadow-lg cursor-pointer w-full max-w-full overflow-hidden break-words ${
+                  className={`relative rounded-2xl sm:rounded-3xl p-4 sm:p-5 transition-all duration-300 border flex flex-col justify-between group shadow-md cursor-pointer w-full max-w-full min-w-0 overflow-hidden break-words box-border ${
                     activeCampanhaForStatus?.id === camp.id
                       ? "ring-2 ring-[#E3000F] shadow-red-500/10"
                       : ""
                   } ${
                     isAtiva
-                      ? "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:border-[#E3000F]/50 hover:shadow-2xl hover:-translate-y-1"
+                      ? "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:border-[#E3000F]/50 hover:shadow-xl"
                       : "bg-neutral-100/60 dark:bg-neutral-900/40 border-neutral-200 dark:border-neutral-800 opacity-75"
                   }`}
                 >
@@ -629,15 +629,15 @@ export function Campanha({
                     </span>
                   )}
 
-                  <div>
+                  <div className="min-w-0 max-w-full">
                     {/* TOPO DO CARD: BADGE DO ESTILO + STATUS */}
-                    <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4 flex-wrap sm:flex-nowrap">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shrink-0 ${estilo.bgBadge}`}>
+                    <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border max-w-full min-w-0 ${estilo.bgBadge}`}>
                         <IconeEstilo size={13} className="shrink-0" />
-                        <span>{estilo.label}</span>
+                        <span className="truncate">{estilo.label}</span>
                       </span>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg border ${
                           isAtiva
                             ? "bg-red-500/10 text-[#E3000F] dark:text-red-400 border-red-500/30"
@@ -647,17 +647,17 @@ export function Campanha({
                         </span>
 
                         {canEdit && (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1" onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center gap-1 ml-0.5" onClick={e => e.stopPropagation()}>
                             <button
                               onClick={() => handleEdit(camp)}
-                              className="p-1 rounded-lg text-neutral-400 hover:text-neutral-800 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-800 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                               title="Editar"
                             >
                               <Edit3 size={14} />
                             </button>
                             <button
                               onClick={() => handleDelete(camp.id)}
-                              className="p-1 rounded-lg text-neutral-400 hover:text-[#E3000F] hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              className="p-1.5 rounded-lg text-neutral-400 hover:text-[#E3000F] hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                               title="Excluir"
                             >
                               <Trash2 size={14} />
@@ -668,27 +668,27 @@ export function Campanha({
                     </div>
 
                     {/* TÍTULO E DESCRIÇÃO */}
-                    <h3 className="font-black text-lg text-neutral-900 dark:text-white tracking-wide uppercase mb-2">
+                    <h3 className="font-black text-base sm:text-lg text-neutral-900 dark:text-white tracking-wide uppercase mb-1.5 break-words leading-snug">
                       {camp.titulo}
                     </h3>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed mb-4 line-clamp-3">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed mb-3.5 line-clamp-3 break-words">
                       {camp.descricao || "Participe da campanha atingindo as metas e acumulando pontos!"}
                     </p>
 
                     {/* CAIXINHA DINÂMICA DE PESOS POR INDICADOR */}
-                    <div className="mb-4 p-3 bg-neutral-50 dark:bg-neutral-800/60 rounded-2xl border border-neutral-200/80 dark:border-neutral-700/80 space-y-2 max-w-full">
-                      <div className="text-[10px] font-black uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center justify-between">
-                        <span className="flex items-center gap-1"><Target size={12} className="text-[#E3000F]" /> Tabela de Pontos:</span>
+                    <div className="mb-3.5 p-3 bg-neutral-50 dark:bg-neutral-800/60 rounded-xl border border-neutral-200/80 dark:border-neutral-700/80 space-y-2 w-full max-w-full min-w-0 overflow-hidden box-border">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center justify-between gap-2 flex-wrap">
+                        <span className="flex items-center gap-1"><Target size={12} className="text-[#E3000F] shrink-0" /> Tabela de Pontos:</span>
                         {camp.metaPontos && <span className="text-amber-500 font-bold">Meta: {camp.metaPontos} pts</span>}
                       </div>
-                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      <div className="flex flex-wrap gap-1.5 pt-0.5 max-w-full">
                         {estilo.indicadores.map((ind) => (
                           <div
                             key={ind.key}
-                            className="bg-white dark:bg-neutral-900 px-2 py-1 rounded-lg border border-neutral-200/60 dark:border-neutral-700/60 flex items-center gap-1.5 text-[10px] shrink-0"
+                            className="bg-white dark:bg-neutral-900 px-2 py-1 rounded-lg border border-neutral-200/60 dark:border-neutral-700/60 flex items-center gap-1.5 text-[10px] max-w-full min-w-0"
                           >
-                            <span className="text-neutral-500 dark:text-neutral-400 font-bold uppercase">{ind.label}:</span>
-                            <span className={`font-black ${ind.cor}`}>+{camp[ind.key] ?? ind.default}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-bold uppercase truncate">{ind.label}:</span>
+                            <span className={`font-black shrink-0 ${ind.cor}`}>+{camp[ind.key] ?? ind.default}</span>
                           </div>
                         ))}
                       </div>
@@ -696,8 +696,8 @@ export function Campanha({
                   </div>
 
                   {/* RODAPÉ DO CARD: PRAZO, PRÊMIO E ACEITE DIGITAL */}
-                  <div className="space-y-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                    <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] sm:text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                  <div className="space-y-2.5 pt-3 border-t border-neutral-100 dark:border-neutral-800 min-w-0 max-w-full">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] sm:text-xs font-bold text-neutral-500 dark:text-neutral-400">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <Clock size={13} className="text-[#E3000F] shrink-0" />
                         <span className="truncate">{formatDateBR(camp.dataInicio)} até {formatDateBR(camp.dataFim)}</span>
@@ -708,21 +708,21 @@ export function Campanha({
                     </div>
 
                     {camp.premio && (
-                      <div className="p-2.5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 flex items-center gap-2.5">
+                      <div className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 flex items-center gap-2 min-w-0 max-w-full overflow-hidden">
                         <Award size={16} className="text-amber-500 shrink-0" />
-                        <span className="text-xs font-black text-neutral-900 dark:text-white truncate block">
+                        <span className="text-xs font-black text-neutral-900 dark:text-white truncate block min-w-0 flex-1">
                           {camp.premio}
                         </span>
                       </div>
                     )}
 
                     {/* BOTÃO DE ACEITE DIGITAL OU STATUS CONFIRMADO (SOMENTE PARA USUÁRIO VENDEDOR) */}
-                    <div onClick={e => e.stopPropagation()}>
+                    <div onClick={e => e.stopPropagation()} className="min-w-0 max-w-full">
                       {isVendedor ? (
                         userHasAceite ? (
                           <div className="w-full py-2 px-3 rounded-xl bg-red-500/10 border border-red-500/30 text-[#E3000F] dark:text-red-400 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider">
                             <FileCheck2 size={15} className="shrink-0" />
-                            <span>1 VENDEDOR ELEGIVEL</span>
+                            <span className="truncate">1 VENDEDOR ELEGIVEL</span>
                           </div>
                         ) : (
                           <button
@@ -735,12 +735,12 @@ export function Campanha({
                           </button>
                         )
                       ) : (
-                        <div className="w-full py-2 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 flex items-center justify-between text-xs font-bold">
+                        <div className="w-full py-2 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 flex items-center justify-between gap-2 text-xs font-bold flex-wrap">
                           <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-neutral-500">
                             <UserCheck size={14} className="text-[#E3000F] shrink-0" />
                             Aceites Registrados:
                           </span>
-                          <span className="px-2 py-0.5 rounded-md bg-[#E3000F]/10 text-[#E3000F] font-black text-xs">
+                          <span className="px-2 py-0.5 rounded-md bg-[#E3000F]/10 text-[#E3000F] font-black text-xs shrink-0">
                             {Object.keys(camp.aceites || {}).length} Vendedor(es)
                           </span>
                         </div>
@@ -756,16 +756,16 @@ export function Campanha({
 
       {/* PAINEL "STATUS DA CAMPANHA": APURAÇÃO EM TEMPO REAL POR INDICADOR */}
       {activeCampanhaForStatus && (
-        <div className="w-full bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 p-4 sm:p-6 lg:p-8 shadow-xl space-y-5 sm:space-y-6 animate-fade-in">
+        <div className="w-full max-w-full min-w-0 overflow-hidden box-border bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-800 p-4 sm:p-6 shadow-xl space-y-5">
           {/* HEADER DO PAINEL DE STATUS */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 sm:pb-6 border-b border-neutral-100 dark:border-neutral-800">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 sm:pb-5 border-b border-neutral-100 dark:border-neutral-800 min-w-0 max-w-full">
+            <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-black flex items-center justify-center shadow-lg shadow-yellow-500/20 font-black shrink-0">
                 <Trophy size={22} className="shrink-0" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base sm:text-xl font-black text-neutral-900 dark:text-white uppercase tracking-wide truncate">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <h3 className="text-sm sm:text-lg font-black text-neutral-900 dark:text-white uppercase tracking-wide break-words min-w-0">
                     Status da Campanha: {activeCampanhaForStatus.titulo}
                   </h3>
                   <span className="px-2 py-0.5 rounded-md bg-red-500/15 border border-red-500/40 text-[#E3000F] dark:text-red-400 text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 shrink-0">
@@ -773,7 +773,7 @@ export function Campanha({
                     Tempo Real
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 break-words">
                   Pontuação gerada automaticamente a cada item vendido no período ({formatDateBR(activeCampanhaForStatus.dataInicio)} a {formatDateBR(activeCampanhaForStatus.dataFim)}).
                 </p>
               </div>
@@ -781,12 +781,12 @@ export function Campanha({
 
             {/* SELETOR SE HOUVER MAIS DE UMA CAMPANHA */}
             {campanhasData.length > 1 && (
-              <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="flex items-center gap-2 w-full lg:w-auto min-w-0 shrink-0">
                 <span className="text-xs font-bold text-neutral-400 uppercase shrink-0">Campanha:</span>
                 <select
                   value={activeCampanhaForStatus.id}
                   onChange={(e) => setSelectedCampIdForStatus(Number(e.target.value))}
-                  className="w-full md:w-auto px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl text-xs font-bold uppercase outline-none focus:border-[#E3000F]"
+                  className="w-full lg:max-w-xs px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl text-xs font-bold uppercase outline-none focus:border-[#E3000F] truncate"
                 >
                   {campanhasData.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -800,19 +800,19 @@ export function Campanha({
 
           {/* CARD DE DESTAQUE: LÍDER ATUAL / GANHADOR PROVISÓRIO */}
           {apuracaoCampanha.lider && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0 max-w-full overflow-hidden">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-500 text-neutral-950 flex items-center justify-center font-black text-xl shadow-md shrink-0">
                   🥇
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 block truncate">
                     Líder da Campanha (Ganhador Provisório)
                   </span>
                   <h4 className="text-sm sm:text-lg font-black text-neutral-900 dark:text-white uppercase truncate">
                     {apuracaoCampanha.lider.nome}
                   </h4>
-                  <span className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 block">
+                  <span className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 block truncate">
                     {apuracaoCampanha.lider.temAceite ? "✅ Aceite Digital Confirmado (Elegível)" : "⚠️ Pendente de Aceite Digital"}
                   </span>
                 </div>
@@ -832,28 +832,28 @@ export function Campanha({
           )}
 
           {/* TABELA DE APURAÇÃO POR INDICADOR ESTILO GESTÃO */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 w-full max-w-full min-w-0">
             <div className="sm:hidden text-[10.5px] font-bold text-neutral-400 dark:text-neutral-500 flex items-center gap-1.5 px-1">
               <span>👉 Deslize horizontalmente para ver todos os indicadores e pontos</span>
             </div>
-            <div className="overflow-x-auto rounded-2xl border border-neutral-200 dark:border-neutral-800 custom-scrollbar touch-pan-x w-full">
-              <table className="w-full text-left border-collapse text-xs whitespace-nowrap min-w-[620px]">
+            <div className="overflow-x-auto rounded-2xl border border-neutral-200 dark:border-neutral-800 custom-scrollbar touch-pan-x w-full max-w-full min-w-0">
+              <table className="w-full text-left border-collapse text-xs whitespace-nowrap min-w-[600px]">
               <thead className="bg-neutral-900 text-white dark:bg-black">
                 <tr>
-                  <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-neutral-800 text-center w-12">#</th>
-                  <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-neutral-800">Colaborador / Vendedor</th>
+                  <th className="px-3.5 py-3 font-bold uppercase tracking-wider border-r border-neutral-800 text-center w-12">#</th>
+                  <th className="px-3.5 py-3 font-bold uppercase tracking-wider border-r border-neutral-800">Colaborador / Vendedor</th>
                   {(() => {
                     const activeEstilo = ESTILOS_CAMPANHA.find((e) => e.id === activeCampanhaForStatus.tipoCampanha) || ESTILOS_CAMPANHA[0];
                     return activeEstilo.indicadores.map((ind) => (
-                      <th key={ind.key} className="px-4 py-3 font-bold uppercase tracking-wider border-r border-neutral-800 text-center">
+                      <th key={ind.key} className="px-3.5 py-3 font-bold uppercase tracking-wider border-r border-neutral-800 text-center">
                         {ind.label} (+{activeCampanhaForStatus[ind.key] ?? ind.default}pts)
                       </th>
                     ));
                   })()}
-                  <th className="px-4 py-3 font-bold uppercase tracking-wider border-r border-neutral-800 text-center bg-red-600/30 text-red-200">
+                  <th className="px-3.5 py-3 font-bold uppercase tracking-wider border-r border-neutral-800 text-center bg-red-600/30 text-red-200">
                     Total de Pontos
                   </th>
-                  <th className="px-4 py-3 font-bold uppercase tracking-wider text-center">
+                  <th className="px-3.5 py-3 font-bold uppercase tracking-wider text-center">
                     Aceite Digital
                   </th>
                 </tr>
@@ -872,10 +872,10 @@ export function Campanha({
                         isTop1 ? "bg-amber-500/5 font-bold" : ""
                       }`}
                     >
-                      <td className="px-4 py-3 text-center font-black">
+                      <td className="px-3.5 py-3 text-center font-black">
                         {isTop1 ? "🥇 1º" : isTop2 ? "🥈 2º" : isTop3 ? "🥉 3º" : `${idx + 1}º`}
                       </td>
-                      <td className="px-4 py-3 font-extrabold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                      <td className="px-3.5 py-3 font-extrabold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
                         <span>{getFirstName(seller.nome)}</span>
                         {seller.temAceite ? (
                           <span className="text-[10px] text-[#E3000F] font-bold" title="Aceite Confirmado">
@@ -892,7 +892,7 @@ export function Campanha({
                         const peso = Number(activeCampanhaForStatus[ind.key] ?? ind.default);
                         const pts = qty * peso;
                         return (
-                          <td key={ind.key} className="px-4 py-3 text-center font-mono">
+                          <td key={ind.key} className="px-3.5 py-3 text-center font-mono">
                             <span className="font-bold text-neutral-800 dark:text-neutral-200">{qty}</span>
                             <span className="text-[10px] text-neutral-400 block font-normal">
                               ({pts} pts)
@@ -900,10 +900,10 @@ export function Campanha({
                           </td>
                         );
                       })}
-                      <td className="px-4 py-3 text-center font-black text-base text-[#E3000F] font-mono">
+                      <td className="px-3.5 py-3 text-center font-black text-base text-[#E3000F] font-mono">
                         {seller.totalPontos}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-3.5 py-3 text-center">
                         {seller.temAceite ? (
                           <span className="px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-[#E3000F] dark:text-red-400 text-[10px] font-black uppercase">
                             Elegível
@@ -926,34 +926,34 @@ export function Campanha({
 
       {/* MODAL DE ACEITE DIGITAL */}
       {aceiteModal.isOpen && aceiteModal.campanha && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in no-print">
-          <div className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-3xl shadow-2xl border border-neutral-200 dark:border-neutral-800 p-6 sm:p-8 flex flex-col space-y-5">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 no-print overflow-y-auto">
+          <div className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-neutral-200 dark:border-neutral-800 p-5 sm:p-6 flex flex-col space-y-4 max-h-[82vh] overflow-y-auto min-w-0 box-border">
             <div className="flex items-center gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
               <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-900/20 text-[#E3000F] flex items-center justify-center shrink-0">
                 <FileCheck2 size={20} />
               </div>
-              <div>
-                <h3 className="font-extrabold text-base text-neutral-900 dark:text-white uppercase">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase break-words">
                   Confirmação de Ciência da Campanha
                 </h3>
                 <p className="text-xs text-neutral-400">Termos, Métricas e Elegibilidade</p>
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 space-y-2 text-xs">
-              <div className="flex justify-between">
+            <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 space-y-2 text-xs min-w-0 max-w-full">
+              <div className="flex justify-between gap-2 flex-wrap">
                 <span className="font-bold text-neutral-500 uppercase">Campanha:</span>
-                <span className="font-black text-neutral-900 dark:text-white uppercase">{aceiteModal.campanha.titulo}</span>
+                <span className="font-black text-neutral-900 dark:text-white uppercase break-words">{aceiteModal.campanha.titulo}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2 flex-wrap">
                 <span className="font-bold text-neutral-500 uppercase">Período:</span>
                 <span className="font-bold text-neutral-700 dark:text-neutral-300">
                   {formatDateBR(aceiteModal.campanha.dataInicio)} até {formatDateBR(aceiteModal.campanha.dataFim)}
                 </span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2 flex-wrap">
                 <span className="font-bold text-neutral-500 uppercase">Premiação:</span>
-                <span className="font-bold text-[#E3000F]">{aceiteModal.campanha.premio || "Definida pela Gerência"}</span>
+                <span className="font-bold text-[#E3000F] break-words">{aceiteModal.campanha.premio || "Definida pela Gerência"}</span>
               </div>
             </div>
 
@@ -966,18 +966,18 @@ export function Campanha({
               </p>
             </div>
 
-            <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-end gap-3">
+            <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-end gap-2.5 flex-wrap">
               <button
                 type="button"
                 onClick={() => setAceiteModal({ isOpen: false, campanha: null })}
-                className="px-5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 Voltar
               </button>
               <button
                 type="button"
                 onClick={handleConfirmarAceite}
-                className="px-6 py-2.5 bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 flex items-center gap-1.5 cursor-pointer active:scale-98"
+                className="px-5 py-2 bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 flex items-center gap-1.5 cursor-pointer active:scale-98"
               >
                 <Check size={16} className="shrink-0" />
                 <span>CIENTE E PARTICIPAR</span>
@@ -992,42 +992,42 @@ export function Campanha({
         const selectedEstiloObj = ESTILOS_CAMPANHA.find((e) => e.id === formData.tipoCampanha) || ESTILOS_CAMPANHA[0];
 
         return (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in no-print">
-            <div className="bg-white dark:bg-neutral-900 w-full max-w-xl md:max-w-2xl rounded-3xl shadow-2xl border border-neutral-200 dark:border-neutral-800 p-5 sm:p-7 flex flex-col max-h-[88vh] overflow-hidden">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-2.5 sm:p-4 no-print overflow-y-auto">
+            <div className="bg-white dark:bg-neutral-900 w-full max-w-xl md:max-w-2xl rounded-2xl sm:rounded-3xl shadow-2xl border border-neutral-200 dark:border-neutral-800 p-4 sm:p-6 flex flex-col max-h-[82vh] min-w-0 overflow-hidden box-border my-auto">
               {/* HEADER DO MODAL (FIXO) */}
-              <div className="flex items-center justify-between pb-3.5 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-900/20 text-[#E3000F] flex items-center justify-center shrink-0">
-                    <Target size={20} />
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-neutral-100 dark:border-neutral-800 shrink-0 min-w-0">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-red-50 dark:bg-red-900/20 text-[#E3000F] flex items-center justify-center shrink-0">
+                    <Target size={19} />
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-base sm:text-lg text-neutral-900 dark:text-white uppercase tracking-wide">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white uppercase tracking-wide truncate">
                       {editingId ? "Editar Campanha de Vendas" : "Lançar Nova Campanha de Vendas"}
                     </h3>
-                    <p className="text-xs text-neutral-400">Defina o foco comercial, regras de pontos e período</p>
+                    <p className="text-[11px] sm:text-xs text-neutral-400 truncate">Defina o foco comercial, regras de pontos e período</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="p-2 rounded-xl text-neutral-400 hover:text-neutral-800 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  className="p-2 rounded-xl text-neutral-400 hover:text-neutral-800 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shrink-0"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 
               {/* CORPO DO FORMULÁRIO COM SCROLL INTERNO RESPONSIVO */}
-              <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto scrollbar-thin pr-1 pt-4 space-y-4">
+              <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar pr-1 pt-3.5 space-y-3.5 min-w-0 max-w-full">
                 {/* 1. SELETOR DE ESTILO DINÂMICO E COMPACTO */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
+                <div className="min-w-0 max-w-full">
+                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                     <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                       1. Estilo / Indicador Foco da Campanha <span className="text-[#E3000F]">*</span>
                     </label>
                     <span className="text-[10px] text-neutral-400 font-bold uppercase">Selecione para liberar os pontos</span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 min-w-0 max-w-full">
                     {ESTILOS_CAMPANHA.map((estilo) => {
                       const Icone = estilo.icon;
                       const isSelected = formData.tipoCampanha === estilo.id;
@@ -1036,14 +1036,14 @@ export function Campanha({
                           type="button"
                           key={estilo.id}
                           onClick={() => handleSelectEstilo(estilo.id)}
-                          className={`p-2.5 rounded-2xl border text-left transition-all flex items-center gap-2.5 ${
+                          className={`p-2.5 rounded-xl border text-left transition-all flex items-center gap-2 min-w-0 max-w-full overflow-hidden ${
                             isSelected
-                              ? "bg-neutral-900 text-white dark:bg-white dark:text-black border-[#E3000F] ring-2 ring-[#E3000F]/30 shadow-md scale-[1.01]"
+                              ? "bg-neutral-900 text-white dark:bg-white dark:text-black border-[#E3000F] ring-1 ring-[#E3000F]/40 shadow-sm"
                               : "bg-neutral-50 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
                           }`}
                         >
-                          <div className={`p-1.5 rounded-xl shrink-0 ${isSelected ? "bg-[#E3000F]/20 text-[#E3000F]" : "bg-neutral-200/50 dark:bg-neutral-700/50 " + estilo.textCor}`}>
-                            <Icone size={16} />
+                          <div className={`p-1.5 rounded-lg shrink-0 ${isSelected ? "bg-[#E3000F]/20 text-[#E3000F]" : "bg-neutral-200/50 dark:bg-neutral-700/50 " + estilo.textCor}`}>
+                            <Icone size={15} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <span className="font-black text-xs block truncate leading-tight">{estilo.label}</span>
@@ -1057,7 +1057,7 @@ export function Campanha({
                 </div>
 
                 {/* 2. TÍTULO DA CAMPANHA */}
-                <div>
+                <div className="min-w-0 max-w-full">
                   <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
                     2. Título da Campanha <span className="text-[#E3000F]">*</span>
                   </label>
@@ -1065,63 +1065,63 @@ export function Campanha({
                     type="text"
                     value={formData.titulo}
                     onChange={(e) => setFormData({ ...formData, titulo: e.target.value.toUpperCase() })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-900 dark:text-neutral-100 uppercase outline-none focus:border-[#E3000F]"
+                    className="w-full max-w-full min-w-0 px-3.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-900 dark:text-neutral-100 uppercase outline-none focus:border-[#E3000F] box-border"
                     placeholder="EX: CAMPANHA DE HALLOWEEN • ACELERA TELECOM"
                     required
                   />
                 </div>
 
                 {/* 3. BLOCO DINÂMICO DE PONTOS LIBERADOS POR ESTILO */}
-                <div className="p-4 bg-neutral-50 dark:bg-neutral-800/40 rounded-2xl border border-neutral-200 dark:border-neutral-700 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-black uppercase text-[#E3000F] tracking-wide">
-                      <Sparkles size={16} />
-                      <span>3. Pontos Focados: {selectedEstiloObj.label}</span>
+                <div className="p-3.5 bg-neutral-50 dark:bg-neutral-800/40 rounded-2xl border border-neutral-200 dark:border-neutral-700 space-y-3 min-w-0 max-w-full overflow-hidden box-border">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 text-xs font-black uppercase text-[#E3000F] tracking-wide min-w-0">
+                      <Sparkles size={15} className="shrink-0" />
+                      <span className="truncate">3. Pontos Focados: {selectedEstiloObj.label}</span>
                     </div>
-                    <span className="text-[10px] text-[#E3000F] font-bold uppercase bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
+                    <span className="text-[10px] text-[#E3000F] font-bold uppercase bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20 shrink-0">
                       {selectedEstiloObj.indicadores.length} Indicador(es) Ativo(s)
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 min-w-0 max-w-full">
                     {selectedEstiloObj.indicadores.map((ind) => (
-                      <div key={ind.key}>
+                      <div key={ind.key} className="min-w-0 max-w-full">
                         <label className="block text-[10px] font-black uppercase text-neutral-500 dark:text-neutral-400 mb-1 truncate">
                           {ind.label}
                         </label>
-                        <div className="relative">
+                        <div className="relative min-w-0 max-w-full">
                           <input
                             type="number"
                             value={formData[ind.key] ?? ind.default}
                             onChange={(e) => setFormData({ ...formData, [ind.key]: e.target.value })}
                             placeholder={String(ind.default)}
-                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs font-black text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
+                            className="w-full max-w-full min-w-0 pl-3 pr-9 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs font-black text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#E3000F] box-border"
                           />
-                          <span className="absolute right-2.5 top-2 text-[10px] font-bold text-neutral-400 pointer-events-none">pts</span>
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-400 pointer-events-none">pts</span>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="pt-1">
+                  <div className="pt-1 min-w-0 max-w-full">
                     <label className="block text-[10px] font-black uppercase text-neutral-500 dark:text-neutral-400 mb-1">
                       Meta Mínima de Pontos da Campanha
                     </label>
-                    <div className="relative">
+                    <div className="relative min-w-0 max-w-full">
                       <input
                         type="number"
                         value={formData.metaPontos}
                         onChange={(e) => setFormData({ ...formData, metaPontos: e.target.value })}
                         placeholder="Ex: 100"
-                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
+                        className="w-full max-w-full min-w-0 pl-3 pr-16 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#E3000F] box-border"
                       />
-                      <span className="absolute right-2.5 top-2 text-[10px] font-bold text-neutral-400 pointer-events-none">pts meta</span>
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-400 pointer-events-none">pts meta</span>
                     </div>
                   </div>
                 </div>
 
                 {/* 4. REGRAS E DESCRIÇÃO */}
-                <div>
+                <div className="min-w-0 max-w-full">
                   <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
                     4. Descrição Geral / Mecânica de Participação
                   </label>
@@ -1129,14 +1129,14 @@ export function Campanha({
                     value={formData.descricao}
                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                     rows={2}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F] resize-none"
+                    className="w-full max-w-full min-w-0 px-3.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F] resize-none box-border"
                     placeholder="Explique os critérios de desempate, período de apuração e orientações aos vendedores..."
                   />
                 </div>
 
                 {/* 5. DATAS COM TRAVA DE 4 DÍGITOS */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0 max-w-full">
+                  <div className="min-w-0 max-w-full">
                     <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
                       Data Início <span className="text-[#E3000F]">*</span>
                     </label>
@@ -1157,10 +1157,10 @@ export function Campanha({
                         setFormData({ ...formData, dataInicio: val });
                       }}
                       required
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F]"
+                      className="w-full max-w-full min-w-0 px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F] box-border"
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0 max-w-full">
                     <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
                       Data Fim <span className="text-[#E3000F]">*</span>
                     </label>
@@ -1181,14 +1181,14 @@ export function Campanha({
                         setFormData({ ...formData, dataFim: val });
                       }}
                       required
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F]"
+                      className="w-full max-w-full min-w-0 px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F] box-border"
                     />
                   </div>
                 </div>
 
                 {/* 6. PREMIAÇÃO E STATUS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0 max-w-full">
+                  <div className="min-w-0 max-w-full">
                     <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
                       Premiação
                     </label>
@@ -1197,17 +1197,17 @@ export function Campanha({
                       value={formData.premio}
                       onChange={(e) => setFormData({ ...formData, premio: e.target.value })}
                       placeholder="Ex: Folga, R$ 200 no Vale, Troféu..."
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F]"
+                      className="w-full max-w-full min-w-0 px-3.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F] box-border"
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0 max-w-full">
                     <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
                       Status da Campanha
                     </label>
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F]"
+                      className="w-full max-w-full min-w-0 px-3.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F] box-border"
                     >
                       <option value="ATIVA">ATIVA</option>
                       <option value="EM APURAÇÃO">EM APURAÇÃO</option>
@@ -1217,7 +1217,7 @@ export function Campanha({
                 </div>
 
                 {/* 7. GANHADORES */}
-                <div>
+                <div className="min-w-0 max-w-full">
                   <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
                     Ganhador(es) Registrado(s)
                   </label>
@@ -1226,22 +1226,22 @@ export function Campanha({
                     value={formData.ganhadores || ""}
                     onChange={(e) => setFormData({ ...formData, ganhadores: e.target.value })}
                     placeholder="Ex: 1º Lugar: João Silva • 2º Lugar: Maria Santos"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F]"
+                    className="w-full max-w-full min-w-0 px-3.5 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none focus:border-[#E3000F] box-border"
                   />
                 </div>
 
                 {/* BOTÕES DE AÇÃO FIXOS NO BOTTOM */}
-                <div className="flex justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 sticky bottom-0 bg-white dark:bg-neutral-900 py-2 shrink-0">
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-neutral-100 dark:border-neutral-800 sticky bottom-0 bg-white dark:bg-neutral-900 py-2 shrink-0 flex-wrap">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-[#E3000F] hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 transition-all cursor-pointer"
+                    className="px-5 py-2 bg-[#E3000F] hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 transition-all cursor-pointer"
                   >
                     {editingId ? "Salvar Alterações" : "Lançar Campanha"}
                   </button>

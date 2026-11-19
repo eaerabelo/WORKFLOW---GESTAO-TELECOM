@@ -496,3 +496,10 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - Adicionadas todas as ofertas conjuntas por marca (`SAMSUNG`: 14 grupos de ofertas incluindo Fit3, Buds Core, Buds 3 FE, Buds4, Buds 4 Pro, Watch 8 40/44/Classic, Watch 9 40/44, Watch Ultra/Ultra2 e Capas MagSafe S26/S26+/S26 Ultra; `MOTOROLA`: Moto Buds Loop Swarovski, Moto Buds Bass e Moto Buds 2+; `APPLE`: AirPods 4 ANC, AirPods Pro 2ª Geração, AirPods Pro 3 e 7 famílias de Capas Customic & Laut + Película para iPhone 17e/17/17 Pro/17 Pro Max/18 Pro/18 Pro Max/Duo).
 - Adicionada barra de busca instantânea por modelo ou Código SAP, botão de cópia rápida de Código SAP com 1 clique e filtro para a tabela avulsa **Multi Friday**.
 - Ajustada a tipografia da área **BUNDLES** na seção `[GEEK]` para o mesmo padrão visual limpo e confortável das seções `[VENDA]` e `[UR]` (`Inter / system-ui`, pesos `font-medium` / `font-semibold` / `font-bold`, sem caixa alta excessiva ou fonte monoespaçada cansativa) e renomeada a categoria `"WEARABLES & ÁUDIO"` para **`"RELOGIOS & FONES"`**.
+
+---
+
+## 18/11/2026 — Correção de Vazamento de Dimensões na Seção `[CAMPANHA]` (`FRONTEND/src/components/Campanha.jsx` & `CampanhaStyle.css`)
+
+- Removido o bloqueio `h-full flex-col overflow-y-auto animate-fade-in` em `.campanha-container` que comprimia os blocos internos e prendia os modais dentro do container da seção.
+- Aplicado contenção estrita (`w-full max-w-full min-w-0 overflow-hidden box-border`) em todos os cards de campanha, no painel aberto de **Status da Campanha** (evitando que a tabela multi-indicadores estoure a largura da caixa) e nos modais abertos de **Lançar/Editar Campanha** e **Aceite Digital** (`max-h-[82vh]`, grids responsivos `grid-cols-1 sm:grid-cols-2` para datas e indicadores).
