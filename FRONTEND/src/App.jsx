@@ -1227,16 +1227,24 @@ export default function App() {
       )}
 
       {/* Sidebar - Menu de Navegação Esquerdo */}
-      <aside className={`${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:w-0 md:translate-x-0'} no-print overflow-hidden shrink-0 transition-all duration-500 ease-in-out bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col z-30 fixed md:relative top-0 left-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-none`}>
-        <div className="h-12 sm:h-16 flex items-center px-4 sm:px-6 border-b border-neutral-100 dark:border-neutral-800 min-w-[16rem] shrink-0">
-          <div className="flex items-center text-[#E3000F] font-bold text-base sm:text-xl tracking-tight whitespace-nowrap">
-            <img src={wfLogo} alt="WorkFlow Logo" className="w-11 sm:w-16 h-auto m-0 object-contain -mr-1" />
+      <aside className={`${isSidebarOpen ? 'translate-x-0 w-72 sm:w-64' : '-translate-x-full w-72 sm:w-64 md:w-0 md:translate-x-0'} no-print overflow-hidden shrink-0 transition-all duration-500 ease-in-out bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col z-30 fixed md:relative top-0 left-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.08)] dark:shadow-none`}>
+        <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 border-b border-neutral-100 dark:border-neutral-800 min-w-[17.5rem] sm:min-w-[16rem] shrink-0">
+          <div className="flex items-center text-[#E3000F] font-bold text-lg sm:text-xl tracking-tight whitespace-nowrap">
+            <img src={wfLogo} alt="WorkFlow Logo" className="w-12 sm:w-16 h-auto m-0 object-contain -mr-1" />
             <span>WORKFLOW</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            title="Fechar menu"
+          >
+            <X size={20} />
+          </button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-2.5 sm:py-4 min-w-[16rem] scrollbar-hide">
-          <div className="px-4 mb-2 text-xs font-semibold text-neutral-400 dark:text-neutral-500 tracking-wider whitespace-nowrap">MÓDULOS (A-Z)</div>
-          <ul className="space-y-1 px-2.5 sm:px-3">
+        <nav className="flex-1 overflow-y-auto py-3 sm:py-4 min-w-[17.5rem] sm:min-w-[16rem] scrollbar-hide">
+          <div className="px-4 mb-2.5 text-xs font-bold text-neutral-400 dark:text-neutral-500 tracking-wider whitespace-nowrap">MÓDULOS (A-Z)</div>
+          <ul className="space-y-1 px-3">
             {sidebarSections.map((section) => {
               if (section.name === 'ACESSOS' && !isGerente) return null;
               if (section.name === 'GESTÃO' && !hasMetaAccess) return null;
@@ -1257,13 +1265,13 @@ export default function App() {
                       }
                       if (window.innerWidth < 768) setIsSidebarOpen(false); 
                     }} 
-                    className={`w-full flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 ${activeTab === section.name ? 'bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F]' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${activeTab === section.name ? 'bg-red-50 dark:bg-[#E3000F]/15 text-[#E3000F] shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100/80 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
                     title={activeTab === section.name ? "Clique para recolher o menu lateral" : ""}
                   >
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <span className={`shrink-0 ${activeTab === section.name ? 'text-[#E3000F]' : 'text-neutral-400'}`}>{section.icon}</span>
-                      <div className="flex items-center gap-1.5 whitespace-nowrap truncate">
-                        <span className="whitespace-nowrap truncate">{section.name}</span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`shrink-0 ${activeTab === section.name ? 'text-[#E3000F]' : 'text-neutral-400 dark:text-neutral-500'}`}>{section.icon}</span>
+                      <div className="flex items-center gap-2 whitespace-nowrap truncate">
+                        <span className="whitespace-nowrap truncate leading-snug">{section.name}</span>
                         {section.name === 'GEEK' && hasNewGeek && (
                           <span className="flex h-2 w-2 relative">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -1283,7 +1291,7 @@ export default function App() {
                         )}
                       </div>
                     </div>
-                    {activeTab === section.name && <ChevronRight size={14} />}
+                    {activeTab === section.name && <ChevronRight size={16} className="shrink-0" />}
                   </button>
                 </li>
               );
@@ -1294,8 +1302,8 @@ export default function App() {
         {/* MONITORAMENTO DO BANCO DE DADOS (ORACLE) */}
         {dbSizeMB !== null && (
           <div className="px-5 py-2.5 border-t border-neutral-100/80 dark:border-neutral-800/60 bg-transparent shrink-0">
-            <div className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400/75 dark:text-neutral-500/65 tracking-wide select-none" title="Armazenamento utilizado e teto máximo do banco de dados">
-              <Database size={11} className="text-neutral-400/65 dark:text-neutral-500/55 shrink-0" />
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-neutral-400 dark:text-neutral-500 tracking-wide select-none" title="Armazenamento utilizado e teto máximo do banco de dados">
+              <Database size={12} className="text-neutral-400 dark:text-neutral-500 shrink-0" />
               <span>ARMAZENAMENTO: {Number(dbSizeMB).toFixed(2)} MB / 20 GB</span>
             </div>
           </div>
@@ -1306,18 +1314,18 @@ export default function App() {
       <main className="flex-1 min-w-0 max-w-full flex flex-col h-full overflow-hidden print:overflow-visible print:h-auto print:block bg-white dark:bg-neutral-950">
 
         {/* Cabeçalho de Ações e Informações */}
-        <header className="h-12 sm:h-16 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between px-2 sm:px-4 lg:px-8 shrink-0 no-print transition-colors duration-500 gap-1 sm:gap-2">
-          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 flex-1">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 sm:p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md text-neutral-500 dark:text-neutral-400 transition-colors shrink-0"><Menu size={20} /></button>
+        <header className="h-14 sm:h-16 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between px-3 sm:px-4 lg:px-8 shrink-0 no-print transition-colors duration-500 gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-neutral-600 dark:text-neutral-300 transition-colors shrink-0"><Menu size={22} /></button>
             <h1 
               onDoubleClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-              className="text-[10.5px] sm:text-lg font-bold sm:font-medium text-neutral-800 dark:text-neutral-100 whitespace-nowrap truncate cursor-pointer select-none hover:text-[#E3000F] transition-colors tracking-tight sm:tracking-normal"
+              className="text-sm sm:text-lg font-bold text-neutral-800 dark:text-neutral-100 whitespace-nowrap truncate cursor-pointer select-none hover:text-[#E3000F] transition-colors"
               title="Duplo clique para expandir/recolher o menu lateral"
             >
               {activeTab}
             </h1>
           </div>
-          <div className="flex items-center gap-1 sm:gap-5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-5 shrink-0">
 
             {/* Botão de Desfazer Exclusão */}
             {undoStack.length > 0 && (
@@ -1394,26 +1402,8 @@ export default function App() {
                   </div>
 
                   {/* CONTROLE DE PERMISSÃO DE NOTIFICAÇÃO NATIVA (PC & CELULAR) */}
-                  <div className="px-4 py-2.5 bg-neutral-100/70 dark:bg-neutral-800/80 border-b border-neutral-200/70 dark:border-neutral-700/70 flex items-center justify-between gap-2">
-                    {nativeNotifPermission === 'granted' ? (
-                      <>
-                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                          Alertas Ativos (PC/Celular)
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => dispatchNativeNotification({
-                            id: `manual-test-${Date.now()}`,
-                            title: 'Teste de Alerta WorkFlow',
-                            desc: 'Notificação sincronizada no seu PC e Celular com sucesso!'
-                          }, true)}
-                          className="px-2.5 py-1 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-[10px] font-extrabold text-neutral-700 dark:text-neutral-200 hover:text-[#E3000F] transition-colors cursor-pointer"
-                        >
-                          Testar
-                        </button>
-                      </>
-                    ) : (
+                  {nativeNotifPermission !== 'granted' && (
+                    <div className="px-4 py-2.5 bg-neutral-100/70 dark:bg-neutral-800/80 border-b border-neutral-200/70 dark:border-neutral-700/70 flex items-center justify-between gap-2">
                       <button
                         type="button"
                         onClick={handleEnableNativeNotifications}
@@ -1422,8 +1412,8 @@ export default function App() {
                         <Bell size={13} />
                         <span>Ativar Notificações no PC / Celular</span>
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div className="max-h-[60vh] sm:max-h-[350px] overflow-y-auto scrollbar-thin">
                     {(!Array.isArray(notifications) || notifications.length === 0) ? (
                       <div className="p-6 text-center text-neutral-500 dark:text-neutral-400">
@@ -1468,7 +1458,7 @@ export default function App() {
 
             {/* Identificação de Empresa */}
             <div className="flex items-center justify-center mx-1 sm:mx-2">
-              <div className="text-[#E3000F] font-black text-[10px] sm:text-xl tracking-tight sm:tracking-tighter uppercase whitespace-nowrap">{getCurrentStoreName()} <span className="hidden sm:inline">- {getCurrentStoreCode()}</span></div>
+              <div className="text-[#E3000F] font-black text-xs sm:text-xl tracking-tight sm:tracking-tighter uppercase whitespace-nowrap">{getCurrentStoreName()} <span className="hidden sm:inline">- {getCurrentStoreCode()}</span></div>
             </div>
 
             {/* Dropdown/Perfil do Usuário Global Logado */}
@@ -1477,8 +1467,8 @@ export default function App() {
                 <div className="flex items-center gap-2 sm:gap-3 group relative cursor-pointer select-none" onClick={() => setIsUserMenuOpen(prev => !prev)} onMouseLeave={() => setIsUserMenuOpen(false)}>
                   <div className="text-right flex flex-col justify-center">
                     <div className="text-sm font-bold text-neutral-800 dark:text-neutral-100 leading-tight hidden sm:block">{String(globalUser?.name || '').split(' ').slice(0, 2).join(' ') || 'Usuário'}</div>
-                    <div className="text-[11px] font-bold text-neutral-800 dark:text-neutral-100 leading-tight sm:hidden">{String(globalUser?.name || '').split(' ')[0] || 'Usuário'}</div>
-                    <div className="text-[8px] sm:text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wide font-medium">{globalUser?.role || ''}</div>
+                    <div className="text-xs font-bold text-neutral-800 dark:text-neutral-100 leading-tight sm:hidden">{String(globalUser?.name || '').split(' ')[0] || 'Usuário'}</div>
+                    <div className="text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wide font-medium">{globalUser?.role || ''}</div>
                   </div>
                   <div className="relative cursor-pointer">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 dark:bg-[#E3000F]/10 text-[#E3000F] rounded-full flex items-center justify-center border border-red-100 dark:border-[#E3000F]/20 group-hover:bg-[#E3000F] group-hover:text-white transition-colors overflow-hidden">

@@ -503,3 +503,11 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 
 - Removido o bloqueio `h-full flex-col overflow-y-auto animate-fade-in` em `.campanha-container` que comprimia os blocos internos e prendia os modais dentro do container da seção.
 - Aplicado contenção estrita (`w-full max-w-full min-w-0 overflow-hidden box-border`) em todos os cards de campanha, no painel aberto de **Status da Campanha** (evitando que a tabela multi-indicadores estoure a largura da caixa) e nos modais abertos de **Lançar/Editar Campanha** e **Aceite Digital** (`max-h-[82vh]`, grids responsivos `grid-cols-1 sm:grid-cols-2` para datas e indicadores).
+
+---
+
+## 18/11/2026 — Ajuste de Escala de Fontes e Lista de Seções no Mobile + Remoção do Botão de Teste de Notificação (`FRONTEND/src/index.css` & `App.jsx`)
+
+- **Escala de Fontes no Mobile (`index.css`):** Aumentada a escala base de fontes em dispositivos móveis (`15px` / `14.5px`, tabelas `0.82rem` e inputs `0.9rem`), eliminando a redução anterior (`12.25px`/`13px`) que deixava os textos das seções pequenos demais no celular.
+- **Lista das Seções (Menu Lateral Mobile — `App.jsx`):** Ampliada a largura do menu lateral no mobile (`w-72` / `min-w-[17.5rem]`), com fonte `14px font-semibold`, espaçamento `px-3.5 py-2.5` e botão `X` para fechamento rápido, além de aumentar o título da seção ativa no topo (`text-sm sm:text-lg font-bold`).
+- **Sino de Notificações (`App.jsx`):** Removido o botão de teste manual (`Testar`) do painel de notificações após validação.
