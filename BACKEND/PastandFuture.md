@@ -549,10 +549,8 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - **Seção `[RESULTADO]` movida para dentro de `[GESTÃO]` (`FRONTEND/src/components/Gestao.jsx` & `FRONTEND/src/App.jsx`):**
   - Integrado o painel completo de `[RESULTADO]` dentro da seção `[GESTÃO]` e atribuída uma linha destacada e clicável de **RESULTADO** nas tabelas de Gestão (`Histórico MxM` e `Histórico SxS`), removendo o item avulso do menu lateral.
 - **Seção `[ESCALA DE TRABALHO]` (`FRONTEND/src/components/EscalaTrabalho.jsx`):**
-  - Remodelada a estrutura visual com tipografia limpa e legível (`Inter`/`system-ui`, `text-xs`/`text-sm`), seletor rápido de **Turno Base** por colaborador e **Sugestor Inteligente de Escala (`6x1` e `5x2`) em Loop de Ideias**, obedecendo todas as regras:
-    1. Vendedores da Tarde não folgam 2 no mesmo dia (idem para Vendedores da Manhã).
-    2. Gestores (`GERENTE`, `SENIOR`, `GEEK`) nunca têm folgas juntas no mesmo dia.
-    3. `ADMINISTRAÇÃO` (`ADM`) e `ASSISTENTE RELACIONAMENTO` folgam sempre no Domingo (com adaptação automática do 2º dia na `5x2`).
-    4. `GERENTE` com folga fixa no Domingo (adaptável na `5x2` à folga conjunta sem coincidir com `SENIOR` e `GEEK`).
+  - Reestruturada a visualização da tabela no modelo oficial da planilha da loja (sem instruções ou textos explicativos visíveis — somente a escala limpa), agrupada por faixas de turno (**`MANHA`**, **`INTERMEDIARIO`** e **`TARDE`**) com colunas `Nome`, `CARGO` e todos os dias do mês (`D, S, T, Q, Q, S, S` / `1..31`), destaque azul (`#0070C0`) nos finais de semana, destaque amarelo (`#FFFF00`) nos feriados (clicável no topo do dia) e rodapé oficial com legenda e faixa `"ESCALA SUJEITA A ALTERAÇÕES"`.
+  - Substituídos os horários pelas **Siglas Oficiais**: `T` (Trabalha), `M` (Manhã), `I` (Intermediário), `N` (Noite/Tarde), `F` (Folga), `FB` (Folga Banco), `FP` (Folga Prêmio), `AT` (Atestado), `TR` (Treinamento), `FE` (Férias) e `AF` (Afastada).
+  - Adicionado botão **Exportar Excel** (`.xlsx`) no formato da planilha oficial, corrigido o modo de **Impressão** paisagem (`@media print`) para enquadrar todos os dias do mês e mantido o botão compacto **Sugerir Escala (`6X1` / `5X2`)** em loop respeitando todas as regras internas de turnos e gestores.
 
 
