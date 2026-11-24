@@ -3,12 +3,39 @@ import { createPortal } from 'react-dom';
 import { getFirstName } from '../utils/nameFormatter.js';
 import {
     Edit2, Save, X, Search, Filter, Trash2, Home,
-    Lock, MessageCircle, MapPin, Loader2, Send, Share2
+    Lock, MessageCircle, MapPin, Loader2, Send, Share2, AlertTriangle, Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
-import { applyPhoneMask } from '../utils/masks';
+import { applyPhoneMask, getTodaySP } from '../utils/masks';
 import { getCurrentStoreName } from '../utils/stores.js';
+
+// Calcula quantos dias se passaram desde a data de agendamento/instalação (ou data da venda) até hoje
+export const getUrOverdueDays = (item) => {
+    if (!item) return 0;
+    const status = String(item.statusUr || 'PEND.DE INSTALAÇÃO').trim().toUpperCase();
+    if (status === 'CONECTADO' || status === 'CANCELADO') return 0;
+
+    const rawDate = item.dataInstalacao || item.data || '';
+    if (!rawDate) return 0;
+
+    let isoDate = '';
+    if (typeof rawDate === 'string' && rawDate.includes('-')) {
+        isoDate = rawDate.slice(0, 10);
+    } else if (typeof rawDate === 'string' && rawDate.includes('/')) {
+        const parts = rawDate.split('/');
+        if (parts.length === 3) isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    if (!isoDate) return 0;
+
+    const todayIso = getTodaySP();
+    const startMs = new Date(`${isoDate}T12:00:00`).getTime();
+    const todayMs = new Date(`${todayIso}T12:00:00`).getTime();
+    if (isNaN(startMs) || isNaN(todayMs)) return 0;
+
+    const diffDays = Math.floor((todayMs - startMs) / (1000 * 60 * 60 * 24));
+    return diffDays;
+};
 
 const formatCepMask = (val) => {
     const digits = String(val || '').replace(/\D/g, '').slice(0, 8);
@@ -440,6 +467,36 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                 )}
             </div>
 
+            {/* ALERTA DE PENDENTES HÁ 5+ DIAS SEM CONEXÃO */}
+            {(() => {
+                const overdueList = filteredData.filter(item => getUrOverdueDays(item) >= 5);
+                if (overdueList.length === 0) return null;
+                return (
+                    <div className="mx-4 mt-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+                        <div className="flex items-start sm:items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                <AlertTriangle size={18} />
+                            </div>
+                            <div>
+                                <h4 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
+                                    Atenção aos Pendentes de Instalação ({overdueList.length} {overdueList.length === 1 ? 'contrato com 5+ dias' : 'contratos com 5+ dias'})
+                                </h4>
+                                <p className="text-xs text-amber-700 dark:text-amber-300/90">
+                                    Contratos com agendamento há 5 dias ou mais que ainda não constam como <strong>CONECTADO</strong>. Verifique e atualize o status!
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setSearchTerm('PEND.DE INSTALAÇÃO')}
+                            className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors shrink-0 cursor-pointer"
+                        >
+                            Filtrar Pendentes
+                        </button>
+                    </div>
+                );
+            })()}
+
             {/* TABELA ESTILO EXCEL */}
             <div className="flex-1 overflow-auto p-4 bg-neutral-100/30 dark:bg-neutral-950/50 flex flex-col">
                 <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm flex flex-col flex-1">
@@ -497,6 +554,14 @@ export function UrResidencial({ salesData, setSalesData, globalUser, isGerente, 
                                                             {item.baixaImediata && (
                                                                 <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[9px] font-black uppercase">
                                                                     Baixa Imediata
+                                                                </span>
+                                                            )}
+                                                            {getUrOverdueDays(item) >= 5 && (
+                                                                <span
+                                                                    className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[9px] font-bold flex items-center gap-1 animate-pulse"
+                                                                    title={`Contrato não conectado há ${getUrOverdueDays(item)} dias desde o agendamento!`}
+                                                                >
+                                                                    <Clock size={10} /> +{getUrOverdueDays(item)}d Pendente
                                                                 </span>
                                                             )}
                                                         </div>

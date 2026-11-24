@@ -1389,31 +1389,31 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
 
                 {/* SEÇÃO BUNDLES — OFERTAS CONJUNTAS (SAMSUNG, MOTOROLA, APPLE) */}
                 <div
-                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 md:p-6 shadow-sm space-y-5 antialiased"
+                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 sm:p-5 md:p-6 shadow-sm space-y-5 antialiased w-full max-w-full min-w-0 overflow-hidden box-border"
                     style={{ fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
                 >
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
-                        <div className="flex items-center gap-3">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                             <div className="w-10 h-10 rounded-xl bg-[#E3000F]/10 flex items-center justify-center text-[#E3000F] shrink-0">
                                 <Layers size={22} />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <div className="flex items-center gap-2.5 flex-wrap">
-                                    <h3 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">
+                                    <h3 className="text-base sm:text-lg font-bold text-neutral-800 dark:text-neutral-100 break-words">
                                         Bundles — Ofertas Conjuntas de Aparelhos
                                     </h3>
                                     <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 px-2.5 py-0.5 rounded-full text-xs font-medium">
                                         Single & Combo Multi • Loja Própria
                                     </span>
                                 </div>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-0.5 break-words">
                                     Consulte aparelhos elegíveis (COMPRE), acessórios do bundle (LEVE), códigos SAP e preços promocionais.
                                 </p>
                             </div>
                         </div>
 
                         {/* SELETOR DE MARCAS (SAMSUNG | MOTOROLA | APPLE) */}
-                        <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700 self-start lg:self-auto">
+                        <div className="flex items-center flex-wrap sm:flex-nowrap bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700 w-full sm:w-auto self-start lg:self-auto min-w-0">
                             {['SAMSUNG', 'MOTOROLA', 'APPLE'].map((marca) => {
                                 const isActive = selectedBundleBrand === marca;
                                 const count = (BUNDLES_POR_MARCA[marca] || []).length;
@@ -1422,14 +1422,14 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                         key={marca}
                                         type="button"
                                         onClick={() => setSelectedBundleBrand(marca)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                                        className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 min-w-0 ${
                                             isActive
                                                 ? 'bg-[#E3000F] text-white shadow-sm'
                                                 : 'text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
                                         }`}
                                     >
-                                        <span>{marca}</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                        <span className="truncate">{marca}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 ${
                                             isActive ? 'bg-black/25 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300'
                                         }`}>
                                             {count}
@@ -1441,15 +1441,15 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                     </div>
 
                     {/* BARRA DE BUSCA POR MODELO / CÓDIGO SAP + FILTRO DE CATEGORIA */}
-                    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-                        <div className="relative flex-1">
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 min-w-0 max-w-full">
+                        <div className="relative flex-1 min-w-0">
                             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
                             <input
                                 type="text"
                                 value={bundleSearch}
                                 onChange={(e) => setBundleSearch(e.target.value)}
                                 placeholder="Buscar por modelo de aparelho (ex: S26 Ultra, A57, iPhone 18, Razr) ou Código SAP (ex: 19329, 62861)..."
-                                className="w-full pl-10 pr-9 py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] transition-all"
+                                className="w-full max-w-full pl-10 pr-9 py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-[#E3000F] focus:ring-1 focus:ring-[#E3000F] transition-all"
                             />
                             {bundleSearch && (
                                 <button
@@ -1463,7 +1463,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                             )}
                         </div>
 
-                        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 min-w-0 max-w-full">
                             {[
                                 { id: 'TODOS', label: 'Todos os Bundles' },
                                 { id: 'RELOGIOS & FONES', label: 'RELOGIOS & FONES' },
@@ -1474,7 +1474,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                     key={tab.id}
                                     type="button"
                                     onClick={() => setBundleSubFilter(tab.id)}
-                                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border ${
+                                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border shrink-0 ${
                                         bundleSubFilter === tab.id
                                             ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-sm'
                                             : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-700'
@@ -1487,7 +1487,7 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                     </div>
 
                     {/* CARDS RESUMO DAS 3 MARCAS */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 w-full max-w-full min-w-0">
                         {[
                             { marca: 'SAMSUNG', desc: 'Buds Core, Fit3, Buds 3 FE, Buds4/4 Pro, Watch 8/Classic, Watch 9, Watch Ultra/Ultra2 + Capas S26' },
                             { marca: 'MOTOROLA', desc: 'Moto Buds Loop Swarovski (R$ 99), Moto Buds Bass (R$ 199) e Moto Buds 2+ (R$ 499)' },
@@ -1499,26 +1499,26 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                 <div
                                     key={marca}
                                     onClick={() => setSelectedBundleBrand(marca)}
-                                    className={`rounded-xl border p-4 transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                                    className={`rounded-xl border p-4 transition-all cursor-pointer flex flex-col justify-between gap-2 min-w-0 max-w-full overflow-hidden ${
                                         isSelected
                                             ? 'border-[#E3000F] bg-red-50/20 dark:bg-[#E3000F]/10 shadow-sm'
                                             : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/40 hover:border-neutral-300 dark:hover:border-neutral-700'
                                     }`}
                                 >
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-2.5 h-2.5 rounded-full ${isSelected ? 'bg-[#E3000F]' : 'bg-neutral-400'}`} />
-                                            <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-100">
+                                    <div className="flex items-center justify-between gap-2 min-w-0">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isSelected ? 'bg-[#E3000F]' : 'bg-neutral-400'}`} />
+                                            <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 truncate">
                                                 Bundles {marca}
                                             </h4>
                                         </div>
-                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold shrink-0 ${
                                             isSelected ? 'bg-[#E3000F] text-white' : 'bg-neutral-200/70 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300'
                                         }`}>
                                             {listaModelos.length} {listaModelos.length === 1 ? 'oferta' : 'ofertas'}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed">
+                                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed break-words">
                                         {desc}
                                     </p>
                                 </div>
@@ -1528,30 +1528,30 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
 
                     {/* LISTAGEM DETALHADA DOS BUNDLES DA MARCA SELECIONADA */}
                     {bundleSubFilter === 'MULTI_FRIDAY' ? (
-                        <div className="space-y-3.5 pt-1">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                                <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
-                                    <Tag size={16} className="text-[#E3000F]" />
-                                    Ofertas Avulsas Multi Friday — {selectedBundleBrand} (Válido 12/11 até 30/11)
+                        <div className="space-y-3.5 pt-1 min-w-0 max-w-full">
+                            <div className="flex items-center justify-between flex-wrap gap-2 min-w-0">
+                                <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2 break-words">
+                                    <Tag size={16} className="text-[#E3000F] shrink-0" />
+                                    <span>Ofertas Avulsas Multi Friday — {selectedBundleBrand} (Válido 12/11 até 30/11)</span>
                                 </h4>
                                 <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">
                                     Parcelamento em até 21x sem juros
                                 </span>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 w-full max-w-full min-w-0">
                                 {(MULTI_FRIDAY_POR_MARCA[selectedBundleBrand] || [])
                                     .filter(item => !bundleSearch.trim() || item.item.toLowerCase().includes(bundleSearch.trim().toLowerCase()))
                                     .map((mf, i) => (
-                                        <div key={i} className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between gap-2.5">
-                                            <div>
+                                        <div key={i} className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-between gap-2.5 min-w-0 max-w-full overflow-hidden">
+                                            <div className="min-w-0">
                                                 <span className="text-xs font-semibold text-[#E3000F] bg-red-50 dark:bg-[#E3000F]/10 px-2.5 py-0.5 rounded-md inline-block">
                                                     Multi Friday • {mf.vigencia}
                                                 </span>
-                                                <h5 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 mt-2">
+                                                <h5 className="text-sm font-bold text-neutral-800 dark:text-neutral-100 mt-2 break-words">
                                                     {mf.item}
                                                 </h5>
                                             </div>
-                                            <div className="flex items-end justify-between pt-2.5 border-t border-neutral-200/70 dark:border-neutral-800">
+                                            <div className="flex items-end justify-between flex-wrap gap-2 pt-2.5 border-t border-neutral-200/70 dark:border-neutral-800">
                                                 <div>
                                                     <span className="block text-xs text-neutral-400 line-through font-medium">
                                                         De: {mf.de}
@@ -1602,55 +1602,56 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                             }
 
                             return (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full max-w-full min-w-0">
                                     {filteredBundles.map((bundle) => {
                                         const isExpanded = !!expandedBundleIds[bundle.id] || query.length > 0;
                                         const compreToShow = isExpanded ? bundle.compreLista : bundle.compreLista.slice(0, 4);
                                         const hiddenCount = Math.max(0, bundle.compreLista.length - 4);
+                                        const formattedLeveCodigos = String(bundle.leveCodigos || '').replace(/;/g, '; ');
 
                                         return (
                                             <div
                                                 key={bundle.id}
-                                                className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 md:p-5 flex flex-col justify-between gap-4 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all shadow-sm"
+                                                className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 md:p-5 flex flex-col justify-between gap-4 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all shadow-sm w-full max-w-full min-w-0 overflow-hidden box-border"
                                             >
                                                 {/* Topo do Card: Tipo + Vigência + Preço do Bundle */}
-                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3.5 border-b border-neutral-100 dark:border-neutral-800">
-                                                    <div className="space-y-2">
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3.5 border-b border-neutral-100 dark:border-neutral-800 min-w-0">
+                                                    <div className="space-y-2 min-w-0 flex-1">
                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 ${
+                                                            <span className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 max-w-full ${
                                                                 bundle.tipo.includes('CAPAS')
                                                                     ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-500/30'
                                                                     : 'bg-purple-50 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300 border border-purple-200/60 dark:border-purple-500/30'
                                                             }`}>
-                                                                {bundle.tipo.includes('CAPAS') ? <Shield size={13} /> : <Watch size={13} />}
-                                                                {bundle.tipo}
+                                                                {bundle.tipo.includes('CAPAS') ? <Shield size={13} className="shrink-0" /> : <Watch size={13} className="shrink-0" />}
+                                                                <span className="truncate">{bundle.tipo}</span>
                                                             </span>
                                                             <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
                                                                 Vigência: {bundle.vigencia}
                                                             </span>
                                                         </div>
 
-                                                        <div>
+                                                        <div className="min-w-0">
                                                             <span className="text-xs font-semibold text-[#E3000F] block">
                                                                 Leve no Bundle:
                                                             </span>
-                                                            <h5 className="text-base font-bold text-neutral-800 dark:text-neutral-100 leading-snug mt-0.5">
+                                                            <h5 className="text-base font-bold text-neutral-800 dark:text-neutral-100 leading-snug mt-0.5 break-words">
                                                                 {bundle.leveModelo}
                                                             </h5>
                                                         </div>
 
-                                                        <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                                                        <div className="flex items-center gap-2 flex-wrap pt-0.5 min-w-0">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleCopySap(bundle.leveCodigos)}
-                                                                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-[#E3000F] flex items-center gap-1.5 cursor-pointer transition-colors"
+                                                                className="max-w-full px-2.5 py-1 rounded-lg text-xs font-medium bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-[#E3000F] flex items-center gap-1.5 cursor-pointer transition-colors text-left min-w-0"
                                                                 title="Clique para copiar o(s) código(s) SAP do acessório"
                                                             >
-                                                                <span>Cód. SAP: {bundle.leveCodigos}</span>
+                                                                <span className="break-words min-w-0">Cód. SAP: {formattedLeveCodigos}</span>
                                                                 {copiedCode === String(bundle.leveCodigos) ? (
-                                                                    <Check size={13} className="text-emerald-500" />
+                                                                    <Check size={13} className="text-emerald-500 shrink-0" />
                                                                 ) : (
-                                                                    <Copy size={13} className="text-neutral-400" />
+                                                                    <Copy size={13} className="text-neutral-400 shrink-0" />
                                                                 )}
                                                             </button>
                                                         </div>
@@ -1673,47 +1674,48 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                                 </div>
 
                                                 {/* Lista de Aparelhos Elegíveis (COMPRE) */}
-                                                <div className="space-y-2.5">
-                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                        <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                                                            <Smartphone size={14} className="text-[#E3000F]" />
-                                                            Compre ({bundle.compreLista.length} {bundle.compreLista.length === 1 ? 'família/modelo elegível' : 'modelos elegíveis'}):
+                                                <div className="space-y-2.5 min-w-0 max-w-full">
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
+                                                        <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 min-w-0">
+                                                            <Smartphone size={14} className="text-[#E3000F] shrink-0" />
+                                                            <span className="break-words">Compre ({bundle.compreLista.length} {bundle.compreLista.length === 1 ? 'família/modelo elegível' : 'modelos elegíveis'}):</span>
                                                         </span>
                                                         <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
                                                             Single e Combo Multi
                                                         </span>
                                                     </div>
 
-                                                    <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/70 px-3 py-2 rounded-lg border border-neutral-200/80 dark:border-neutral-800 leading-relaxed">
+                                                    <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/70 px-3 py-2 rounded-lg border border-neutral-200/80 dark:border-neutral-800 leading-relaxed break-words">
                                                         {bundle.resumoCompre}
                                                     </p>
 
-                                                    <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                                                    <div className="space-y-1.5 max-h-64 overflow-y-auto overflow-x-hidden pr-1 min-w-0 max-w-full">
                                                         {compreToShow.map((c, idx) => {
                                                             const isMatch =
                                                                 query &&
                                                                 (c.modelo.toLowerCase().includes(query) ||
                                                                     String(c.codigos).toLowerCase().includes(query));
+                                                            const formattedSapList = String(c.codigos || '').replace(/;/g, '; ');
                                                             return (
                                                                 <div
                                                                     key={idx}
-                                                                    className={`px-3 py-2 rounded-lg border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 transition-colors ${
+                                                                    className={`px-3 py-2 rounded-lg border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-colors min-w-0 max-w-full overflow-hidden ${
                                                                         isMatch
                                                                             ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700'
                                                                             : 'bg-neutral-50/60 dark:bg-neutral-800/40 border-neutral-200/80 dark:border-neutral-800'
                                                                     }`}
                                                                 >
-                                                                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 leading-snug">
+                                                                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 leading-snug break-words min-w-0 flex-1">
                                                                         {c.modelo}
                                                                     </span>
                                                                     {c.codigos && c.codigos !== '-' && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleCopySap(c.codigos)}
-                                                                            className="self-start sm:self-auto px-2.5 py-1 rounded-md bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 shrink-0 cursor-pointer"
-                                                                            title="Copiar códigos SAP deste modelo"
+                                                                            className="self-start sm:self-auto max-w-full sm:max-w-[52%] px-2.5 py-1 rounded-md bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 cursor-pointer min-w-0 text-left"
+                                                                            title={`Copiar códigos SAP: ${formattedSapList}`}
                                                                         >
-                                                                            <span className="truncate max-w-[220px]">SAP: {c.codigos}</span>
+                                                                            <span className="break-words line-clamp-2 min-w-0">SAP: {formattedSapList}</span>
                                                                             {copiedCode === String(c.codigos) ? (
                                                                                 <Check size={12} className="text-emerald-500 shrink-0" />
                                                                             ) : (
@@ -1730,15 +1732,15 @@ export function Geek({ geekDocs = [], setGeekDocs, isGerente, globalUser, update
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleExpandBundle(bundle.id)}
-                                                            className="w-full py-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                                                            className="w-full py-2 px-3 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center"
                                                         >
                                                             {isExpanded ? (
                                                                 <>
-                                                                    <ChevronUp size={15} /> Recolher lista de modelos
+                                                                    <ChevronUp size={15} className="shrink-0" /> <span>Recolher lista de modelos</span>
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <ChevronDown size={15} /> Ver todos os {bundle.compreLista.length} modelos e códigos SAP (+{hiddenCount})
+                                                                    <ChevronDown size={15} className="shrink-0" /> <span className="truncate">Ver todos os {bundle.compreLista.length} modelos e códigos SAP (+{hiddenCount})</span>
                                                                 </>
                                                             )}
                                                         </button>

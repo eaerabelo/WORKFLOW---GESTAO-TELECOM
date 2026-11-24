@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Lock, Check, History, MonitorPlay, Smartphone, Home, Watch, ShieldCheck, Save, LineChart, Loader2, ClipboardList, Sparkles, TrendingDown, TrendingUp, Presentation, FileDown } from 'lucide-react';
+import { Target, Lock, Check, History, MonitorPlay, Smartphone, Home, Watch, ShieldCheck, Save, LineChart, Loader2, ClipboardList, Sparkles, TrendingDown, TrendingUp, Presentation, FileDown, BarChart3, ArrowUpRight } from 'lucide-react';
 import { METAS_PADRAO } from '../utils/constants';
 import { applyCurrencyMask, parseCurrencyToFloat } from '../utils/masks';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { Indicadores } from './Indicadores.jsx';
+import { Resultado } from './Resultado.jsx';
 
 const STORE_ID = import.meta.env.VITE_STORE_ID || 'uniao_osasco';
 
 const safeMetasPadrao = METAS_PADRAO || { receita: 0, posTotal: 0, posPago: 0, controle: 0, urTotal: 0, fibra: 0, tv: 0, fixo: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, mesh: 0, trocafy: 0, mplay: 0 };
 
-export const Gestao = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, currentYYYYMM, salesData = [], usersDB, globalMonth }) => {
+export const Gestao = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, currentYYYYMM, salesData = [], usersDB, globalMonth, setGlobalMonth }) => {
     const [selectedGoalMonth, setSelectedGoalMonth] = useState(currentYYYYMM);
     const [goalForm, setGoalForm] = useState({ ...safeMetasPadrao, receita: applyCurrencyMask(safeMetasPadrao.receita) });
     const [showGoalSuccess, setShowGoalSuccess] = useState(false);
@@ -450,6 +451,7 @@ export const Gestao = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, 
                 <div className="flex flex-col h-full bg-white dark:bg-neutral-900 rounded-3xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                     <div className="flex border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 shrink-0 overflow-x-auto scrollbar-hide" onWheel={(e) => e.currentTarget.scrollLeft += e.deltaY}>
                         <button onClick={() => setMetaActiveSubTab('DEFINIR')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${metaActiveSubTab === 'DEFINIR' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Definir Metas</button>
+                        <button onClick={() => setMetaActiveSubTab('RESULTADO')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center gap-2 ${metaActiveSubTab === 'RESULTADO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}><BarChart3 size={16} /> Resultado</button>
                         <button onClick={() => setMetaActiveSubTab('COMPARATIVO')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${metaActiveSubTab === 'COMPARATIVO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Histórico MxM</button>
                         <button onClick={() => setMetaActiveSubTab('SEMANAL')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${metaActiveSubTab === 'SEMANAL' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Histórico SXS</button>
                         <button onClick={() => setMetaActiveSubTab('DIAGNOSTICO')} className={`whitespace-nowrap px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${metaActiveSubTab === 'DIAGNOSTICO' ? 'border-[#E3000F] text-[#E3000F] bg-white dark:bg-neutral-900' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>Diagnóstico Semanal</button>
@@ -532,6 +534,41 @@ export const Gestao = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, 
                                             <tr><th className="px-6 py-4 rounded-tl-2xl font-bold sticky left-0 z-10 bg-neutral-900 shadow-[2px_0_5px_rgba(0,0,0,0.2)]">Mês de Ref.</th><th className="px-6 py-4 font-bold text-green-400">Receita (R$)</th><th className="px-6 py-4 font-bold">Pós Total</th><th className="px-6 py-4 font-bold text-neutral-400">Pós Pago</th><th className="px-6 py-4 font-bold text-neutral-400">Controle</th><th className="px-6 py-4 font-bold">UR Total</th><th className="px-6 py-4 font-bold text-neutral-400">Fibra</th><th className="px-6 py-4 font-bold text-neutral-400">TV</th><th className="px-6 py-4 font-bold text-neutral-400">Fixo</th><th className="px-6 py-4 font-bold">Aparelhos</th><th className="px-6 py-4 font-bold">Acessórios</th><th className="px-6 py-4 font-bold">Películas</th><th className="px-6 py-4 font-bold">Seguro</th><th className="px-6 py-4 font-bold rounded-tr-2xl">M-Play</th></tr>
                                         </thead>
                                         <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                                            {/* LINHA ATRIBUÍDA À SEÇÃO [RESULTADO] NA TABELA DE GESTÃO */}
+                                            {(() => {
+                                                const mAtual = (goalsDB || {})[currentYYYYMM] || safeMetasPadrao;
+                                                const realAtual = monthlyMetrics[currentYYYYMM] || { receita: 0, posTotal: 0, posPago: 0, controle: 0, urTotal: 0, fibra: 0, tv: 0, fixo: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, mplay: 0 };
+                                                return (
+                                                    <tr
+                                                        onClick={() => setMetaActiveSubTab('RESULTADO')}
+                                                        className="bg-red-50/70 dark:bg-[#E3000F]/15 hover:bg-red-100/80 dark:hover:bg-[#E3000F]/25 transition-colors cursor-pointer group border-b-2 border-[#E3000F]/30"
+                                                        title="Clique para abrir o painel completo de RESULTADO da loja"
+                                                    >
+                                                        <td className="px-6 py-4 font-black tracking-wider sticky left-0 z-10 bg-red-50 dark:bg-neutral-900 text-[#E3000F] shadow-[2px_0_5px_rgba(0,0,0,0.08)]">
+                                                            <div className="flex items-center gap-2">
+                                                                <BarChart3 size={16} className="text-[#E3000F] shrink-0" />
+                                                                <span>RESULTADO ({currentYYYYMM.split('-').reverse().join('/')})</span>
+                                                                <span className="ml-1 text-[9px] bg-[#E3000F] text-white px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                                                    Abrir <ArrowUpRight size={11} />
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-3 font-black text-green-600 dark:text-green-400 whitespace-nowrap">{renderMxMCell(realAtual.receita, mAtual.receita, true)}</td>
+                                                        <td className="px-6 py-3 font-bold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{renderMxMCell(realAtual.posTotal, mAtual.posTotal)}</td>
+                                                        <td className="px-6 py-3 text-neutral-600 dark:text-neutral-300 whitespace-nowrap">{renderMxMCell(realAtual.posPago, mAtual.posPago)}</td>
+                                                        <td className="px-6 py-3 text-neutral-600 dark:text-neutral-300 whitespace-nowrap">{renderMxMCell(realAtual.controle, mAtual.controle)}</td>
+                                                        <td className="px-6 py-3 font-bold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{renderMxMCell(realAtual.urTotal, mAtual.urTotal)}</td>
+                                                        <td className="px-6 py-3 text-neutral-600 dark:text-neutral-300 whitespace-nowrap">{renderMxMCell(realAtual.fibra, mAtual.fibra)}</td>
+                                                        <td className="px-6 py-3 text-neutral-600 dark:text-neutral-300 whitespace-nowrap">{renderMxMCell(realAtual.tv, mAtual.tv)}</td>
+                                                        <td className="px-6 py-3 text-neutral-600 dark:text-neutral-300 whitespace-nowrap">{renderMxMCell(realAtual.fixo, mAtual.fixo || 0)}</td>
+                                                        <td className="px-6 py-3 font-medium text-orange-600 dark:text-orange-400 whitespace-nowrap">{renderMxMCell(realAtual.aparelho, mAtual.aparelho)}</td>
+                                                        <td className="px-6 py-3 text-neutral-600 dark:text-neutral-300 whitespace-nowrap">{renderMxMCell(realAtual.acessorio, mAtual.acessorio)}</td>
+                                                        <td className="px-6 py-3 text-neutral-600 dark:text-neutral-300 whitespace-nowrap">{renderMxMCell(realAtual.pelicula, mAtual.pelicula)}</td>
+                                                        <td className="px-6 py-3 font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">{renderMxMCell(realAtual.seguro, mAtual.seguro)}</td>
+                                                        <td className="px-6 py-3 text-neutral-600 dark:text-neutral-300 whitespace-nowrap">{renderMxMCell(realAtual.mplay, mAtual.mplay)}</td>
+                                                    </tr>
+                                                );
+                                            })()}
                                             {monthNames.map(month => {
                                                 const m = goalsDB[month];
                                                 const real = monthlyMetrics[month] || { receita: 0, posTotal: 0, posPago: 0, controle: 0, urTotal: 0, fibra: 0, tv: 0, fixo: 0, aparelho: 0, acessorio: 0, pelicula: 0, seguro: 0, mplay: 0 };
@@ -633,6 +670,7 @@ export const Gestao = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, 
                                             {(() => {
                                                 const currentMonthMeta = (goalsDB || {})[selectedSxsMonth] || safeMetasPadrao;
                                                 return (
+                                                    <>
                                                     <tr className="text-neutral-900 dark:text-neutral-100 font-black uppercase text-[11px]">
                                                         <td className="border-t-2 border-b border-neutral-300 dark:border-neutral-700 px-6 py-4 sticky left-0 bg-neutral-100 dark:bg-neutral-800 shadow-[2px_0_5px_rgba(0,0,0,0.05)] z-30 text-[#E3000F]">Realizado Mês</td>
                                                         <td className="border-t-2 border-b border-neutral-300 dark:border-neutral-700 px-6 py-3 bg-neutral-50 dark:bg-neutral-900 font-black text-green-600 dark:text-green-500 whitespace-nowrap">
@@ -708,12 +746,43 @@ export const Gestao = ({ hasAccess, canEdit, setAuthModal, goalsDB, setGoalsDB, 
                                                             </div>
                                                         </td>
                                                     </tr>
+                                                    <tr
+                                                        onClick={() => setMetaActiveSubTab('RESULTADO')}
+                                                        className="bg-red-50/80 dark:bg-[#E3000F]/15 hover:bg-red-100 dark:hover:bg-[#E3000F]/25 transition-colors cursor-pointer text-neutral-900 dark:text-neutral-100 font-black uppercase text-[11px]"
+                                                        title="Clique para abrir a Seção RESULTADO completa"
+                                                    >
+                                                        <td className="border-t border-neutral-300 dark:border-neutral-700 px-6 py-3.5 sticky left-0 bg-red-50 dark:bg-neutral-900 shadow-[2px_0_5px_rgba(0,0,0,0.05)] z-30 text-[#E3000F]">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <BarChart3 size={14} className="text-[#E3000F] shrink-0" />
+                                                                <span>RESULTADO</span>
+                                                                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[#E3000F] text-white text-[9px] flex items-center gap-0.5">
+                                                                    Ver <ArrowUpRight size={10} />
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td colSpan={12} className="border-t border-neutral-300 dark:border-neutral-700 px-6 py-3.5 text-xs font-bold text-neutral-700 dark:text-neutral-200">
+                                                            Clique nesta linha para abrir o Painel Executivo e Tabela Diária de <span className="text-[#E3000F] font-black">RESULTADO</span> ({selectedSxsMonth.split('-').reverse().join('/')})
+                                                        </td>
+                                                    </tr>
+                                                    </>
                                                 );
                                             })()}
                                         </tfoot>
                                     </table>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {metaActiveSubTab === 'RESULTADO' && (
+                        <div className="flex-1 overflow-auto p-3 sm:p-6 bg-neutral-50/50 dark:bg-neutral-950/50">
+                            <Resultado
+                                salesData={salesData}
+                                goalsDB={goalsDB}
+                                usersDB={usersDB}
+                                globalMonth={globalMonth || selectedSxsMonth || currentYYYYMM}
+                                setGlobalMonth={setGlobalMonth || setSelectedSxsMonth}
+                            />
                         </div>
                     )}
 

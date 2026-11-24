@@ -18,10 +18,10 @@ export const PRODUTOS_POR_CATEGORIA = {
         'POS 50GB', 'POS 100GB', 'POS 150GB', 'POS 200GB', 'POS 300GB', 'POS 500GB',
         'CONTROLE 40GB', 'CONTROLE 45GB', 'CONTROLE 45GB GAMER',
         'DEPENDENTE', 'FLEX', 'POS PME',
-        'POS 60GB', 'POS 50GB GAMING', 'CONTROLE 41GB', 'CONTROLE 46GB', 'CONTROLE 46GB GAMING'
+        'POS 60GB', 'POS 50GB GAMING'
     ],
     'RESIDENCIAL': [
-        'FIBRA', 'TVBOX', 'TV CABO', 'SOUNDBOX', 'TV-BOX',
+        'FIBRA', 'TV',
         'PONTO ADICIONAL BOX', 'PONTO ADICIONAL CABO', 'PONTO ADICIONAL SOUND',
         'FIXO', 'MESH', 'FIBRA PME'
     ],
@@ -150,7 +150,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             if (fibraOverrides[subOption]) return fibraOverrides[subOption][combo] || fibraOverrides[subOption]['SINGLE'];
             return FIBRA_OPTIONS.find(o => o.label === subOption)?.prices?.[combo] || FIBRA_OPTIONS.find(o => o.label === subOption)?.prices?.['SINGLE'] || FIBRA_OPTIONS.find(o => o.label === subOption)?.prices?.UNICO;
         }
-        if ((produto === 'TV-BOX' || produto === 'TVBOX' || produto === 'TV CABO' || produto === 'SOUNDBOX') && subOption) {
+        if ((produto === 'TV' || produto === 'TV-BOX' || produto === 'TVBOX' || produto === 'TV CABO' || produto === 'SOUNDBOX') && subOption) {
             const tvOverrides = {
                 'TVBOX': { SINGLE: 159.90, MULTI: 139.90, 'MULTI 3P': 99.90 },
                 'TV CABO': { SINGLE: 179.90, MULTI: 159.90, 'MULTI 3P': 149.90 },
@@ -191,7 +191,13 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
             });
             return extended.sort((a, b) => (parseInt(a.label) * (a.label.includes('GIGA') || a.label.includes('GB') ? 1000 : 1)) - (parseInt(b.label) * (b.label.includes('GIGA') || b.label.includes('GB') ? 1000 : 1)));
         }
-        if (formData.produto === 'TV-BOX') return TV_BOX_OPTIONS;
+        if (formData.produto === 'TV' || formData.produto === 'TV-BOX') {
+            return [
+                { label: 'TV BOX' },
+                { label: 'TV CABO' },
+                { label: 'SOUNDBOX' }
+            ];
+        }
         if (formData.produto === 'FIXO') return FIXO_OPTIONS;
         if (formData.produto === 'MESH') return MESH_OPTIONS;
         if (formData.produto === 'SEGURO') return safeSeguroOptions;
@@ -308,7 +314,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
                     if (!isResidencialProduct(value)) {
                         next.dataInstalacao = '';
                     }
-                    if (value === 'FIBRA') next.subOption = '350 MEGA'; else if (value === 'TV-BOX') next.subOption = 'TV BOX'; else if (value === 'FIXO') next.subOption = 'FIXO MUNDO'; else if (value === 'MESH') next.subOption = 'MESH 2UN'; else if (value === 'SEGURO') next.subOption = 'SEGURO R$ 60,00'; else if (value === 'DEPENDENTE') next.subOption = 'GRATUITO'; else next.subOption = '';
+                    if (value === 'FIBRA') next.subOption = '350 MEGA'; else if (value === 'TV' || value === 'TV-BOX') next.subOption = 'TV BOX'; else if (value === 'FIXO') next.subOption = 'FIXO MUNDO'; else if (value === 'MESH') next.subOption = 'MESH 2UN'; else if (value === 'SEGURO') next.subOption = 'SEGURO R$ 60,00'; else if (value === 'DEPENDENTE') next.subOption = 'GRATUITO'; else next.subOption = '';
                     const isNewMovel = ['POS', 'PÓS', 'CONTROLE', 'FLEX', 'PRÉ', 'PRE', 'DEPENDENTE'].some(term => String(value || '').toUpperCase().includes(term));
                     if (!isNewMovel) { next.tipoOperacao = ''; next.operadoraOrigem = ''; }
                 }
@@ -464,7 +470,7 @@ export const Venda = ({ salesData, setSalesData, isVendedor, globalUser, usersDB
         const { vendedor, data, qtda, portabilidade, produto, receita, mplay, tipoOperacao, subOption } = formData;
 
         const isItemMovel = ['POS', 'PÓS', 'CONTROLE', 'FLEX', 'PRÉ', 'PRE', 'DEPENDENTE'].some(term => String(produto || '').toUpperCase().includes(term));
-        const itemShowMplay = (isItemMovel || ['FIBRA', 'TV-BOX', 'FIXO', 'MESH'].includes(produto || '')) && !isMplayAlreadySelectedInCombo;
+        const itemShowMplay = (isItemMovel || ['FIBRA', 'TV', 'TV-BOX', 'FIXO', 'MESH'].includes(produto || '')) && !isMplayAlreadySelectedInCombo;
 
         const finalPortabilidade = isItemMovel ? (tipoOperacao === 'MIGRAÇÃO' ? 'NÃO' : portabilidade) : 'NÃO';
         const finalOperadoraOrigem = (isItemMovel && finalPortabilidade === 'SIM' && tipoOperacao === 'ATIVAÇÃO') ? formData.operadoraOrigem : '';

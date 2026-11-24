@@ -1,22 +1,22 @@
 // Constantes puramente visuais (Não contêm regras de negócio)
 
-export const PRODUTOS_CONTRATO_OBRIGATORIO = ['FIBRA', 'TV-BOX', 'MESH', 'FIXO', 'FIBRA PME'];
+export const PRODUTOS_CONTRATO_OBRIGATORIO = ['FIBRA', 'TV', 'TV-BOX', 'MESH', 'FIXO', 'FIBRA PME'];
 
 export const VENDEDORES = ['MATHEUS', 'GISELE', 'BRUNA', 'DANILO', 'DAVID'];
 
 export const PRODUTOS = [
     // Pós-Pago Oficiais
     'POS 50GB', 'POS 100GB', 'POS 150GB', 'POS 200GB', 'POS 300GB', 'POS 500GB',
-    // Controle Oficiais
+    // Controle Oficiais Atualizados (40, 45 e 45 Gamer)
     'CONTROLE 40GB', 'CONTROLE 45GB', 'CONTROLE 45GB GAMER',
-    // TV e Residencial
-    'TVBOX', 'TV CABO', 'SOUNDBOX', 'FIBRA', 'TV-BOX',
+    // TV e Residencial Atualizados
+    'FIBRA', 'TV',
     'PONTO ADICIONAL BOX', 'PONTO ADICIONAL CABO', 'PONTO ADICIONAL SOUND',
     // Outros Serviços & Telefonia
     'FIXO', 'FLEX', 'MESH', 'POS PME', 'FIBRA PME', 'SEGURO',
     'APARELHO', 'ACESSORIO', 'PELICULA', 'DEPENDENTE', 'BANDA LARGA',
-    // Legados / Históricos
-    'POS 60GB', 'POS 50GB GAMING', 'CONTROLE 41GB', 'CONTROLE 46GB', 'CONTROLE 46GB GAMING'
+    // Anteriores / Pós mantidos
+    'POS 60GB', 'POS 50GB GAMING'
 ];
 
 export const METAS_PADRAO = {

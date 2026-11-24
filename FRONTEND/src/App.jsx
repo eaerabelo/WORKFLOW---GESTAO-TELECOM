@@ -36,7 +36,7 @@ import { ControleSimcard } from './components/ControleSimcard.jsx';
 import { Gestao } from './components/Gestao.jsx';
 import { Venda } from './components/Venda.jsx';
 import { Proposta } from './components/Proposta.jsx';
-import { UrResidencial } from './components/UrResidencial.jsx';
+import { UrResidencial, getUrOverdueDays } from './components/UrResidencial.jsx';
 import { Reprovados } from './components/Reprovados.jsx';
 import { Resultado } from './components/Resultado.jsx';
 import { Login } from './components/Login.jsx';
@@ -67,7 +67,10 @@ import {
   registerWorkflowServiceWorker,
   getNativeNotificationPermission,
   requestNativeNotificationPermission,
-  dispatchNativeNotification
+  requestBackgroundExecutionPermission,
+  dispatchNativeNotification,
+  isIosDevice,
+  isRunningStandalone
 } from './utils/pwaNotifications.js';
 
 // Multi-Tenant: Identificador dinâmico da loja
@@ -190,36 +193,61 @@ export default function App() {
   // Conta notificações não lidas
   const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
 
-  // Estados de PWA (Instalação App Chrome/Mobile) e Permissão de Notificação Nativa (PC & Celular)
+  // Estados de PWA (Instalação App Chrome/Mobile/iOS) e Permissão de Notificação Nativa + Segundo Plano (PC & Celular)
   const [nativeNotifPermission, setNativeNotifPermission] = useState(() => getNativeNotificationPermission());
+  const [bgPermissionGranted, setBgPermissionGranted] = useState(() => typeof window !== 'undefined' && localStorage.getItem('wf_bg_permission_granted') === 'true');
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+  const [isIosInstallModalOpen, setIsIosInstallModalOpen] = useState(false);
+  const [showIosInstallButton, setShowIosInstallButton] = useState(() => isIosDevice() && !isRunningStandalone());
 
   useEffect(() => {
     registerWorkflowServiceWorker();
+    setShowIosInstallButton(isIosDevice() && !isRunningStandalone());
 
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredInstallPrompt(e);
     };
+
+    const handleSwMessage = (event) => {
+      if (event.data && event.data.type === 'NAVIGATE_TO_TAB' && event.data.tab) {
+        setActiveTab(event.data.tab);
+      }
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSwMessage);
+    }
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+      }
+    };
   }, []);
 
-  // Solicita permissão de notificação ao navegador/PC/Celular após o login na primeira interação
+  // Solicita permissão de notificação e uso em segundo plano ao navegador/PC/Celular após o login na primeira interação
   useEffect(() => {
     if (!globalUser) return;
     const currentPerm = getNativeNotificationPermission();
     setNativeNotifPermission(currentPerm);
 
-    if (currentPerm === 'default') {
+    if (currentPerm === 'granted') {
+      requestBackgroundExecutionPermission().then((ok) => {
+        if (ok) setBgPermissionGranted(true);
+      });
+    } else if (currentPerm === 'default') {
       const requestOnFirstClick = async () => {
         const res = await requestNativeNotificationPermission();
         setNativeNotifPermission(res);
         if (res === 'granted') {
+          const bgOk = await requestBackgroundExecutionPermission();
+          if (bgOk) setBgPermissionGranted(true);
           dispatchNativeNotification({
             id: `welcome-notif-${Date.now()}`,
-            title: 'Notificações Ativadas!',
-            desc: 'Você receberá os alertas de campanhas, metas e parciais diretamente no seu dispositivo.'
+            title: 'Notificações e 2º Plano Ativados!',
+            desc: 'Você receberá os alertas de campanhas, instalações UR e parciais mesmo com a janela em segundo plano.'
           }, true);
         }
         window.removeEventListener('click', requestOnFirstClick);
@@ -233,24 +261,31 @@ export default function App() {
     const res = await requestNativeNotificationPermission();
     setNativeNotifPermission(res);
     if (res === 'granted') {
-      toast.success('Notificações do sistema ativadas no seu dispositivo!');
+      const bgOk = await requestBackgroundExecutionPermission();
+      if (bgOk) setBgPermissionGranted(true);
+      toast.success('Notificações e execução em segundo plano ativadas no seu dispositivo!');
       await dispatchNativeNotification({
         id: `test-notif-${Date.now()}`,
-        title: 'Alertas Sincronizados!',
-        desc: 'As notificações da plataforma agora aparecem no seu PC e Celular.'
+        title: 'Segundo Plano Sincronizado!',
+        desc: 'As notificações da plataforma agora funcionam em segundo plano no seu PC e Celular.'
       }, true);
     } else if (res === 'denied') {
-      toast.error('Permissão bloqueada no navegador. Clique no cadeado ao lado da URL para permitir notificações.');
+      toast.error('Permissão bloqueada no navegador. Clique no cadeado ao lado da URL para permitir notificações e segundo plano.');
     }
   };
 
   const handleInstallPwaApp = async () => {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredInstallPrompt(null);
-      toast.success('Instalando aplicativo WorkFlow...');
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredInstallPrompt(null);
+        toast.success('Instalando aplicativo WorkFlow...');
+      }
+      return;
+    }
+    if (isIosDevice() && !isRunningStandalone()) {
+      setIsIosInstallModalOpen(true);
     }
   };
 
@@ -532,6 +567,109 @@ export default function App() {
       localStorage.setItem('last_seen_campanhas', JSON.stringify(currentSeen));
     }
   }, [campanhasData, isBackendReady]);
+
+  // --- ALERTA AUTOMÁTICO DE 5 DIAS PARA CONTRATOS NÃO CONECTADOS NA [UR RESIDENCIAL] ---
+  useEffect(() => {
+    if (!isBackendReady || !globalUser || !Array.isArray(salesData) || salesData.length === 0) return;
+
+    const isResidentialProd = (produto) => {
+      const p = String(produto || '').toUpperCase();
+      return p.includes('FIBRA') || p.includes('TV') || p.includes('SOUNDBOX') || p.includes('FIXO') || p.includes('RESIDENCIAL') || p.includes('MESH') || p.includes('PONTO ADICIONAL');
+    };
+
+    const checkOverdueUrContracts = () => {
+      const loggedUserName = String(globalUser?.name || '').trim().toUpperCase();
+      const loggedFirst = loggedUserName.split(' ')[0] || '';
+      const roleUpper = String(globalUser?.role || 'VENDEDOR').trim().toUpperCase();
+      const isLeader = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'ADM', 'ASSISTENTE RELACIONAMENTO', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(roleUpper);
+      const todayKey = getTodaySP();
+
+      const notifiedStorageKey = `wf_ur_overdue_5d_${todayKey}_${loggedUserName}`;
+      let alreadyNotifiedIds = [];
+      try {
+        alreadyNotifiedIds = JSON.parse(localStorage.getItem(notifiedStorageKey) || '[]');
+        if (!Array.isArray(alreadyNotifiedIds)) alreadyNotifiedIds = [];
+      } catch (e) {
+        alreadyNotifiedIds = [];
+      }
+
+      const overdueForCurrentUser = [];
+
+      salesData.forEach((sale) => {
+        if (!sale || !isResidentialProd(sale.produto)) return;
+        // Considera vendas que entraram com data de agendamento/instalação (ou data base) e não estão conectadas
+        if (!sale.dataInstalacao && !sale.data) return;
+        const diffDays = getUrOverdueDays(sale);
+        if (diffDays < 5) return;
+
+        const saleSellerUpper = String(sale.vendedor || '').trim().toUpperCase();
+        const saleSellerFirst = saleSellerUpper.split(' ')[0] || '';
+        const isResponsibleSeller =
+          loggedUserName &&
+          (saleSellerUpper === loggedUserName || (loggedFirst && saleSellerFirst === loggedFirst));
+
+        // Notifica o usuário responsável pela venda gerada (e também a gestão/acompanhamento)
+        if (isResponsibleSeller || isLeader) {
+          const saleKey = String(sale.id || `${sale.contrato}-${sale.dataInstalacao}`);
+          if (!alreadyNotifiedIds.includes(saleKey)) {
+            overdueForCurrentUser.push({ sale, diffDays, isResponsibleSeller, saleKey });
+          }
+        }
+      });
+
+      if (overdueForCurrentUser.length > 0) {
+        const newNotifItems = overdueForCurrentUser.map(({ sale, diffDays, isResponsibleSeller, saleKey }) => {
+          alreadyNotifiedIds.push(saleKey);
+          const contratoTxt = sale.contrato && sale.contrato !== '-' ? `Contrato ${sale.contrato}` : sale.produto;
+          const clienteTxt = sale.nomeCliente ? ` (${sale.nomeCliente})` : '';
+          const sellerTxt = String(sale.vendedor || 'Vendedor').split(' ')[0];
+          const dataAgendadaBr = sale.dataInstalacao
+            ? new Date(sale.dataInstalacao + 'T12:00:00').toLocaleDateString('pt-BR')
+            : sale.data;
+
+          return {
+            id: `ur-5d-${todayKey}-${saleKey}`,
+            title: isResponsibleSeller
+              ? `⚠️ Instalação Pendente há ${diffDays} dias!`
+              : `⚠️ UR Pendente (${sellerTxt}) — ${diffDays} dias`,
+            desc: `${contratoTxt}${clienteTxt} agendado para ${dataAgendadaBr} ainda NÃO está CONECTADO na UR Residencial. Verifique o pendente de instalação!`,
+            time: Date.now(),
+            read: false,
+            type: 'ur-overdue-5d',
+            targetTab: 'UR-RESIDENCIAL',
+            requireInteraction: true
+          };
+        });
+
+        localStorage.setItem(notifiedStorageKey, JSON.stringify(alreadyNotifiedIds));
+
+        setNotifications((prev) => {
+          const existingIds = new Set((Array.isArray(prev) ? prev : []).map((n) => n.id));
+          const filteredNew = newNotifItems.filter((n) => !existingIds.has(n.id));
+          return [...filteredNew, ...(Array.isArray(prev) ? prev : [])].slice(0, 30);
+        });
+
+        // Dispara notificação nativa em segundo plano e alerta visual para o usuário responsável
+        newNotifItems.slice(0, 3).forEach((notif) => {
+          dispatchNativeNotification(notif, true);
+        });
+
+        const firstAlert = newNotifItems[0];
+        toast(
+          `${firstAlert.title} ${
+            newNotifItems.length > 1
+              ? `(+${newNotifItems.length - 1} contratos pendentes há 5+ dias na UR Residencial)`
+              : firstAlert.desc
+          }`,
+          { icon: '⚠️', duration: 8000 }
+        );
+      }
+    };
+
+    checkOverdueUrContracts();
+    const interval = setInterval(checkOverdueUrContracts, 15 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [salesData, globalUser, isBackendReady]);
 
   // --- ESTADOS DO DASHBOARD DE VENDAS ---
   // Seleção e visualização global de determinado colaborador
@@ -1033,7 +1171,6 @@ export default function App() {
     // { name: 'PROPOSTA', icon: <FileText size={18} /> }, // Oculto temporariamente a pedido
     { name: 'REPROVADOS', icon: <AlertOctagon size={18} /> },
     { name: 'RETENÇÃO', icon: <ShieldCheck size={18} /> },
-    { name: 'RESULTADO', icon: <BarChart3 size={18} /> },
     { name: 'SCRIPTS', icon: <Copy size={18} /> },
     // { name: 'SISTEMAS', icon: <Database size={18} /> }, // Oculto temporariamente a pedido
     { name: 'UR-RESIDENCIAL', icon: <Briefcase size={18} /> },
@@ -1348,12 +1485,12 @@ export default function App() {
               <BookOpen size={16} /> <span className="hidden lg:inline">Tutorial</span>
             </button>
 
-            {deferredInstallPrompt && (
+            {(deferredInstallPrompt || showIosInstallButton) && (
               <button
                 type="button"
                 onClick={handleInstallPwaApp}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E3000F] hover:bg-red-700 text-white rounded-lg text-xs font-extrabold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
-                title="Instalar WorkFlow como Aplicativo no Dispositivo"
+                title="Instalar WorkFlow como Aplicativo no Desktop, Android ou iPhone (iOS)"
               >
                 <Zap size={14} />
                 <span className="hidden md:inline">Instalar App</span>
@@ -1402,17 +1539,20 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* CONTROLE DE PERMISSÃO DE NOTIFICAÇÃO NATIVA (PC & CELULAR) */}
-                  {nativeNotifPermission !== 'granted' && (
-                    <div className="px-4 py-2.5 bg-neutral-100/70 dark:bg-neutral-800/80 border-b border-neutral-200/70 dark:border-neutral-700/70 flex items-center justify-between gap-2">
+                  {/* CONTROLE DE PERMISSÃO DE NOTIFICAÇÃO NATIVA E SEGUNDO PLANO (PC, ANDROID & iOS) */}
+                  {(nativeNotifPermission !== 'granted' || !bgPermissionGranted) && (
+                    <div className="px-4 py-2.5 bg-neutral-100/70 dark:bg-neutral-800/80 border-b border-neutral-200/70 dark:border-neutral-700/70 flex flex-col gap-1.5">
                       <button
                         type="button"
                         onClick={handleEnableNativeNotifications}
-                        className="w-full py-1.5 px-3 rounded-xl bg-[#E3000F] hover:bg-red-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                        className="w-full py-2 px-3 rounded-xl bg-[#E3000F] hover:bg-red-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
                       >
                         <Bell size={13} />
-                        <span>Ativar Notificações no PC / Celular</span>
+                        <span>Permitir Notificações em 2º Plano</span>
                       </button>
+                      <span className="text-[10px] text-neutral-500 dark:text-neutral-400 text-center leading-tight">
+                        Receba alertas da UR Residencial, campanhas e parciais mesmo com a janela em segundo plano.
+                      </span>
                     </div>
                   )}
                   <div className="max-h-[60vh] sm:max-h-[350px] overflow-y-auto scrollbar-thin">
@@ -1424,21 +1564,31 @@ export default function App() {
                     ) : (
                       <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                         {notifications.map(notif => (
-                          <div key={notif.id} className={`p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${!notif.read ? 'bg-red-50/30 dark:bg-[#E3000F]/5' : ''}`}>
+                          <div
+                            key={notif.id}
+                            onClick={() => {
+                              if (notif.targetTab) {
+                                setActiveTab(notif.targetTab);
+                                setIsNotificationsOpen(false);
+                              }
+                            }}
+                            className={`p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${notif.targetTab ? 'cursor-pointer' : ''} ${!notif.read ? 'bg-red-50/30 dark:bg-[#E3000F]/5' : ''}`}
+                          >
                             <div className="flex gap-3">
                               <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${notif.type === 'parcial' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 
                                 notif.type === 'campanha' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' : 
                                   notif.type === 'campanha_win' ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-500' : 
                                     notif.type === 'pricing' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-500' :
-                                      notif.type === 'ur-reminder' ? 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400' :
+                                      (notif.type === 'ur-reminder' || notif.type === 'ur-overdue-5d') ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
                                         'bg-red-100 text-[#E3000F] dark:bg-red-900/30'
                                 }`}>
                                 {notif.type === 'parcial' ? <ClipboardCheck size={16} /> : 
                                   notif.type === 'campanha' ? <Megaphone size={16} /> : 
                                     notif.type === 'campanha_win' ? <Trophy size={16} /> : 
                                       notif.type === 'pricing' ? <DollarSign size={16} /> :
-                                        notif.type === 'ur-reminder' ? <Home size={16} /> :
-                                          <Target size={16} />}
+                                        notif.type === 'ur-overdue-5d' ? <AlertTriangle size={16} /> :
+                                          notif.type === 'ur-reminder' ? <Home size={16} /> :
+                                            <Target size={16} />}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h4 className={`text-sm mb-0.5 leading-tight ${!notif.read ? 'font-bold text-neutral-900 dark:text-white' : 'font-medium text-neutral-700 dark:text-neutral-300'}`}>{notif.title}</h4>
@@ -1527,7 +1677,7 @@ export default function App() {
 
           {/* Roteador/Renderizador do Conteúdo Principal conforme as Abas ativas */}
           {activeTab === 'GESTÃO' ? (
-            <Gestao hasAccess={hasMetaAccess} canEdit={canEditMeta} setAuthModal={setAuthModal} goalsDB={goalsDB} setGoalsDB={setGoalsDB} currentYYYYMM={currentYYYYMM} usersDB={usersDB} salesData={salesData} globalMonth={globalMonth} />
+            <Gestao hasAccess={hasMetaAccess} canEdit={canEditMeta} setAuthModal={setAuthModal} goalsDB={goalsDB} setGoalsDB={setGoalsDB} currentYYYYMM={currentYYYYMM} usersDB={usersDB} salesData={salesData} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} />
           ) : activeTab === 'VENDA' ? (
             <Venda salesData={salesData} setSalesData={handleSetSalesData} isVendedor={isVendedor} globalUser={globalUser} usersDB={usersDB} globalMonth={globalMonth} />
           ) : activeTab === 'CONTROLE-SIMCARD' ? (
@@ -1687,6 +1837,48 @@ export default function App() {
 
       {/* MODAL DE ATUALIZAÇÕES (NOVIDADES) EXTRAÍDO */}
       <Atualizacoes globalUser={globalUser} updateUserProfile={updateUserProfile} usersDB={usersDB} />
+
+      {/* MODAL DE INSTALAÇÃO DO APP NO iOS / iPHONE / SAFARI */}
+      {isIosInstallModalOpen && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto bg-black/65 backdrop-blur-sm p-4 no-print flex items-center justify-center" onClick={() => setIsIosInstallModalOpen(false)}>
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-md animate-fade-in flex flex-col items-center p-6 sm:p-8 text-center border border-neutral-200 dark:border-neutral-800" onClick={(e) => e.stopPropagation()}>
+            <img src={wfLogo} alt="WorkFlow Logo" className="w-16 h-16 rounded-2xl bg-neutral-900 p-2 shadow-lg mb-4 object-contain border border-neutral-700" />
+            <h2 className="text-xl font-black text-neutral-800 dark:text-neutral-100 mb-2 tracking-tight">
+              Instalar WorkFlow no iPhone / iOS
+            </h2>
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mb-5 leading-relaxed">
+              Para instalar o aplicativo oficial com a logo na tela de início do seu iPhone e receber notificações em segundo plano:
+            </p>
+            <div className="w-full space-y-3 text-left bg-neutral-50 dark:bg-neutral-800/70 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 mb-6 text-xs sm:text-sm">
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#E3000F] text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <p className="text-neutral-700 dark:text-neutral-200 font-medium">
+                  Toque no botão <strong>Compartilhar</strong> (ícone de quadrado com seta para cima) na barra do Safari/Navegador.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#E3000F] text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <p className="text-neutral-700 dark:text-neutral-200 font-medium">
+                  Role as opções e selecione <strong>"Adicionar à Tela de Início"</strong> e depois toque em <strong>Adicionar</strong>.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#E3000F] text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <p className="text-neutral-700 dark:text-neutral-200 font-medium">
+                  Abra o app pela Tela de Início e toque no sininho para <strong>Permitir Notificações em 2º Plano</strong>.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsIosInstallModalOpen(false)}
+              className="w-full py-3 bg-[#E3000F] hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-red-500/25 cursor-pointer"
+            >
+              Entendi, vou adicionar!
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE LEMBRETE UR RESIDENCIAL */}
       {isUrReminderModalOpen && (
