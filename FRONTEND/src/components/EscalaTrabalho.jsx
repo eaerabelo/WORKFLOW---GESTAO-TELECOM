@@ -636,9 +636,13 @@ export const EscalaTrabalho = ({
         }
         if (dayObj.isWeekend) {
             if (sigla === 'F' || sigla === 'FB' || sigla === 'FP') {
-                return 'bg-gradient-to-b from-[#0369a1] to-[#075985] text-amber-200 font-black border-sky-700/70';
+                return dayObj.dow === 0
+                    ? 'bg-gradient-to-b from-red-600 to-red-700 text-white font-black border-red-800/70'
+                    : 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black border-sky-700/70';
             }
-            return 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black border-sky-700/70';
+            return dayObj.dow === 0
+                ? 'bg-gradient-to-b from-red-600 to-red-700 text-white font-black border-red-800/70'
+                : 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black border-sky-700/70';
         }
         // Dias de semana normais com codificação sutil e tecnológica por sigla
         if (sigla === 'F' || sigla === 'FB' || sigla === 'FP') {
@@ -827,7 +831,7 @@ export const EscalaTrabalho = ({
                                                 const headerBg = d.isHoliday
                                                     ? 'bg-gradient-to-b from-amber-300 to-yellow-400 text-neutral-950 font-black'
                                                     : d.isWeekend
-                                                        ? 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black'
+                                                        ? (d.dow === 0 ? 'bg-gradient-to-b from-red-600 to-red-700 text-white font-black' : 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black')
                                                         : 'bg-neutral-900 text-neutral-300 font-bold';
                                                 return (
                                                     <th
@@ -846,7 +850,7 @@ export const EscalaTrabalho = ({
                                                 const numBg = d.isHoliday
                                                     ? 'bg-yellow-400 text-neutral-950 font-black'
                                                     : d.isWeekend
-                                                        ? 'bg-[#0369a1] text-white font-black'
+                                                        ? (d.dow === 0 ? 'bg-red-700 text-white font-black' : 'bg-[#0369a1] text-white font-black')
                                                         : 'bg-neutral-800 text-white font-extrabold';
                                                 return (
                                                     <th
@@ -945,6 +949,10 @@ export const EscalaTrabalho = ({
                                                                 {monthDaysList.map((d) => {
                                                                     const sigla = getCellSigla(emp, d, sec.id);
                                                                     const cellTheme = getTechCellClasses(d, sigla);
+                                                                    const isFolgaSigla = sigla === 'F' || sigla === 'FB' || sigla === 'FP';
+                                                                    const folgaTextClass = isFolgaSigla
+                                                                        ? ((d.isWeekend || d.isHoliday) ? 'bg-white/95 text-[#E3000F] rounded-sm' : 'text-[#E3000F]')
+                                                                        : '';
 
                                                                     return (
                                                                         <td
@@ -955,7 +963,7 @@ export const EscalaTrabalho = ({
                                                                                 <select
                                                                                     value={sigla}
                                                                                     onChange={(e) => handleCellSiglaChange(emp.name, d.dateStr, e.target.value)}
-                                                                                    className="w-full h-full py-1.5 px-0 bg-transparent text-center font-black outline-none cursor-pointer appearance-none"
+                                                                                    className={`w-full h-full py-1.5 px-0 text-center font-black outline-none cursor-pointer appearance-none ${folgaTextClass || 'bg-transparent'}`}
                                                                                     style={{ textAlignLast: 'center', WebkitAppearance: 'none', MozAppearance: 'none' }}
                                                                                     title={`${getFirstName(emp.name)} • Dia ${d.dayNumber} (${d.dayNameFull})`}
                                                                                 >
@@ -971,7 +979,7 @@ export const EscalaTrabalho = ({
                                                                                     ))}
                                                                                 </select>
                                                                             ) : (
-                                                                                <span className="block py-1.5 px-0.5 font-black">
+                                                                                <span className={`block py-1.5 px-0.5 font-black ${folgaTextClass}`}>
                                                                                     {sigla}
                                                                                 </span>
                                                                             )}
@@ -1022,7 +1030,7 @@ export const EscalaTrabalho = ({
                                     <div className="mt-2.5 flex flex-wrap items-center justify-center gap-3 text-[11px] font-bold text-sky-100 no-print">
                                         <span className="inline-flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-full border border-white/15">
                                             <span className="w-2.5 h-2.5 rounded-full bg-[#0284c7] border border-white inline-block" />
-                                            Fim de Semana (Sáb/Dom)
+                                            Sábado (Azul) • Domingo (Vermelho)
                                         </span>
                                         <span className="inline-flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-full border border-white/15">
                                             <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 border border-black/40 inline-block" />
