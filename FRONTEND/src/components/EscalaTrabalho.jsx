@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
-    CalendarDays, Lock, Printer, Sparkles, RefreshCw, FileSpreadsheet, Flag
+    CalendarDays, Lock, Printer, Sparkles, RefreshCw, FileSpreadsheet,
+    Sun, Sunset, Moon, ShieldAlert
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
@@ -16,10 +17,10 @@ const MESES_NOMES = [
 
 // Siglas oficiais da Escala (Idênticas e expandidas a partir da planilha padrão da loja)
 export const SIGLAS_ESCALA = [
-    { code: 'T', label: 'TRABALHA (TURNO FIXO)', horario: 'Turno Padrão' },
-    { code: 'M', label: 'MANHÃ (ABERTURA)', horario: '09:40 - 18:00' },
+    { code: 'T', label: 'TRABALHA', horario: 'Turno Padrão' },
+    { code: 'M', label: 'MANHÃ', horario: '09:40 - 18:00' },
     { code: 'I', label: 'INTERMEDIÁRIO', horario: '10:40 / 11:40' },
-    { code: 'N', label: 'NOITE / TARDE (FECHAMENTO)', horario: '13:40 - 22:00' },
+    { code: 'N', label: 'NOITE / TARDE', horario: '13:40 - 22:00' },
     { code: 'F', label: 'FOLGA', horario: 'FOLGA' },
     { code: 'FB', label: 'FOLGA BANCO', horario: 'FOLGA BANCO' },
     { code: 'FP', label: 'FOLGA PRÊMIO', horario: 'FOLGA PRÊMIO' },
@@ -29,10 +30,15 @@ export const SIGLAS_ESCALA = [
     { code: 'AF', label: 'AFASTADA(O)', horario: 'AFASTADA' }
 ];
 
-// Converte qualquer valor antigo (ex: '09:40 - 18:00', 'FOLGA') para a Sigla Oficial
+// Converte qualquer valor antigo para a Sigla Oficial limpa
 const normalizeToSigla = (val, sectionShift = 'MANHA') => {
     const raw = String(val || '').trim().toUpperCase();
-    const v = raw.includes('—') ? raw.split('—')[0].trim() : raw.includes('-') && !raw.includes(':') ? raw.split('-')[0].trim() : raw;
+    const v = raw.includes('—')
+        ? raw.split('—')[0].trim()
+        : raw.includes('-') && !raw.includes(':')
+            ? raw.split('-')[0].trim()
+            : raw;
+
     if (!v) {
         if (sectionShift === 'MANHA') return 'M';
         if (sectionShift === 'INTERMEDIARIO') return 'I';
@@ -50,20 +56,19 @@ const normalizeToSigla = (val, sectionShift = 'MANHA') => {
     return 'T';
 };
 
-// Feriados nacionais fixos (MM-DD) para pré-destacar em amarelo automaticamente
+// Feriados nacionais fixos (MM-DD) para pré-destacar automaticamente
 const FERIADOS_FIXOS_MM_DD = new Set([
-    '01-01', // Confraternização Universal
-    '04-21', // Tiradentes
-    '05-01', // Dia do Trabalho
-    '09-07', // Independência
-    '10-12', // Nossa Sra. Aparecida
-    '11-02', // Finados
-    '11-15', // Proclamação da República
-    '11-20', // Consciência Negra
-    '12-25'  // Natal
+    '01-01',
+    '04-21',
+    '05-01',
+    '09-07',
+    '10-12',
+    '11-02',
+    '11-15',
+    '11-20',
+    '12-25'
 ]);
 
-// Identifica grupo de regra por cargo
 const getRoleRuleGroup = (roleRaw) => {
     const r = String(roleRaw || 'VENDEDOR').trim().toUpperCase();
     if (r.includes('GERENTE') || r.includes('COORDENADOR') || r.includes('ESPECIALISTA')) return 'GERENTE';
@@ -74,7 +79,6 @@ const getRoleRuleGroup = (roleRaw) => {
     return 'VENDEDOR';
 };
 
-// Nome amigável do cargo como na planilha ("Vendedora Sênior", "Assistente Adm", "Assis Relacionamento", "Assistente Tecnológico", "Vendedor(a) Loja")
 const formatFriendlyRole = (roleRaw) => {
     const r = String(roleRaw || 'VENDEDOR').trim().toUpperCase();
     if (r.includes('GERENTE')) return 'Gerente Loja';
@@ -101,7 +105,7 @@ export const EscalaTrabalho = ({
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     });
 
-    const [escalaModel, setEscalaModel] = useState('6X1'); // '6X1' | '5X2'
+    const [escalaModel, setEscalaModel] = useState('6X1');
     const [ideaLoopIndex, setIdeaLoopIndex] = useState(0);
 
     const storeDisplayName = useMemo(() => {
@@ -115,7 +119,10 @@ export const EscalaTrabalho = ({
         return MESES_NOMES[mIdx] || 'MÊS';
     }, [selectedScheduleMonth]);
 
-    // Colaboradores ativos da loja
+    const currentYearLabel = useMemo(() => {
+        return (selectedScheduleMonth || '').split('-')[0] || '2026';
+    }, [selectedScheduleMonth]);
+
     const activeEmployees = useMemo(() => {
         const rolePriority = {
             GERENTE: 1,
@@ -144,33 +151,28 @@ export const EscalaTrabalho = ({
             });
     }, [usersDB]);
 
-    // Define em qual bloco da planilha o colaborador está alocado: 'MANHA' | 'INTERMEDIARIO' | 'TARDE'
     const getEmployeeSection = (emp, idxInAll = 0) => {
         const savedSec = scheduleData?._sections?.[emp.name];
         if (savedSec && ['MANHA', 'INTERMEDIARIO', 'TARDE'].includes(savedSec)) {
             return savedSec;
         }
 
-        // Inferência caso já tenha horário salvo anteriormente
         const savedBase = String(scheduleData?._baseShifts?.[emp.name] || '');
         if (savedBase.startsWith('13:') || savedBase.startsWith('14:')) return 'TARDE';
         if (savedBase.startsWith('10:40') || savedBase.startsWith('11:')) return 'INTERMEDIARIO';
         if (savedBase.startsWith('09:')) return 'MANHA';
 
-        // Alocação padrão idêntica à estrutura da planilha da loja
         if (emp.group === 'GERENTE' || emp.group === 'ADM' || emp.group === 'ASSISTENTE_RELA') return 'MANHA';
         if (emp.group === 'GEEK') return 'INTERMEDIARIO';
         if (emp.group === 'SENIOR') {
             return idxInAll % 2 === 0 ? 'MANHA' : 'TARDE';
         }
-        // Distribui vendedores proporcionalmente entre MANHÃ, INTERMEDIÁRIO e TARDE
         const mod = idxInAll % 5;
         if (mod === 0 || mod === 1) return 'MANHA';
         if (mod === 2) return 'INTERMEDIARIO';
         return 'TARDE';
     };
 
-    // Permite mover o colaborador entre MANHA, INTERMEDIARIO e TARDE diretamente na linha
     const handleChangeEmployeeSection = (empName, newSection) => {
         if (!canEditSchedule) return;
         const defaultSigla = newSection === 'MANHA' ? 'M' : newSection === 'INTERMEDIARIO' ? 'I' : 'N';
@@ -190,7 +192,6 @@ export const EscalaTrabalho = ({
         });
     };
 
-    // Gera os dias do mês selecionado
     const monthDaysList = useMemo(() => {
         const [year, month] = selectedScheduleMonth.split('-').map(Number);
         const date = new Date(year, month - 1, 1);
@@ -201,7 +202,7 @@ export const EscalaTrabalho = ({
             const dNum = date.getDate();
             const mmdd = `${String(month).padStart(2, '0')}-${String(dNum).padStart(2, '0')}`;
             const dateStr = `${year}-${mmdd}`;
-            const dow = date.getDay(); // 0=Dom .. 6=Sab
+            const dow = date.getDay();
             const isWeekend = dow === 0 || dow === 6;
             const isAutoHoliday = FERIADOS_FIXOS_MM_DD.has(mmdd);
             const isHoliday = customHolidays[dateStr] !== undefined ? Boolean(customHolidays[dateStr]) : isAutoHoliday;
@@ -220,7 +221,6 @@ export const EscalaTrabalho = ({
         return days;
     }, [selectedScheduleMonth, monthlyOverrides]);
 
-    // Alterna se uma coluna do mês é Feriado (Amarelo) ao clicar no cabeçalho do dia
     const handleToggleHolidayColumn = (dayObj) => {
         if (!canEditSchedule) return;
         setMonthlyOverrides((prev) => {
@@ -236,12 +236,11 @@ export const EscalaTrabalho = ({
         });
         toast.success(
             dayObj.isHoliday
-                ? `Dia ${dayObj.dayNumber} desmarcado como feriado.`
-                : `Dia ${dayObj.dayNumber} destacado como Feriado (Amarelo)!`
+                ? `Dia ${dayObj.dayNumber} removido como feriado.`
+                : `Dia ${dayObj.dayNumber} marcado como Feriado!`
         );
     };
 
-    // Obtém a sigla exibida em uma célula (Colaborador + Dia do Mês)
     const getCellSigla = (emp, dayObj, section) => {
         const override = monthlyOverrides?.[emp.name]?.[dayObj.dateStr];
         if (override !== undefined && override !== '') {
@@ -251,10 +250,10 @@ export const EscalaTrabalho = ({
         if (weeklyVal !== undefined && weeklyVal !== '') {
             return normalizeToSigla(weeklyVal, section);
         }
-        // Padrão inicial caso ainda não gerado
         if (dayObj.dow === 0 && ['GERENTE', 'ADM', 'ASSISTENTE_RELA'].includes(emp.group)) {
             return 'F';
         }
+        if (dayObj.isHoliday || dayObj.dow === 0) return 'T';
         if (section === 'MANHA') return 'M';
         if (section === 'INTERMEDIARIO') return 'I';
         return 'N';
@@ -271,9 +270,7 @@ export const EscalaTrabalho = ({
         }));
     };
 
-    // =========================================================================
-    // GERADOR AUTOMÁTICO DE ESCALA (6X1 E 5X2) EM LOOP DE IDEIAS (SILENCIOSO)
-    // =========================================================================
+    // Gerador de Sugestão Automática (6x1 e 5x2) em Loop de Ideias
     const handleGenerateSuggestionLoop = (targetMode = null) => {
         if (!canEditSchedule) return;
         const mode = targetMode || escalaModel;
@@ -281,52 +278,52 @@ export const EscalaTrabalho = ({
 
         const VARIATIONS = [
             {
-                gerenteExtra5x2: 6, // Sábado
-                admExtra5x2: 6,     // Sábado
-                relaExtra5x2: 5,    // Sexta
-                seniorOff6x1: [1],  // Segunda
+                gerenteExtra5x2: 6,
+                admExtra5x2: 6,
+                relaExtra5x2: 5,
+                seniorOff6x1: [1],
                 seniorOff5x2: [1, 2],
-                geekOff6x1: [3],    // Quarta
+                geekOff6x1: [3],
                 geekOff5x2: [3, 4],
                 sellerOffset: 0
             },
             {
-                gerenteExtra5x2: 1, // Segunda
-                admExtra5x2: 5,     // Sexta
-                relaExtra5x2: 6,    // Sábado
-                seniorOff6x1: [2],  // Terça
+                gerenteExtra5x2: 1,
+                admExtra5x2: 5,
+                relaExtra5x2: 6,
+                seniorOff6x1: [2],
                 seniorOff5x2: [2, 3],
-                geekOff6x1: [4],    // Quinta
+                geekOff6x1: [4],
                 geekOff5x2: [4, 5],
                 sellerOffset: 1
             },
             {
-                gerenteExtra5x2: 3, // Quarta
-                admExtra5x2: 6,     // Sábado
-                relaExtra5x2: 1,    // Segunda
-                seniorOff6x1: [4],  // Quinta
+                gerenteExtra5x2: 3,
+                admExtra5x2: 6,
+                relaExtra5x2: 1,
+                seniorOff6x1: [4],
                 seniorOff5x2: [1, 4],
-                geekOff6x1: [2],    // Terça
+                geekOff6x1: [2],
                 geekOff5x2: [2, 5],
                 sellerOffset: 2
             },
             {
-                gerenteExtra5x2: 5, // Sexta
-                admExtra5x2: 1,     // Segunda
-                relaExtra5x2: 6,    // Sábado
-                seniorOff6x1: [3],  // Quarta
+                gerenteExtra5x2: 5,
+                admExtra5x2: 1,
+                relaExtra5x2: 6,
+                seniorOff6x1: [3],
                 seniorOff5x2: [2, 3],
-                geekOff6x1: [1],    // Segunda
+                geekOff6x1: [1],
                 geekOff5x2: [1, 4],
                 sellerOffset: 3
             },
             {
-                gerenteExtra5x2: 2, // Terça
-                admExtra5x2: 6,     // Sábado
-                relaExtra5x2: 4,    // Quinta
-                seniorOff6x1: [5],  // Sexta
+                gerenteExtra5x2: 2,
+                admExtra5x2: 6,
+                relaExtra5x2: 4,
+                seniorOff6x1: [5],
                 seniorOff5x2: [3, 5],
-                geekOff6x1: [1],    // Segunda
+                geekOff6x1: [1],
                 geekOff5x2: [1, 4],
                 sellerOffset: 4
             }
@@ -337,7 +334,6 @@ export const EscalaTrabalho = ({
         const nextSchedule = { _sections: nextSections };
         const nextMonthlyForMonth = { ...(monthlyOverrides || {}) };
 
-        // Garante seção definida para cada colaborador
         activeEmployees.forEach((emp, idx) => {
             nextSections[emp.name] = getEmployeeSection(emp, idx);
         });
@@ -349,11 +345,10 @@ export const EscalaTrabalho = ({
             return 'N';
         };
 
-        // 1. Dias de folga na semana (0=Dom..6=Sab) por colaborador respeitando 100% das regras
         const weeklyOffDaysMap = {};
         const usedManagerOffDows = new Set();
 
-        // GERENTE: Domingo fixo (0) + conjunta adaptável na 5x2
+        // GERENTE: Domingo fixo + conjunta na 5x2
         activeEmployees
             .filter((e) => e.group === 'GERENTE')
             .forEach((emp) => {
@@ -409,7 +404,7 @@ export const EscalaTrabalho = ({
                 weeklyOffDaysMap[emp.name] = offs;
             });
 
-        // ADM e ASSISTENTE RELACIONAMENTO: Sempre Domingo (0) + adaptável na 5x2
+        // ADM e ASSISTENTE RELACIONAMENTO: Sempre Domingo + adaptável na 5x2
         activeEmployees
             .filter((e) => e.group === 'ADM')
             .forEach((emp) => {
@@ -426,7 +421,7 @@ export const EscalaTrabalho = ({
                 weeklyOffDaysMap[emp.name] = offs;
             });
 
-        // VENDEDORES: Separados por seção (MANHA, INTERMEDIARIO, TARDE) -> Não podem folgar 2 do mesmo turno no mesmo dia
+        // VENDEDORES: Separados por turno -> Não folgam 2 do mesmo turno no mesmo dia
         ['MANHA', 'INTERMEDIARIO', 'TARDE'].forEach((secKey, secIdx) => {
             const sellersInSec = activeEmployees.filter(
                 (e) => e.group === 'VENDEDOR' && nextSections[e.name] === secKey
@@ -436,7 +431,6 @@ export const EscalaTrabalho = ({
 
             sellersInSec.forEach((emp, idxInSec) => {
                 const offs = new Set();
-                // Passada 1: Dias com 0 vendedores deste turno folgando
                 for (let k = 0; k < 7 && offs.size < targetOff; k++) {
                     const candidateDow = (idxInSec * 2 + k + v.sellerOffset + secIdx) % 7;
                     if (offCountByDow[candidateDow] === 0 && !offs.has(candidateDow)) {
@@ -444,7 +438,6 @@ export const EscalaTrabalho = ({
                         offCountByDow[candidateDow] += 1;
                     }
                 }
-                // Passada 2: Dia com menor número de folgas no turno
                 while (offs.size < targetOff) {
                     const avail = [0, 1, 2, 3, 4, 5, 6]
                         .filter((d) => !offs.has(d))
@@ -457,7 +450,6 @@ export const EscalaTrabalho = ({
             });
         });
 
-        // Aplica tanto na base semanal quanto nos dias do mês ativo (com rotação sutil por semana no mês para dinamismo)
         activeEmployees.forEach((emp) => {
             const sec = nextSections[emp.name];
             const offs = weeklyOffDaysMap[emp.name] || new Set([0]);
@@ -467,7 +459,6 @@ export const EscalaTrabalho = ({
                 nextSchedule[emp.name][dName] = offs.has(dow) ? 'F' : workSiglaForSection(sec, dow, false);
             });
 
-            // Preenche os dias do mês selecionado
             const empMonthOverrides = { ...(nextMonthlyForMonth[emp.name] || {}) };
             monthDaysList.forEach((dayObj) => {
                 const isOff = offs.has(dayObj.dow);
@@ -482,13 +473,12 @@ export const EscalaTrabalho = ({
         setMonthlyOverrides(nextMonthlyForMonth);
         setIdeaLoopIndex(step + 1);
 
-        toast.success(`Sugestão ${mode} #${(step % VARIATIONS.length) + 1} aplicada na Escala!`, {
+        toast.success(`Sugestão ${mode} #${(step % VARIATIONS.length) + 1} aplicada!`, {
             icon: '✨',
-            duration: 2500
+            duration: 2200
         });
     };
 
-    // Agrupa os colaboradores nas 3 faixas da planilha: MANHÃ, INTERMEDIÁRIO e TARDE
     const groupedSections = useMemo(() => {
         const groups = {
             MANHA: [],
@@ -500,15 +490,37 @@ export const EscalaTrabalho = ({
             groups[sec].push(emp);
         });
         return [
-            { id: 'MANHA', title: 'MANHA', employees: groups.MANHA },
-            { id: 'INTERMEDIARIO', title: 'INTERMEDIARIO', employees: groups.INTERMEDIARIO },
-            { id: 'TARDE', title: 'TARDE', employees: groups.TARDE }
+            {
+                id: 'MANHA',
+                title: 'MANHÃ',
+                subtitle: '09:40 às 18:00',
+                icon: <Sun size={13} className="text-sky-400" />,
+                barGradient: 'from-slate-900 via-slate-800 to-sky-950 border-sky-500/30',
+                badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-400/30',
+                employees: groups.MANHA
+            },
+            {
+                id: 'INTERMEDIARIO',
+                title: 'INTERMEDIÁRIO',
+                subtitle: '10:40 / 11:40',
+                icon: <Sunset size={13} className="text-amber-400" />,
+                barGradient: 'from-slate-900 via-slate-800 to-amber-950 border-amber-500/30',
+                badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-400/30',
+                employees: groups.INTERMEDIARIO
+            },
+            {
+                id: 'TARDE',
+                title: 'TARDE / NOITE',
+                subtitle: '13:40 às 22:00',
+                icon: <Moon size={13} className="text-indigo-400" />,
+                barGradient: 'from-slate-900 via-slate-800 to-indigo-950 border-indigo-500/30',
+                badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/30',
+                employees: groups.TARDE
+            }
         ];
     }, [activeEmployees, scheduleData]);
 
-    // =========================================================================
-    // EXPORTAÇÃO PARA EXCEL (.XLSX) NO FORMATO DA PLANILHA OFICIAL
-    // =========================================================================
+    // Exportação Excel (.xlsx) no modelo da planilha
     const handleExportExcel = () => {
         if (activeEmployees.length === 0) {
             toast.error('Nenhum colaborador ativo para exportar.');
@@ -516,14 +528,10 @@ export const EscalaTrabalho = ({
         }
 
         const aoa = [];
-
-        // Linha 1: LOJA | MÊS | Letras dos dias (D, S, T, Q, Q, S, S...)
         const row1 = [storeDisplayName, currentMonthLabel, ...monthDaysList.map((d) => d.dayLetter)];
-        // Linha 2: Vazio | Vazio | Números dos dias (1..30/31)
         const row2 = ['', '', ...monthDaysList.map((d) => d.dayNumber)];
         aoa.push(row1, row2);
 
-        // Para cada seção (MANHA, INTERMEDIARIO, TARDE)
         groupedSections.forEach((sec) => {
             const headerRow = ['Nome', 'CARGO', sec.title, ...new Array(Math.max(0, monthDaysList.length - 1)).fill('')];
             aoa.push(headerRow);
@@ -538,7 +546,6 @@ export const EscalaTrabalho = ({
             });
         });
 
-        // Linha em branco + Bloco de Legenda Oficial como no rodapé da imagem
         aoa.push([]);
         const legendRows = [
             ['FOLGA', 'F', 'ESCALA SUJEITA A ALTERAÇÕES'],
@@ -547,7 +554,7 @@ export const EscalaTrabalho = ({
             ['FOLGA PREMIO', 'FP', ''],
             ['TREINAMENTO', 'TR', ''],
             ['INTERMEDIARIO', 'I', ''],
-            ['MANHA / TARDE / TRABALHA', 'M / N / T', ''],
+            ['MANHA / NOITE / TRABALHA', 'M / N / T', ''],
             ['AFASTADA / FERIAS', 'AF / FE', '']
         ];
         legendRows.forEach((lr) => aoa.push(lr));
@@ -565,21 +572,34 @@ export const EscalaTrabalho = ({
         toast.success('Planilha de Escala exportada em Excel com sucesso!');
     };
 
-    // Estilo das células conforme o dia (Fim de semana Azul, Feriado Amarelo, Dia útil Branco/Escuro)
-    const getCellThemeClasses = (dayObj, sigla) => {
+    // Estilização Tecnológica & Elegante das células da matriz (mantendo a semântica: Fim de Semana Azul, Feriado Amarelo/Ouro, Folga e Turnos destacados)
+    const getTechCellClasses = (dayObj, sigla) => {
         if (dayObj.isHoliday) {
-            return 'bg-[#FFFF00] text-black font-black border-neutral-400 dark:border-neutral-600';
+            return 'bg-gradient-to-b from-amber-300 to-yellow-400 text-neutral-950 font-black border-amber-500/60 shadow-inner';
         }
         if (dayObj.isWeekend) {
-            return 'bg-[#0070C0] text-white font-black border-[#005a9e]';
+            if (sigla === 'F' || sigla === 'FB' || sigla === 'FP') {
+                return 'bg-gradient-to-b from-[#0369a1] to-[#075985] text-amber-200 font-black border-sky-700/70';
+            }
+            return 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black border-sky-700/70';
         }
+        // Dias de semana normais com codificação sutil e tecnológica por sigla
         if (sigla === 'F' || sigla === 'FB' || sigla === 'FP') {
-            return 'bg-red-50/70 dark:bg-red-950/30 text-[#E3000F] dark:text-red-400 font-black border-neutral-300 dark:border-neutral-700';
+            return 'bg-rose-50/90 dark:bg-rose-950/35 text-[#E3000F] dark:text-rose-400 font-black border-neutral-200/90 dark:border-neutral-800';
         }
         if (sigla === 'AT' || sigla === 'AF' || sigla === 'FE') {
-            return 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 font-black border-neutral-300 dark:border-neutral-700';
+            return 'bg-amber-50 dark:bg-amber-950/35 text-amber-700 dark:text-amber-300 font-black border-neutral-200/90 dark:border-neutral-800';
         }
-        return 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-bold border-neutral-300 dark:border-neutral-700';
+        if (sigla === 'M') {
+            return 'bg-white dark:bg-neutral-900/90 text-sky-700 dark:text-sky-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
+        }
+        if (sigla === 'I') {
+            return 'bg-white dark:bg-neutral-900/90 text-amber-700 dark:text-amber-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
+        }
+        if (sigla === 'N') {
+            return 'bg-white dark:bg-neutral-900/90 text-indigo-700 dark:text-indigo-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
+        }
+        return 'bg-white dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-100 font-extrabold border-neutral-200/90 dark:border-neutral-800';
     };
 
     return (
@@ -615,10 +635,10 @@ export const EscalaTrabalho = ({
                     .escala-sheet-table th,
                     .escala-sheet-table td {
                         padding: 2px 1px !important;
-                        border: 1px solid #333333 !important;
+                        border: 1px solid #334155 !important;
                     }
-                    .escala-col-nome { width: 95px !important; }
-                    .escala-col-cargo { width: 115px !important; }
+                    .escala-col-nome { width: 100px !important; }
+                    .escala-col-cargo { width: 120px !important; }
                 }
             `}</style>
 
@@ -639,23 +659,25 @@ export const EscalaTrabalho = ({
                     </div>
                 </div>
             ) : (
-                <div className="flex flex-col h-full bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden escala-print-root">
-                    {/* BARRA DE FERRAMENTAS COMPACTA (SEM TEXTOS OU INSTRUÇÕES LONGAS) */}
-                    <div className="no-print px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex flex-col h-full bg-white dark:bg-neutral-950 rounded-2xl shadow-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden escala-print-root">
+                    {/* BARRA DE COMANDO TECNOLÓGICA COMPACTA (SEM INSTRUÇÕES VISÍVEIS) */}
+                    <div className="no-print px-4 py-3 bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
                         <div className="flex items-center gap-3 flex-wrap">
-                            <div className="flex items-center gap-2 bg-white dark:bg-neutral-800 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm">
-                                <CalendarDays size={16} className="text-[#E3000F]" />
+                            {/* IDENTIFICAÇÃO TECNOLÓGICA + SELETOR DE MÊS */}
+                            <div className="flex items-center gap-2.5 bg-neutral-900/90 border border-neutral-700/80 px-3.5 py-1.5 rounded-xl shadow-inner">
+                                <span className="w-2 h-2 rounded-full bg-[#E3000F] animate-pulse" />
+                                <CalendarDays size={15} className="text-[#E3000F]" />
                                 <input
                                     type="month"
                                     value={selectedScheduleMonth}
                                     onChange={(e) => setSelectedScheduleMonth(e.target.value)}
-                                    className="bg-transparent text-xs sm:text-sm font-bold text-neutral-800 dark:text-neutral-100 outline-none cursor-pointer"
+                                    className="bg-transparent text-xs sm:text-sm font-extrabold text-white outline-none cursor-pointer tracking-wide"
                                 />
                             </div>
 
                             {canEditSchedule && (
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <div className="flex items-center bg-neutral-200/80 dark:bg-neutral-800 p-1 rounded-xl border border-neutral-300/70 dark:border-neutral-700">
+                                    <div className="flex items-center bg-neutral-900 p-1 rounded-xl border border-neutral-700/80">
                                         {['6X1', '5X2'].map((mod) => (
                                             <button
                                                 key={mod}
@@ -664,10 +686,10 @@ export const EscalaTrabalho = ({
                                                     setEscalaModel(mod);
                                                     handleGenerateSuggestionLoop(mod);
                                                 }}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                                                className={`px-3.5 py-1.5 rounded-lg text-xs font-black tracking-wider transition-all cursor-pointer ${
                                                     escalaModel === mod
-                                                        ? 'bg-[#E3000F] text-white shadow-sm'
-                                                        : 'text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
+                                                        ? 'bg-gradient-to-r from-[#E3000F] to-red-600 text-white shadow-md shadow-red-600/30'
+                                                        : 'text-neutral-400 hover:text-white'
                                                 }`}
                                             >
                                                 {mod}
@@ -678,12 +700,12 @@ export const EscalaTrabalho = ({
                                     <button
                                         type="button"
                                         onClick={() => handleGenerateSuggestionLoop(escalaModel)}
-                                        className="px-3.5 py-2 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-neutral-800 to-neutral-900 hover:from-neutral-700 hover:to-neutral-800 text-white border border-neutral-700 text-xs font-extrabold flex items-center gap-2 shadow-sm transition-all cursor-pointer group"
                                         title="Gerar nova sugestão automática de escala em loop"
                                     >
-                                        <Sparkles size={14} className="text-[#E3000F]" />
+                                        <Sparkles size={14} className="text-[#E3000F] group-hover:scale-110 transition-transform" />
                                         <span>Sugerir Escala ({escalaModel})</span>
-                                        <RefreshCw size={13} className="ml-0.5 opacity-80" />
+                                        <RefreshCw size={13} className="text-neutral-400 group-hover:rotate-180 transition-transform duration-500" />
                                     </button>
                                 </div>
                             )}
@@ -693,7 +715,7 @@ export const EscalaTrabalho = ({
                             <button
                                 type="button"
                                 onClick={handleExportExcel}
-                                className="px-3.5 py-2 rounded-xl bg-[#107c41] hover:bg-[#0c5e31] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-[#107c41] hover:from-emerald-500 hover:to-emerald-700 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-emerald-900/20 transition-all cursor-pointer"
                             >
                                 <FileSpreadsheet size={15} />
                                 <span>Exportar Excel</span>
@@ -702,7 +724,7 @@ export const EscalaTrabalho = ({
                             <button
                                 type="button"
                                 onClick={() => window.print()}
-                                className="px-3.5 py-2 rounded-xl bg-neutral-900 dark:bg-neutral-800 hover:bg-black dark:hover:bg-neutral-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                             >
                                 <Printer size={15} />
                                 <span>Imprimir</span>
@@ -710,38 +732,44 @@ export const EscalaTrabalho = ({
                         </div>
                     </div>
 
-                    {/* PLANILHA VISUAL DE ESCALA (MODELO OFICIAL POR TURNOS E SIGLAS) */}
-                    <div className="flex-1 overflow-auto p-2 sm:p-4 bg-neutral-100/70 dark:bg-neutral-950/60 escala-print-root">
-                        <div className="bg-white dark:bg-neutral-900 border-2 border-neutral-800 dark:border-neutral-700 rounded-lg overflow-hidden shadow-sm">
+                    {/* MATRIZ TECNOLÓGICA DE ESCALA (PADRÃO PLANILHA POR TURNOS E SIGLAS) */}
+                    <div className="flex-1 overflow-auto p-2 sm:p-4 bg-neutral-100/80 dark:bg-neutral-950 escala-print-root">
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-lg">
                             <div className="overflow-x-auto">
                                 <table className="w-full border-collapse text-center whitespace-nowrap escala-sheet-table select-none">
-                                    {/* CABEÇALHO DA PLANILHA: LOJA | MÊS | LETRAS E DIAS DO MÊS */}
+                                    {/* CABEÇALHO DA MATRIZ: LOJA | MÊS | LETRAS E DIAS DO MÊS */}
                                     <thead>
                                         <tr>
                                             <th
                                                 rowSpan={2}
-                                                className="escala-col-nome bg-[#BFBFBF] dark:bg-neutral-800 text-neutral-950 dark:text-white font-black text-xs sm:text-sm uppercase px-3 py-2 border border-neutral-700 sticky left-0 z-20 min-w-[130px]"
+                                                className="escala-col-nome bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 text-white font-black text-xs sm:text-sm uppercase px-3 py-2.5 border border-neutral-700 sticky left-0 z-20 min-w-[140px] tracking-wider shadow-[2px_0_8px_rgba(0,0,0,0.25)]"
                                             >
-                                                {storeDisplayName}
+                                                <div className="flex flex-col items-center justify-center leading-tight">
+                                                    <span className="text-[10px] font-bold text-[#E3000F] tracking-widest">UNIDADE</span>
+                                                    <span>{storeDisplayName}</span>
+                                                </div>
                                             </th>
                                             <th
                                                 rowSpan={2}
-                                                className="escala-col-cargo bg-[#D9D9D9] dark:bg-neutral-800/90 text-neutral-950 dark:text-white font-black text-xs sm:text-sm uppercase px-3 py-2 border border-neutral-700 min-w-[155px]"
+                                                className="escala-col-cargo bg-gradient-to-br from-neutral-800 to-neutral-900 text-white font-black text-xs sm:text-sm uppercase px-3 py-2.5 border border-neutral-700 min-w-[165px] tracking-wider"
                                             >
-                                                {currentMonthLabel}
+                                                <div className="flex flex-col items-center justify-center leading-tight">
+                                                    <span className="text-[10px] font-bold text-sky-400 tracking-widest">{currentYearLabel}</span>
+                                                    <span>{currentMonthLabel}</span>
+                                                </div>
                                             </th>
                                             {monthDaysList.map((d) => {
                                                 const headerBg = d.isHoliday
-                                                    ? 'bg-[#FFFF00] text-black'
+                                                    ? 'bg-gradient-to-b from-amber-300 to-yellow-400 text-neutral-950 font-black'
                                                     : d.isWeekend
-                                                        ? 'bg-[#0070C0] text-white'
-                                                        : 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100';
+                                                        ? 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black'
+                                                        : 'bg-neutral-900 text-neutral-300 font-bold';
                                                 return (
                                                     <th
                                                         key={`letter-${d.dateStr}`}
                                                         onClick={() => handleToggleHolidayColumn(d)}
-                                                        title={canEditSchedule ? 'Clique para marcar/desmarcar este dia como Feriado (Amarelo)' : d.dayNameFull}
-                                                        className={`px-1 py-1 text-[11px] sm:text-xs font-black border border-neutral-700 min-w-[30px] sm:min-w-[34px] cursor-pointer transition-opacity hover:opacity-85 ${headerBg}`}
+                                                        title={canEditSchedule ? 'Clique para marcar/desmarcar Feriado (Amarelo)' : d.dayNameFull}
+                                                        className={`px-1 py-1.5 text-[11px] font-black border border-neutral-700/80 min-w-[32px] sm:min-w-[35px] cursor-pointer transition-all hover:brightness-110 ${headerBg}`}
                                                     >
                                                         {d.dayLetter}
                                                     </th>
@@ -751,18 +779,18 @@ export const EscalaTrabalho = ({
                                         <tr>
                                             {monthDaysList.map((d) => {
                                                 const numBg = d.isHoliday
-                                                    ? 'bg-[#FFFF00] text-black'
+                                                    ? 'bg-yellow-400 text-neutral-950 font-black'
                                                     : d.isWeekend
-                                                        ? 'bg-[#0070C0] text-white'
-                                                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100';
+                                                        ? 'bg-[#0369a1] text-white font-black'
+                                                        : 'bg-neutral-800 text-white font-extrabold';
                                                 return (
                                                     <th
                                                         key={`num-${d.dateStr}`}
                                                         onClick={() => handleToggleHolidayColumn(d)}
                                                         title={canEditSchedule ? 'Clique para marcar/desmarcar Feriado (Amarelo)' : `Dia ${d.dayNumber}`}
-                                                        className={`px-1 py-1 text-[11px] sm:text-xs font-black border border-neutral-700 cursor-pointer ${numBg}`}
+                                                        className={`px-1 py-1 text-[11px] font-black border border-neutral-700/80 cursor-pointer tabular-nums ${numBg}`}
                                                     >
-                                                        {d.dayNumber}
+                                                        {String(d.dayNumber).padStart(2, '0')}
                                                     </th>
                                                 );
                                             })}
@@ -772,19 +800,25 @@ export const EscalaTrabalho = ({
                                     <tbody>
                                         {groupedSections.map((sec) => (
                                             <React.Fragment key={sec.id}>
-                                                {/* FAIXA SEPARADORA DE TURNO: Nome | CARGO | MANHA / INTERMEDIARIO / TARDE */}
-                                                <tr className="bg-[#7F7F7F] dark:bg-neutral-800 text-white font-black text-[11px] sm:text-xs uppercase tracking-wider">
-                                                    <td className="px-2 py-1.5 border border-neutral-700 sticky left-0 z-10 bg-[#7F7F7F] dark:bg-neutral-800">
+                                                {/* FAIXA TECNOLÓGICA SEPARADORA DE TURNO: Nome | CARGO | MANHÃ / INTERMEDIÁRIO / TARDE */}
+                                                <tr className={`bg-gradient-to-r ${sec.barGradient} text-white font-black text-[11px] uppercase tracking-wider`}>
+                                                    <td className="px-3 py-1.5 border border-neutral-700 sticky left-0 z-10 bg-slate-900 text-neutral-300 text-left">
                                                         Nome
                                                     </td>
-                                                    <td className="px-2 py-1.5 border border-neutral-700">
-                                                        CARGO
+                                                    <td className="px-3 py-1.5 border border-neutral-700 text-neutral-300 text-left">
+                                                        Cargo
                                                     </td>
                                                     <td
                                                         colSpan={monthDaysList.length}
-                                                        className="px-3 py-1.5 border border-neutral-700 text-center font-black tracking-widest"
+                                                        className="px-4 py-1.5 border border-neutral-700 text-center"
                                                     >
-                                                        {sec.title}
+                                                        <div className="inline-flex items-center justify-center gap-2">
+                                                            {sec.icon}
+                                                            <span className="tracking-widest font-black">{sec.title}</span>
+                                                            <span className={`px-2 py-0.2 rounded-full text-[10px] font-bold border ${sec.badgeColor} no-print`}>
+                                                                {sec.subtitle}
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                 </tr>
 
@@ -793,7 +827,7 @@ export const EscalaTrabalho = ({
                                                     <tr>
                                                         <td
                                                             colSpan={2 + monthDaysList.length}
-                                                            className="py-2 text-xs text-neutral-400 dark:text-neutral-500 italic border border-neutral-300 dark:border-neutral-800"
+                                                            className="py-2.5 text-xs text-neutral-400 dark:text-neutral-500 italic border border-neutral-200 dark:border-neutral-800"
                                                         >
                                                             Nenhum colaborador alocado em {sec.title}
                                                         </td>
@@ -802,30 +836,37 @@ export const EscalaTrabalho = ({
                                                     sec.employees.map((emp) => {
                                                         const isHighlightedRole = emp.group !== 'VENDEDOR';
                                                         const nameBg = isHighlightedRole
-                                                            ? 'bg-[#D9D9D9] dark:bg-neutral-800 text-neutral-950 dark:text-white'
-                                                            : 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100';
+                                                            ? 'bg-neutral-200/90 dark:bg-neutral-800/95 text-neutral-950 dark:text-white'
+                                                            : 'bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100';
 
                                                         return (
-                                                            <tr key={emp.name} className="hover:brightness-95 transition-all">
+                                                            <tr key={emp.name} className="hover:brightness-95 dark:hover:brightness-110 transition-all">
                                                                 {/* NOME DO COLABORADOR */}
                                                                 <td
-                                                                    className={`px-2.5 py-1.5 text-xs font-extrabold uppercase border border-neutral-500 dark:border-neutral-700 sticky left-0 z-10 ${nameBg}`}
+                                                                    className={`px-3 py-2 text-xs font-extrabold uppercase border border-neutral-300 dark:border-neutral-800 sticky left-0 z-10 text-left shadow-[2px_0_6px_rgba(0,0,0,0.06)] ${nameBg}`}
                                                                 >
-                                                                    {getFirstName(emp.name)}
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span
+                                                                            className={`w-1.5 h-4 rounded-full shrink-0 ${
+                                                                                isHighlightedRole ? 'bg-[#E3000F]' : 'bg-sky-500'
+                                                                            }`}
+                                                                        />
+                                                                        <span className="truncate">{getFirstName(emp.name)}</span>
+                                                                    </div>
                                                                 </td>
 
-                                                                {/* CARGO + SELETOR RÁPIDO PARA MOVER ENTRE MANHÃ/INTERMEDIÁRIO/TARDE */}
+                                                                {/* CARGO + SELETOR RÁPIDO PARA MOVER DE FAIXA (M / I / T) */}
                                                                 <td
-                                                                    className={`px-2 py-1 text-[11px] sm:text-xs font-bold border border-neutral-500 dark:border-neutral-700 ${nameBg}`}
+                                                                    className={`px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border border-neutral-300 dark:border-neutral-800 text-left ${nameBg}`}
                                                                 >
-                                                                    <div className="flex items-center justify-between gap-1">
+                                                                    <div className="flex items-center justify-between gap-1.5">
                                                                         <span className="truncate">{emp.friendlyRole}</span>
                                                                         {canEditSchedule && (
                                                                             <select
                                                                                 value={sec.id}
                                                                                 onChange={(e) => handleChangeEmployeeSection(emp.name, e.target.value)}
-                                                                                className="no-print text-[10px] font-black bg-black/10 dark:bg-white/10 rounded px-1 py-0.5 outline-none cursor-pointer"
-                                                                                title="Alterar bloco de turno deste colaborador (Manhã, Intermediário ou Tarde)"
+                                                                                className="no-print text-[10px] font-black bg-neutral-900/10 dark:bg-white/10 hover:bg-neutral-900/20 dark:hover:bg-white/20 rounded-md px-1.5 py-0.5 outline-none cursor-pointer transition-colors"
+                                                                                title="Mudar colaborador de turno (M = Manhã, I = Intermediário, T = Tarde)"
                                                                             >
                                                                                 <option value="MANHA" className="bg-white text-black">M</option>
                                                                                 <option value="INTERMEDIARIO" className="bg-white text-black">I</option>
@@ -835,15 +876,15 @@ export const EscalaTrabalho = ({
                                                                     </div>
                                                                 </td>
 
-                                                                {/* CÉLULAS DOS DIAS (1 A 30/31) COM SIGLAS */}
+                                                                {/* CÉLULAS DOS DIAS (1 A 30/31) COM SIGLAS LIMPAS */}
                                                                 {monthDaysList.map((d) => {
                                                                     const sigla = getCellSigla(emp, d, sec.id);
-                                                                    const cellTheme = getCellThemeClasses(d, sigla);
+                                                                    const cellTheme = getTechCellClasses(d, sigla);
 
                                                                     return (
                                                                         <td
                                                                             key={`${emp.name}-${d.dateStr}`}
-                                                                            className={`p-0 border text-xs sm:text-[13px] ${cellTheme}`}
+                                                                            className={`p-0 border text-xs sm:text-[13px] transition-colors ${cellTheme}`}
                                                                         >
                                                                             {canEditSchedule ? (
                                                                                 <select
@@ -882,40 +923,45 @@ export const EscalaTrabalho = ({
                                 </table>
                             </div>
 
-                            {/* RODAPÉ OFICIAL DA PLANILHA: LEGENDA DE SIGLAS + FAIXA AZUL "ESCALA SUJEITA A ALTERAÇÕES" */}
-                            <div className="grid grid-cols-1 md:grid-cols-12 border-t-4 border-black dark:border-neutral-700">
-                                <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-neutral-900 divide-y divide-neutral-300 dark:divide-neutral-800 border-b md:border-b-0 md:border-r border-neutral-700 text-[11px] font-extrabold uppercase">
+                            {/* RODAPÉ TECNOLÓGICO NO PADRÃO DA PLANILHA: LEGENDA + BANNER AZUL OFICIAL */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 border-t-2 border-neutral-800">
+                                {/* TABELA DE LEGENDA DE SIGLAS */}
+                                <div className="lg:col-span-4 bg-neutral-50 dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-800 border-b lg:border-b-0 lg:border-r border-neutral-700 text-[11px] font-extrabold uppercase">
                                     {[
-                                        { label: 'FOLGA', code: 'F' },
-                                        { label: 'ATESTADO', code: 'AT' },
-                                        { label: 'FOLGA BANCO', code: 'FB' },
-                                        { label: 'FOLGA PREMIO', code: 'FP' },
-                                        { label: 'TREINAMENTO', code: 'TR' },
-                                        { label: 'INTERMEDIARIO', code: 'I' },
-                                        { label: 'MANHÃ / NOITE / TRABALHA', code: 'M / N / T' },
-                                        { label: 'AFASTADA / FÉRIAS', code: 'AF / FE' }
+                                        { label: 'FOLGA', code: 'F', badge: 'text-[#E3000F] dark:text-rose-400' },
+                                        { label: 'ATESTADO', code: 'AT', badge: 'text-amber-600 dark:text-amber-400' },
+                                        { label: 'FOLGA BANCO', code: 'FB', badge: 'text-[#E3000F] dark:text-rose-400' },
+                                        { label: 'FOLGA PRÊMIO', code: 'FP', badge: 'text-[#E3000F] dark:text-rose-400' },
+                                        { label: 'TREINAMENTO', code: 'TR', badge: 'text-sky-600 dark:text-sky-400' },
+                                        { label: 'INTERMEDIÁRIO', code: 'I', badge: 'text-amber-600 dark:text-amber-400' },
+                                        { label: 'MANHÃ / NOITE / TRABALHA', code: 'M / N / T', badge: 'text-indigo-600 dark:text-indigo-400' },
+                                        { label: 'AFASTADA / FÉRIAS', code: 'AF / FE', badge: 'text-neutral-700 dark:text-neutral-300' }
                                     ].map((item) => (
-                                        <div key={item.label} className="grid grid-cols-12 items-center">
-                                            <div className="col-span-8 px-3 py-1 text-center text-neutral-800 dark:text-neutral-200 border-r border-neutral-300 dark:border-neutral-800">
+                                        <div key={item.label} className="grid grid-cols-12 items-center hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors">
+                                            <div className="col-span-8 px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-300 border-r border-neutral-200 dark:border-neutral-800 tracking-wide">
                                                 {item.label}
                                             </div>
-                                            <div className="col-span-4 px-2 py-1 text-center font-black text-neutral-950 dark:text-white">
+                                            <div className={`col-span-4 px-2 py-1.5 text-center font-black ${item.badge}`}>
                                                 {item.code}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
 
-                                <div className="md:col-span-8 lg:col-span-9 bg-[#0070C0] text-white flex flex-col items-center justify-center p-4 text-center">
-                                    <span className="text-xs sm:text-sm font-black uppercase tracking-widest">
-                                        ESCALA SUJEITA A ALTERAÇÕES
-                                    </span>
-                                    <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-[11px] font-bold text-blue-100 no-print">
-                                        <span className="flex items-center gap-1.5">
-                                            <span className="w-3 h-3 rounded-sm bg-[#0070C0] border border-white inline-block" /> Fim de Semana (Sáb/Dom)
+                                {/* FAIXA AZUL TECNOLÓGICA "ESCALA SUJEITA A ALTERAÇÕES" */}
+                                <div className="lg:col-span-8 bg-gradient-to-r from-[#0369a1] via-[#0284c7] to-[#075985] text-white flex flex-col items-center justify-center p-5 text-center relative overflow-hidden">
+                                    <div className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase tracking-[0.2em] drop-shadow-sm">
+                                        <ShieldAlert size={16} className="text-sky-200 shrink-0" />
+                                        <span>ESCALA SUJEITA A ALTERAÇÕES</span>
+                                    </div>
+                                    <div className="mt-2.5 flex flex-wrap items-center justify-center gap-3 text-[11px] font-bold text-sky-100 no-print">
+                                        <span className="inline-flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-full border border-white/15">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-[#0284c7] border border-white inline-block" />
+                                            Fim de Semana (Sáb/Dom)
                                         </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <span className="w-3 h-3 rounded-sm bg-[#FFFF00] border border-black/40 inline-block" /> Feriado (Clique no dia no topo para marcar)
+                                        <span className="inline-flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-full border border-white/15">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 border border-black/40 inline-block" />
+                                            Feriado (Clique no dia no topo)
                                         </span>
                                     </div>
                                 </div>
