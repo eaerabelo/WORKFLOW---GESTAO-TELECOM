@@ -951,7 +951,7 @@ export const EscalaTrabalho = ({
                                                                     const cellTheme = getTechCellClasses(d, sigla);
                                                                     const isFolgaSigla = sigla === 'F' || sigla === 'FB' || sigla === 'FP';
                                                                     const folgaTextClass = isFolgaSigla
-                                                                        ? ((d.isWeekend || d.isHoliday) ? 'bg-white/95 text-[#E3000F] rounded-sm' : 'text-[#E3000F]')
+                                                                        ? (d.isHoliday ? 'bg-white/95 text-[#E3000F] rounded-sm' : d.dow === 0 ? 'text-white' : d.isWeekend ? 'bg-white/95 text-[#E3000F] rounded-sm' : 'text-[#E3000F]')
                                                                         : '';
 
                                                                     return (
