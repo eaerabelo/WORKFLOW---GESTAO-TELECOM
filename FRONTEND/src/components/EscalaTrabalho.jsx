@@ -951,7 +951,7 @@ export const EscalaTrabalho = ({
                                                                     const cellTheme = getTechCellClasses(d, sigla);
                                                                     const isFolgaSigla = sigla === 'F' || sigla === 'FB' || sigla === 'FP';
                                                                     const folgaTextClass = isFolgaSigla
-                                                                        ? (d.isHoliday ? 'bg-white/95 text-[#E3000F] rounded-sm' : d.dow === 0 ? 'text-white' : d.isWeekend ? 'bg-white/95 text-[#E3000F] rounded-sm' : 'text-[#E3000F]')
+                                                                        ? (d.dow === 0 && !d.isHoliday ? 'text-white' : 'text-[#E3000F]')
                                                                         : '';
 
                                                                     return (
@@ -963,7 +963,7 @@ export const EscalaTrabalho = ({
                                                                                 <select
                                                                                     value={sigla}
                                                                                     onChange={(e) => handleCellSiglaChange(emp.name, d.dateStr, e.target.value)}
-                                                                                    className={`w-full h-full py-1.5 px-0 text-center font-black outline-none cursor-pointer appearance-none ${folgaTextClass || 'bg-transparent'}`}
+                                                                                    className={`w-full h-full py-1.5 px-0 text-center font-black outline-none cursor-pointer appearance-none bg-transparent ${folgaTextClass}`}
                                                                                     style={{ textAlignLast: 'center', WebkitAppearance: 'none', MozAppearance: 'none' }}
                                                                                     title={`${getFirstName(emp.name)} • Dia ${d.dayNumber} (${d.dayNameFull})`}
                                                                                 >
