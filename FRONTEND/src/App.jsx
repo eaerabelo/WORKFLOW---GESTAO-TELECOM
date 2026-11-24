@@ -1188,7 +1188,7 @@ export default function App() {
   
   const canModifySimcard = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'ADM', 'JOVEM APRENDIZ', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   const canEditSchedule = isGerente;
-  const hasScheduleAccess = ['GERENTE', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
+  const hasScheduleAccess = ['GERENTE', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   const hasMetaAccess = ['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'ADM', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   const canEditMeta = ['GERENTE', 'SENIOR', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
   const hasParcialAccess = ['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO', 'ADM', 'COORDENADOR', 'ESPECIALISTA'].includes(userRoleUpper);
@@ -1268,7 +1268,7 @@ export default function App() {
       setAuthModal({ isOpen: false, pendingAction: null, pendingId: null, requiredRole: null });
       setAuthCredentials({ user: '', password: '' });
       if (activeTab === 'GESTÃO' && !['GERENTE', 'SENIOR', 'ADMINISTRAÇÃO', 'GEEK', 'JOVEM APRENDIZ', 'ASSISTENTE RELACIONAMENTO'].includes(userMatched.role)) setActiveTab('VENDA');
-      if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE'].includes(userMatched.role)) setActiveTab('VENDA');
+      if (activeTab === 'ESCALA DE TRABALHO' && !['GERENTE', 'GEEK', 'COORDENADOR', 'ESPECIALISTA'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'PARCIAL & FECHAMENTO' && !['GERENTE', 'SENIOR', 'GEEK', 'ASSISTENTE RELACIONAMENTO', 'ADMINISTRAÇÃO'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'ÁREA - LOJAS' && !['GERENTE', 'SENIOR', 'GEEK'].includes(userMatched.role)) setActiveTab('VENDA');
       if (activeTab === 'RESULTADO' && (!userMatched.role || String(userMatched.role).trim().toUpperCase().includes('VENDEDOR'))) setActiveTab('VENDA');
