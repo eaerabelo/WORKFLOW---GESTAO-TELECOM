@@ -15,12 +15,52 @@ const MESES_NOMES = [
     'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'
 ];
 
+// Tabela de Horários e Carga Horária Semanal por Modelo de Escala (6X1 vs 5X2 — 42h semanais divididas em 5 dias)
+export const SHIFT_SCHEDULES_BY_MODEL = {
+    '6X1': {
+        weeklyTotal: '44h Semanais • 7h20/dia (6 dias)',
+        MANHA: {
+            range: '09:40 às 18:00',
+            carga: '7h20/dia + 1h Int. • 44h Sem.',
+            fullLabel: '09:40 às 18:00 (7h20/dia • 44h/sem)'
+        },
+        INTERMEDIARIO: {
+            range: '11:40 às 20:00',
+            carga: '7h20/dia + 1h Int. • 44h Sem.',
+            fullLabel: '11:40 às 20:00 (7h20/dia • 44h/sem)'
+        },
+        TARDE: {
+            range: '13:40 às 22:00',
+            carga: '7h20/dia + 1h Int. • 44h Sem.',
+            fullLabel: '13:40 às 22:00 (7h20/dia • 44h/sem)'
+        }
+    },
+    '5X2': {
+        weeklyTotal: '42h Semanais • 8h24/dia (5 dias)',
+        MANHA: {
+            range: '09:36 às 19:00',
+            carga: '8h24/dia + 1h Int. • 42h Sem.',
+            fullLabel: '09:36 às 19:00 (8h24/dia • 42h/sem)'
+        },
+        INTERMEDIARIO: {
+            range: '11:00 às 20:24',
+            carga: '8h24/dia + 1h Int. • 42h Sem.',
+            fullLabel: '11:00 às 20:24 (8h24/dia • 42h/sem)'
+        },
+        TARDE: {
+            range: '12:36 às 22:00',
+            carga: '8h24/dia + 1h Int. • 42h Sem.',
+            fullLabel: '12:36 às 22:00 (8h24/dia • 42h/sem)'
+        }
+    }
+};
+
 // Siglas oficiais da Escala (Idênticas e expandidas a partir da planilha padrão da loja)
 export const SIGLAS_ESCALA = [
     { code: 'T', label: 'TRABALHA', horario: 'Turno Padrão' },
-    { code: 'M', label: 'MANHÃ', horario: '09:40 - 18:00' },
-    { code: 'I', label: 'INTERMEDIÁRIO', horario: '10:40 / 11:40' },
-    { code: 'N', label: 'NOITE / TARDE', horario: '13:40 - 22:00' },
+    { code: 'M', label: 'MANHÃ', horario: '09:40 às 18:00 (6x1) / 09:36 às 19:00 (5x2 - 42h)' },
+    { code: 'I', label: 'INTERMEDIÁRIO', horario: '11:40 às 20:00 (6x1) / 11:00 às 20:24 (5x2 - 42h)' },
+    { code: 'N', label: 'NOITE / TARDE', horario: '13:40 às 22:00 (6x1) / 12:36 às 22:00 (5x2 - 42h)' },
     { code: 'F', label: 'FOLGA', horario: 'FOLGA' },
     { code: 'FB', label: 'FOLGA BANCO', horario: 'FOLGA BANCO' },
     { code: 'FP', label: 'FOLGA PRÊMIO', horario: 'FOLGA PRÊMIO' },
@@ -105,7 +145,9 @@ export const EscalaTrabalho = ({
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     });
 
-    const [escalaModel, setEscalaModel] = useState('6X1');
+    const [escalaModel, setEscalaModel] = useState(() => {
+        return scheduleData?._escalaModel === '5X2' ? '5X2' : '6X1';
+    });
     const [ideaLoopIndex, setIdeaLoopIndex] = useState(0);
 
     const storeDisplayName = useMemo(() => {
@@ -331,7 +373,7 @@ export const EscalaTrabalho = ({
 
         const v = VARIATIONS[step % VARIATIONS.length];
         const nextSections = { ...(scheduleData?._sections || {}) };
-        const nextSchedule = { _sections: nextSections };
+        const nextSchedule = { _sections: nextSections, _escalaModel: mode };
         const nextMonthlyForMonth = { ...(monthlyOverrides || {}) };
 
         activeEmployees.forEach((emp, idx) => {
@@ -479,6 +521,8 @@ export const EscalaTrabalho = ({
         });
     };
 
+    const currentModelSpecs = SHIFT_SCHEDULES_BY_MODEL[escalaModel] || SHIFT_SCHEDULES_BY_MODEL['6X1'];
+
     const groupedSections = useMemo(() => {
         const groups = {
             MANHA: [],
@@ -489,11 +533,14 @@ export const EscalaTrabalho = ({
             const sec = getEmployeeSection(emp, idx);
             groups[sec].push(emp);
         });
+        const specs = SHIFT_SCHEDULES_BY_MODEL[escalaModel] || SHIFT_SCHEDULES_BY_MODEL['6X1'];
         return [
             {
                 id: 'MANHA',
                 title: 'MANHÃ',
-                subtitle: '09:40 às 18:00',
+                subtitle: specs.MANHA.range,
+                cargaHoraria: specs.MANHA.carga,
+                fullLabel: specs.MANHA.fullLabel,
                 icon: <Sun size={13} className="text-sky-400" />,
                 barGradient: 'from-slate-900 via-slate-800 to-sky-950 border-sky-500/30',
                 badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-400/30',
@@ -502,7 +549,9 @@ export const EscalaTrabalho = ({
             {
                 id: 'INTERMEDIARIO',
                 title: 'INTERMEDIÁRIO',
-                subtitle: '10:40 / 11:40',
+                subtitle: specs.INTERMEDIARIO.range,
+                cargaHoraria: specs.INTERMEDIARIO.carga,
+                fullLabel: specs.INTERMEDIARIO.fullLabel,
                 icon: <Sunset size={13} className="text-amber-400" />,
                 barGradient: 'from-slate-900 via-slate-800 to-amber-950 border-amber-500/30',
                 badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-400/30',
@@ -511,16 +560,18 @@ export const EscalaTrabalho = ({
             {
                 id: 'TARDE',
                 title: 'TARDE / NOITE',
-                subtitle: '13:40 às 22:00',
+                subtitle: specs.TARDE.range,
+                cargaHoraria: specs.TARDE.carga,
+                fullLabel: specs.TARDE.fullLabel,
                 icon: <Moon size={13} className="text-indigo-400" />,
                 barGradient: 'from-slate-900 via-slate-800 to-indigo-950 border-indigo-500/30',
                 badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/30',
                 employees: groups.TARDE
             }
         ];
-    }, [activeEmployees, scheduleData]);
+    }, [activeEmployees, scheduleData, escalaModel]);
 
-    // Exportação Excel (.xlsx) no modelo da planilha
+    // Exportação Excel (.xlsx) no modelo da planilha com a carga horária exata do turno (6x1 ou 5x2 - 42h)
     const handleExportExcel = () => {
         if (activeEmployees.length === 0) {
             toast.error('Nenhum colaborador ativo para exportar.');
@@ -528,12 +579,17 @@ export const EscalaTrabalho = ({
         }
 
         const aoa = [];
-        const row1 = [storeDisplayName, currentMonthLabel, ...monthDaysList.map((d) => d.dayLetter)];
+        const row1 = [`${storeDisplayName} (${escalaModel})`, `${currentMonthLabel} - ${currentModelSpecs.weeklyTotal}`, ...monthDaysList.map((d) => d.dayLetter)];
         const row2 = ['', '', ...monthDaysList.map((d) => d.dayNumber)];
         aoa.push(row1, row2);
 
         groupedSections.forEach((sec) => {
-            const headerRow = ['Nome', 'CARGO', sec.title, ...new Array(Math.max(0, monthDaysList.length - 1)).fill('')];
+            const headerRow = [
+                'Nome',
+                'CARGO',
+                `${sec.title} — ${sec.subtitle} (${sec.cargaHoraria})`,
+                ...new Array(Math.max(0, monthDaysList.length - 1)).fill('')
+            ];
             aoa.push(headerRow);
 
             sec.employees.forEach((emp) => {
@@ -548,13 +604,14 @@ export const EscalaTrabalho = ({
 
         aoa.push([]);
         const legendRows = [
-            ['FOLGA', 'F', 'ESCALA SUJEITA A ALTERAÇÕES'],
+            ['FOLGA', 'F', `ESCALA ${escalaModel} (${currentModelSpecs.weeklyTotal}) — SUJEITA A ALTERAÇÕES`],
             ['ATESTADO', 'AT', ''],
             ['FOLGA BANCO', 'FB', ''],
             ['FOLGA PREMIO', 'FP', ''],
             ['TREINAMENTO', 'TR', ''],
-            ['INTERMEDIARIO', 'I', ''],
-            ['MANHA / NOITE / TRABALHA', 'M / N / T', ''],
+            [`INTERMEDIARIO (${currentModelSpecs.INTERMEDIARIO.range} • ${currentModelSpecs.INTERMEDIARIO.carga})`, 'I', ''],
+            [`MANHA (${currentModelSpecs.MANHA.range} • ${currentModelSpecs.MANHA.carga})`, 'M', ''],
+            [`TARDE / NOITE (${currentModelSpecs.TARDE.range} • ${currentModelSpecs.TARDE.carga})`, 'N / T', ''],
             ['AFASTADA / FERIAS', 'AF / FE', '']
         ];
         legendRows.forEach((lr) => aoa.push(lr));
@@ -709,6 +766,14 @@ export const EscalaTrabalho = ({
                                     </button>
                                 </div>
                             )}
+
+                            {/* INDICADOR DE CARGA HORÁRIA DO REGIME ATIVO (6X1: 44h | 5X2: 42h) */}
+                            <div className="px-3 py-1.5 rounded-xl bg-neutral-900/90 border border-neutral-700/80 text-[11px] font-extrabold text-neutral-200 flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded-md bg-[#E3000F] text-white font-black text-[10px]">
+                                    {escalaModel}
+                                </span>
+                                <span>{currentModelSpecs.weeklyTotal}</span>
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -800,7 +865,7 @@ export const EscalaTrabalho = ({
                                     <tbody>
                                         {groupedSections.map((sec) => (
                                             <React.Fragment key={sec.id}>
-                                                {/* FAIXA TECNOLÓGICA SEPARADORA DE TURNO: Nome | CARGO | MANHÃ / INTERMEDIÁRIO / TARDE */}
+                                                {/* FAIXA TECNOLÓGICA SEPARADORA DE TURNO: Nome | CARGO | MANHÃ / INTERMEDIÁRIO / TARDE + HORÁRIO E CARGA HORÁRIA */}
                                                 <tr className={`bg-gradient-to-r ${sec.barGradient} text-white font-black text-[11px] uppercase tracking-wider`}>
                                                     <td className="px-3 py-1.5 border border-neutral-700 sticky left-0 z-10 bg-slate-900 text-neutral-300 text-left">
                                                         Nome
@@ -812,11 +877,11 @@ export const EscalaTrabalho = ({
                                                         colSpan={monthDaysList.length}
                                                         className="px-4 py-1.5 border border-neutral-700 text-center"
                                                     >
-                                                        <div className="inline-flex items-center justify-center gap-2">
+                                                        <div className="inline-flex items-center justify-center gap-2 flex-wrap">
                                                             {sec.icon}
                                                             <span className="tracking-widest font-black">{sec.title}</span>
-                                                            <span className={`px-2 py-0.2 rounded-full text-[10px] font-bold border ${sec.badgeColor} no-print`}>
-                                                                {sec.subtitle}
+                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${sec.badgeColor}`}>
+                                                                {sec.subtitle} • {sec.cargaHoraria}
                                                             </span>
                                                         </div>
                                                     </td>
@@ -925,23 +990,23 @@ export const EscalaTrabalho = ({
 
                             {/* RODAPÉ TECNOLÓGICO NO PADRÃO DA PLANILHA: LEGENDA + BANNER AZUL OFICIAL */}
                             <div className="grid grid-cols-1 lg:grid-cols-12 border-t-2 border-neutral-800">
-                                {/* TABELA DE LEGENDA DE SIGLAS */}
-                                <div className="lg:col-span-4 bg-neutral-50 dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-800 border-b lg:border-b-0 lg:border-r border-neutral-700 text-[11px] font-extrabold uppercase">
+                                {/* TABELA DE LEGENDA DE SIGLAS COM CARGA HORÁRIA COMPLETA EM TODOS OS TURNOS (MANHÃ, INTERMEDIÁRIO E TARDE) */}
+                                <div className="lg:col-span-5 bg-neutral-50 dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-800 border-b lg:border-b-0 lg:border-r border-neutral-700 text-[11px] font-extrabold uppercase">
                                     {[
+                                        { label: `MANHÃ (${currentModelSpecs.MANHA.range} • ${currentModelSpecs.MANHA.carga})`, code: 'M', badge: 'text-sky-600 dark:text-sky-400' },
+                                        { label: `INTERMEDIÁRIO (${currentModelSpecs.INTERMEDIARIO.range} • ${currentModelSpecs.INTERMEDIARIO.carga})`, code: 'I', badge: 'text-amber-600 dark:text-amber-400' },
+                                        { label: `TARDE / NOITE (${currentModelSpecs.TARDE.range} • ${currentModelSpecs.TARDE.carga})`, code: 'N / T', badge: 'text-indigo-600 dark:text-indigo-400' },
                                         { label: 'FOLGA', code: 'F', badge: 'text-[#E3000F] dark:text-rose-400' },
+                                        { label: 'FOLGA BANCO / FOLGA PRÊMIO', code: 'FB / FP', badge: 'text-[#E3000F] dark:text-rose-400' },
                                         { label: 'ATESTADO', code: 'AT', badge: 'text-amber-600 dark:text-amber-400' },
-                                        { label: 'FOLGA BANCO', code: 'FB', badge: 'text-[#E3000F] dark:text-rose-400' },
-                                        { label: 'FOLGA PRÊMIO', code: 'FP', badge: 'text-[#E3000F] dark:text-rose-400' },
                                         { label: 'TREINAMENTO', code: 'TR', badge: 'text-sky-600 dark:text-sky-400' },
-                                        { label: 'INTERMEDIÁRIO', code: 'I', badge: 'text-amber-600 dark:text-amber-400' },
-                                        { label: 'MANHÃ / NOITE / TRABALHA', code: 'M / N / T', badge: 'text-indigo-600 dark:text-indigo-400' },
                                         { label: 'AFASTADA / FÉRIAS', code: 'AF / FE', badge: 'text-neutral-700 dark:text-neutral-300' }
                                     ].map((item) => (
                                         <div key={item.label} className="grid grid-cols-12 items-center hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors">
-                                            <div className="col-span-8 px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-300 border-r border-neutral-200 dark:border-neutral-800 tracking-wide">
+                                            <div className="col-span-9 px-3 py-1.5 text-left text-neutral-700 dark:text-neutral-300 border-r border-neutral-200 dark:border-neutral-800 tracking-wide">
                                                 {item.label}
                                             </div>
-                                            <div className={`col-span-4 px-2 py-1.5 text-center font-black ${item.badge}`}>
+                                            <div className={`col-span-3 px-2 py-1.5 text-center font-black ${item.badge}`}>
                                                 {item.code}
                                             </div>
                                         </div>
@@ -949,10 +1014,10 @@ export const EscalaTrabalho = ({
                                 </div>
 
                                 {/* FAIXA AZUL TECNOLÓGICA "ESCALA SUJEITA A ALTERAÇÕES" */}
-                                <div className="lg:col-span-8 bg-gradient-to-r from-[#0369a1] via-[#0284c7] to-[#075985] text-white flex flex-col items-center justify-center p-5 text-center relative overflow-hidden">
+                                <div className="lg:col-span-7 bg-gradient-to-r from-[#0369a1] via-[#0284c7] to-[#075985] text-white flex flex-col items-center justify-center p-5 text-center relative overflow-hidden">
                                     <div className="flex items-center gap-2 text-xs sm:text-sm font-black uppercase tracking-[0.2em] drop-shadow-sm">
                                         <ShieldAlert size={16} className="text-sky-200 shrink-0" />
-                                        <span>ESCALA SUJEITA A ALTERAÇÕES</span>
+                                        <span>ESCALA {escalaModel} ({currentModelSpecs.weeklyTotal}) — SUJEITA A ALTERAÇÕES</span>
                                     </div>
                                     <div className="mt-2.5 flex flex-wrap items-center justify-center gap-3 text-[11px] font-bold text-sky-100 no-print">
                                         <span className="inline-flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-full border border-white/15">
