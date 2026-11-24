@@ -938,37 +938,8 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                     </div>
                 </div>
                 
-                {/* CONTROLES DO TOPO: ABAS (SIMULADOR / FONTE) + SELETOR DE COLABORADOR */}
+                {/* CONTROLES DO TOPO: SELETOR DE COLABORADOR (ABA FONTE OCULTA TEMPORARIAMENTE POR COMPLIANCE) */}
                 <div className="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    {/* SELETOR DE ABAS: SIMULADOR vs FONTE */}
-                    <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                        <button
-                            type="button"
-                            onClick={() => setActiveSectionTab('SIMULADOR')}
-                            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                activeSectionTab === 'SIMULADOR'
-                                    ? 'bg-white dark:bg-neutral-900 text-[#E3000F] shadow-sm'
-                                    : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
-                            }`}
-                        >
-                            <Calculator size={15} />
-                            <span>Simulador</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveSectionTab('FONTE')}
-                            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                activeSectionTab === 'FONTE'
-                                    ? 'bg-[#E3000F] text-white shadow-sm'
-                                    : 'text-neutral-600 dark:text-neutral-300 hover:text-[#E3000F]'
-                            }`}
-                            title={`Ver Fonte e PDF da Regra (${activeRegra.pdfFile})`}
-                        >
-                            <FileText size={15} />
-                            <span>FONTE</span>
-                        </button>
-                    </div>
-
                     {canChangeSeller ? (
                         <div className="flex items-center gap-2.5 bg-neutral-50 dark:bg-neutral-800/60 px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700/80 shadow-inner">
                             <User size={17} className="text-[#E3000F] shrink-0" />
@@ -1022,212 +993,12 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                             subtext="Processando pontuação de metas, aceleradores e comissão..."
                         />
                     </div>
-                ) : activeSectionTab === 'FONTE' ? (
-                    /* ============================================================================
-                       ABA "FONTE": DIRECIONAMENTO AO PDF DA PASTA UPLOADS + REGRAS POR CARGO
-                       ============================================================================ */
-                    <div className="space-y-5 pb-6 animate-fade-in">
-                        {/* CARD PRINCIPAL DA REGRA ATRIBUÍDA AO USUÁRIO IDENTIFICADO */}
-                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border-2 border-[#E3000F]/30 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-                            <div className="space-y-1.5">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#E3000F]/10 text-[#E3000F] text-xs font-extrabold uppercase tracking-wider">
-                                    <FileText size={15} />
-                                    <span>Regra Atribuída ao Seu Perfil ({activeRoleKey})</span>
-                                </div>
-                                <h3 className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white">
-                                    {activeRegra.titulo} — {activeRegra.grupoAnexo}
-                                </h3>
-                                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                                    Colaborador identificado: <strong className="text-neutral-900 dark:text-white">{metrics.targetSeller}</strong> • Documento Oficial: <strong className="text-[#E3000F]">{activeRegra.pdfFile}</strong>
-                                </p>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0">
-                                <button
-                                    type="button"
-                                    disabled={isLoadingPdf}
-                                    onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
-                                    className="flex-1 md:flex-initial px-5 py-3 rounded-xl bg-gradient-to-r from-[#E3000F] to-red-700 hover:from-red-600 hover:to-red-800 disabled:opacity-60 text-white font-bold text-sm shadow-lg shadow-red-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
-                                >
-                                    <ExternalLink size={17} />
-                                    <span>{isLoadingPdf ? 'Autenticando PDF...' : `Abrir PDF (${activeRegra.pdfFile})`}</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={isLoadingPdf}
-                                    onClick={() => handleDownloadCargoPDF(activeRegra.pdfKey, activeRegra.pdfFile)}
-                                    className="px-4 py-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-60 text-neutral-800 dark:text-neutral-100 font-bold text-sm flex items-center justify-center gap-2 border border-neutral-200 dark:border-neutral-700 transition-all cursor-pointer"
-                                >
-                                    <Download size={17} />
-                                    <span>Baixar PDF</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* RESUMO SIMPLES E LEGÍVEL DA REGRA DO USUÁRIO */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-                                <span className="text-xs font-extrabold text-[#E3000F] uppercase tracking-wider block mb-1.5">
-                                    1. Base & Gatilhos (Mín. 80%)
-                                </span>
-                                <div className="text-base font-extrabold text-neutral-900 dark:text-white mb-1">
-                                    Base: {activeRegra.baseApuracao}
-                                </div>
-                                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                                    {activeRegra.gatilhosLabel}
-                                </p>
-                            </div>
-
-                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-                                <span className="text-xs font-extrabold text-[#E3000F] uppercase tracking-wider block mb-1.5">
-                                    2. Faixas % sobre Receita
-                                </span>
-                                <div className="space-y-1.5 mt-2">
-                                    {activeRegra.faixas.map(f => (
-                                        <div key={f.label} className="flex items-center justify-between text-sm font-semibold text-neutral-700 dark:text-neutral-200">
-                                            <span>{f.label}:</span>
-                                            <strong className="text-neutral-900 dark:text-white font-extrabold tabular-nums">{f.texto}</strong>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-                                <span className="text-xs font-extrabold text-[#E3000F] uppercase tracking-wider block mb-1.5">
-                                    3. Bônus & Teto do Cargo
-                                </span>
-                                <div className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 mb-1 tabular-nums">
-                                    Teto RV: {applyCurrencyMask(activeRegra.teto)}
-                                </div>
-                                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                                    {activeRegra.bonusResumo}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* VISUALIZADOR EMBUTIDO DO PDF DO CARGO LOGADO (AUTENTICADO VIA JWT) */}
-                        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
-                            <div className="px-5 py-3.5 bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                                <span className="text-sm font-extrabold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
-                                    <BookOpen size={17} className="text-[#E3000F]" />
-                                    Visualização Segura (JWT) — {activeRegra.pdfFile}
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
-                                    className="text-xs font-bold text-[#E3000F] hover:underline flex items-center gap-1 cursor-pointer"
-                                >
-                                    <span>Abrir em Nova Guia</span>
-                                    <ExternalLink size={13} />
-                                </button>
-                            </div>
-                            <div className="w-full h-[540px] bg-neutral-100 dark:bg-neutral-950 flex items-center justify-center">
-                                {isLoadingPdf && !activePdfPreviewUrl ? (
-                                    <div className="text-sm font-bold text-neutral-600 dark:text-neutral-300 flex items-center gap-2">
-                                        <span>Autenticando e carregando documento PDF...</span>
-                                    </div>
-                                ) : pdfError ? (
-                                    <div className="text-center p-6 space-y-3">
-                                        <p className="text-sm font-bold text-neutral-600 dark:text-neutral-300">{pdfError}</p>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
-                                            className="px-4 py-2 rounded-xl bg-[#E3000F] text-white text-xs font-bold cursor-pointer"
-                                        >
-                                            Tentar Abrir Novamente
-                                        </button>
-                                    </div>
-                                ) : activePdfPreviewUrl ? (
-                                    <iframe
-                                        src={activePdfPreviewUrl}
-                                        title={activeRegra.pdfFile}
-                                        className="w-full h-full border-0"
-                                    />
-                                ) : null}
-                            </div>
-                        </div>
-
-                        {/* BIBLIOTECA DE PDFs PROTEGIDA POR JWT */}
-                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-                            <h3 className="text-sm font-extrabold text-neutral-800 dark:text-neutral-100 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <FileText size={17} className="text-[#E3000F]" />
-                                {canChangeSeller
-                                    ? 'Todos os Cadernos de Regras por Cargo (Acesso Protegido JWT)'
-                                    : 'Cadernos Oficiais Disponíveis para o Seu Perfil'}
-                            </h3>
-
-                            {canChangeSeller && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
-                                    {Object.values(REGRAS_CARGOS_NORMA).map((item) => {
-                                        const isUserRole = item.codigo === activeRoleKey;
-                                        return (
-                                            <button
-                                                key={item.codigo}
-                                                type="button"
-                                                onClick={() => handleOpenCargoPDF(item.pdfKey)}
-                                                className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 group ${
-                                                    isUserRole
-                                                        ? 'bg-red-50/70 dark:bg-[#E3000F]/15 border-[#E3000F] shadow-sm'
-                                                        : 'bg-neutral-50 dark:bg-neutral-800/40 border-neutral-200 dark:border-neutral-700/70 hover:border-[#E3000F]/50'
-                                                }`}
-                                            >
-                                                <div>
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <span className="text-xs font-extrabold uppercase text-[#E3000F]">
-                                                            {item.codigo}
-                                                        </span>
-                                                        {isUserRole && (
-                                                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-[#E3000F] text-white">
-                                                                ATIVO
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-sm font-bold text-neutral-900 dark:text-white mt-1">
-                                                        {item.titulo}
-                                                    </div>
-                                                    <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-0.5">
-                                                        {item.pdfFile}
-                                                    </div>
-                                                </div>
-                                                <div className="pt-2 border-t border-neutral-200/70 dark:border-neutral-700/60 flex items-center justify-between text-xs font-bold text-neutral-700 dark:text-neutral-200 group-hover:text-[#E3000F]">
-                                                    <span>Abrir PDF</span>
-                                                    <ExternalLink size={14} />
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-                            {/* DOCUMENTOS GERAIS E DE FÉRIAS */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                                {DOCUMENTOS_EXTRAS_UPLOADS.map((doc) => (
-                                    <button
-                                        key={doc.pdfFile}
-                                        type="button"
-                                        onClick={() => handleOpenCargoPDF(doc.pdfKey)}
-                                        className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700/70 hover:border-[#E3000F] text-left transition-all cursor-pointer flex items-center justify-between gap-3 group"
-                                    >
-                                        <div>
-                                            <div className="text-sm font-extrabold text-neutral-900 dark:text-white group-hover:text-[#E3000F]">
-                                                {doc.titulo}
-                                            </div>
-                                            <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-0.5">
-                                                {doc.subtitulo} ({doc.pdfFile})
-                                            </div>
-                                        </div>
-                                        <ExternalLink size={18} className="text-neutral-400 group-hover:text-[#E3000F] shrink-0" />
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
                 ) : (
                     /* ============================================================================
-                       ABA "SIMULADOR": LAYOUT LÚDICO, SIMPLES, LIMPO E COM FONTES BEM LEGÍVEIS
+                       TELA "SIMULADOR": LAYOUT LÚDICO, SIMPLES, LIMPO E COM FONTES BEM LEGÍVEIS
                        ============================================================================ */
                     <div className="space-y-5 pb-6">
-                        {/* AVISO DO SIMULADOR + BOTÃO DIRETO PARA O PDF DA REGRA DO USUÁRIO ("FONTE") */}
+                        {/* AVISO DO SIMULADOR */}
                         <div className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800/90 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
                             <div className="flex items-center gap-3.5">
                                 <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -1238,21 +1009,10 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                         Simulador de Remuneração Variável — {activeRegra.titulo}
                                     </strong>
                                     <span className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 font-medium">
-                                        Os cálculos exibidos são estimativas baseadas na tabela oficial do seu cargo.
+                                        Os cálculos exibidos são estimativas baseadas nos parâmetros do seu cargo.
                                     </span>
                                 </div>
                             </div>
-
-                            <button
-                                type="button"
-                                onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
-                                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#E3000F]/10 hover:bg-[#E3000F] text-[#E3000F] hover:text-white border border-[#E3000F]/30 font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-sm"
-                                title={`Abrir PDF Oficial: ${activeRegra.pdfFile}`}
-                            >
-                                <FileText size={16} />
-                                <span>FONTE: Abrir PDF ({activeRoleKey})</span>
-                                <ExternalLink size={14} />
-                            </button>
                         </div>
 
                         {/* CARDS PRINCIPAIS */}
@@ -1606,30 +1366,12 @@ export const FatorRvv = ({ globalUser, salesData = [], goalsDB = {}, usersDB = {
                                 </div>
                             </div>
 
-                            {/* SEÇÃO SIMPLES E ENXUTA: REGRAS DE ENQUADRAMENTO + LINK DIRETO PARA "FONTE" */}
+                            {/* SEÇÃO SIMPLES E ENXUTA: REGRAS DE ENQUADRAMENTO */}
                             <div className="md:col-span-3 bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-neutral-100 dark:border-neutral-800">
                                     <h3 className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200 uppercase tracking-wider flex items-center gap-2">
                                         <AlertCircle size={18} className="text-[#E3000F]" /> Regras de Enquadramento ({activeRegra.titulo})
                                     </h3>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveSectionTab('FONTE')}
-                                            className="px-3.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-100 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
-                                        >
-                                            <BookOpen size={14} className="text-[#E3000F]" />
-                                            <span>Ir para Aba FONTE</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleOpenCargoPDF(activeRegra.pdfKey)}
-                                            className="px-3.5 py-1.5 rounded-xl bg-[#E3000F] hover:bg-red-700 text-white text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-                                        >
-                                            <FileText size={14} />
-                                            <span>PDF: {activeRegra.pdfFile}</span>
-                                        </button>
-                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">

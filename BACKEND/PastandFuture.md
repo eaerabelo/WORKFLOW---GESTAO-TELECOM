@@ -524,3 +524,43 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - **Gap de Meta do Dia Anterior para Todos os Indicadores (`Resultado.jsx`):** Expandido o painel **"Gap de Meta do Dia Anterior"** para exibir todos os indicadores da loja (Financeiro, Móvel, Residencial, Aparelhos, Anexação e Serviços) com filtros rápidos por categoria, mostrando Meta Ontem, Real Ontem, Gap deixado, Meta Hoje Rebalanceada com Gap e progresso em tempo real.
 - **Seção `[CONTROLE-SIMCARD]` (`FRONTEND/src/components/ControleSimcard.jsx`):**
   - Travadas as linhas das caixinhas de **Cadastro em Lote** (`Lote Físico (ICCID)` e `Lote Virtual (E-SIM)`) em no máximo **20 caracteres numéricos por linha** (`sanitizeBatchIccidText` + `wrap="off"`), evitando caracteres excedentes ou erros por linha ao bipar/digitar.
+
+---
+
+## 23/11/2026 — Ocultação Temporária da Aba "FONTE" e PDFs na Seção `[FATOR RV]` por Compliance (`FRONTEND/src/components/FatorRvv.jsx`)
+
+- Removida temporariamente a exibição da aba **`FONTE`** e dos botões de abertura/download de PDFs na seção **`[FATOR RV]`**, mantendo exclusivamente a primeira tela de **Simulador de Remuneração Variável** para conformidade com políticas de compliance.
+
+---
+
+## 18/11/2026 — Correção de Vazamento de Dimensões na Seção `[CAMPANHA]` (`FRONTEND/src/components/Campanha.jsx` & `CampanhaStyle.css`)
+
+- Removido o bloqueio `h-full flex-col overflow-y-auto animate-fade-in` em `.campanha-container` que comprimia os blocos internos e prendia os modais dentro do container da seção.
+- Aplicado contenção estrita (`w-full max-w-full min-w-0 overflow-hidden box-border`) em todos os cards de campanha, no painel aberto de **Status da Campanha** (evitando que a tabela multi-indicadores estoure a largura da caixa) e nos modais abertos de **Lançar/Editar Campanha** e **Aceite Digital** (`max-h-[82vh]`, grids responsivos `grid-cols-1 sm:grid-cols-2` para datas e indicadores).
+
+---
+
+## 18/11/2026 — Ajuste de Escala de Fontes e Lista de Seções no Mobile + Remoção do Botão de Teste de Notificação (`FRONTEND/src/index.css` & `App.jsx`)
+
+- **Escala de Fontes no Mobile (`index.css`):** Aumentada a escala base de fontes em dispositivos móveis (`15px` / `14.5px`, tabelas `0.82rem` e inputs `0.9rem`), eliminando a redução anterior (`12.25px`/`13px`) que deixava os textos das seções pequenos demais no celular.
+- **Lista das Seções (Menu Lateral Mobile — `App.jsx`):** Ampliada a largura do menu lateral no mobile (`w-72` / `min-w-[17.5rem]`), com fonte `14px font-semibold`, espaçamento `px-3.5 py-2.5` e botão `X` para fechamento rápido, além de aumentar o título da seção ativa no topo (`text-sm sm:text-lg font-bold`).
+- **Sino de Notificações (`App.jsx`):** Removido o botão de teste manual (`Testar`) do painel de notificações após validação.
+
+---
+
+## 18/11/2026 — Regra Combo Multi em `[RETENÇÃO]` + Restrição de Cargo e Monitor Multi-Indicadores de Gap em `[RESULTADO]`
+
+- **Seção `[RETENÇÃO]` (`FRONTEND/src/components/Retencao.jsx`):**
+  - Configurado `COMBO MULTI` como a soma dos 3 produtos (`MÓVEL` + `TVBOX` + `FIBRA`). Ao selecionar `COMBO MULTI`, os 3 produtos são selecionados automaticamente; e ao marcar os 3 produtos individuais, o `COMBO MULTI` é ativado automaticamente.
+- **Seção `[RESULTADO]` (`FRONTEND/src/App.jsx` & `FRONTEND/src/components/Resultado.jsx`):**
+  - **Restrição para Não-Vendedores (`App.jsx`):** Reforçada a verificação `isVendedor` (`!userRoleUpper || userRoleUpper.includes('VENDEDOR')`) para ocultar `[RESULTADO]` na barra lateral e redirecionar para `[VENDA]` sempre que o usuário for Vendedor.
+  - **Correção de Cor no Modo Noturno (`Resultado.jsx`):** Substituídas as classes inválidas `dark:from-neutral-850` e `dark:border-neutral-750` (que faziam o card manter o fundo branco `from-neutral-50` no modo escuro) por `bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800`.
+  - **Gap de Meta do Dia Anterior para Todos os Indicadores (`Resultado.jsx`):** Expandido o painel **"Gap de Meta do Dia Anterior"** para exibir todos os indicadores da loja (Financeiro, Móvel, Residencial, Aparelhos, Anexação e Serviços) com filtros rápidos por categoria, mostrando Meta Ontem, Real Ontem, Gap deixado, Meta Hoje Rebalanceada com Gap e progresso em tempo real.
+- **Seção `[CONTROLE-SIMCARD]` (`FRONTEND/src/components/ControleSimcard.jsx`):**
+  - Travadas as linhas das caixinhas de **Cadastro em Lote** (`Lote Físico (ICCID)` e `Lote Virtual (E-SIM)`) em no máximo **20 caracteres numéricos por linha** (`sanitizeBatchIccidText` + `wrap="off"`), evitando caracteres excedentes ou erros por linha ao bipar/digitar.
+
+---
+
+## 23/11/2026 — Ocultação Temporária da Aba "FONTE" e PDFs na Seção `[FATOR RV]` por Compliance (`FRONTEND/src/components/FatorRvv.jsx`)
+
+- Removida temporariamente a exibição da aba **`FONTE`** e dos botões de abertura/download de PDFs na seção **`[FATOR RV]`**, mantendo exclusivamente a primeira tela de **Simulador de Remuneração Variável** para conformidade com políticas de compliance.
