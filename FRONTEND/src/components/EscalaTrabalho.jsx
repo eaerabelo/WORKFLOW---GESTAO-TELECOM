@@ -31,7 +31,8 @@ export const SIGLAS_ESCALA = [
 
 // Converte qualquer valor antigo (ex: '09:40 - 18:00', 'FOLGA') para a Sigla Oficial
 const normalizeToSigla = (val, sectionShift = 'MANHA') => {
-    const v = String(val || '').trim().toUpperCase();
+    const raw = String(val || '').trim().toUpperCase();
+    const v = raw.includes('—') ? raw.split('—')[0].trim() : raw.includes('-') && !raw.includes(':') ? raw.split('-')[0].trim() : raw;
     if (!v) {
         if (sectionShift === 'MANHA') return 'M';
         if (sectionShift === 'INTERMEDIARIO') return 'I';
@@ -848,16 +849,18 @@ export const EscalaTrabalho = ({
                                                                                 <select
                                                                                     value={sigla}
                                                                                     onChange={(e) => handleCellSiglaChange(emp.name, d.dateStr, e.target.value)}
-                                                                                    className="w-full h-full py-1.5 px-0.5 bg-transparent text-center font-black outline-none cursor-pointer appearance-none"
+                                                                                    className="w-full h-full py-1.5 px-0 bg-transparent text-center font-black outline-none cursor-pointer appearance-none"
+                                                                                    style={{ textAlignLast: 'center', WebkitAppearance: 'none', MozAppearance: 'none' }}
                                                                                     title={`${getFirstName(emp.name)} • Dia ${d.dayNumber} (${d.dayNameFull})`}
                                                                                 >
                                                                                     {SIGLAS_ESCALA.map((s) => (
                                                                                         <option
                                                                                             key={s.code}
                                                                                             value={s.code}
-                                                                                            className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-bold"
+                                                                                            title={s.label}
+                                                                                            className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-black text-center"
                                                                                         >
-                                                                                            {s.code} — {s.label}
+                                                                                            {s.code}
                                                                                         </option>
                                                                                     ))}
                                                                                 </select>
