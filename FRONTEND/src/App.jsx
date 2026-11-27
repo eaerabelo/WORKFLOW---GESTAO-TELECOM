@@ -1479,8 +1479,8 @@ export default function App() {
             {/* Botão Global de Tutorial */}
             <button 
               onClick={() => setIsTutorialOpen(true)} 
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-[#E3000F] dark:text-red-400 rounded-lg text-sm font-medium transition-colors animate-fade-in"
-              title="Ver Tutorial desta Tela"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-[#E3000F] dark:text-red-400 rounded-lg text-xs sm:text-sm font-medium transition-colors animate-fade-in"
+              title="Ver Tutorial e Regras do Sistema"
             >
               <BookOpen size={16} /> <span className="hidden lg:inline">Tutorial</span>
             </button>
@@ -1497,16 +1497,7 @@ export default function App() {
               </button>
             )}
 
-            
-
-            {/* Botão Wi-Fi para Clientes */}
-            <button 
-              onClick={() => setIsWifiModalOpen(true)} 
-              className="hidden sm:flex p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full text-neutral-500 dark:text-neutral-400 transition-colors" 
-              title="Wi-Fi para Clientes"
-            >
-              <Wifi size={20} />
-            </button>
+            {/* Ícone de Wi-Fi para Clientes desativado a pedido */}
 
             {/* Seletor do Theme Light/Dark */}
             <button onClick={toggleTheme} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full text-neutral-500 dark:text-neutral-400 transition-colors" title={theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}>

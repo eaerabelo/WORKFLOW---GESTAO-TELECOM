@@ -571,4 +571,17 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - Removidas as seções e títulos comerciais (`"Espaço do Colaborador • Perfil Executivo"` e `"PERFORMANCE GLOBAL & ATENDIMENTO CONSULTIVO"` / vitrine de vendas) de todos os perfis cujo cargo **não seja Vendedor**.
   - Criado o painel **WorkFlow Enterprise • Identidade & Governança Corporativa (IAM & RBAC)** sob medida para cada função (`GERENTE` / `COORDENADOR` / `ESPECIALISTA`, `GEEK`, `SENIOR`, `ADMINISTRAÇÃO` / `ADM`, `ASSISTENTE RELACIONAMENTO` e demais cargos operacionais), apresentando credencial RBAC, alçada operacional, 4 pilares corporativos do cargo e matriz de conformidade/segurança JWT & LGPD.
 
+---
+
+## 26/11/2026 — Recepção Oficial `WORK_BOASVINDAS`, Central de Tutorial com `WORK_REGRAS` e Lâminas Reais do Sistema + Desativação do Ícone Wi-Fi Cliente
+
+- **Curadoria e Integração das Imagens `work_*` da pasta `BACKEND/uploads` (`FRONTEND/src/assets/tutoriais/`):**
+  - Inspecionadas visualmente todas as 18 imagens `work_*.jpeg`: selecionadas e integradas as **14 lâminas que correspondem fielmente às telas reais do nosso sistema** (`work_boasvindas`, `work_regras`, `work_vendas`, `work_vendaconjunta`, `work_simcards`, `work_geek`, `work_budle`, `work_parcial`, `work_reprovados`, `work_rv`, `work_gestao`, `work_MxM`, `work_SxS` e `work_diagnostico`), descartando os 4 mockups que não representavam telas reais (`work_retencao`, `work_scripts`, `work_indicadores` e `work_escala`).
+- **Tela Inicial de Boas-Vindas & Atualizações (`FRONTEND/src/components/Atualizacoes.jsx` & `updatesController.js`):**
+  - Novos usuários e usuários recebendo atualizações (`v2.6.0`) agora são recepcionados na tela inicial com a lâmina oficial **`work_boasvindas.jpeg`** (*"Entenda o Workflow!"*) com opção de zoom em tela cheia e aba de resumo das novidades.
+- **Central de Treinamento (`FRONTEND/src/components/Tutorial.jsx`):**
+  - Adicionada em destaque a aba **`REGRAS E TERMOS`** com a lâmina **`work_regras.jpeg`** e mapeadas todas as lâminas ilustradas reais para cada módulo correspondente, com suporte a ampliação em tela cheia.
+- **Cabeçalho Principal (`FRONTEND/src/App.jsx`):**
+  - Desativado o ícone de **Wi-Fi para Clientes** no cabeçalho superior conforme solicitado.
+
 

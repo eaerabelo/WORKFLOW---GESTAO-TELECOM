@@ -1,9 +1,9 @@
 export const getLatestUpdate = async (req, res) => {
     try {
         const SYSTEM_UPDATES = {
-            version: 'v2.5.0',
-            title: 'NOVAS ATUALIZAÇÕES DO WORKFLOW',
-            subtitle: 'Confira as últimas melhorias implementadas no painel, na tela de entrada e nos relatórios.',
+            version: 'v2.6.0',
+            title: 'BEM-VINDO AO WORKFLOW!',
+            subtitle: 'Conheça a visão geral do sistema e confira as últimas atualizações liberadas para a sua loja.',
             features: [
                 {
                     icon: 'Lock',
