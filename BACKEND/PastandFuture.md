@@ -556,4 +556,11 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
   - **Regra de Carga Horária `5X2` (42h Semanais) & Exibição Completa no Intermediário (`EscalaTrabalho.jsx`):** Reformulados os horários para o modelo **`5X2`** dividindo **42 horas semanais** nos 5 dias trabalhados (`8h24/dia + 1h de intervalo`: **Manhã** `09:36 às 19:00`, **Intermediário** `11:00 às 20:24` e **Tarde/Noite** `12:36 às 22:00`), mantendo na **`6X1`** as `44h semanais` (`7h20/dia + 1h de intervalo`: **Manhã** `09:40 às 18:00`, **Intermediário** `11:40 às 20:00` e **Tarde/Noite** `13:40 às 22:00`). O turno **Intermediário** agora exibe seu horário de entrada/saída completo e sua carga horária exatamente como os demais turnos.
   - **Correção Definitiva de Impressão e Cores Oficiais (`EscalaTrabalho.jsx` & `index.css`):** Restaurada a classe global `.print-schedule` exigida pelo `@media print` de `index.css` (que ocultava toda a página sem ela, gerando impressão em branco) e implementado motor dedicado de impressão em `<iframe>` A4 Paisagem (`handlePrintSchedule` no botão **Imprimir** e no atalho `Ctrl+P`), preservando Domingo em Vermelho (`F` branco), Sábado em Azul, Feriado em Amarelo e letra `F` de folga em Vermelho nos demais dias sem alterar o fundo das células.
 
+---
+
+## 26/11/2026 — Seção `[PARCIAL & FECHAMENTO]`: Exibição Exclusiva do "Feito" na Parcial de Vendas (Por hora)
+
+- **Seção `[PARCIAL & FECHAMENTO]` (`FRONTEND/src/components/ParcialFechamento.jsx`):**
+  - Removida a coluna e os campos de **"Meta"** do card **Parcial de Vendas (Por hora)**, deixando exclusivamente os valores realizados (**Feito**) tanto na interface quanto na mensagem formatada enviada via WhatsApp (`Compartilhar Parcial`).
+
 

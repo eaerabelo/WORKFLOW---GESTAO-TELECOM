@@ -146,9 +146,9 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
     const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
     const handleSendWhatsApp = () => {
-        const pad = (v) => String(v).padStart(2, '0');
+        const pad = (v) => String(v || 0).padStart(2, '0');
         const lojaFormatted = String(form.loja || '').replace(/SHOPPING/gi, 'LP');
-        const text = `Parcial ${form.hora}H\nÁrea ${form.area}\nLoja: ${lojaFormatted}\n\nMETA HORA / FEITO\nSenhas: ${form.senhas || '0'}\nGross: ${pad(form.metaGross)}/${pad(form.feitoGross)}\nGross PME: ${pad(form.metaGrossPme)}/${pad(form.feitoGrossPme)}\nAparelho: ${pad(form.metaAparelho)}/${pad(form.feitoAparelho)}\nSeguro: ${pad(form.metaSeguro)}/${pad(form.feitoSeguro)}\nAcessórios: ${pad(form.metaAcessorio)}/${pad(form.feitoAcessorio)}\nVirtua: ${pad(form.metaVirtua)}/${pad(form.feitoVirtua)}\nVirtua PME: ${pad(form.metaVirtuaPme)}/${pad(form.feitoVirtuaPme)}\nTV: ${pad(form.metaTv)}/${pad(form.feitoTv)}\nMplay: ${pad(form.metaMplay)}/${pad(form.feitoMplay)}\nClaro Up: ${pad(form.feitoUpgradeUp)}`;
+        const text = `Parcial ${form.hora}H\nÁrea ${form.area}\nLoja: ${lojaFormatted}\n\nFEITO\nSenhas: ${form.senhas || '0'}\nGross: ${pad(form.feitoGross)}\nGross PME: ${pad(form.feitoGrossPme)}\nAparelho: ${pad(form.feitoAparelho)}\nSeguro: ${pad(form.feitoSeguro)}\nAcessórios: ${pad(form.feitoAcessorio)}\nVirtua: ${pad(form.feitoVirtua)}\nVirtua PME: ${pad(form.feitoVirtuaPme)}\nTV: ${pad(form.feitoTv)}\nMplay: ${pad(form.feitoMplay)}\nClaro Up: ${pad(form.feitoUpgradeUp)}`;
         const encodedText = encodeURIComponent(text);
         window.open(`https://wa.me/?text=${encodedText}`, '_blank');
     };
@@ -202,15 +202,12 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
         window.open(`https://wa.me/?text=${encodedText}`, '_blank');
     };
 
-    const MetricRow = ({ label, nameMeta, nameFeito, isUpgradeUp = false }) => (
+    const MetricRow = ({ label, nameFeito }) => (
         <div className="flex items-center justify-between py-1.5 sm:py-2 border-b border-neutral-100 dark:border-neutral-800/60 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors px-1 sm:px-2 rounded-lg gap-2 min-w-0">
             <span className="text-[11px] sm:text-sm font-bold text-neutral-700 dark:text-neutral-300 whitespace-nowrap truncate min-w-0 flex-1">{label}</span>
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                {!isUpgradeUp ? (
-                    <div className="flex items-center gap-1"><Target size={14} className="text-neutral-400 hidden sm:block" /><input type="number" name={nameMeta} value={form[nameMeta]} onChange={handleChange} className="w-11 sm:w-14 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-lg text-center font-bold text-[11px] sm:text-xs outline-none focus:border-[#E3000F] transition-all" /></div>
-                ) : (<div className="w-11 sm:w-14"></div>)}
-                <span className="text-neutral-300 dark:text-neutral-600 font-bold mx-0.5">/</span>
-                <div className="flex items-center gap-1"><CheckCircle2 size={14} className="text-green-500 hidden sm:block" /><input type="number" name={nameFeito} value={form[nameFeito]} readOnly className="w-11 sm:w-14 bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-lg text-center font-black text-[11px] sm:text-xs outline-none cursor-not-allowed" title="Calculado automaticamente" /></div>
+            <div className="flex items-center gap-1.5 shrink-0">
+                <CheckCircle2 size={14} className="text-green-500 hidden sm:block" />
+                <input type="number" name={nameFeito} value={form[nameFeito]} readOnly className="w-14 sm:w-16 bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 sm:py-1.5 rounded-lg text-center font-black text-[11px] sm:text-xs outline-none cursor-not-allowed" title="Calculado automaticamente" />
             </div>
         </div>
     );
@@ -248,13 +245,22 @@ export function ParcialFechamento({ hasAccess, salesData = [], goalsDB = {}, glo
                             </div>
                         </div>
                         <div className="bg-neutral-100/50 dark:bg-neutral-800/80 px-3 sm:px-5 py-2 sm:py-2.5 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center gap-2 shrink-0 min-w-0">
-                            <h3 className="font-bold text-neutral-700 dark:text-neutral-200 text-[9px] sm:text-[10px] uppercase tracking-tight sm:tracking-wider whitespace-nowrap truncate min-w-0">Meta / Realizado</h3>
+                            <h3 className="font-bold text-neutral-700 dark:text-neutral-200 text-[9px] sm:text-[10px] uppercase tracking-tight sm:tracking-wider whitespace-nowrap truncate min-w-0">Indicadores do Dia</h3>
                             <div className="flex gap-2.5 sm:gap-6 text-[8.5px] sm:text-[10px] font-bold text-neutral-500 uppercase tracking-tight sm:tracking-widest shrink-0 whitespace-nowrap">
-                                <span className="flex items-center gap-1 whitespace-nowrap"><Target size={11} /> Meta</span><span className="flex items-center gap-1 text-green-600 dark:text-green-500 whitespace-nowrap"><CheckCircle2 size={11} /> Feito</span>
+                                <span className="flex items-center gap-1 text-green-600 dark:text-green-500 whitespace-nowrap"><CheckCircle2 size={11} /> Feito</span>
                             </div>
                         </div>
                         <div className="p-3 sm:p-5">
-                            <MetricRow label="Gross" nameMeta="metaGross" nameFeito="feitoGross" /><MetricRow label="Gross PME" nameMeta="metaGrossPme" nameFeito="feitoGrossPme" /><MetricRow label="Aparelho" nameMeta="metaAparelho" nameFeito="feitoAparelho" /><MetricRow label="Seguro" nameMeta="metaSeguro" nameFeito="feitoSeguro" /><MetricRow label="Acessórios" nameMeta="metaAcessorio" nameFeito="feitoAcessorio" /><MetricRow label="Virtua" nameMeta="metaVirtua" nameFeito="feitoVirtua" /><MetricRow label="Virtua PME" nameMeta="metaVirtuaPme" nameFeito="feitoVirtuaPme" /><MetricRow label="TV" nameMeta="metaTv" nameFeito="feitoTv" /><MetricRow label="Mplay" nameMeta="metaMplay" nameFeito="feitoMplay" /><MetricRow label="Claro Up" nameMeta="" nameFeito="feitoUpgradeUp" isUpgradeUp={true} />
+                            <MetricRow label="Gross" nameFeito="feitoGross" />
+                            <MetricRow label="Gross PME" nameFeito="feitoGrossPme" />
+                            <MetricRow label="Aparelho" nameFeito="feitoAparelho" />
+                            <MetricRow label="Seguro" nameFeito="feitoSeguro" />
+                            <MetricRow label="Acessórios" nameFeito="feitoAcessorio" />
+                            <MetricRow label="Virtua" nameFeito="feitoVirtua" />
+                            <MetricRow label="Virtua PME" nameFeito="feitoVirtuaPme" />
+                            <MetricRow label="TV" nameFeito="feitoTv" />
+                            <MetricRow label="Mplay" nameFeito="feitoMplay" />
+                            <MetricRow label="Claro Up" nameFeito="feitoUpgradeUp" />
                         </div>
                     </div>
                     <button onClick={handleSendWhatsApp} className="w-full px-6 py-3 sm:py-3.5 bg-[#25D366] text-white font-bold rounded-xl hover:bg-[#1EBE57] transition-all shadow-lg shadow-[#25D366]/30 flex items-center justify-center gap-2 text-xs sm:text-base whitespace-nowrap hover:-translate-y-0.5">
