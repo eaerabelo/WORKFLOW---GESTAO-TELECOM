@@ -1,10 +1,123 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     ArrowLeft, Camera, User, Calendar, MapPin, Phone, Mail, Award,
-    Sparkles, ShieldCheck, Save, CheckCircle2, Briefcase, Star, TrendingUp, Crown, Trash2, Search, Shirt, Lock
+    Sparkles, ShieldCheck, Save, CheckCircle2, Briefcase, Star, TrendingUp, Crown, Trash2, Search, Shirt, Lock,
+    Building2, Cpu, KeyRound, Activity, Layers, FileCheck2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchProfileAPI, saveProfileAPI } from '../services/api.js';
+import { getCurrentStoreName, getCurrentStoreCode } from '../utils/stores.js';
+
+// Mapeamento Corporativo Enterprise por Cargo (Exclusivo para perfis que NÃO são Vendedores)
+const getEnterpriseRoleConfig = (roleRaw) => {
+    const r = String(roleRaw || '').trim().toUpperCase();
+
+    if (r.includes('GERENTE') || r.includes('COORDENADOR') || r.includes('ESPECIALISTA')) {
+        return {
+            headerTitle: 'WorkFlow Enterprise • Governança Executiva',
+            badge: 'CREDENCIAL EXECUTIVA VERIFICADA • ENTERPRISE IAM',
+            headline: 'GOVERNANÇA EXECUTIVA & GESTÃO ESTRATÉGICA DE UNIDADE',
+            description: 'Credencial administrativa de nível executivo com alçada integral sobre metas estratégicas, escalas operacionais, auditoria de estoque, controle de acessos (RBAC) e inteligência de resultados.',
+            clearance: 'TIER 01 • FULL EXECUTIVE ADMIN',
+            scopeLabel: 'Gestão Integral de Loja, Metas, Escalas, Acessos & Compliance',
+            statusLabel: 'Alçada Executiva Ativa',
+            pillars: [
+                { id: 'p1', tag: 'IAM & RBAC', title: 'Controle de Acessos & Equipe', desc: 'Gestão de credenciais, hierarquia funcional e segurança operacional da unidade.' },
+                { id: 'p2', tag: 'BI & KPIs', title: 'Planejamento & Resultado', desc: 'Direcionamento de metas mensais, diagnóstico SxS/MxM e indicadores executivos.' },
+                { id: 'p3', tag: 'WORKFORCE', title: 'Orquestração de Escalas', desc: 'Planejamento inteligente de turnos 6x1 / 5x2 e cobertura integral de loja.' },
+                { id: 'p4', tag: 'COMPLIANCE', title: 'Auditoria & Governança', desc: 'Supervisão de inventário SIMCard, retenção, UR residencial e campanhas.' }
+            ]
+        };
+    }
+
+    if (r.includes('GEEK')) {
+        return {
+            headerTitle: 'WorkFlow Enterprise • Ecossistema Tecnológico',
+            badge: 'ESPECIALISTA TECNOLÓGICO • ENTERPRISE TECH',
+            headline: 'ARQUITETURA DE SOLUÇÕES TECNOLÓGICAS & OPERAÇÕES GEEK',
+            description: 'Credencial técnica dedicada à curadoria de portfólio de dispositivos, bundles oficiais, códigos SAP, rastreabilidade de SIMCards e suporte especializado à operação.',
+            clearance: 'TIER 02 • TECH & DEVICES SPECIALIST',
+            scopeLabel: 'Curadoria Geek, Bundles SAP, Inventário SIMCard & Suporte Técnico',
+            statusLabel: 'Credencial Técnica Ativa',
+            pillars: [
+                { id: 'p1', tag: 'TECH HUB', title: 'Gestão Geek & Bundles', desc: 'Administração de ofertas conjuntas, códigos SAP, flyers e materiais técnicos.' },
+                { id: 'p2', tag: 'INVENTORY', title: 'Controle de SIMCard & eSIM', desc: 'Rastreabilidade de lotes físicos/virtuais, selo digital e conciliação de estoque.' },
+                { id: 'p3', tag: 'ANALYTICS', title: 'Visão Operacional & Escala', desc: 'Acompanhamento de parciais horárias, indicadores de loja e matriz de turnos.' },
+                { id: 'p4', tag: 'ENABLEMENT', title: 'Padronização & Suporte', desc: 'Apoio técnico em ecossistema multi-devices, configuração e argumentação.' }
+            ]
+        };
+    }
+
+    if (r.includes('SENIOR') || r.includes('SÊNIOR')) {
+        return {
+            headerTitle: 'WorkFlow Enterprise • Supervisão Operacional',
+            badge: 'LIDERANÇA TÁTICA • ENTERPRISE OPERATIONS',
+            headline: 'SUPERVISÃO OPERACIONAL & LIDERANÇA DE PISO',
+            description: 'Credencial de liderança tática com atribuições de acompanhamento em tempo real da operação, gestão de parciais, auditoria de estoque e suporte direto à gerência.',
+            clearance: 'TIER 02 • OPERATIONS LEAD',
+            scopeLabel: 'Supervisão de Operação, Metas, Parciais, Estoque & Retenção',
+            statusLabel: 'Supervisão Ativa',
+            pillars: [
+                { id: 'p1', tag: 'EXECUTION', title: 'Monitoramento Diário', desc: 'Acompanhamento de parciais horárias, fechamento diário e ritmo operacional.' },
+                { id: 'p2', tag: 'INVENTORY', title: 'Auditoria de SIMCards', desc: 'Controle e movimentação segura de chips físicos e virtuais na unidade.' },
+                { id: 'p3', tag: 'QUALITY', title: 'Tratativa & Retenção', desc: 'Apoio direto em negociações críticas, retenção e pendências de instalação.' },
+                { id: 'p4', tag: 'STRATEGY', title: 'Gestão de Indicadores', desc: 'Análise de desempenho da equipe, campanhas ativas e planos de ação.' }
+            ]
+        };
+    }
+
+    if (r.includes('ADMIN') || r === 'ADM') {
+        return {
+            headerTitle: 'WorkFlow Enterprise • Backoffice & Compliance',
+            badge: 'GOVERNANÇA ADMINISTRATIVA • ENTERPRISE AUDIT',
+            headline: 'BACKOFFICE CORPORATIVO, AUDITORIA & CONFORMIDADE',
+            description: 'Credencial administrativa voltada à integridade cadastral, auditoria de processos, conciliação de estoque SIMCard, acompanhamento de UR e fechamento operacional.',
+            clearance: 'TIER 02 • BACKOFFICE & COMPLIANCE',
+            scopeLabel: 'Auditoria Administrativa, Estoque SIMCard, UR Residencial & Relatórios',
+            statusLabel: 'Governança Ativa',
+            pillars: [
+                { id: 'p1', tag: 'AUDIT', title: 'Conformidade & Contratos', desc: 'Conferência documental, validação cadastral e prevenção a inconsistências.' },
+                { id: 'p2', tag: 'STOCK SAP', title: 'Conciliação de Inventário', desc: 'Controle rigoroso de entradas em lote, baixas e rastreio de SIMCards.' },
+                { id: 'p3', tag: 'SLA & UR', title: 'Monitoramento Residencial', desc: 'Controle de agendamentos, prazos de conexão e pendências operacionais.' },
+                { id: 'p4', tag: 'REPORTING', title: 'Consolidação Gerencial', desc: 'Apoio na apuração de parciais, fechamentos e indicadores da unidade.' }
+            ]
+        };
+    }
+
+    if (r.includes('ASSISTENTE') || r.includes('RELA')) {
+        return {
+            headerTitle: 'WorkFlow Enterprise • Customer Experience & Pós-Venda',
+            badge: 'GOVERNANÇA DE RELACIONAMENTO • ENTERPRISE CX',
+            headline: 'EXPERIÊNCIA DO CLIENTE, PÓS-VENDA & RETENÇÃO',
+            description: 'Credencial corporativa dedicada à gestão de relacionamento, confirmação ativa de instalações residenciais, retenção estratégica e qualidade de atendimento.',
+            clearance: 'TIER 03 • CX & RETENTION SPECIALIST',
+            scopeLabel: 'Pós-Venda, Confirmação UR Residencial, Retenção & Qualidade',
+            statusLabel: 'Credencial CX Ativa',
+            pillars: [
+                { id: 'p1', tag: 'SLA & UR', title: 'Gestão de Instalações', desc: 'Confirmação ativa via WhatsApp, acompanhamento de agenda e conexão UR.' },
+                { id: 'p2', tag: 'RETENTION', title: 'Fidelização & Reversão', desc: 'Registro e acompanhamento estruturado de retenções e blindagem de base.' },
+                { id: 'p3', tag: 'CX QUALITY', title: 'Excelência no Atendimento', desc: 'Organização de fluxo, suporte ao cliente e resolução ágil de demandas.' },
+                { id: 'p4', tag: 'OPERATIONS', title: 'Integração com Gestão', desc: 'Visibilidade de campanhas, parciais e indicadores consolidados da loja.' }
+            ]
+        };
+    }
+
+    return {
+        headerTitle: 'WorkFlow Enterprise • Operações Corporativas',
+        badge: 'IDENTIDADE CORPORATIVA • ENTERPRISE OPS',
+        headline: 'SUPORTE OPERACIONAL & PROCESSOS CORPORATIVOS',
+        description: 'Credencial corporativa integrada ao ecossistema WorkFlow para suporte estruturado às rotinas operacionais, organização de processos, estoque e atendimento da unidade.',
+        clearance: 'TIER 03 • CORPORATE OPERATIONS',
+        scopeLabel: 'Suporte Operacional, Organização de Fluxos, Estoque & Atendimento',
+        statusLabel: 'Credencial Corporativa Ativa',
+        pillars: [
+            { id: 'p1', tag: 'WORKFLOW', title: 'Rotinas da Unidade', desc: 'Apoio diário à organização operacional e padronização dos processos internos.' },
+            { id: 'p2', tag: 'INVENTORY', title: 'Apoio de Inventário', desc: 'Conferência e organização de SIMCards, insumos e materiais da loja.' },
+            { id: 'p3', tag: 'FRONT DESK', title: 'Recepção & Triagem', desc: 'Acolhimento ágil e direcionamento assertivo de demandas na unidade.' },
+            { id: 'p4', tag: 'SECURITY', title: 'Conformidade & LGPD', desc: 'Uso seguro dos sistemas corporativos com proteção de dados e auditoria.' }
+        ]
+    };
+};
 
 export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
     const [loading, setLoading] = useState(true);
@@ -18,8 +131,8 @@ export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
         username: loginCode,
         name: globalUser?.name || '',
         role: globalUser?.role || 'VENDEDOR',
-        storeName: 'LP RAPOSO',
-        storeCode: 'K7W8',
+        storeName: getCurrentStoreName() || 'LP RAPOSO',
+        storeCode: getCurrentStoreCode() || 'K7W8',
         birthDate: '',
         age: '',
         phone: '',
@@ -221,6 +334,13 @@ export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
         }
     };
 
+    const currentRoleUpper = String(profile.role || globalUser?.role || 'VENDEDOR').trim().toUpperCase();
+    const isVendedorProfile =
+        !currentRoleUpper ||
+        currentRoleUpper === 'VENDEDOR' ||
+        (currentRoleUpper.includes('VENDEDOR') && !currentRoleUpper.includes('SENIOR') && !currentRoleUpper.includes('SÊNIOR'));
+    const enterpriseConfig = getEnterpriseRoleConfig(currentRoleUpper);
+
     return (
         <div className="min-h-screen w-full bg-[#F7F7F8] dark:bg-neutral-950 text-neutral-800 dark:text-neutral-100 flex flex-col animate-fade-in overflow-y-auto">
             {/* Barra Superior Minimalista (Tela Individual mantendo a mesma URL) */}
@@ -236,7 +356,7 @@ export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
                     </button>
                     <div className="h-5 w-px bg-neutral-200 dark:bg-neutral-800 hidden sm:block" />
                     <span className="text-xs font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 hidden sm:inline">
-                        Espaço do Colaborador • Perfil Executivo
+                        {isVendedorProfile ? 'Espaço do Colaborador • Perfil Executivo' : enterpriseConfig.headerTitle}
                     </span>
                 </div>
 
@@ -333,71 +453,131 @@ export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
                     </div>
                 </section>
 
-                {/* VITRINE ELEGANTE DE DESTAQUE AO LONGO DO ANO / MÊS */}
-                <section className="rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-[#1f070a] text-white p-6 sm:p-8 shadow-lg border border-neutral-800 relative overflow-hidden">
-                    <div className="absolute -right-8 -top-8 opacity-5 pointer-events-none">
-                        <Crown size={180} />
-                    </div>
-
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10 border-b border-white/10 pb-6">
-                        <div className="space-y-2 max-w-2xl">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[10px] font-black uppercase tracking-widest">
-                                <Award size={13} />
-                                <span>Categoria de Destaque Automática • Melhor Indicador</span>
-                            </div>
-                            <h2 className="text-lg sm:text-xl font-black tracking-tight text-white uppercase">
-                                {highlights.topSpotlight?.indicator || profile.featuredIndicator || 'PERFORMANCE GLOBAL & ATENDIMENTO CONSULTIVO'}
-                            </h2>
-                            <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
-                                {highlights.topSpotlight?.note || profile.featuredNote}
-                            </p>
+                {/* VITRINE DE PERFORMANCE (EXCLUSIVA VENDEDOR) OU PAINEL DE GOVERNANÇA ENTERPRISE (DEMAIS CARGOS) */}
+                {isVendedorProfile ? (
+                    <section className="rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-[#1f070a] text-white p-6 sm:p-8 shadow-lg border border-neutral-800 relative overflow-hidden">
+                        <div className="absolute -right-8 -top-8 opacity-5 pointer-events-none">
+                            <Crown size={180} />
                         </div>
 
-                        <div className="flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-4 shrink-0">
-                            <div className="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400">
-                                <TrendingUp size={22} />
-                            </div>
-                            <div>
-                                <span className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                                    Melhor Período Apurado
-                                </span>
-                                <span className="text-base font-black text-amber-300 uppercase">
-                                    {highlights.topSpotlight?.period || profile.featuredPeriod || `Temporada ${new Date().getFullYear()}`}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Insígnias de Especialidade por Indicador */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-6 relative z-10">
-                        {(highlights.badges || []).map((b) => (
-                            <div
-                                key={b.id}
-                                className={`rounded-2xl p-4 border transition-all ${
-                                    b.active
-                                        ? 'bg-white/10 border-amber-400/40 shadow-md'
-                                        : 'bg-white/[0.03] border-white/10 opacity-80'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between gap-2 mb-2">
-                                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-amber-400/20 text-amber-300">
-                                        {b.tier}
-                                    </span>
-                                    <Star size={13} className={b.active ? 'text-amber-400 fill-amber-400' : 'text-neutral-500'} />
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10 border-b border-white/10 pb-6">
+                            <div className="space-y-2 max-w-2xl">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[10px] font-black uppercase tracking-widest">
+                                    <Award size={13} />
+                                    <span>Categoria de Destaque Automática • Melhor Indicador</span>
                                 </div>
-                                <div className="text-xs font-black text-white uppercase leading-snug mb-1">
-                                    {b.indicator}
-                                </div>
-                                <p className="text-[11px] text-neutral-300 leading-relaxed mb-2">
-                                    {b.metricLabel}
+                                <h2 className="text-lg sm:text-xl font-black tracking-tight text-white uppercase">
+                                    {highlights.topSpotlight?.indicator || profile.featuredIndicator || 'PERFORMANCE GLOBAL & ATENDIMENTO CONSULTIVO'}
+                                </h2>
+                                <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
+                                    {highlights.topSpotlight?.note || profile.featuredNote}
                                 </p>
-                                <div className="text-[10px] font-mono text-amber-300/90 font-semibold">
-                                    Ref: {b.period}
+                            </div>
+
+                            <div className="flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-4 shrink-0">
+                                <div className="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400">
+                                    <TrendingUp size={22} />
+                                </div>
+                                <div>
+                                    <span className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                                        Melhor Período Apurado
+                                    </span>
+                                    <span className="text-base font-black text-amber-300 uppercase">
+                                        {highlights.topSpotlight?.period || profile.featuredPeriod || `Temporada ${new Date().getFullYear()}`}
+                                    </span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </section>
+                        </div>
+
+                        {/* Insígnias de Especialidade por Indicador */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-6 relative z-10">
+                            {(highlights.badges || []).map((b) => (
+                                <div
+                                    key={b.id}
+                                    className={`rounded-2xl p-4 border transition-all ${
+                                        b.active
+                                            ? 'bg-white/10 border-amber-400/40 shadow-md'
+                                            : 'bg-white/[0.03] border-white/10 opacity-80'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-amber-400/20 text-amber-300">
+                                            {b.tier}
+                                        </span>
+                                        <Star size={13} className={b.active ? 'text-amber-400 fill-amber-400' : 'text-neutral-500'} />
+                                    </div>
+                                    <div className="text-xs font-black text-white uppercase leading-snug mb-1">
+                                        {b.indicator}
+                                    </div>
+                                    <p className="text-[11px] text-neutral-300 leading-relaxed mb-2">
+                                        {b.metricLabel}
+                                    </p>
+                                    <div className="text-[10px] font-mono text-amber-300/90 font-semibold">
+                                        Ref: {b.period}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                ) : (
+                    <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-neutral-900 to-slate-900 text-white p-6 sm:p-8 shadow-lg border border-slate-800 relative overflow-hidden">
+                        <div className="absolute -right-8 -top-8 opacity-[0.06] pointer-events-none">
+                            <ShieldCheck size={190} />
+                        </div>
+
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10 border-b border-white/10 pb-6">
+                            <div className="space-y-2.5 max-w-2xl">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-300 text-[10px] font-black uppercase tracking-widest">
+                                    <ShieldCheck size={13} />
+                                    <span>{enterpriseConfig.badge}</span>
+                                </div>
+                                <h2 className="text-lg sm:text-xl font-black tracking-tight text-white uppercase">
+                                    {enterpriseConfig.headline}
+                                </h2>
+                                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                                    {enterpriseConfig.description}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-4 bg-white/[0.04] backdrop-blur-md border border-white/10 rounded-2xl px-5 py-4 shrink-0">
+                                <div className="w-11 h-11 rounded-xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center text-sky-400">
+                                    <KeyRound size={21} />
+                                </div>
+                                <div>
+                                    <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                        Credencial RBAC Enterprise
+                                    </span>
+                                    <span className="text-sm sm:text-base font-black text-sky-300 uppercase tracking-wide">
+                                        {enterpriseConfig.clearance}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Pilares Corporativos Enterprise do Cargo */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-6 relative z-10">
+                            {enterpriseConfig.pillars.map((p) => (
+                                <div
+                                    key={p.id}
+                                    className="rounded-2xl p-4 bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 hover:border-sky-400/40 transition-all"
+                                >
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/20">
+                                            {p.tag}
+                                        </span>
+                                        <Layers size={13} className="text-sky-400/80" />
+                                    </div>
+                                    <div className="text-xs font-black text-white uppercase leading-snug mb-1">
+                                        {p.title}
+                                    </div>
+                                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                                        {p.desc}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* FORMULÁRIO DE DADOS PESSOAIS, ENDEREÇO E CONFIGURAÇÃO DE DESTAQUE */}
                 <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -669,94 +849,183 @@ export const Profile = ({ globalUser, onBack, onProfileUpdated }) => {
                         </div>
                     </div>
 
-                    {/* Coluna 2: Categoria de Destaque Automática & Especialidade do Vendedor */}
+                    {/* Coluna 2: Selo Comercial (Vendedores) OU Matriz de Governança & Credencial Enterprise (Demais Cargos) */}
                     <div className="lg:col-span-5 bg-white dark:bg-neutral-900 rounded-3xl p-6 border border-neutral-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between space-y-5">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between gap-2.5 border-b border-neutral-100 dark:border-neutral-800 pb-4">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
-                                        <Award size={18} />
+                        {isVendedorProfile ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between gap-2.5 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
+                                            <Award size={18} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black uppercase tracking-wider text-neutral-800 dark:text-neutral-100">
+                                                Selo de Destaque no Ano / Mês
+                                            </h3>
+                                            <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                                                Calculado automaticamente onde você é melhor
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-sm font-black uppercase tracking-wider text-neutral-800 dark:text-neutral-100">
-                                            Selo de Destaque no Ano / Mês
-                                        </h3>
-                                        <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
-                                            Calculado automaticamente onde você é melhor
-                                        </p>
-                                    </div>
+                                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
+                                        <Sparkles size={11} /> Automático
+                                    </span>
                                 </div>
-                                <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
-                                    <Sparkles size={11} /> Automático
-                                </span>
-                            </div>
 
-                            <div>
-                                <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
-                                    <span>Especialidade Principal Apurada</span>
-                                    <Lock size={11} className="text-amber-500" />
-                                </label>
-                                <input
-                                    type="text"
-                                    readOnly
-                                    value={highlights.topSpotlight?.specialty || profile.specialty || 'Consultoria Completa (Móvel, Fibra & Devices)'}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 text-xs font-bold text-amber-900 dark:text-amber-300 outline-none cursor-not-allowed"
-                                />
-                            </div>
+                                <div>
+                                    <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        <span>Especialidade Principal Apurada</span>
+                                        <Lock size={11} className="text-amber-500" />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={highlights.topSpotlight?.specialty || profile.specialty || 'Consultoria Completa (Móvel, Fibra & Devices)'}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 text-xs font-bold text-amber-900 dark:text-amber-300 outline-none cursor-not-allowed"
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
-                                    <span>Categoria de Destaque (Melhor Indicador)</span>
-                                    <Lock size={11} className="text-amber-500" />
-                                </label>
-                                <input
-                                    type="text"
-                                    readOnly
-                                    value={highlights.topSpotlight?.indicator || profile.featuredIndicator || 'PERFORMANCE GLOBAL & ATENDIMENTO CONSULTIVO'}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 text-xs font-black text-[#E3000F] dark:text-amber-400 outline-none cursor-not-allowed uppercase"
-                                />
-                            </div>
+                                <div>
+                                    <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        <span>Categoria de Destaque (Melhor Indicador)</span>
+                                        <Lock size={11} className="text-amber-500" />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={highlights.topSpotlight?.indicator || profile.featuredIndicator || 'PERFORMANCE GLOBAL & ATENDIMENTO CONSULTIVO'}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 text-xs font-black text-[#E3000F] dark:text-amber-400 outline-none cursor-not-allowed uppercase"
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
-                                    <span>Mês / Temporada de Melhor Desempenho</span>
-                                    <Lock size={11} className="text-amber-500" />
-                                </label>
-                                <input
-                                    type="text"
-                                    readOnly
-                                    value={highlights.topSpotlight?.period || profile.featuredPeriod || `Temporada ${new Date().getFullYear()}`}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-300 outline-none cursor-not-allowed"
-                                />
-                            </div>
+                                <div>
+                                    <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        <span>Mês / Temporada de Melhor Desempenho</span>
+                                        <Lock size={11} className="text-amber-500" />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={highlights.topSpotlight?.period || profile.featuredPeriod || `Temporada ${new Date().getFullYear()}`}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-300 outline-none cursor-not-allowed"
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
-                                    <span>Leitura Automática do Destaque</span>
-                                    <Lock size={11} className="text-amber-500" />
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    readOnly
-                                    value={highlights.topSpotlight?.note || profile.featuredNote}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-600 dark:text-neutral-300 outline-none cursor-not-allowed resize-none leading-relaxed"
-                                />
-                            </div>
+                                <div>
+                                    <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        <span>Leitura Automática do Destaque</span>
+                                        <Lock size={11} className="text-amber-500" />
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        readOnly
+                                        value={highlights.topSpotlight?.note || profile.featuredNote}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-600 dark:text-neutral-300 outline-none cursor-not-allowed resize-none leading-relaxed"
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="block text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
-                                    Lema / Frase Pessoal no Perfil
-                                </label>
-                                <input
-                                    type="text"
-                                    name="bio"
-                                    value={profile.bio}
-                                    onChange={handleChange}
-                                    placeholder="Sua frase de inspiração profissional..."
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
-                                />
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        Lema / Frase Pessoal no Perfil
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="bio"
+                                        value={profile.bio}
+                                        onChange={handleChange}
+                                        placeholder="Sua frase de inspiração profissional..."
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between gap-2.5 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="p-2 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400">
+                                            <ShieldCheck size={18} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black uppercase tracking-wider text-neutral-800 dark:text-neutral-100">
+                                                Matriz de Identidade & Governança (IAM)
+                                            </h3>
+                                            <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                                                Credencial corporativa e parâmetros de acesso Enterprise
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
+                                        <Activity size={11} /> Verificado
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        <span>Unidade Organizacional Vinculada</span>
+                                        <Building2 size={11} className="text-sky-500" />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={`${getCurrentStoreName() || profile.storeName} • CÓD. ${getCurrentStoreCode() || profile.storeCode}`}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-800 dark:text-neutral-200 outline-none cursor-not-allowed uppercase"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        <span>Nível de Permissão RBAC</span>
+                                        <Lock size={11} className="text-sky-500" />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={enterpriseConfig.clearance}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-sky-50/70 dark:bg-sky-950/25 border border-sky-200/70 dark:border-sky-800/50 text-xs font-black text-sky-800 dark:text-sky-300 outline-none cursor-not-allowed uppercase"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        <span>Escopo Operacional no Ecossistema</span>
+                                        <FileCheck2 size={11} className="text-sky-500" />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={enterpriseConfig.scopeLabel}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-300 outline-none cursor-not-allowed"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        <span>Conformidade & Segurança da Sessão</span>
+                                        <Lock size={11} className="text-emerald-500" />
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        readOnly
+                                        value={`${enterpriseConfig.statusLabel} • Sessão autenticada via token criptografado JWT com rastreabilidade operacional e conformidade LGPD.`}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-600 dark:text-neutral-300 outline-none cursor-not-allowed resize-none leading-relaxed"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
+                                        Assinatura / Nota Corporativa da Função
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="bio"
+                                        value={profile.bio}
+                                        onChange={handleChange}
+                                        placeholder="Ex: Gestão orientada a eficiência operacional e excelência..."
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-800 dark:text-neutral-100 outline-none focus:border-[#E3000F]"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-end gap-3">
                             <button

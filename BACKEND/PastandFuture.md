@@ -563,4 +563,12 @@ Este documento serve como a nossa **Única Fonte de Verdade (Single Source of Tr
 - **Seção `[PARCIAL & FECHAMENTO]` (`FRONTEND/src/components/ParcialFechamento.jsx`):**
   - Removida a coluna e os campos de **"Meta"** do card **Parcial de Vendas (Por hora)**, deixando exclusivamente os valores realizados (**Feito**) tanto na interface quanto na mensagem formatada enviada via WhatsApp (`Compartilhar Parcial`).
 
+---
+
+## 26/11/2026 — Tela `[PERFIL]`: Identidade & Governança Corporativa Enterprise para Cargos Não-Vendedores (`FRONTEND/src/components/profile.jsx`)
+
+- **Separação entre Vendedores e Demais Cargos (`profile.jsx`):**
+  - Removidas as seções e títulos comerciais (`"Espaço do Colaborador • Perfil Executivo"` e `"PERFORMANCE GLOBAL & ATENDIMENTO CONSULTIVO"` / vitrine de vendas) de todos os perfis cujo cargo **não seja Vendedor**.
+  - Criado o painel **WorkFlow Enterprise • Identidade & Governança Corporativa (IAM & RBAC)** sob medida para cada função (`GERENTE` / `COORDENADOR` / `ESPECIALISTA`, `GEEK`, `SENIOR`, `ADMINISTRAÇÃO` / `ADM`, `ASSISTENTE RELACIONAMENTO` e demais cargos operacionais), apresentando credencial RBAC, alçada operacional, 4 pilares corporativos do cargo e matriz de conformidade/segurança JWT & LGPD.
+
 
