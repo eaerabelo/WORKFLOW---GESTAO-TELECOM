@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
     CalendarDays, Lock, Printer, Sparkles, RefreshCw, FileSpreadsheet,
     Sun, Sunset, Moon, ShieldAlert
@@ -629,77 +629,569 @@ export const EscalaTrabalho = ({
         toast.success('Planilha de Escala exportada em Excel com sucesso!');
     };
 
-    // Estilização Tecnológica & Elegante das células da matriz (mantendo a semântica: Fim de Semana Azul, Feriado Amarelo/Ouro, Folga e Turnos destacados)
+    // Impressão dedicada em Iframe isolado A4 Paisagem (Garante 0% de chance de página em branco ou corte de colunas)
+    const handlePrintSchedule = useCallback(() => {
+        if (typeof document === 'undefined') return;
+
+        const escapeHtml = (str) =>
+            String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+
+        const headerLettersHtml = monthDaysList
+            .map((d) => {
+                const cls = d.isHoliday
+                    ? 'th-holiday'
+                    : d.isWeekend
+                        ? (d.dow === 0 ? 'th-sunday' : 'th-saturday')
+                        : 'th-weekday-letter';
+                return `<th class="${cls}">${escapeHtml(d.dayLetter)}</th>`;
+            })
+            .join('');
+
+        const headerNumsHtml = monthDaysList
+            .map((d) => {
+                const cls = d.isHoliday
+                    ? 'th-holiday'
+                    : d.isWeekend
+                        ? (d.dow === 0 ? 'th-sunday-num' : 'th-saturday-num')
+                        : 'th-weekday-num';
+                return `<th class="${cls}">${String(d.dayNumber).padStart(2, '0')}</th>`;
+            })
+            .join('');
+
+        const sectionsHtml = groupedSections
+            .map((sec) => {
+                const sectionClass =
+                    sec.id === 'MANHA'
+                        ? 'sec-manha'
+                        : sec.id === 'INTERMEDIARIO'
+                            ? 'sec-inter'
+                            : 'sec-tarde';
+
+                const rowsHtml =
+                    sec.employees.length === 0
+                        ? `<tr><td colspan="${2 + monthDaysList.length}" class="empty-row">Nenhum colaborador alocado em ${escapeHtml(sec.title)}</td></tr>`
+                        : sec.employees
+                              .map((emp) => {
+                                  const isHigh = emp.group !== 'VENDEDOR';
+                                  const rowTypeClass = isHigh ? 'emp-high' : 'emp-norm';
+                                  const dotColor = isHigh ? '#E3000F' : '#0284c7';
+
+                                  const dayCells = monthDaysList
+                                      .map((d) => {
+                                          const sigla = getCellSigla(emp, d, sec.id);
+                                          const isFolga = sigla === 'F' || sigla === 'FB' || sigla === 'FP';
+                                          let bg = '#ffffff';
+                                          let color = '#111827';
+
+                                          if (d.isHoliday) {
+                                              bg = '#facc15';
+                                              color = isFolga ? '#E3000F' : '#09090b';
+                                          } else if (d.dow === 0) {
+                                              bg = '#dc2626';
+                                              color = '#ffffff'; // No domingo, inclusive o F de folga é branco sobre fundo vermelho
+                                          } else if (d.dow === 6) {
+                                              bg = '#0284c7';
+                                              color = isFolga ? '#E3000F' : '#ffffff';
+                                          } else {
+                                              bg = '#ffffff';
+                                              if (isFolga) color = '#E3000F';
+                                              else if (sigla === 'AT' || sigla === 'AF' || sigla === 'FE') {
+                                                  bg = '#fef3c7';
+                                                  color = '#92400e';
+                                              } else if (sigla === 'M') color = '#0369a1';
+                                              else if (sigla === 'I') color = '#b45309';
+                                              else if (sigla === 'N') color = '#4338ca';
+                                              else color = '#111827';
+                                          }
+
+                                          return `<td style="background:${bg};color:${color};font-weight:900;">${escapeHtml(sigla)}</td>`;
+                                      })
+                                      .join('');
+
+                                  return `<tr class="${rowTypeClass}">
+                                      <td class="col-nome"><span class="dot" style="background:${dotColor};"></span>${escapeHtml(getFirstName(emp.name))}</td>
+                                      <td class="col-cargo">${escapeHtml(emp.friendlyRole)}</td>
+                                      ${dayCells}
+                                  </tr>`;
+                              })
+                              .join('');
+
+                return `
+                    <tr class="sec-bar ${sectionClass}">
+                        <td class="sec-label">Nome</td>
+                        <td class="sec-label">Cargo</td>
+                        <td colspan="${monthDaysList.length}" class="sec-title">
+                            <span>${escapeHtml(sec.title)}</span>
+                            <span class="sec-pill">${escapeHtml(sec.subtitle)} • ${escapeHtml(sec.cargaHoraria)}</span>
+                        </td>
+                    </tr>
+                    ${rowsHtml}
+                `;
+            })
+            .join('');
+
+        const legendItems = [
+            { label: `MANHÃ (${currentModelSpecs.MANHA.range} • ${currentModelSpecs.MANHA.carga})`, code: 'M', color: '#0369a1' },
+            { label: `INTERMEDIÁRIO (${currentModelSpecs.INTERMEDIARIO.range} • ${currentModelSpecs.INTERMEDIARIO.carga})`, code: 'I', color: '#b45309' },
+            { label: `TARDE / NOITE (${currentModelSpecs.TARDE.range} • ${currentModelSpecs.TARDE.carga})`, code: 'N / T', color: '#4338ca' },
+            { label: 'FOLGA', code: 'F', color: '#E3000F' },
+            { label: 'FOLGA BANCO / FOLGA PRÊMIO', code: 'FB / FP', color: '#E3000F' },
+            { label: 'ATESTADO', code: 'AT', color: '#b45309' },
+            { label: 'TREINAMENTO', code: 'TR', color: '#0284c7' },
+            { label: 'AFASTADA / FÉRIAS', code: 'AF / FE', color: '#334155' }
+        ];
+
+        const legendHtml = legendItems
+            .map(
+                (it) => `<div class="leg-row">
+                    <span class="leg-lbl">${escapeHtml(it.label)}</span>
+                    <span class="leg-code" style="color:${it.color};">${escapeHtml(it.code)}</span>
+                </div>`
+            )
+            .join('');
+
+        const printHtml = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Escala_${escapeHtml(storeDisplayName)}_${escapeHtml(selectedScheduleMonth)}</title>
+<style>
+  @page { size: A4 landscape; margin: 5mm; }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    color: #09090b;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  .sheet-wrap {
+    width: 100%;
+    border: 1.5px solid #1e293b;
+    background: #ffffff;
+  }
+  table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 7.5pt;
+  }
+  th, td {
+    border: 1px solid #334155;
+    padding: 2.5px 1px;
+    text-align: center;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .th-unidade {
+    width: 102px;
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 6.8pt;
+    line-height: 1.15;
+    white-space: normal;
+    word-break: break-word;
+    padding: 4px 3px;
+  }
+  .th-unidade small {
+    display: block;
+    font-size: 5.8pt;
+    color: #ef4444;
+    letter-spacing: 0.08em;
+    margin-bottom: 1px;
+  }
+  .th-mes {
+    width: 114px;
+    background: #1e293b;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 7pt;
+    line-height: 1.15;
+    white-space: normal;
+    padding: 4px 3px;
+  }
+  .th-mes small {
+    display: block;
+    font-size: 6pt;
+    color: #38bdf8;
+    letter-spacing: 0.08em;
+  }
+  .th-weekday-letter { background: #0f172a; color: #e2e8f0; font-weight: 800; }
+  .th-weekday-num { background: #1e293b; color: #ffffff; font-weight: 900; }
+  .th-sunday, .th-sunday-num { background: #dc2626; color: #ffffff; font-weight: 900; }
+  .th-saturday, .th-saturday-num { background: #0284c7; color: #ffffff; font-weight: 900; }
+  .th-holiday { background: #facc15; color: #09090b; font-weight: 900; }
+  .sec-bar td {
+    color: #ffffff;
+    font-weight: 900;
+    text-transform: uppercase;
+    padding: 3px 4px;
+    font-size: 7.2pt;
+  }
+  .sec-manha td { background: #0c4a6e; }
+  .sec-inter td { background: #78350f; }
+  .sec-tarde td { background: #1e1b4b; }
+  .sec-bar td.sec-label { background: #0f172a; text-align: left; color: #cbd5e1; }
+  .sec-pill {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.16);
+    font-size: 6.5pt;
+    font-weight: 800;
+  }
+  .emp-high td.col-nome, .emp-high td.col-cargo { background: #e5e7eb; color: #09090b; }
+  .emp-norm td.col-nome, .emp-norm td.col-cargo { background: #f8fafc; color: #09090b; }
+  td.col-nome {
+    text-align: left;
+    padding-left: 4px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  td.col-cargo {
+    text-align: left;
+    padding-left: 4px;
+    font-weight: 700;
+    font-size: 7pt;
+  }
+  .dot {
+    display: inline-block;
+    width: 3px;
+    height: 9px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .empty-row { color: #64748b; font-style: italic; padding: 4px; }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 46% 54%;
+    border-top: 2px solid #0f172a;
+    page-break-inside: avoid;
+  }
+  .leg-box {
+    border-right: 1.5px solid #334155;
+    font-size: 6.6pt;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .leg-row {
+    display: grid;
+    grid-template-columns: 78% 22%;
+    border-bottom: 1px solid #cbd5e1;
+  }
+  .leg-row:last-child { border-bottom: none; }
+  .leg-lbl {
+    padding: 2px 5px;
+    border-right: 1px solid #cbd5e1;
+    color: #1e293b;
+  }
+  .leg-code {
+    padding: 2px 4px;
+    text-align: center;
+    font-weight: 900;
+  }
+  .banner-box {
+    background: linear-gradient(90deg, #0369a1, #0284c7, #075985);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px;
+  }
+  .banner-title {
+    font-size: 8.5pt;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .banner-sub {
+    margin-top: 4px;
+    font-size: 6.8pt;
+    font-weight: 700;
+    color: #e0f2fe;
+  }
+</style>
+</head>
+<body>
+  <div class="sheet-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2" class="th-unidade"><small>UNIDADE</small>${escapeHtml(storeDisplayName)}</th>
+          <th rowspan="2" class="th-mes"><small>${escapeHtml(currentYearLabel)}</small>${escapeHtml(currentMonthLabel)}</th>
+          ${headerLettersHtml}
+        </tr>
+        <tr>
+          ${headerNumsHtml}
+        </tr>
+      </thead>
+      <tbody>
+        ${sectionsHtml}
+      </tbody>
+    </table>
+    <div class="footer-grid">
+      <div class="leg-box">${legendHtml}</div>
+      <div class="banner-box">
+        <div class="banner-title">ESCALA ${escapeHtml(escalaModel)} (${escapeHtml(currentModelSpecs.weeklyTotal)}) — SUJEITA A ALTERAÇÕES</div>
+        <div class="banner-sub">Sábado (Azul) • Domingo (Vermelho) • Feriado (Amarelo)</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+        const existingFrame = document.getElementById('escala-print-iframe');
+        if (existingFrame) existingFrame.remove();
+
+        const iframe = document.createElement('iframe');
+        iframe.id = 'escala-print-iframe';
+        iframe.className = 'no-print';
+        iframe.style.position = 'fixed';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '0';
+        iframe.style.width = '1123px';
+        iframe.style.height = '794px';
+        iframe.style.border = '0';
+        iframe.style.opacity = '0';
+        iframe.style.pointerEvents = 'none';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (!doc) {
+            window.print();
+            return;
+        }
+        doc.open();
+        doc.write(printHtml);
+        doc.close();
+
+        const triggerIframePrint = () => {
+            try {
+                const win = iframe.contentWindow;
+                if (!win) {
+                    window.print();
+                    return;
+                }
+                win.onafterprint = () => {
+                    setTimeout(() => {
+                        iframe.remove();
+                    }, 500);
+                };
+                win.focus();
+                win.print();
+            } catch (err) {
+                window.print();
+            }
+        };
+
+        if (doc.readyState === 'complete') {
+            setTimeout(triggerIframePrint, 120);
+        } else {
+            iframe.onload = () => setTimeout(triggerIframePrint, 120);
+        }
+    }, [monthDaysList, groupedSections, storeDisplayName, currentYearLabel, currentMonthLabel, escalaModel, currentModelSpecs, scheduleData, monthlyOverrides]);
+
+    // Captura Ctrl+P / Cmd+P quando estiver na Escala de Trabalho para usar a impressão dedicada
+    useEffect(() => {
+        if (!hasAccess) return;
+        const onKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && String(e.key || '').toLowerCase() === 'p') {
+                e.preventDefault();
+                handlePrintSchedule();
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [hasAccess, handlePrintSchedule]);
+
+    // Estilização Tecnológica & Elegante das células da matriz (mantendo a semântica: Domingo Vermelho, Sábado Azul, Feriado Amarelo, Folga em destaque)
     const getTechCellClasses = (dayObj, sigla) => {
         if (dayObj.isHoliday) {
-            return 'bg-gradient-to-b from-amber-300 to-yellow-400 text-neutral-950 font-black border-amber-500/60 shadow-inner';
+            return 'print-cell-holiday bg-gradient-to-b from-amber-300 to-yellow-400 text-neutral-950 font-black border-amber-500/60 shadow-inner';
         }
         if (dayObj.isWeekend) {
             if (sigla === 'F' || sigla === 'FB' || sigla === 'FP') {
                 return dayObj.dow === 0
-                    ? 'bg-gradient-to-b from-red-600 to-red-700 text-white font-black border-red-800/70'
-                    : 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black border-sky-700/70';
+                    ? 'print-cell-sunday bg-gradient-to-b from-red-600 to-red-700 text-white font-black border-red-800/70'
+                    : 'print-cell-saturday bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black border-sky-700/70';
             }
             return dayObj.dow === 0
-                ? 'bg-gradient-to-b from-red-600 to-red-700 text-white font-black border-red-800/70'
-                : 'bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black border-sky-700/70';
+                ? 'print-cell-sunday bg-gradient-to-b from-red-600 to-red-700 text-white font-black border-red-800/70'
+                : 'print-cell-saturday bg-gradient-to-b from-[#0284c7] to-[#0369a1] text-white font-black border-sky-700/70';
         }
         // Dias de semana normais com codificação sutil e tecnológica por sigla
         if (sigla === 'F' || sigla === 'FB' || sigla === 'FP') {
-            return 'bg-rose-50/90 dark:bg-rose-950/35 text-[#E3000F] dark:text-rose-400 font-black border-neutral-200/90 dark:border-neutral-800';
+            return 'print-cell-weekday print-sigla-folga bg-rose-50/90 dark:bg-rose-950/35 text-[#E3000F] dark:text-rose-400 font-black border-neutral-200/90 dark:border-neutral-800';
         }
         if (sigla === 'AT' || sigla === 'AF' || sigla === 'FE') {
-            return 'bg-amber-50 dark:bg-amber-950/35 text-amber-700 dark:text-amber-300 font-black border-neutral-200/90 dark:border-neutral-800';
+            return 'print-cell-weekday print-sigla-amber bg-amber-50 dark:bg-amber-950/35 text-amber-700 dark:text-amber-300 font-black border-neutral-200/90 dark:border-neutral-800';
         }
         if (sigla === 'M') {
-            return 'bg-white dark:bg-neutral-900/90 text-sky-700 dark:text-sky-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
+            return 'print-cell-weekday print-sigla-manha bg-white dark:bg-neutral-900/90 text-sky-700 dark:text-sky-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
         }
         if (sigla === 'I') {
-            return 'bg-white dark:bg-neutral-900/90 text-amber-700 dark:text-amber-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
+            return 'print-cell-weekday print-sigla-inter bg-white dark:bg-neutral-900/90 text-amber-700 dark:text-amber-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
         }
         if (sigla === 'N') {
-            return 'bg-white dark:bg-neutral-900/90 text-indigo-700 dark:text-indigo-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
+            return 'print-cell-weekday print-sigla-noite bg-white dark:bg-neutral-900/90 text-indigo-700 dark:text-indigo-300 font-extrabold border-neutral-200/90 dark:border-neutral-800';
         }
-        return 'bg-white dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-100 font-extrabold border-neutral-200/90 dark:border-neutral-800';
+        return 'print-cell-weekday bg-white dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-100 font-extrabold border-neutral-200/90 dark:border-neutral-800';
     };
 
     return (
         <div
-            className="h-full flex flex-col animate-fade-in print:block print:h-auto print:bg-white antialiased"
+            className="escala-print-wrapper h-full flex flex-col animate-fade-in print:block print:h-auto print:bg-white antialiased"
             style={{ fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
         >
             <style>{`
                 @media print {
-                    @page { size: landscape; margin: 4mm; }
-                    html, body {
+                    @page { size: A4 landscape; margin: 4mm; }
+                    html, body, #root {
                         background: #ffffff !important;
                         color: #000000 !important;
+                        height: auto !important;
+                        overflow: visible !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
-                    .no-print { display: none !important; }
-                    .escala-print-root {
+                    .no-print, .print-hide-select { display: none !important; }
+                    .print-only-sigla { display: block !important; }
+                    .escala-print-wrapper,
+                    .escala-print-root,
+                    .escala-scroll-box {
+                        position: static !important;
+                        transform: none !important;
+                        animation: none !important;
                         box-shadow: none !important;
                         border: none !important;
                         padding: 0 !important;
                         margin: 0 !important;
                         width: 100% !important;
                         max-width: 100% !important;
+                        height: auto !important;
+                        max-height: none !important;
                         overflow: visible !important;
+                        background: #ffffff !important;
+                    }
+                    .print-schedule {
+                        visibility: visible !important;
+                        position: absolute !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        border: 1.5px solid #1e293b !important;
+                        border-radius: 0 !important;
+                        box-shadow: none !important;
+                        overflow: visible !important;
+                        background: #ffffff !important;
+                    }
+                    .print-schedule * {
+                        visibility: visible !important;
+                    }
+                    .print-schedule .sticky {
+                        position: static !important;
+                        box-shadow: none !important;
                     }
                     .escala-sheet-table {
                         width: 100% !important;
                         table-layout: fixed !important;
                         border-collapse: collapse !important;
-                        font-size: 8.5pt !important;
+                        font-size: 7.5pt !important;
                     }
                     .escala-sheet-table th,
                     .escala-sheet-table td {
+                        min-width: 0 !important;
                         padding: 2px 1px !important;
                         border: 1px solid #334155 !important;
+                        line-height: 1.15 !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
                     }
-                    .escala-col-nome { width: 100px !important; }
-                    .escala-col-cargo { width: 120px !important; }
+                    th.escala-col-nome,
+                    th.escala-col-cargo {
+                        white-space: normal !important;
+                        word-break: break-word !important;
+                        font-size: 6.8pt !important;
+                        padding: 3px 2px !important;
+                    }
+                    .escala-col-nome {
+                        width: 98px !important;
+                        min-width: 98px !important;
+                        max-width: 98px !important;
+                    }
+                    .escala-col-cargo {
+                        width: 114px !important;
+                        min-width: 114px !important;
+                        max-width: 114px !important;
+                    }
+                    /* Cores limpas para impressão independente de Modo Escuro ativo na tela */
+                    .print-row-highlight {
+                        background: #e5e7eb !important;
+                        color: #09090b !important;
+                    }
+                    .print-row-normal {
+                        background: #ffffff !important;
+                        color: #09090b !important;
+                    }
+                    .print-cell-weekday {
+                        background: #ffffff !important;
+                        color: #111827 !important;
+                    }
+                    .print-sigla-manha { color: #0369a1 !important; }
+                    .print-sigla-inter { color: #b45309 !important; }
+                    .print-sigla-noite { color: #4338ca !important; }
+                    .print-sigla-amber { background: #fef3c7 !important; color: #92400e !important; }
+                    .print-sigla-folga { background: #fff1f2 !important; color: #E3000F !important; }
+                    .print-cell-sunday {
+                        background: #dc2626 !important;
+                        color: #ffffff !important;
+                    }
+                    .print-cell-saturday {
+                        background: #0284c7 !important;
+                        color: #ffffff !important;
+                    }
+                    .print-cell-holiday {
+                        background: #facc15 !important;
+                        color: #09090b !important;
+                    }
+                    .print-folga-red { color: #E3000F !important; }
+                    .print-folga-white { color: #ffffff !important; }
+                    .print-footer-grid {
+                        display: grid !important;
+                        grid-template-columns: 45% 55% !important;
+                        border-top: 2px solid #1e293b !important;
+                        page-break-inside: avoid !important;
+                        background: #ffffff !important;
+                    }
+                    .print-legend-box {
+                        background: #ffffff !important;
+                        color: #111827 !important;
+                        font-size: 6.8pt !important;
+                    }
+                    .print-legend-box div {
+                        color: #111827 !important;
+                        border-color: #cbd5e1 !important;
+                        padding-top: 1.5px !important;
+                        padding-bottom: 1.5px !important;
+                    }
                 }
             `}</style>
 
@@ -792,7 +1284,7 @@ export const EscalaTrabalho = ({
 
                             <button
                                 type="button"
-                                onClick={() => window.print()}
+                                onClick={handlePrintSchedule}
                                 className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                             >
                                 <Printer size={15} />
@@ -803,8 +1295,8 @@ export const EscalaTrabalho = ({
 
                     {/* MATRIZ TECNOLÓGICA DE ESCALA (PADRÃO PLANILHA POR TURNOS E SIGLAS) */}
                     <div className="flex-1 overflow-auto p-2 sm:p-4 bg-neutral-100/80 dark:bg-neutral-950 escala-print-root">
-                        <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-lg">
-                            <div className="overflow-x-auto">
+                        <div className="print-schedule bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-lg">
+                            <div className="overflow-x-auto escala-scroll-box">
                                 <table className="w-full border-collapse text-center whitespace-nowrap escala-sheet-table select-none">
                                     {/* CABEÇALHO DA MATRIZ: LOJA | MÊS | LETRAS E DIAS DO MÊS */}
                                     <thead>
@@ -905,14 +1397,14 @@ export const EscalaTrabalho = ({
                                                     sec.employees.map((emp) => {
                                                         const isHighlightedRole = emp.group !== 'VENDEDOR';
                                                         const nameBg = isHighlightedRole
-                                                            ? 'bg-neutral-200/90 dark:bg-neutral-800/95 text-neutral-950 dark:text-white'
-                                                            : 'bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100';
+                                                            ? 'print-row-highlight bg-neutral-200/90 dark:bg-neutral-800/95 text-neutral-950 dark:text-white'
+                                                            : 'print-row-normal bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100';
 
                                                         return (
                                                             <tr key={emp.name} className="hover:brightness-95 dark:hover:brightness-110 transition-all">
                                                                 {/* NOME DO COLABORADOR */}
                                                                 <td
-                                                                    className={`px-3 py-2 text-xs font-extrabold uppercase border border-neutral-300 dark:border-neutral-800 sticky left-0 z-10 text-left shadow-[2px_0_6px_rgba(0,0,0,0.06)] ${nameBg}`}
+                                                                    className={`escala-col-nome px-3 py-2 text-xs font-extrabold uppercase border border-neutral-300 dark:border-neutral-800 sticky left-0 z-10 text-left shadow-[2px_0_6px_rgba(0,0,0,0.06)] ${nameBg}`}
                                                                 >
                                                                     <div className="flex items-center gap-2">
                                                                         <span
@@ -926,7 +1418,7 @@ export const EscalaTrabalho = ({
 
                                                                 {/* CARGO + SELETOR RÁPIDO PARA MOVER DE FAIXA (M / I / T) */}
                                                                 <td
-                                                                    className={`px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border border-neutral-300 dark:border-neutral-800 text-left ${nameBg}`}
+                                                                    className={`escala-col-cargo px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border border-neutral-300 dark:border-neutral-800 text-left ${nameBg}`}
                                                                 >
                                                                     <div className="flex items-center justify-between gap-1.5">
                                                                         <span className="truncate">{emp.friendlyRole}</span>
@@ -951,7 +1443,7 @@ export const EscalaTrabalho = ({
                                                                     const cellTheme = getTechCellClasses(d, sigla);
                                                                     const isFolgaSigla = sigla === 'F' || sigla === 'FB' || sigla === 'FP';
                                                                     const folgaTextClass = isFolgaSigla
-                                                                        ? (d.dow === 0 && !d.isHoliday ? 'text-white' : 'text-[#E3000F]')
+                                                                        ? (d.dow === 0 && !d.isHoliday ? 'text-white print-folga-white' : 'text-[#E3000F] print-folga-red')
                                                                         : '';
 
                                                                     return (
@@ -960,24 +1452,29 @@ export const EscalaTrabalho = ({
                                                                             className={`p-0 border text-xs sm:text-[13px] transition-colors ${cellTheme}`}
                                                                         >
                                                                             {canEditSchedule ? (
-                                                                                <select
-                                                                                    value={sigla}
-                                                                                    onChange={(e) => handleCellSiglaChange(emp.name, d.dateStr, e.target.value)}
-                                                                                    className={`w-full h-full py-1.5 px-0 text-center font-black outline-none cursor-pointer appearance-none bg-transparent ${folgaTextClass}`}
-                                                                                    style={{ textAlignLast: 'center', WebkitAppearance: 'none', MozAppearance: 'none' }}
-                                                                                    title={`${getFirstName(emp.name)} • Dia ${d.dayNumber} (${d.dayNameFull})`}
-                                                                                >
-                                                                                    {SIGLAS_ESCALA.map((s) => (
-                                                                                        <option
-                                                                                            key={s.code}
-                                                                                            value={s.code}
-                                                                                            title={s.label}
-                                                                                            className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-black text-center"
-                                                                                        >
-                                                                                            {s.code}
-                                                                                        </option>
-                                                                                    ))}
-                                                                                </select>
+                                                                                <>
+                                                                                    <select
+                                                                                        value={sigla}
+                                                                                        onChange={(e) => handleCellSiglaChange(emp.name, d.dateStr, e.target.value)}
+                                                                                        className={`print-hide-select w-full h-full py-1.5 px-0 text-center font-black outline-none cursor-pointer appearance-none bg-transparent ${folgaTextClass}`}
+                                                                                        style={{ textAlignLast: 'center', WebkitAppearance: 'none', MozAppearance: 'none' }}
+                                                                                        title={`${getFirstName(emp.name)} • Dia ${d.dayNumber} (${d.dayNameFull})`}
+                                                                                    >
+                                                                                        {SIGLAS_ESCALA.map((s) => (
+                                                                                            <option
+                                                                                                key={s.code}
+                                                                                                value={s.code}
+                                                                                                title={s.label}
+                                                                                                className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-black text-center"
+                                                                                            >
+                                                                                                {s.code}
+                                                                                            </option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                    <span className={`hidden print-only-sigla py-0.5 px-0 font-black text-center ${folgaTextClass}`}>
+                                                                                        {sigla}
+                                                                                    </span>
+                                                                                </>
                                                                             ) : (
                                                                                 <span className={`block py-1.5 px-0.5 font-black ${folgaTextClass}`}>
                                                                                     {sigla}
@@ -997,9 +1494,9 @@ export const EscalaTrabalho = ({
                             </div>
 
                             {/* RODAPÉ TECNOLÓGICO NO PADRÃO DA PLANILHA: LEGENDA + BANNER AZUL OFICIAL */}
-                            <div className="grid grid-cols-1 lg:grid-cols-12 border-t-2 border-neutral-800">
+                            <div className="print-footer-grid grid grid-cols-1 lg:grid-cols-12 border-t-2 border-neutral-800">
                                 {/* TABELA DE LEGENDA DE SIGLAS COM CARGA HORÁRIA COMPLETA EM TODOS OS TURNOS (MANHÃ, INTERMEDIÁRIO E TARDE) */}
-                                <div className="lg:col-span-5 bg-neutral-50 dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-800 border-b lg:border-b-0 lg:border-r border-neutral-700 text-[11px] font-extrabold uppercase">
+                                <div className="print-legend-box lg:col-span-5 bg-neutral-50 dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-800 border-b lg:border-b-0 lg:border-r border-neutral-700 text-[11px] font-extrabold uppercase">
                                     {[
                                         { label: `MANHÃ (${currentModelSpecs.MANHA.range} • ${currentModelSpecs.MANHA.carga})`, code: 'M', badge: 'text-sky-600 dark:text-sky-400' },
                                         { label: `INTERMEDIÁRIO (${currentModelSpecs.INTERMEDIARIO.range} • ${currentModelSpecs.INTERMEDIARIO.carga})`, code: 'I', badge: 'text-amber-600 dark:text-amber-400' },
